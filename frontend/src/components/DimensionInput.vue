@@ -27,7 +27,7 @@ import StylePropertyControl from "@/components/Controls/StylePropertyControl.vue
 import { DIMENSION_UNIT_OPTIONS } from "@/utils/unitOptions";
 
 defineProps<{
-	property: styleProperty;
+	property: string;
 	label: string;
 }>();
 </script>

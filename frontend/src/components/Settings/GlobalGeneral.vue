@@ -80,6 +80,17 @@
 			@update:model-value="
 				(val: Boolean) => builderStore.updateBuilderSettings('disable_auto_dark_mode', val)
 			" />
+		<hr class="w-full border-outline-gray-2" />
+		<CodeEditor
+			:modelValue="websiteSettings.doc?.robots_txt"
+			type="Python"
+			height="120px"
+			fixed-height
+			label="robots.txt"
+			:autofocus="false"
+			:show-line-numbers="true"
+			:description="robotsDescription"
+			@update:modelValue="(val: string) => websiteSettings.setValue.submit({ robots_txt: val })" />
 	</div>
 </template>
 <script setup lang="ts">
@@ -91,9 +102,17 @@ import useBuilderStore from "@/stores/builderStore";
 import { BuilderPage } from "@/types/doctypes";
 import { Switch } from "frappe-ui";
 import { computed } from "vue";
+import CodeEditor from "../Controls/CodeEditor.vue";
 import ImageUploader from "../Controls/ImageUploader.vue";
 
 const builderStore = useBuilderStore();
+
+const robotsGuide =
+	"https://developer.mozilla.org/en-US/docs/Web/Security/Practical_implementation_guides/Robots_txt";
+const robotsDescription = __(
+	"Specify rules to control how search engines interact with your site. For more details, visit {0}.",
+	[`<a href="${robotsGuide}">${__("Robots.txt Guide")}</a>`],
+);
 
 const routeOptions = computed(() => {
 	return allWebPages.data

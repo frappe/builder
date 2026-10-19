@@ -9,7 +9,7 @@ import { BOX_UNIT_OPTIONS } from "@/utils/unitOptions";
 import { __ } from "@/translation";
 
 const setFont = (font: string) => {
-	_setFont(font, null).then(() => {
+	_setFont(font).then(() => {
 		blockController.setFontFamily(font);
 	});
 };

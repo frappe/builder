@@ -28,4 +28,16 @@
 		</div>
 	</div>
 </div>
+
+<script>
+	// in the editor's preview frame, "/" would load Builder inside it
+	const link = window.self !== window.top && document.querySelector(".error-page a");
+	if (link) {
+		link.textContent = {{ _("Go Back")|tojson }};
+		link.addEventListener("click", (event) => {
+			event.preventDefault();
+			history.back();
+		});
+	}
+</script>
 {% endblock %}

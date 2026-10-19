@@ -5,7 +5,7 @@
 				class="flex w-full items-center justify-between"
 				@focusin="updateActiveState"
 				@click.capture="onAnchorClick"
-				@click="$event.target instanceof HTMLInputElement && open()">
+				@click="openOnInputClick">
 				<StylePropertyControl
 					propertyKey="boxShadow"
 					:component="Input"
@@ -158,6 +158,10 @@ const SHADOW_CONTROLS = [
 
 const activeState = ref<string | null>(null);
 const { isOpen, open, toggle, onAnchorClick, onUpdateOpen } = useAnchoredPopover();
+
+const openOnInputClick = (e: MouseEvent) => {
+	if (e.target instanceof HTMLInputElement) open();
+};
 
 const toggleForState = (state: string | null) => {
 	const isOpenForState = isOpen.value && activeState.value === state;

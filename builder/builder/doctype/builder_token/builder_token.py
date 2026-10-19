@@ -41,7 +41,7 @@ class BuilderToken(StandardFileSync, Document):
 
 	def on_update(self):
 		clear_builder_token_cache()
-		if self.is_standard:
+		if self.is_standard and frappe.conf.developer_mode:
 			export_to_files(
 				record_list=[["Builder Token", self.name, "builder_token"]], record_module="builder"
 			)

@@ -106,14 +106,6 @@ const panes: SettingsPane[] = [
 		load: () => import("@/components/Settings/GlobalRedirects.vue"),
 	},
 	{
-		name: "global_robots",
-		label: __("Robots"),
-		title: __("Robots.txt"),
-		icon: "lucide-bot",
-		group: "Global",
-		load: () => import("@/components/Settings/PageRobots.vue"),
-	},
-	{
 		name: "global_domains",
 		label: __("Domains"),
 		title: __("Custom Domains"),
@@ -142,19 +134,11 @@ const panes: SettingsPane[] = [
 	},
 	{
 		name: "global_agents",
-		label: __("Agents"),
+		label: __("AI Agents"),
 		title: __("Connect Your Agent"),
-		icon: "lucide-plug",
+		icon: "lucide-bot",
 		group: "Global",
 		load: () => import("@/components/Settings/GlobalAgents.vue"),
-	},
-	{
-		name: "global_ai",
-		label: __("AI"),
-		title: __("AI Settings"),
-		icon: "lucide-sparkles",
-		group: "Global",
-		load: () => import("@/components/Settings/GlobalAI.vue"),
 	},
 ];
 

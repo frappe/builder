@@ -1,4 +1,4 @@
-import type { default as Block, default as BlockDataKey } from "@/block";
+import type Block from "@/block";
 import useCanvasStore from "@/stores/canvasStore";
 import getBlockTemplate from "./blockTemplate";
 import componentController from "./componentController";
@@ -186,7 +186,8 @@ const blockController = {
 		});
 	},
 	isClickTrackingEnabled: () => {
-		return Boolean(blockController.getCustomAttributes()?.["data-track"]);
+		const attributes = blockController.getCustomAttributes();
+		return Boolean(attributes && attributes["data-track"]);
 	},
 	toggleClickTracking: (enabled: boolean) => {
 		// Store a marker only; the live blockId is stamped onto data-track at render time.
@@ -254,7 +255,7 @@ const blockController = {
 	getTextContent: () => {
 		return blockController.isBlockSelected() && blockController.getFirstSelectedBlock().getTextContent();
 	},
-	setDataKey: (key: keyof BlockDataKey, value: string) => {
+	setDataKey: <K extends keyof BlockDataKey>(key: K, value: BlockDataKey[K] | null) => {
 		canvasStore.activeCanvas?.selectedBlocks.forEach((block) => {
 			block.setDataKey(key, value);
 		});

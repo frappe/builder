@@ -341,7 +341,7 @@ class Block implements BlockOptions {
 	hasChildren() {
 		return this.getChildren().length > 0;
 	}
-	getCustomAttributes() {
+	getCustomAttributes(): BlockAttributeMap {
 		let customAttributes = {};
 		if (this.isExtendedFromComponent()) {
 			customAttributes = this.referenceComponent?.customAttributes || {};
@@ -444,13 +444,28 @@ class Block implements BlockOptions {
 	}
 	getActiveStyleProperty(style: styleProperty) {
 		const activeState = this.activeState?.split(":")[0];
-		return (activeState ? `${activeState}:${style}` : style) as styleProperty;
+		return (activeState ? `${activeState}:${String(style)}` : style) as styleProperty;
 	}
 	setAttribute(attribute: string, value: string | undefined) {
 		this.attributes[attribute] = value;
 	}
 	removeAttribute(attribute: string) {
 		this.setAttribute(attribute, undefined);
+	}
+	// published pages apply customAttributes over attributes, so an id set in HTML Attributes wins
+	getId() {
+		return this.getCustomAttributes().id || this.getAttribute("id");
+	}
+	setId(id: string | undefined) {
+		// a removed key falls back to the component's id, so an instance blanks it instead
+		const value = id || (this.referenceComponent?.getId() ? "" : undefined);
+		if (value !== undefined && "id" in this.getCustomAttributes()) {
+			this.customAttributes.id = value;
+		} else {
+			// clearing drops both copies, or the one left behind becomes the id again
+			delete this.customAttributes.id;
+		}
+		this.setAttribute("id", value);
 	}
 	getAttribute(attribute: string) {
 		return this.getAttributes()[attribute];
@@ -487,7 +502,7 @@ class Block implements BlockOptions {
 		return styleValue ?? this.getComponentStyleFallback(style, currentBreakpoint, nativeOnly, cascading);
 	}
 
-	private getStyleMapForBreakpoint(breakpoint: string) {
+	getStyleMapForBreakpoint(breakpoint: string) {
 		const styleMap = {
 			mobile: this.mobileStyles,
 			tablet: this.tabletStyles,
@@ -496,7 +511,7 @@ class Block implements BlockOptions {
 		return styleMap[breakpoint as keyof typeof styleMap] || this.baseStyles;
 	}
 
-	private getStyleWithCascading(style: styleProperty, breakpoint: string): StyleValue | undefined {
+	getStyleWithCascading(style: styleProperty, breakpoint: string): StyleValue | undefined {
 		if (this.isExtendedFromComponent()) {
 			const componentValue = this.referenceComponent?.getStyle(style, breakpoint, true, false);
 			if (componentValue) return componentValue;
@@ -516,7 +531,7 @@ class Block implements BlockOptions {
 		return this.getStyle(style, "desktop");
 	}
 
-	private getInheritedStyleValue(style: styleProperty, breakpoint: string): StyleValue | undefined {
+	getInheritedStyleValue(style: styleProperty, breakpoint: string): StyleValue | undefined {
 		switch (breakpoint) {
 			case "mobile":
 				return this.mobileStyles[style] || this.tabletStyles[style] || this.baseStyles[style];
@@ -527,7 +542,7 @@ class Block implements BlockOptions {
 		}
 	}
 
-	private getComponentStyleFallback(
+	getComponentStyleFallback(
 		style: styleProperty,
 		breakpoint: string,
 		nativeOnly: boolean,
@@ -880,7 +895,7 @@ class Block implements BlockOptions {
 		}
 		return dataKey;
 	}
-	setDataKey(key: keyof BlockDataKey, value: BlockDataKeyType) {
+	setDataKey<K extends keyof BlockDataKey>(key: K, value: BlockDataKey[K] | null) {
 		if (!this.dataKey || !this.dataKey[key]) {
 			this.dataKey = {
 				key: "",
@@ -892,7 +907,7 @@ class Block implements BlockOptions {
 		if (!value && key === "key") {
 			this.dataKey = {};
 		} else {
-			this.dataKey[key] = value;
+			this.dataKey[key] = value ?? undefined;
 		}
 	}
 	getInnerHTML(): string {

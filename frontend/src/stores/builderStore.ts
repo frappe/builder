@@ -1,5 +1,6 @@
 import { __ } from "@/translation";
 import BlockContextMenu from "@/components/BlockContextMenu.vue";
+import type { AISetupState } from "@/components/ai/types";
 import { builderSettings } from "@/data/builderSettings";
 import { BuilderSettings } from "@/types/doctypes";
 import { editorDemo } from "@/utils/editorDemo";
@@ -50,6 +51,8 @@ const useBuilderStore = defineStore("builderStore", {
 		// An AI build is streaming onto the canvas: the server owns the draft, so the
 		// editor's autosave must stand down (it would persist the partial preview).
 		aiBuildingCanvas: false,
+		// counts Bob's server edits, so an autosave queued before one stands down
+		aiEditEpoch: 0,
 		// site-level maintenance/migration state, not the editor's edit lock
 		isSiteInReadOnlyMode: window.is_read_only_mode === "True",
 		viewers: <UserInfo[]>[],
@@ -84,8 +87,9 @@ const useBuilderStore = defineStore("builderStore", {
 		async refreshAIState() {
 			const state = (await createResource({ url: "builder.ai.api.ai_setup_state" })
 				.submit()
-				.catch(() => null)) as { configured?: boolean } | null;
+				.catch(() => null)) as AISetupState | null;
 			this.aiConfigured = !!state?.configured;
+			return state;
 		},
 		toggleReadOnlyMode(readonly: boolean | null = null) {
 			this.readOnlyMode = readonly ?? !this.readOnlyMode;

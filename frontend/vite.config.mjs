@@ -51,7 +51,7 @@ export default defineConfig({
 	resolve: {
 		dedupe: ["prosemirror-model", "prosemirror-view", "prosemirror-state", "prosemirror-transform"],
 		alias: {
-			"@": path.resolve(__dirname, "src"),
+			"@": path.resolve(import.meta.dirname, "src"),
 		},
 	},
 	server: {

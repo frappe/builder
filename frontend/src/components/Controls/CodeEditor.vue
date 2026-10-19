@@ -6,10 +6,9 @@
 			<slot name="label-suffix"></slot>
 		</span>
 		<div
-			:style="{
-				'min-height': height,
-			}"
-			class="flex h-[30vh] max-h-[80vh] resize-y overflow-hidden !rounded-4 border border-outline-gray-2 bg-surface-gray-2">
+			:style="boxStyle"
+			:class="fixedHeight ? '' : 'h-[30vh]'"
+			class="flex max-h-[80vh] resize-y overflow-hidden !rounded-4 border border-outline-gray-2 bg-surface-gray-2">
 			<CodeMirrorEditor
 				ref="editor"
 				:mode
@@ -44,7 +43,7 @@
 </template>
 <script setup lang="ts">
 import { __ } from "@/translation";
-import { defineAsyncComponent, ref, VNodeRef, watch } from "vue";
+import { computed, defineAsyncComponent, ref, StyleValue, VNodeRef, watch } from "vue";
 
 // keeps the CodeMirror stack out of the main editor bundle
 const CodeMirrorEditor = defineAsyncComponent(() => import("./CodeMirror/CodeMirrorEditor.vue"));
@@ -57,6 +56,8 @@ const props = withDefaults(
 		label?: string;
 		readonly?: boolean;
 		height?: string;
+		/** use `height` as the editor's height; otherwise it is a minimum under a 30vh box */
+		fixedHeight?: boolean;
 		showLineNumbers?: boolean;
 		autofocus?: boolean;
 		showSaveButton?: boolean;
@@ -77,6 +78,10 @@ const props = withDefaults(
 		showSaveButton: false,
 		description: "",
 	},
+);
+
+const boxStyle = computed<StyleValue>(() =>
+	props.fixedHeight ? { height: props.height } : { minHeight: props.height },
 );
 
 const emit = defineEmits(["save", "update:modelValue"]);
