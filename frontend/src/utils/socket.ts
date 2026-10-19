@@ -18,9 +18,10 @@ export function createSocket(): Socket {
 // port. Only a dev web server, reached on its own port, leaves it on a port of its own.
 function socketUrl(): string {
 	const url = new URL(window.location.origin);
-	// in dev the jinja boot data is not rendered, so the host doubles as the site
+	// in dev the jinja boot data is not rendered, so the host doubles as the site and the
+	// socket.io port comes from the environment
 	const site = import.meta.env.DEV ? url.hostname : window.site_name;
-	const port = import.meta.env.DEV ? import.meta.env.VITE_SOCKETIO_PORT : window.socketio_port;
+	const port = import.meta.env.DEV ? import.meta.env.VITE_SOCKETIO_PORT || "9000" : window.socketio_port;
 	if (port && url.port) url.port = port;
 	return `${url.origin}/${site}`;
 }
