@@ -9217,10 +9217,10 @@ wcwidth@>=1.0.1:
   dependencies:
     defaults "^1.0.3"
 
-web-features@3.42.0:
-  version "3.42.0"
-  resolved "https://registry.yarnpkg.com/web-features/-/web-features-3.42.0.tgz#d32b5fe2895220f61b232e251536ecd504ab011b"
-  integrity sha512-Vq97bzyedg6EuPFnz1GIJqsI9me8CbxzwYrcBI/cNwjj66v77IsGmIZi9SxPHTu2t25F7ta4kZJPu4qvuYlhfQ==
+web-features@3.43.0:
+  version "3.43.0"
+  resolved "https://registry.yarnpkg.com/web-features/-/web-features-3.43.0.tgz#d47c2f1780e660499c2daa31f9a3108ed6bd5b13"
+  integrity sha512-nxisNw9bZc+q186ptMsJ/qRBuXH78h918eS6/CeKeGH28kK/1Qfyu/ETG2cSgYTPqvbGFQ9s/8n3XBdpBYv3DA==
 
 webidl-conversions@^3.0.0:
   version "3.0.1"

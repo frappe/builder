@@ -75,7 +75,7 @@
     "vite": "^8.2.1",
     "vitest": "^4.1.10",
     "vue-eslint-parser": "^10.4.0",
-    "web-features": "3.42.0"
+    "web-features": "3.43.0"
   },
   "peerDependencies": {}
 }
