@@ -12,6 +12,8 @@ plain dicts, since a live Document's save() runs hooks that can commit. A
 savepoint rollback still erases anything a snippet manages to write.
 """
 
+import functools
+
 import frappe
 
 from builder.ai.agent.registry import Tool
@@ -25,6 +27,13 @@ SAVEPOINT = "builder_ai_run_python"
 # log_error and response write.
 STRIPPED_FRAPPE_KEYS = ("qb", "make_get_request", "render_template", "get_last_doc", "log_error", "response")
 STRIPPED_DB_METHODS = ("sql",)
+# These utils read file contents straight off disk, with no File permission check.
+STRIPPED_UTILS = (
+	"pdf_to_base64",
+	"image_to_base64",
+	"get_thumbnail_base64_for_image",
+	"get_image_thumbnail_uri",
+)
 
 # get_list switches that widen a read past the session user's own permissions.
 UNSCOPING_LIST_ARGS = ("ignore_permissions", "ignore_user_permissions", "user")
@@ -39,6 +48,8 @@ def sandbox_globals() -> dict:
 		fr.pop(key, None)
 	for method in STRIPPED_DB_METHODS:
 		fr["db"].pop(method, None)
+	for util in STRIPPED_UTILS:
+		fr["utils"].pop(util, None)
 	scope_reads_to_user(fr)
 	hide_exec_only_globals(safe)
 	return safe
@@ -50,7 +61,8 @@ def scope_reads_to_user(fr) -> None:
 	could open in Desk."""
 	db = fr["db"]
 	fr["get_all"] = fr["get_list"] = db["get_all"] = db["get_list"] = user_get_list
-	fr["get_doc"] = fr["get_cached_doc"] = guarded_get_doc
+	fr["get_doc"] = guarded_get_doc
+	fr["get_cached_doc"] = guarded_get_cached_doc
 	for method in ("get_value", "get_single_value", "exists", "count"):
 		db[method] = read_guarded(getattr(frappe.db, method))
 
@@ -58,22 +70,41 @@ def scope_reads_to_user(fr) -> None:
 def hide_exec_only_globals(safe: dict) -> None:
 	"""safe_exec lays these globals over its full server-script namespace, so a
 	top-level name left out here (FrappeClient, run_script) would still resolve."""
-	from frappe.utils.safe_exec import get_safe_globals
-
-	for key in get_safe_globals().keys() - safe.keys():
+	for key in exec_only_globals():
 		safe[key] = None
 
 
+@functools.cache
+def exec_only_globals() -> frozenset:
+	from frappe.utils.safe_exec import get_safe_globals, render_safe_globals
+
+	return frozenset(get_safe_globals().keys() - render_safe_globals().keys())
+
+
 def user_get_list(doctype, fields=None, filters=None, **kwargs):
+	from frappe.utils.safe_exec import remove_unsafe_fields
+
 	for key in UNSCOPING_LIST_ARGS:
 		kwargs.pop(key, None)
+	if isinstance(fields, list):
+		fields = remove_unsafe_fields(fields)
+	# Always rows, never a query object, as frappe's own safe_get_list insists.
+	kwargs["run"] = True
 	return frappe.get_list(doctype, fields=fields, filters=filters, **kwargs)
 
 
 def guarded_get_doc(*args, **kwargs):
+	return readable(frappe.get_doc(*args, **kwargs))
+
+
+def guarded_get_cached_doc(*args, **kwargs):
+	# a copy, since stripping unreadable fields would otherwise change the cached doc
+	return readable(frappe.get_doc(frappe.get_cached_doc(*args, **kwargs).as_dict()))
+
+
+def readable(doc):
 	from frappe.utils.safe_exec import SafeDoc
 
-	doc = frappe.get_doc(*args, **kwargs)
 	if not doc.has_permission():
 		frappe.throw(f"No permission to read {doc.doctype}", frappe.PermissionError)
 	doc.apply_fieldlevel_read_permissions()

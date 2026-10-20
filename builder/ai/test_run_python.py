@@ -124,3 +124,22 @@ class TestRunPython(FrappeTestCase):
 
 		self.assertIn("FAILED", ignored)
 		self.assertIn("FAILED", as_admin)
+
+	def test_a_list_read_always_returns_rows(self):
+		out = run("result = str(isinstance(frappe.get_list('Builder Page', run=False, limit=1), list))")
+
+		self.assertEqual(out, "True")
+
+	def test_offers_no_file_reading_helpers(self):
+		for name in (
+			"pdf_to_base64",
+			"image_to_base64",
+			"get_thumbnail_base64_for_image",
+			"get_image_thumbnail_uri",
+		):
+			self.assertEqual(run(f"result = str(frappe.utils.get('{name}'))"), "None", name)
+
+	def test_reads_a_cached_document(self):
+		out = run("result = frappe.get_cached_doc('Builder Settings').doctype")
+
+		self.assertEqual(out, "Builder Settings")
