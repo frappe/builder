@@ -5863,7 +5863,7 @@ js-tokens@^9.0.1:
   resolved "https://registry.yarnpkg.com/js-tokens/-/js-tokens-9.0.1.tgz#2ec43964658435296f6761b34e10671c2d9527f4"
   integrity sha512-mxa9E9ITFOt0ban3j6L5MpjwegGz6lBQmM1IJkWeBZGcMxto50+eWdjC/52xDbS2vy0k7vIMK0Fe2wfL9OQSpQ==
 
-js-yaml@^3.13.1, js-yaml@^3.6.1, js-yaml@^4.1.1, js-yaml@^4.3.1, js-yaml@^5.2.3:
+js-yaml@^3.13.1, js-yaml@^3.6.1, js-yaml@^4.1.1, js-yaml@^4.3.1, js-yaml@^5.5.0:
   version "4.3.2"
   resolved "https://registry.yarnpkg.com/js-yaml/-/js-yaml-4.3.2.tgz#8e44fb14a2643c59726bb15787b5f1512cb3d3fb"
   integrity sha512-SFNOvSJ+Dgf/9An904Yx+CgSlIPCkIpao4qo51lpee25TIRejdH3rhR4EZMGoNx3/TP3O+wzWuiTFl4sqbltzA==
@@ -9217,10 +9217,10 @@ wcwidth@>=1.0.1:
   dependencies:
     defaults "^1.0.3"
 
-web-features@3.42.0:
-  version "3.42.0"
-  resolved "https://registry.yarnpkg.com/web-features/-/web-features-3.42.0.tgz#d32b5fe2895220f61b232e251536ecd504ab011b"
-  integrity sha512-Vq97bzyedg6EuPFnz1GIJqsI9me8CbxzwYrcBI/cNwjj66v77IsGmIZi9SxPHTu2t25F7ta4kZJPu4qvuYlhfQ==
+web-features@3.43.0:
+  version "3.43.0"
+  resolved "https://registry.yarnpkg.com/web-features/-/web-features-3.43.0.tgz#d47c2f1780e660499c2daa31f9a3108ed6bd5b13"
+  integrity sha512-nxisNw9bZc+q186ptMsJ/qRBuXH78h918eS6/CeKeGH28kK/1Qfyu/ETG2cSgYTPqvbGFQ9s/8n3XBdpBYv3DA==
 
 webidl-conversions@^3.0.0:
   version "3.0.1"
