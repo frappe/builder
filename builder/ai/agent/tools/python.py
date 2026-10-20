@@ -3,13 +3,9 @@
 The named read tools answer the common questions; this answers the rest. One
 sandboxed snippet can count, aggregate, and cross-reference anything on the
 site, so the agent orients itself on demand instead of depending on pre-baked
-context or a bespoke tool per question. The namespace is Frappe's render-safe
-subset (what Jinja templates get) rather than the server-script one, minus the
-query builder, raw SQL, outbound requests and template rendering, so there is
-nothing to enqueue, mail, call, request, insert or delete with. Every read
-answers with the session user's own permissions, and documents come back as
-plain dicts, since a live Document's save() runs hooks that can commit. A
-savepoint rollback still erases anything a snippet manages to write.
+context or a bespoke tool per question. It runs on Frappe's render-safe
+namespace (what Jinja templates get), trimmed further, so it can only read, with
+the session user's own permissions. A savepoint rollback erases any write.
 """
 
 import functools
@@ -54,10 +50,8 @@ def sandbox_globals() -> dict:
 
 
 def scope_reads_to_user(fr) -> None:
-	"""Render-safe reads skip permission checks. Every read here answers with the
-	session user's OWN permissions: Bob sees exactly what the person driving it
-	could open in Desk. Record reads go through get_list, so owner-only roles and
-	User Permissions apply, not just the DocType-level check."""
+	"""Render-safe reads skip permission checks. These answer with the session user's
+	own, through get_list, so owner-only roles and User Permissions apply too."""
 	db = fr["db"]
 	fr["get_all"] = fr["get_list"] = db["get_all"] = db["get_list"] = user_get_list
 	fr["get_doc"] = fr["get_cached_doc"] = guarded_get_doc

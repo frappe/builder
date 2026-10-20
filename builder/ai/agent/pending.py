@@ -66,9 +66,8 @@ def request_confirmation(ctx, kind: str, summary: str, payload: dict) -> None:
 
 def apply_pending_action(kind: str, payload: dict) -> str:
 	"""Run the real mutation for a confirmed action. Called ONLY from the confirm
-	endpoint (user-triggered), and with the confirming user's own permissions: the
-	payload is model-written, so it may name any doctype. Returns a short human
-	summary of what happened."""
+	endpoint (user-triggered), with the confirming user's own permissions, since the
+	model wrote the payload. Returns a short human summary of what happened."""
 	if kind not in KINDS:
 		frappe.throw(frappe._("Unknown pending action: {0}").format(kind))
 	payload = payload or {}
@@ -100,10 +99,8 @@ def apply_global_settings(payload: dict) -> str:
 
 
 def apply_create_doctype(payload: dict) -> str:
-	"""Create a Custom DocType (custom=1, created at runtime, no code files or app
-	migration). Public pages read it through their data script, so it grants no
-	Guest read: that would publish every field over the REST API, and Frappe only
-	lets Administrator grant it."""
+	"""Create a Custom DocType (custom=1, no code files or migration). No Guest read:
+	it would publish every field over the REST API; public pages use a data script."""
 	name = (payload.get("name") or "").strip()
 	if not name:
 		frappe.throw(frappe._("Doctype name is required"))

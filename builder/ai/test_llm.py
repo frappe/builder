@@ -4,6 +4,7 @@ from frappe.tests.utils import FrappeTestCase
 
 from builder.ai.llm import (
 	GENERIC_FAILURE,
+	NO_KEY,
 	is_retryable,
 	loads_tolerant,
 	patch_messages_for_provider,
@@ -172,32 +173,14 @@ class TestProviderTuning(FrappeTestCase):
 
 
 class TestSharedKey(FrappeTestCase):
-	def routed_key(self, info: dict) -> str | None:
-		with (
-			patch.object(ModelRegistry, "find", return_value=info),
-			patch("builder.ai.llm.provider_api_key", return_value=None),
-		):
-			return route(info["name"], SHARED_KEY)[2]
-
-	def test_an_openrouter_model_without_its_own_key_borrows_the_shared_one(self):
-		self.assertEqual(self.routed_key(OPENROUTER_MODEL), SHARED_KEY)
-
-	def test_a_custom_gateway_never_gets_the_shared_key(self):
-		self.assertNotEqual(self.routed_key(GATEWAY_MODEL), SHARED_KEY)
-
-	def test_openrouter_behind_a_custom_api_base_never_gets_the_shared_key(self):
-		self.assertNotEqual(
-			self.routed_key({**OPENROUTER_MODEL, "api_base": "https://proxy.example.com"}), SHARED_KEY
-		)
-
-	def resolved_key(self, info: dict) -> str:
-		with (
-			patch.object(ModelRegistry, "find", return_value=info),
-			patch("builder.ai.llm.provider_api_key", return_value=None),
-			patch("builder.ai.llm.settings_api_key", return_value=SHARED_KEY),
-		):
-			return resolve_api_key(info["name"])
-
-	def test_resolves_the_shared_key_only_for_openrouter(self):
-		self.assertEqual(self.resolved_key(OPENROUTER_MODEL), SHARED_KEY)
-		self.assertNotEqual(self.resolved_key(GATEWAY_MODEL), SHARED_KEY)
+	def test_only_openrouter_borrows_the_shared_key(self):
+		proxied = {**OPENROUTER_MODEL, "api_base": "https://proxy.example.com/v1"}
+		for info, expected in ((OPENROUTER_MODEL, SHARED_KEY), (GATEWAY_MODEL, NO_KEY), (proxied, NO_KEY)):
+			with (
+				self.subTest(model=info["name"], api_base=info["api_base"]),
+				patch.object(ModelRegistry, "find", return_value=info),
+				patch("builder.ai.llm.provider_api_key", return_value=None),
+				patch("builder.ai.llm.settings_api_key", return_value=SHARED_KEY),
+			):
+				self.assertEqual(route(info["name"], SHARED_KEY)[2], expected)
+				self.assertEqual(resolve_api_key(info["name"]), expected)

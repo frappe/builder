@@ -321,24 +321,6 @@ class AISession:
 			update_modified=False,
 		)
 
-	@classmethod
-	def claim_pending_action(cls, message_id: str, status: str) -> bool:
-		"""Decide a pending-action message exactly once. The row lock holds a
-		concurrent confirm until this one commits, and it then reads the decided status."""
-		current = frappe.db.get_value(cls.MESSAGE_DOCTYPE, message_id, "status", for_update=True)
-		if current != "pending_action":
-			return False
-		frappe.db.set_value(cls.MESSAGE_DOCTYPE, message_id, "status", status)
-		return True
-
-	@classmethod
-	def reopen_pending_action(cls, message_id: str) -> None:
-		"""Hand a claimed action back after it failed, so Apply can be tried again. The
-		claim was committed before the action ran, so the request's rollback keeps it."""
-		frappe.db.rollback()
-		frappe.db.set_value(cls.MESSAGE_DOCTYPE, message_id, "status", "pending_action")
-		frappe.db.commit()  # nosemgrep
-
 	# --- run lock (one turn per session at a time) -------------------------
 	# Redis NX+TTL via builder.ai.locks: atomic (the old is_running DB flag was a
 	# check-then-set race) and self-healing — a crashed worker's lock expires

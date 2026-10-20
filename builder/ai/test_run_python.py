@@ -58,11 +58,14 @@ class TestRunPython(FrappeTestCase):
 		self.assertIn("FAILED", out)
 		self.assertEqual(frappe.db.get_value("Builder Page", page.name, "page_title"), "Original")
 
-	def test_reads_a_loaded_documents_fields(self):
+	def test_reads_documents_as_dicts(self):
 		page = frappe.get_doc({"doctype": "Builder Page", "page_title": "Readable"}).insert()
 
 		self.assertEqual(
 			run(f"result = frappe.get_doc('Builder Page', '{page.name}').page_title"), "Readable"
+		)
+		self.assertEqual(
+			run("result = frappe.get_cached_doc('Builder Settings').doctype"), "Builder Settings"
 		)
 
 	def test_blocks_imports(self):
@@ -87,6 +90,10 @@ class TestRunPython(FrappeTestCase):
 			"frappe.log_error('hi')",
 			"FrappeClient('https://example.com')",
 			"run_script('missing')",
+			"frappe.utils.pdf_to_base64('/private/files/x.pdf')",
+			"frappe.utils.image_to_base64('/private/files/x.png')",
+			"frappe.utils.get_thumbnail_base64_for_image('/private/files/x.png')",
+			"frappe.utils.get_image_thumbnail_uri('/private/files/x.png')",
 		):
 			with self.subTest(call=call):
 				# Missing, not merely failing: these raise on the name itself.
@@ -102,38 +109,20 @@ class TestRunPython(FrappeTestCase):
 		self.assertIn("truncated", out)
 
 	def test_reads_answer_with_the_users_own_permissions(self):
+		reads = (
+			"frappe.get_all('User', pluck='name')",
+			"frappe.get_list('User', ignore_permissions=True, pluck='name')",
+			"frappe.get_list('User', user='Administrator', pluck='name')",
+			"frappe.db.get_value('User', 'Administrator', 'email')",
+			"frappe.get_doc('User', 'Administrator').email",
+		)
 		with self.set_user("Guest"):
-			listed = run("result = frappe.get_all('User', pluck='name')")
-			fetched = run("result = frappe.db.get_value('User', 'Administrator', 'email')")
-			loaded = run("result = frappe.get_doc('User', 'Administrator').email")
+			outs = {read: run(f"result = {read}") for read in reads}
 
-		self.assertIn("FAILED", listed)
-		self.assertIn("FAILED", fetched)
-		self.assertIn("FAILED", loaded)
-
-	def test_a_list_read_cannot_opt_out_of_permissions(self):
-		with self.set_user("Guest"):
-			ignored = run("result = frappe.get_list('User', ignore_permissions=True, pluck='name')")
-			as_admin = run("result = frappe.get_list('User', user='Administrator', pluck='name')")
-
-		self.assertIn("FAILED", ignored)
-		self.assertIn("FAILED", as_admin)
+		for read, out in outs.items():
+			self.assertIn("FAILED", out, read)
 
 	def test_a_list_read_always_returns_rows(self):
 		out = run("result = str(isinstance(frappe.get_list('Builder Page', run=False, limit=1), list))")
 
 		self.assertEqual(out, "True")
-
-	def test_offers_no_file_reading_helpers(self):
-		for name in (
-			"pdf_to_base64",
-			"image_to_base64",
-			"get_thumbnail_base64_for_image",
-			"get_image_thumbnail_uri",
-		):
-			self.assertEqual(run(f"result = str(frappe.utils.get('{name}'))"), "None", name)
-
-	def test_reads_a_cached_document(self):
-		out = run("result = frappe.get_cached_doc('Builder Settings').doctype")
-
-		self.assertEqual(out, "Builder Settings")

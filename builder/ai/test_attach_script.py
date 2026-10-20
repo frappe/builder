@@ -67,22 +67,12 @@ class TestUpdateScript(FrappeTestCase):
 			frappe.db.get_value("Builder Client Script", script.name, "script"), ".hero { opacity: 0; }"
 		)
 
-	def test_will_not_touch_a_script_on_another_page(self):
+	def test_only_touches_a_script_on_the_open_page(self):
 		page, script = make_page(), make_script()
+		for page_id in (page.name, None):
+			out = apply_update_script(
+				SimpleNamespace(page_id=page_id), {"script_name": script.name, "script": ".a {}"}
+			)
 
-		out = apply_update_script(
-			SimpleNamespace(page_id=page.name),
-			{"script_name": script.name, "script": ".hero { opacity: 0; }"},
-		)
-
-		self.assertTrue(out.startswith("FAILED"))
+			self.assertTrue(out.startswith("FAILED"), page_id)
 		self.assertEqual(frappe.db.get_value("Builder Client Script", script.name, "script"), script.script)
-
-	def test_no_open_page_fails(self):
-		script = make_script()
-
-		out = apply_update_script(
-			SimpleNamespace(page_id=None), {"script_name": script.name, "script": ".a {}"}
-		)
-
-		self.assertTrue(out.startswith("FAILED"))

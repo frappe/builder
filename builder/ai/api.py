@@ -185,25 +185,19 @@ def confirm_pending_settings(message_id: str, decision: str = "apply"):
 	owner = frappe.db.get_value(AISession.DOCTYPE, msg.session, "session_user")
 	if owner != frappe.session.user:
 		frappe.throw(_("This action does not belong to you"), frappe.PermissionError)
-	applying = decision == "apply"
-	if not AISession.claim_pending_action(message_id, "action_applied" if applying else "action_skipped"):
+	if msg.status != "pending_action":
 		frappe.throw(_("No pending action on this message"))
 
-	if not applying:
+	if decision != "apply":
+		frappe.db.set_value(AISession.MESSAGE_DOCTYPE, message_id, "status", "action_skipped")
 		outcome = "Skipped. Nothing was changed."
 		AISession.try_append_message(msg.session, "assistant", outcome, message_type="status")
 		resumed = resume_after_action(msg.session, outcome)
 		return {"status": "skipped", "resumed": resumed}
 
 	meta = AISession.load_metadata(msg.metadata_json)
-	# Committed first, so while the action runs no other confirm can claim it, and a
-	# failure can hand it back without undoing someone else's decision.
-	frappe.db.commit()  # nosemgrep
-	try:
-		result = apply_pending_action(meta.get("kind"), meta.get("payload") or {})
-	except Exception:
-		AISession.reopen_pending_action(message_id)
-		raise
+	result = apply_pending_action(meta.get("kind"), meta.get("payload") or {})
+	frappe.db.set_value(AISession.MESSAGE_DOCTYPE, message_id, "status", "action_applied")
 	# The OUTCOME becomes part of the conversation — visible in the chat after a
 	# reload, and context for the agent's next turn (it knows what was applied).
 	AISession.try_append_message(msg.session, "assistant", result, message_type="status")
@@ -218,9 +212,9 @@ def resume_after_action(session_id: str, outcome: str) -> bool:
 	there left the user typing "continue" to re-trigger the job. Best effort: the
 	action is already applied and must not be undone by a queue failure.
 	"""
+	if AISession.is_session_running(session_id):
+		return False
 	try:
-		if AISession.is_session_running(session_id):
-			return False
 		page_id, model = frappe.db.get_value(AISession.DOCTYPE, session_id, ["page", "selected_model"])
 		if not page_id:
 			return False

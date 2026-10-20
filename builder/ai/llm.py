@@ -204,9 +204,8 @@ def provider_api_key(info: dict) -> str | None:
 
 
 def uses_settings_key(info: dict) -> bool:
-	"""The Builder Settings key is an OpenRouter key, so only a provider that
-	calls OpenRouter itself may borrow it. Sent to any other endpoint it would
-	hand the key to whoever runs that endpoint."""
+	"""The Builder Settings key is an OpenRouter key; sent anywhere else, it goes to
+	whoever runs that endpoint."""
 	return info.get("litellm_provider") == "openrouter" and not info.get("api_base")
 
 

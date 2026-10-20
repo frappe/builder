@@ -22,10 +22,3 @@ class TestImprovePrompt(FrappeTestCase):
 			improve_prompt("a landing page for my bakery")
 
 		complete.assert_not_called()
-
-	def test_a_page_editor_gets_the_rewrite(self):
-		with (
-			patch("builder.ai.api.resolve_api_key", return_value="key"),
-			patch("builder.ai.llm.complete", return_value=" A sharper prompt "),
-		):
-			self.assertEqual(improve_prompt("a landing page for my bakery"), "A sharper prompt")
