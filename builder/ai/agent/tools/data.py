@@ -290,8 +290,6 @@ def write_page_data_script(ctx, args: dict) -> str:
 def request_create_doctype(ctx, args: dict) -> str | None:
 	"""Returning a string DECLINES the proposal (no confirm card) and feeds the
 	reason back to the model — e.g. proposing 'Event', a built-in Frappe doctype."""
-	if not frappe.has_permission("DocType", "create"):
-		return pending.not_permitted("create DocTypes")
 	name = (args.get("name") or "").strip()
 	fields = args.get("fields") or []
 	if not name or not fields:
@@ -302,6 +300,8 @@ def request_create_doctype(ctx, args: dict) -> str | None:
 			f"REAL fieldnames (schema follows), or propose a different name (e.g. 'Community {name}').\n"
 			f"{get_doctype_schema(ctx, {'doctype': name})}"
 		)
+	if not frappe.has_permission("DocType", "create"):
+		return pending.not_permitted("create DocTypes")
 	summary = f"Create a new DocType '{name}' with {len(fields)} field(s)?"
 	pending.request_confirmation(ctx, "create_doctype", summary, {"name": name, "fields": fields})
 	return None

@@ -164,9 +164,12 @@ def apply_connect_form(payload: dict) -> str:
 	Web Form (the trusted, rate-limited, field-whitelisted boundary) + a client
 	script that POSTs the form's fields to the Web Form's accept endpoint. Reused
 	if the doctype/web form already exist. Returns the Desk link to the entries."""
-	from builder.ai.agent.tools.forms import desk_slug, is_builder_submission_doctype
+	from builder.ai.agent.tools.forms import (
+		desk_slug,
+		is_builder_submission_doctype,
+		missing_create_permission,
+	)
 
-	frappe.has_permission("DocType", "create", throw=True)
 	doctype = (payload.get("doctype_name") or "").strip()
 	fields = payload.get("fields") or []
 	page_id = (payload.get("page_id") or "").strip()
@@ -175,6 +178,9 @@ def apply_connect_form(payload: dict) -> str:
 		frappe.throw(frappe._("connect_form needs a doctype, fields, and a form selector"))
 	if frappe.db.exists("DocType", doctype) and not is_builder_submission_doctype(doctype):
 		frappe.throw(frappe._("{0} already exists and is not a form submission DocType").format(doctype))
+	# Checked for both before creating either, so a missing permission leaves nothing half-made.
+	if action := missing_create_permission(doctype):
+		frappe.throw(frappe._("You are not permitted to {0}").format(action), frappe.PermissionError)
 
 	# 1. private submission DocType — System Manager only, NO guest permission
 	#    (the Web Form is the trusted boundary; submissions must not be readable by
@@ -199,7 +205,6 @@ def apply_connect_form(payload: dict) -> str:
 		).insert()
 
 	# 2. Web Form bound to it — guest-allowed (login_required off), published.
-	#    Only Website Manager may create Web Forms; the DocType check above is the gate.
 	wf_name = desk_slug(doctype)
 	if not frappe.db.exists("Web Form", wf_name):
 		frappe.get_doc(
@@ -218,7 +223,7 @@ def apply_connect_form(payload: dict) -> str:
 					for f in fields
 				],
 			}
-		).insert(ignore_permissions=True)
+		).insert(ignore_permissions=True)  # missing_create_permission above is the gate
 
 	# 3. client script on the page: capture the form's fields and POST them to the
 	#    stock Web Form accept endpoint (guest-safe, rate-limited, ignore_permissions).

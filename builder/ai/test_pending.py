@@ -1,5 +1,6 @@
 import json
 from types import SimpleNamespace
+from unittest.mock import patch
 
 import frappe
 from frappe.tests.utils import FrappeTestCase
@@ -97,16 +98,23 @@ class TestApplyPendingAction(FrappeTestCase):
 			frappe.delete_doc("DocType", doctype, force=True, ignore_missing=True)
 
 	def test_a_system_manager_can_connect_a_form(self):
+		doctype = f"Bob Connect Test {frappe.generate_hash(length=6)}"
 		frappe.set_user(user_with_role("System Manager"))
 		payload = {
-			"doctype_name": "Bob Connect Test Submission",
+			"doctype_name": doctype,
 			"fields": [{"fieldname": "email", "label": "Email", "fieldtype": "Data"}],
 			"form_selector": "form",
 		}
+		try:
+			pending.apply_pending_action("connect_form", payload)
 
-		pending.apply_pending_action("connect_form", payload)
-
-		self.assertTrue(frappe.db.exists("Web Form", {"doc_type": "Bob Connect Test Submission"}))
+			self.assertTrue(frappe.db.exists("Web Form", {"doc_type": doctype}))
+		finally:
+			# Creating a DocType commits, so the test transaction can't roll these back.
+			frappe.set_user("Administrator")
+			for web_form in frappe.get_all("Web Form", {"doc_type": doctype}, pluck="name"):
+				frappe.delete_doc("Web Form", web_form, force=True)
+			frappe.delete_doc("DocType", doctype, force=True, ignore_missing=True)
 
 	def test_connect_form_will_not_wire_an_existing_doctype(self):
 		frappe.set_user(user_with_role("System Manager"))
@@ -189,8 +197,32 @@ class TestProposalsTheUserCannotApply(FrappeTestCase):
 
 		from builder.ai.agent.tools.forms import request_connect_form
 
-		self.assert_declined(
-			request_connect_form(
-				SimpleNamespace(page_id="page-anything"), {"doctype_name": "Bob Visit Request"}
-			)
-		)
+		args = {
+			"doctype_name": "Bob Visit Request",
+			"fields": [{"fieldname": "email", "label": "Email", "fieldtype": "Data"}],
+			"form_selector": "form",
+		}
+
+		self.assert_declined(request_connect_form(SimpleNamespace(page_id="page-anything"), args))
+
+	def test_an_already_connected_form_is_still_answered(self):
+		from types import SimpleNamespace
+
+		from builder.ai.agent.tools import forms
+
+		with patch.object(forms, "connected_submission_doctype", return_value="Bob Visit Request"):
+			out = forms.request_connect_form(SimpleNamespace(page_id="page-anything"), {})
+
+		self.assertTrue(out.startswith("ALREADY CONNECTED"), out)
+
+	def test_an_existing_doctype_is_offered_for_reuse(self):
+		from builder.ai.agent.tools.data import request_create_doctype
+
+		out = request_create_doctype(None, {"name": "Builder Page", "fields": [{"fieldname": "title"}]})
+
+		self.assertIn("already EXISTS", out)
+
+	def test_a_form_can_reuse_an_existing_doctype(self):
+		from builder.ai.agent.tools.forms import missing_create_permission
+
+		self.assertIsNone(missing_create_permission("Builder Page"))
