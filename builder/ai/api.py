@@ -14,7 +14,7 @@ from frappe import _
 
 from builder.ai.agent.loop import run_agent_job
 from builder.ai.block_codec import BlockCodec
-from builder.ai.llm import resolve_api_key
+from builder.ai.llm import resolve_api_key, settings_api_key
 from builder.ai.models import GatewayListing, ModelRegistry
 from builder.ai.session import AISession
 from builder.utils import has_page_write
@@ -369,7 +369,7 @@ def ai_setup_state():
 		return {"configured": False, "models": 0, "providers": 0, "needs_migrate": True, "presets": []}
 
 	providers = frappe.get_all("Builder AI Provider", filters={"enabled": 1}, fields=["name", "api_key"])
-	settings_key = frappe.get_single("Builder Settings").get_password("ai_api_key", raise_exception=False)
+	settings_key = settings_api_key()
 	# A provider carrying its own key is enough on its own — a self-hosted gateway
 	# never needs the shared OpenRouter one.
 	has_key = bool(settings_key) or any(p.api_key for p in providers)
@@ -590,7 +590,7 @@ def test_api_key(provider: str | None = None, api_key: str | None = None):
 		actual_model = model
 		api_key = typed_key or resolve_api_key(model)
 	else:
-		api_key = frappe.get_single("Builder Settings").get_password("ai_api_key", raise_exception=False)
+		api_key = settings_api_key()
 		if not api_key:
 			return {"success": False, "message": _("Please set an OpenRouter API key")}
 		actual_model = ModelRegistry.get_default("openrouter")
