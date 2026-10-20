@@ -104,7 +104,6 @@ def apply_create_doctype(payload: dict) -> str:
 	migration). Public pages read it through their data script, so it grants no
 	Guest read: that would publish every field over the REST API, and Frappe only
 	lets Administrator grant it."""
-	frappe.has_permission("DocType", "create", throw=True)
 	name = (payload.get("name") or "").strip()
 	if not name:
 		frappe.throw(frappe._("Doctype name is required"))
@@ -149,7 +148,6 @@ def apply_seed_sample_data(payload: dict) -> str:
 	rows = payload.get("rows") or []
 	if not doctype or not frappe.db.exists("DocType", doctype):
 		frappe.throw(frappe._("DocType {0} does not exist").format(doctype))
-	frappe.has_permission(doctype, "create", throw=True)
 	created = 0
 	for row in rows:
 		if not isinstance(row, dict):

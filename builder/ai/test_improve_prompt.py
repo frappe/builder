@@ -14,12 +14,12 @@ class TestImprovePrompt(FrappeTestCase):
 			frappe.get_doc({"doctype": "User", "email": PORTAL_USER, "first_name": "Portal"}).insert(
 				ignore_permissions=True
 			)
-		frappe.set_user(PORTAL_USER)
-		try:
-			with patch("builder.ai.llm.complete") as complete, self.assertRaises(frappe.ValidationError):
-				improve_prompt("a landing page for my bakery")
-		finally:
-			frappe.set_user("Administrator")
+		with (
+			self.set_user(PORTAL_USER),
+			patch("builder.ai.llm.complete") as complete,
+			self.assertRaises(frappe.ValidationError),
+		):
+			improve_prompt("a landing page for my bakery")
 
 		complete.assert_not_called()
 

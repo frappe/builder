@@ -6,14 +6,8 @@ from frappe.tests.utils import FrappeTestCase
 from builder.ai import api
 from builder.ai.agent.loop import run_agent_job
 from builder.ai.models import ModelRegistry
+from builder.ai.test_llm import OPENROUTER_MODEL as MODEL
 
-MODEL = {
-	"name": "openrouter/test/model",
-	"provider": "OpenRouter",
-	"route_prefix": "openrouter",
-	"litellm_provider": "openrouter",
-	"api_base": None,
-}
 SECRET = "sk-or-secret"
 
 
@@ -45,19 +39,13 @@ class TestAgentJobs(FrappeTestCase):
 		self.assert_no_key(self.enqueued_kwargs(lambda: api.resume_after_action(session.name, "Applied.")))
 
 	def test_the_job_resolves_its_own_key(self):
-		with (
-			patch("builder.ai.llm.resolve_api_key", return_value=SECRET),
-			patch("builder.ai.agent.loop.AgentRunner") as runner,
-		):
-			run_agent_job("hi", MODEL["name"], page_id="some-page")
+		# a job queued before the key moved out of its arguments still carries one
+		for queued in ({}, {"api_key": "sk-stale"}):
+			with (
+				self.subTest(queued=queued),
+				patch("builder.ai.llm.resolve_api_key", return_value=SECRET),
+				patch("builder.ai.agent.loop.AgentRunner") as runner,
+			):
+				run_agent_job("hi", MODEL["name"], page_id="some-page", **queued)
 
-		runner.assert_called_once_with("hi", MODEL["name"], SECRET, page_id="some-page")
-
-	def test_a_job_queued_with_the_old_key_argument_still_runs(self):
-		with (
-			patch("builder.ai.llm.resolve_api_key", return_value=SECRET),
-			patch("builder.ai.agent.loop.AgentRunner") as runner,
-		):
-			run_agent_job("hi", MODEL["name"], api_key="sk-stale", page_id="some-page")
-
-		runner.assert_called_once_with("hi", MODEL["name"], SECRET, page_id="some-page")
+				runner.assert_called_once_with("hi", MODEL["name"], SECRET, page_id="some-page")

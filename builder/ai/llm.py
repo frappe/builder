@@ -211,7 +211,9 @@ def uses_settings_key(info: dict) -> bool:
 
 
 def settings_api_key() -> str | None:
-	return frappe.get_single("Builder Settings").get_password("ai_api_key", raise_exception=False)
+	from frappe.utils.password import get_decrypted_password
+
+	return get_decrypted_password("Builder Settings", "Builder Settings", "ai_api_key", raise_exception=False)
 
 
 def resolve_api_key(model: str | None = None) -> str:

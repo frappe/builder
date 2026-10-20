@@ -328,7 +328,7 @@ class ModelRegistry:
 		for m in cls.catalog():
 			if not cls.still_served(m):
 				continue
-			ready = bool(provider_api_key(m) or m.get("api_base")) or (fallback and uses_settings_key(m))
+			ready = bool(m.get("api_base") or provider_api_key(m)) or (fallback and uses_settings_key(m))
 			grouped.setdefault(m["provider"], []).append({**m, "ready": ready})
 		return [{"provider": provider, "models": models} for provider, models in grouped.items()]
 

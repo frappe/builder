@@ -102,25 +102,19 @@ class TestRunPython(FrappeTestCase):
 		self.assertIn("truncated", out)
 
 	def test_reads_answer_with_the_users_own_permissions(self):
-		frappe.set_user("Guest")
-		try:
+		with self.set_user("Guest"):
 			listed = run("result = frappe.get_all('User', pluck='name')")
 			fetched = run("result = frappe.db.get_value('User', 'Administrator', 'email')")
 			loaded = run("result = frappe.get_doc('User', 'Administrator').email")
-		finally:
-			frappe.set_user("Administrator")
 
 		self.assertIn("FAILED", listed)
 		self.assertIn("FAILED", fetched)
 		self.assertIn("FAILED", loaded)
 
 	def test_a_list_read_cannot_opt_out_of_permissions(self):
-		frappe.set_user("Guest")
-		try:
+		with self.set_user("Guest"):
 			ignored = run("result = frappe.get_list('User', ignore_permissions=True, pluck='name')")
 			as_admin = run("result = frappe.get_list('User', user='Administrator', pluck='name')")
-		finally:
-			frappe.set_user("Administrator")
 
 		self.assertIn("FAILED", ignored)
 		self.assertIn("FAILED", as_admin)

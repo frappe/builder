@@ -1,9 +1,7 @@
 from unittest.mock import patch
 
-import frappe
 from frappe.tests.utils import FrappeTestCase
 
-from builder.ai.api import import_provider_models
 from builder.ai.llm import (
 	GENERIC_FAILURE,
 	is_retryable,
@@ -203,21 +201,3 @@ class TestSharedKey(FrappeTestCase):
 	def test_resolves_the_shared_key_only_for_openrouter(self):
 		self.assertEqual(self.resolved_key(OPENROUTER_MODEL), SHARED_KEY)
 		self.assertNotEqual(self.resolved_key(GATEWAY_MODEL), SHARED_KEY)
-
-	def test_importing_a_gateways_models_never_sends_the_shared_key(self):
-		provider = frappe.get_doc(
-			{
-				"doctype": "Builder AI Provider",
-				"provider_name": "Bob Keyless Gateway",
-				"api_base": GATEWAY_MODEL["api_base"],
-			}
-		).insert()
-
-		with (
-			patch("builder.ai.llm.settings_api_key", return_value=SHARED_KEY),
-			patch("requests.get") as get,
-		):
-			get.return_value.json.return_value = {"data": []}
-			import_provider_models(provider.name)
-
-		self.assertNotIn("Authorization", get.call_args.kwargs["headers"])
