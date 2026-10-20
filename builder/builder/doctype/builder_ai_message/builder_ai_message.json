@@ -74,7 +74,7 @@
  "hide_toolbar": 1,
  "index_web_pages_for_search": 0,
  "links": [],
- "modified": "2026-10-06 10:00:00.000000",
+ "modified": "2026-10-20 10:17:21.196004",
  "modified_by": "Administrator",
  "module": "Builder",
  "name": "Builder AI Message",
@@ -94,6 +94,7 @@
    "write": 1
   },
   {
+   "if_owner": 1,
    "read": 1,
    "role": "Website Manager"
   }

@@ -226,3 +226,43 @@ class TestProposalsTheUserCannotApply(FrappeTestCase):
 		from builder.ai.agent.tools.forms import missing_create_permission
 
 		self.assertIsNone(missing_create_permission("Builder Page"))
+
+
+class TestChatPrivacy(FrappeTestCase):
+	def tearDown(self):
+		frappe.set_user("Administrator")
+
+	def chat(self, user, page):
+		frappe.set_user(user)
+		session = frappe.get_doc(
+			{"doctype": "Builder AI Session", "session_user": user, "page": page}
+		).insert(ignore_permissions=True)
+		message = frappe.get_doc(
+			{"doctype": "Builder AI Message", "session": session.name, "role": "user", "content": "hi"}
+		).insert(ignore_permissions=True)
+		frappe.set_user("Administrator")
+		return session.name, message.name
+
+	def test_a_website_manager_reads_only_their_own_chats(self):
+		page = frappe.get_doc({"doctype": "Builder Page", "page_title": "Chat privacy"}).insert().name
+		manager = user_with_role("Website Manager")
+		_, mine = self.chat(manager, page)
+		_, theirs = self.chat(user_with_role("System Manager"), page)
+
+		frappe.set_user(manager)
+		visible = frappe.get_list(
+			"Builder AI Message", filters={"name": ["in", [mine, theirs]]}, pluck="name"
+		)
+
+		self.assertEqual(visible, [mine])
+
+	def test_a_website_manager_can_delete_a_page_with_someone_elses_chat(self):
+		manager = user_with_role("Website Manager")
+		frappe.set_user(manager)
+		page = frappe.get_doc({"doctype": "Builder Page", "page_title": "Shared chat page"}).insert().name
+		session, _ = self.chat(user_with_role("System Manager"), page)
+
+		frappe.set_user(manager)
+		frappe.delete_doc("Builder Page", page)
+
+		self.assertFalse(frappe.db.exists("Builder AI Session", session))
