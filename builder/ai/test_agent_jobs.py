@@ -52,3 +52,12 @@ class TestAgentJobs(FrappeTestCase):
 			run_agent_job("hi", MODEL["name"], page_id="some-page")
 
 		runner.assert_called_once_with("hi", MODEL["name"], SECRET, page_id="some-page")
+
+	def test_a_job_queued_with_the_old_key_argument_still_runs(self):
+		with (
+			patch("builder.ai.llm.resolve_api_key", return_value=SECRET),
+			patch("builder.ai.agent.loop.AgentRunner") as runner,
+		):
+			run_agent_job("hi", MODEL["name"], api_key="sk-stale", page_id="some-page")
+
+		runner.assert_called_once_with("hi", MODEL["name"], SECRET, page_id="some-page")

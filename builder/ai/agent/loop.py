@@ -1490,4 +1490,6 @@ class AgentRunner:
 
 def run_agent_job(prompt: str, model: str, **kwargs):
 	# Resolved here, not passed in: job kwargs sit in Redis and show in Desk's RQ Job view.
+	# Jobs queued before that change still carry the key.
+	kwargs.pop("api_key", None)
 	AgentRunner(prompt, model, llm.resolve_api_key(model), **kwargs).run()
