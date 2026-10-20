@@ -102,7 +102,7 @@ class TestGatewayListing(FrappeTestCase):
 		self.assertTrue(frappe.db.exists("Builder AI Model", "test-gateway/vendor/chat-a"))
 		self.assertIsNone(GatewayListing.served_ids("Dead Gateway"))
 
-	def test_credits_fall_back_to_the_shared_key(self):
+	def test_credits_never_send_the_shared_key_to_a_gateway(self):
 		keyless = frappe.get_doc(
 			{
 				"doctype": "Builder AI Provider",
@@ -124,7 +124,8 @@ class TestGatewayListing(FrappeTestCase):
 			credits = GatewayListing(keyless).credits()
 		self.assertEqual(credits, {"balance": 5.5, "spent": 1})
 		self.assertEqual(get.call_args.args[0], "https://free.test/v1/credits")
-		self.assertEqual(get.call_args.kwargs["headers"], {"Authorization": "Bearer shared-key"})
+		# The Builder Settings key is an OpenRouter key; this api_base gets no key at all.
+		self.assertEqual(get.call_args.kwargs["headers"], {})
 
 	def test_credits_drop_a_spend_that_is_not_a_number(self):
 		reply = MagicMock()

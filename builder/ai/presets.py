@@ -12,6 +12,7 @@ AI Provider / Builder AI Model row, editable afterwards like any other.
 import frappe
 from frappe import _
 
+from builder.ai.llm import NO_KEY
 from builder.ai.models import ModelRegistry
 
 PRESETS = [
@@ -255,7 +256,7 @@ def verify_key(preset: dict, api_key: str, api_base: str, model_id: str) -> dict
 			**overrides,
 			messages=[{"role": "user", "content": "Reply with OK"}],
 			max_tokens=5,
-			api_key=api_key or "not-needed",
+			api_key=api_key or NO_KEY,
 		)
 		return {"success": True, "severity": "ok", "message": _("Connected")}
 	except Exception as e:

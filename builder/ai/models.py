@@ -243,9 +243,8 @@ class GatewayListing:
 
 	def request(self) -> tuple[str, dict]:
 		base = self.provider.api_base.rstrip("/")
-		key = self.provider.resolved_key() or frappe.get_single("Builder Settings").get_password(
-			"ai_api_key", raise_exception=False
-		)
+		# Never the Builder Settings key: that belongs to OpenRouter, not this api_base.
+		key = self.provider.resolved_key()
 		if self.provider.litellm_provider == "anthropic":
 			# litellm treats an Anthropic api_base as the host root and appends /v1/messages
 			return f"{base}/v1/models", {"x-api-key": key or "", "anthropic-version": "2023-06-01"}
@@ -318,21 +317,19 @@ class ModelRegistry:
 		"""Provider-grouped catalog — the shape the model picker consumes.
 
 		`ready` says whether this model can actually be called: its provider's own
-		key, or the shared one in Builder Settings. Computed here rather than in the
-		cached row loader, so key state is never held in redis, and so the picker can
-		say a model is unusable BEFORE someone writes a prompt for it."""
-		from builder.ai.llm import provider_api_key
+		key, a gateway's api_base (which may need no key), or for OpenRouter the
+		shared one in Builder Settings. Computed here rather than in the cached row
+		loader, so key state is never held in redis, and so the picker can say a
+		model is unusable BEFORE someone writes a prompt for it."""
+		from builder.ai.llm import provider_api_key, settings_api_key, uses_settings_key
 
-		fallback = bool(
-			frappe.get_single("Builder Settings").get_password("ai_api_key", raise_exception=False)
-		)
+		fallback = bool(settings_api_key())
 		grouped: dict[str, list] = {}
 		for m in cls.catalog():
 			if not cls.still_served(m):
 				continue
-			grouped.setdefault(m["provider"], []).append(
-				{**m, "ready": bool(provider_api_key(m)) or fallback}
-			)
+			ready = bool(m.get("api_base") or provider_api_key(m)) or (fallback and uses_settings_key(m))
+			grouped.setdefault(m["provider"], []).append({**m, "ready": ready})
 		return [{"provider": provider, "models": models} for provider, models in grouped.items()]
 
 	@staticmethod
