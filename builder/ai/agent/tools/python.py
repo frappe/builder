@@ -26,7 +26,6 @@ SAVEPOINT = "builder_ai_run_python"
 # render_template and get_last_doc read without permission checks, and
 # log_error and response write.
 STRIPPED_FRAPPE_KEYS = ("qb", "make_get_request", "render_template", "get_last_doc", "log_error", "response")
-STRIPPED_DB_METHODS = ("sql",)
 # These utils read file contents straight off disk, with no File permission check.
 STRIPPED_UTILS = (
 	"pdf_to_base64",
@@ -46,8 +45,7 @@ def sandbox_globals() -> dict:
 	fr = safe["frappe"]
 	for key in STRIPPED_FRAPPE_KEYS:
 		fr.pop(key, None)
-	for method in STRIPPED_DB_METHODS:
-		fr["db"].pop(method, None)
+	fr["db"].pop("sql", None)
 	for util in STRIPPED_UTILS:
 		fr["utils"].pop(util, None)
 	scope_reads_to_user(fr)
@@ -58,13 +56,15 @@ def sandbox_globals() -> dict:
 def scope_reads_to_user(fr) -> None:
 	"""Render-safe reads skip permission checks. Every read here answers with the
 	session user's OWN permissions: Bob sees exactly what the person driving it
-	could open in Desk."""
+	could open in Desk. Record reads go through get_list, so owner-only roles and
+	User Permissions apply, not just the DocType-level check."""
 	db = fr["db"]
 	fr["get_all"] = fr["get_list"] = db["get_all"] = db["get_list"] = user_get_list
-	fr["get_doc"] = guarded_get_doc
-	fr["get_cached_doc"] = guarded_get_cached_doc
-	for method in ("get_value", "get_single_value", "exists", "count"):
-		db[method] = read_guarded(getattr(frappe.db, method))
+	fr["get_doc"] = fr["get_cached_doc"] = guarded_get_doc
+	db["get_value"] = user_get_value
+	db["exists"] = user_exists
+	db["count"] = user_count
+	db["get_single_value"] = read_guarded(db["get_single_value"])
 
 
 def hide_exec_only_globals(safe: dict) -> None:
@@ -93,20 +93,34 @@ def user_get_list(doctype, fields=None, filters=None, **kwargs):
 	return frappe.get_list(doctype, fields=fields, filters=filters, **kwargs)
 
 
+def user_get_value(doctype, filters=None, fieldname="name", *args, as_dict=False, **kwargs):
+	if frappe.get_meta(doctype).issingle:
+		return read_guarded(frappe.db.get_value)(doctype, filters, fieldname, as_dict=as_dict)
+	fields = list(fieldname) if isinstance(fieldname, list | tuple) else [fieldname]
+	rows = user_get_list(doctype, fields=fields, filters=by_name(filters), limit=1, as_list=not as_dict)
+	if not rows:
+		return None
+	return rows[0] if as_dict or len(fields) > 1 else rows[0][0]
+
+
+def user_exists(doctype, filters=None, *args, **kwargs):
+	names = user_get_list(doctype, filters=by_name(filters), limit=1, pluck="name")
+	return names[0] if names else None
+
+
+def user_count(doctype, filters=None, *args, **kwargs):
+	return len(user_get_list(doctype, filters=filters, limit=0, pluck="name"))
+
+
+def by_name(filters):
+	return {"name": filters} if isinstance(filters, str | int) else filters
+
+
 def guarded_get_doc(*args, **kwargs):
-	return readable(frappe.get_doc(*args, **kwargs))
-
-
-def guarded_get_cached_doc(*args, **kwargs):
-	# a copy, since stripping unreadable fields would otherwise change the cached doc
-	return readable(frappe.get_doc(frappe.get_cached_doc(*args, **kwargs).as_dict()))
-
-
-def readable(doc):
 	from frappe.utils.safe_exec import SafeDoc
 
-	if not doc.has_permission():
-		frappe.throw(f"No permission to read {doc.doctype}", frappe.PermissionError)
+	doc = frappe.get_doc(*args, **kwargs)
+	doc.check_permission("read")
 	doc.apply_fieldlevel_read_permissions()
 	return SafeDoc(doc.as_dict())
 
