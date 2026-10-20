@@ -138,6 +138,12 @@ class TestApplyPendingAction(FrappeTestCase):
 
 
 class TestConfirmPendingSettings(FrappeTestCase):
+	def setUp(self):
+		# confirming commits its claim, which would keep this test's rows
+		commit = patch.object(frappe.db, "commit")
+		self.commit = commit.start()
+		self.addCleanup(commit.stop)
+
 	def pending_message(self) -> str:
 		session = frappe.get_doc({"doctype": "Builder AI Session", "session_user": "Administrator"}).insert()
 		metadata = {"status": "pending_action", "kind": "home_page", "payload": {"route": "bob-home"}}
@@ -158,13 +164,24 @@ class TestConfirmPendingSettings(FrappeTestCase):
 			confirm_pending_settings(message_id, decision="skip")
 		self.assertEqual(frappe.db.get_single_value("Builder Settings", "home_page"), "bob-home")
 
+	def test_the_claim_is_committed_before_the_action_runs(self):
+		message_id = self.pending_message()
+		steps = []
+		self.commit.side_effect = lambda: steps.append("commit")
+
+		with patch.object(
+			pending, "apply_pending_action", side_effect=lambda *a: steps.append("apply") or "Done"
+		):
+			confirm_pending_settings(message_id)
+
+		self.assertEqual(steps[:2], ["commit", "apply"])
+
 	def test_a_failed_action_can_be_applied_again(self):
 		message_id = self.pending_message()
 
 		with (
 			patch.object(pending, "apply_pending_action", side_effect=frappe.ValidationError),
 			patch.object(frappe.db, "rollback"),
-			patch.object(frappe.db, "commit"),
 			self.assertRaises(frappe.ValidationError),
 		):
 			confirm_pending_settings(message_id)

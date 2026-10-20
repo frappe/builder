@@ -333,9 +333,8 @@ class AISession:
 
 	@classmethod
 	def reopen_pending_action(cls, message_id: str) -> None:
-		"""Hand a claimed action back after it failed, so Apply can be tried again. An
-		action that creates a DocType commits midway, claim included, so the request's
-		own rollback can't undo it."""
+		"""Hand a claimed action back after it failed, so Apply can be tried again. The
+		claim was committed before the action ran, so the request's rollback keeps it."""
 		frappe.db.rollback()
 		frappe.db.set_value(cls.MESSAGE_DOCTYPE, message_id, "status", "pending_action")
 		frappe.db.commit()  # nosemgrep

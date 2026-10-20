@@ -196,6 +196,9 @@ def confirm_pending_settings(message_id: str, decision: str = "apply"):
 		return {"status": "skipped", "resumed": resumed}
 
 	meta = AISession.load_metadata(msg.metadata_json)
+	# Committed first, so while the action runs no other confirm can claim it, and a
+	# failure can hand it back without undoing someone else's decision.
+	frappe.db.commit()  # nosemgrep
 	try:
 		result = apply_pending_action(meta.get("kind"), meta.get("payload") or {})
 	except Exception:
