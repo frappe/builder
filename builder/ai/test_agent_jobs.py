@@ -38,6 +38,19 @@ class TestAgentJobs(FrappeTestCase):
 
 		self.assert_no_key(self.enqueued_kwargs(lambda: api.resume_after_action(session.name, "Applied.")))
 
+	def test_a_resume_without_a_key_queues_nothing(self):
+		page = frappe.get_doc({"doctype": "Builder Page", "page_title": "Keyless resume"}).insert()
+		session = frappe.get_doc(
+			{"doctype": "Builder AI Session", "session_user": "Administrator", "page": page.name}
+		).insert()
+
+		with (
+			patch("builder.ai.api.resolve_api_key", side_effect=frappe.ValidationError),
+			patch("frappe.enqueue") as enqueue,
+		):
+			self.assertFalse(api.resume_after_action(session.name, "Applied."))
+		enqueue.assert_not_called()
+
 	def test_the_job_resolves_its_own_key(self):
 		# a job queued before the key moved out of its arguments still carries one
 		for queued in ({}, {"api_key": "sk-stale"}):

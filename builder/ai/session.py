@@ -331,6 +331,15 @@ class AISession:
 		frappe.db.set_value(cls.MESSAGE_DOCTYPE, message_id, "status", status)
 		return True
 
+	@classmethod
+	def reopen_pending_action(cls, message_id: str) -> None:
+		"""Hand a claimed action back after it failed, so Apply can be tried again. An
+		action that creates a DocType commits midway, claim included, so the request's
+		own rollback can't undo it."""
+		frappe.db.rollback()
+		frappe.db.set_value(cls.MESSAGE_DOCTYPE, message_id, "status", "pending_action")
+		frappe.db.commit()  # nosemgrep
+
 	# --- run lock (one turn per session at a time) -------------------------
 	# Redis NX+TTL via builder.ai.locks: atomic (the old is_running DB flag was a
 	# check-then-set race) and self-healing — a crashed worker's lock expires

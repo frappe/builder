@@ -158,6 +158,18 @@ class TestConfirmPendingSettings(FrappeTestCase):
 			confirm_pending_settings(message_id, decision="skip")
 		self.assertEqual(frappe.db.get_single_value("Builder Settings", "home_page"), "bob-home")
 
+	def test_a_failed_action_can_be_applied_again(self):
+		message_id = self.pending_message()
+
+		with (
+			patch.object(pending, "apply_pending_action", side_effect=frappe.ValidationError),
+			patch.object(frappe.db, "rollback"),
+			patch.object(frappe.db, "commit"),
+			self.assertRaises(frappe.ValidationError),
+		):
+			confirm_pending_settings(message_id)
+		self.assertEqual(frappe.db.get_value("Builder AI Message", message_id, "status"), "pending_action")
+
 
 class TestProposalsTheUserCannotApply(FrappeTestCase):
 	def setUp(self):

@@ -196,7 +196,11 @@ def confirm_pending_settings(message_id: str, decision: str = "apply"):
 		return {"status": "skipped", "resumed": resumed}
 
 	meta = AISession.load_metadata(msg.metadata_json)
-	result = apply_pending_action(meta.get("kind"), meta.get("payload") or {})
+	try:
+		result = apply_pending_action(meta.get("kind"), meta.get("payload") or {})
+	except Exception:
+		AISession.reopen_pending_action(message_id)
+		raise
 	# The OUTCOME becomes part of the conversation — visible in the chat after a
 	# reload, and context for the agent's next turn (it knows what was applied).
 	AISession.try_append_message(msg.session, "assistant", result, message_type="status")
@@ -218,6 +222,8 @@ def resume_after_action(session_id: str, outcome: str) -> bool:
 		if not page_id:
 			return False
 		resolved_model = ModelRegistry.get_default(model or "openrouter")
+		# A job that can't find its key fails out of sight, so check before queueing it.
+		resolve_api_key(resolved_model)
 		frappe.enqueue(
 			run_agent_job,
 			queue="default",
