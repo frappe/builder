@@ -218,9 +218,9 @@ def resume_after_action(session_id: str, outcome: str) -> bool:
 	there left the user typing "continue" to re-trigger the job. Best effort: the
 	action is already applied and must not be undone by a queue failure.
 	"""
-	if AISession.is_session_running(session_id):
-		return False
 	try:
+		if AISession.is_session_running(session_id):
+			return False
 		page_id, model = frappe.db.get_value(AISession.DOCTYPE, session_id, ["page", "selected_model"])
 		if not page_id:
 			return False

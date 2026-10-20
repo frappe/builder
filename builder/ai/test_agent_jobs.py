@@ -6,6 +6,7 @@ from frappe.tests.utils import FrappeTestCase
 from builder.ai import api
 from builder.ai.agent.loop import run_agent_job
 from builder.ai.models import ModelRegistry
+from builder.ai.session import AISession
 from builder.ai.test_llm import OPENROUTER_MODEL as MODEL
 
 SECRET = "sk-or-secret"
@@ -49,6 +50,14 @@ class TestAgentJobs(FrappeTestCase):
 			patch("frappe.enqueue") as enqueue,
 		):
 			self.assertFalse(api.resume_after_action(session.name, "Applied."))
+		enqueue.assert_not_called()
+
+	def test_a_resume_that_cannot_check_the_run_lock_queues_nothing(self):
+		with (
+			patch.object(AISession, "is_session_running", side_effect=ConnectionError),
+			patch("frappe.enqueue") as enqueue,
+		):
+			self.assertFalse(api.resume_after_action("any-session", "Applied."))
 		enqueue.assert_not_called()
 
 	def test_the_job_resolves_its_own_key(self):
