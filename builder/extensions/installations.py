@@ -81,9 +81,16 @@ def set_extension_enabled(extension: str, enabled: bool) -> None:
 @frappe.whitelist()
 @has_page_read(NO_BUILDER_ACCESS)
 def get_installation_details(extension: str) -> dict:
-	"""What the details pane shows beyond the list row. A page reader may not read the installation itself."""
+	"""What the details pane shows beyond the list row. A page reader may not read the installation itself.
+
+	`is_updating` lets the pane recover when the realtime message of an update job never came.
+	"""
 	row = frappe.get_cached_doc(INSTALLATION_DOCTYPE, get_installation(extension))
-	return {"installed_on": row.installed_on, "readme": row.readme}
+	return {
+		"installed_on": row.installed_on,
+		"readme": row.readme,
+		"is_updating": is_job_enqueued(install_job_id(row.name)),
+	}
 
 
 @frappe.whitelist(methods=["POST"])

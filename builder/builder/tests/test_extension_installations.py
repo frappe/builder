@@ -14,6 +14,7 @@ from builder.builder.tests.extension_fixtures import (
 )
 from builder.extensions.access import assert_extension_access
 from builder.extensions.installations import (
+	get_installation_details,
 	get_installations,
 	set_extension_enabled,
 	uninstall_extension,
@@ -66,6 +67,14 @@ class TestInstallations(FrappeTestCase):
 
 		with patch("builder.extensions.installations.is_job_enqueued", return_value=False):
 			self.assertEqual(listed(EXTENSION)["install_state"], "Failed")
+
+	def test_details_report_whether_an_update_job_runs(self):
+		"""The details pane clears a stuck Update button when the job's message never came."""
+		make_installation(EXTENSION)
+
+		for is_running in (True, False):
+			with patch("builder.extensions.installations.is_job_enqueued", return_value=is_running):
+				self.assertEqual(get_installation_details(EXTENSION)["is_updating"], is_running)
 
 
 class TestEnableAndDisable(FrappeTestCase):
