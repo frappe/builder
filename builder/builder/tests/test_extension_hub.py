@@ -70,11 +70,11 @@ class TestReadRelease(FrappeTestCase):
 			"status": "Published",
 		}
 
-	def test_refuses_a_sandboxed_release_before_the_download(self):
-		self.assertRaises(frappe.ValidationError, read_release, EXTENSION, self.release(1))
+	def test_refuses_a_newer_protocol_before_the_download(self):
+		self.assertRaises(frappe.ValidationError, read_release, EXTENSION, self.release(2))
 
-	def test_reads_a_trusted_release(self):
-		self.assertEqual(read_release(EXTENSION, self.release(2)).protocol_version, 2)
+	def test_reads_a_release_of_this_protocol(self):
+		self.assertEqual(read_release(EXTENSION, self.release(1)).protocol_version, 1)
 
 
 class TestHubResponseCap(FrappeTestCase):

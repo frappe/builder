@@ -16,7 +16,7 @@ VERSION = "1.0.0"
 
 def manifest(**values) -> bytes:
 	fields = {
-		"v": 2,
+		"v": 1,
 		"name": NAME,
 		"label": "Chunked",
 		"description": "Splits its build.",
@@ -57,13 +57,8 @@ class TestExtensionPackage(FrappeTestCase):
 			validate_package(make_package(build(**{"extra/notes.js": b""})), NAME, VERSION)
 
 	def test_refuses_a_sandboxed_package(self):
-		"""A protocol 1 package imports an SDK this Builder does not serve, so it could never load."""
-		with self.assertRaises(frappe.ValidationError):
-			validate_package(make_package(build(**{"manifest.json": manifest(v=1)})), NAME, VERSION)
-
-	def test_refuses_a_permission_list(self):
-		"""A trusted extension has no grants, so a manifest that asks for some was built for the sandbox."""
-		with self.assertRaises(frappe.ValidationError):
+		"""Only a sandboxed package asks for permissions. It imports an SDK this Builder does not serve."""
+		with self.assertRaisesRegex(frappe.ValidationError, "sandboxed"):
 			validate_package(
 				make_package(build(**{"manifest.json": manifest(permissions=[])})), NAME, VERSION
 			)
