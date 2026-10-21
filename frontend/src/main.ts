@@ -12,6 +12,7 @@ import translationPlugin, { ensureTranslations } from "./translation";
 import App from "@/App.vue";
 import Input from "@/components/Controls/Input.vue";
 import { editorDemo } from "@/utils/editorDemo";
+import { importExtensions, installExtensions } from "@/utils/loadExtensions";
 
 const app = createApp(App);
 const pinia = createPinia();
@@ -20,7 +21,15 @@ const pinia = createPinia();
 // chunk looks up stores as it loads
 app.use(pinia);
 
-ensureTranslations().then(() => {
+// the demo runs no extensions. Elsewhere they load while the translations do
+const extensions = editorDemo
+	? Promise.resolve([])
+	: importExtensions().catch((error) => {
+			console.error("[builder] the extensions did not load", error);
+			return [];
+		});
+
+Promise.all([ensureTranslations(), extensions]).then(([, loaded]) => {
 	app.use(router);
 	app.use(FrappeUI);
 	if (!editorDemo) {
@@ -36,6 +45,8 @@ ensureTranslations().then(() => {
 	app.component("FormControl", FormControl);
 	app.component("BuilderInput", Input);
 
+	// before the first render, so an extension's items show from the start
+	installExtensions(app, loaded);
 	app.mount("#app");
 });
 
