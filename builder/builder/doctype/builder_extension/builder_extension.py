@@ -21,6 +21,7 @@ from builder.extensions.constants import (
 )
 
 STATE_DOCTYPE = "Builder Extension State"
+KEPT_PREVIOUS_RELEASES = 1
 
 
 class BuilderExtension(Document):
@@ -64,7 +65,7 @@ class BuilderExtension(Document):
 
 	def on_update(self):
 		# after the commit, so a rolled back update still finds the release it runs
-		frappe.db.after_commit.add(self.delete_other_releases)
+		frappe.db.after_commit.add(self.delete_old_releases)
 
 	def on_trash(self):
 		self.delete_extension_state()
@@ -117,22 +118,39 @@ class BuilderExtension(Document):
 	def write_extension_files(self, files: dict[str, bytes]):
 		"""Write one release to its own folder, keyed by path under the release root.
 
-		The folder is new for each build, so the release the editor runs now stays
-		whole until the record points at the new one.
+		The files go to a staging folder that moves into place in one rename. So a
+		release folder is always whole, and the checksum names its package, so an
+		existing one is reused.
 		"""
 		release = self.release_path
-		shutil.rmtree(release, ignore_errors=True)
-		for relative_path, content in files.items():
-			target = release / relative_path
-			target.parent.mkdir(parents=True, exist_ok=True)
-			target.write_bytes(content)
-
-	def delete_other_releases(self):
-		if not self.install_path.is_dir():
+		if release.is_dir():
 			return
-		for release in self.install_path.iterdir():
-			if release.name != self.checksum:
-				shutil.rmtree(release, ignore_errors=True)
+		staging = self.install_path / f".staging-{uuid.uuid4().hex}"
+		try:
+			for relative_path, content in files.items():
+				target = staging / relative_path
+				target.parent.mkdir(parents=True, exist_ok=True)
+				target.write_bytes(content)
+			staging.rename(release)
+		finally:
+			shutil.rmtree(staging, ignore_errors=True)
+
+	@property
+	def previous_releases(self) -> list[Path]:
+		"""Newest first. A staging folder is not a release yet."""
+		if not self.install_path.is_dir():
+			return []
+		releases = [
+			release
+			for release in self.install_path.iterdir()
+			if release.name != self.checksum and not release.name.startswith(".")
+		]
+		return sorted(releases, key=lambda release: release.stat().st_mtime, reverse=True)
+
+	def delete_old_releases(self):
+		# an open editor tab may still run the previous release and load its chunks lazily
+		for release in self.previous_releases[KEPT_PREVIOUS_RELEASES:]:
+			shutil.rmtree(release, ignore_errors=True)
 
 	def delete_extension_files(self):
 		shutil.rmtree(self.install_path, ignore_errors=True)
