@@ -311,8 +311,6 @@ def get_safer_globals():
 			get_cached_doc=get_cached_doc_as_dict,
 			_=frappe._,
 			session=safe_globals["frappe"]["session"],
-			# a script raises it for a missing record, and the site answers 404
-			PageDoesNotExistError=frappe.PageDoesNotExistError,
 		),
 	)
 
