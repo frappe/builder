@@ -7,6 +7,7 @@ from frappe.tests.utils import FrappeTestCase
 from builder.utils import (
 	Block,
 	ColonRule,
+	add_composite_index_to_web_page_view,
 	camel_case_to_kebab_case,
 	clean_data,
 	copy_asset_file,
@@ -562,3 +563,15 @@ class TestBuilderUtils(FrappeTestCase):
 
 		for input_val, expected in test_cases.items():
 			self.assertEqual(sanitize_style_value(input_val), expected)
+
+	@patch("frappe.db.add_index")
+	@patch("frappe.get_meta", return_value=frappe._dict(is_virtual=0))
+	def test_add_composite_index_to_web_page_view(self, get_meta, add_index):
+		add_composite_index_to_web_page_view()
+		add_index.assert_called_once_with("Web Page View", ["creation", "is_unique", "path"])
+
+	@patch("frappe.db.add_index")
+	@patch("frappe.get_meta", return_value=frappe._dict(is_virtual=1))
+	def test_add_composite_index_skips_virtual_web_page_view(self, get_meta, add_index):
+		add_composite_index_to_web_page_view()
+		add_index.assert_not_called()
