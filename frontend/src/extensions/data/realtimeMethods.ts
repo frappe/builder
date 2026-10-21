@@ -25,13 +25,25 @@ const forward = ({ doctype, name }: ListUpdate) =>
 		bridge.getChannels(extension).forEach((channel) => channel.emit("data.changed", change));
 	});
 
+// not `doctype_subscribe()`, which drops a second room within a second
+const join = (doctype: string) => useBuilderStore().realtime.emit("doctype_subscribe", doctype);
+
+/** A new connection starts in no rooms, so it joins the watched doctypes again. */
+const rejoin = () => watched.forEach((doctypes) => doctypes.forEach(join));
+
 const watch = (extension: string) => {
-	if (!watched.size) useBuilderStore().realtime.on("list_update", forward);
+	const { realtime } = useBuilderStore();
+	if (!watched.size) {
+		realtime.on("list_update", forward);
+		realtime.on("connect", rejoin);
+	}
 	const doctypes = new Set<string>();
 	watched.set(extension, doctypes);
 	bridge.registerTeardown(extension, () => {
 		watched.delete(extension);
-		if (!watched.size) useBuilderStore().realtime.off("list_update", forward);
+		if (watched.size) return;
+		realtime.off("list_update", forward);
+		realtime.off("connect", rejoin);
 	});
 	return doctypes;
 };
@@ -42,8 +54,7 @@ const subscribe = (params: unknown, extension: InstalledExtension) => {
 	const doctypes = watched.get(extension.name) ?? watch(extension.name);
 	if (doctypes.has(doctype)) return;
 	doctypes.add(doctype);
-	// not `doctype_subscribe()`, which drops a second room within a second
-	useBuilderStore().realtime.emit("doctype_subscribe", doctype);
+	join(doctype);
 };
 
 export const realtimeMethods: MethodTable = {

@@ -32,10 +32,9 @@ const frame = (name: string) => {
 	return channel;
 };
 
-const announce = (doctype: string, name: string) => {
-	const forward = realtime.on.mock.calls.find(([event]) => event === "list_update")?.[1];
-	forward({ doctype, name });
-};
+const handler = (event: string) => realtime.on.mock.calls.find(([name]) => name === event)?.[1];
+
+const announce = (doctype: string, name: string) => handler("list_update")({ doctype, name });
 
 const stop = (name: string) => teardowns.get(name)?.forEach((cleanup) => cleanup());
 
@@ -71,11 +70,23 @@ describe("data.subscribe", () => {
 		expect(crm.emit).not.toHaveBeenCalled();
 	});
 
+	it("joins the watched rooms again on each new connection", () => {
+		subscribe("acme/cms", "CMS Post");
+		subscribe("acme/crm", "Lead");
+		realtime.emit.mockClear();
+
+		handler("connect")();
+
+		expect(realtime.emit).toHaveBeenCalledWith("doctype_subscribe", "CMS Post");
+		expect(realtime.emit).toHaveBeenCalledWith("doctype_subscribe", "Lead");
+	});
+
 	it("stops listening when the last watching extension stops", () => {
 		subscribe("acme/cms", "CMS Post");
 
 		stop("acme/cms");
 
 		expect(realtime.off).toHaveBeenCalledWith("list_update", expect.any(Function));
+		expect(realtime.off).toHaveBeenCalledWith("connect", expect.any(Function));
 	});
 });
