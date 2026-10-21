@@ -33,7 +33,12 @@ const props = withDefaults(
 		component?: Component;
 		events?: Record<string, unknown>;
 		type?: string;
-		options?: Array<{ label: string; value: string | null }>;
+		options?: Array<{
+			label: string;
+			value: string | number | null;
+			icon?: string | Component;
+			hideLabel?: boolean;
+		}>;
 		defaultValue?: string | number;
 		allowDynamicValue?: boolean;
 		labelPlacement?: "left" | "top";

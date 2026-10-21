@@ -24,12 +24,8 @@
 							type="button"
 							class="size-4 cursor-pointer rounded-4 shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-outline-gray-4"
 							:aria-label="__('Open background picker')"
-							@click="
-								() => {
-									activeState = variant;
-									toggle();
-								}
-							"
+							@mousedown.prevent
+							@click="toggleForState(variant)"
 							:class="{ 'bg-surface-gray-4': !getHasBackground(variant) }"
 							:style="getPreviewStyle(variant)" />
 					</template>
@@ -165,7 +161,14 @@ const colorPickerRef = ref<InstanceType<typeof ColorPicker> | null>(null);
 const handlePopoverToggle = (open: boolean) => {
 	if (!open) colorPickerRef.value?.commitRecentColor();
 };
-const { isOpen, toggle, onAnchorClick, onUpdateOpen } = useAnchoredPopover(handlePopoverToggle);
+const { isOpen, open, toggle, onAnchorClick, onUpdateOpen } = useAnchoredPopover(handlePopoverToggle);
+
+// the swatch keeps focus off itself, so activeState still names the state the popover shows
+const toggleForState = (state: string | null) => {
+	const isOpenForState = isOpen.value && activeState.value === state;
+	activeState.value = state;
+	toggle(!isOpenForState);
+};
 
 const updateActiveState = (e: FocusEvent) => {
 	const target = e.target as HTMLElement;
@@ -188,7 +191,7 @@ const handleFocusIn = (e: FocusEvent) => {
 	updateActiveState(e);
 	const target = e.target as HTMLElement;
 	if (target.tagName !== "INPUT" || target.closest(".background-popover-body")) return;
-	if (hasImage(activeState.value)) toggle();
+	if (hasImage(activeState.value)) open();
 };
 
 const getStyleKey = (prop: string, state: string | null = activeState.value) => {

@@ -445,10 +445,12 @@ const DATA_URL_EXTENSIONS: Record<string, string> = {
 	"image/png": "png",
 };
 
+// Each image also gets its own name: an upload is staged at .temp-<filename>,
+// so images sharing one name delete that file from under each other.
 function dataURLFileName(dataURL: string, baseName: string) {
 	const mime = dataURL.match(/^data:(.*?)(;|,)/)?.[1] || "";
 	const extension = DATA_URL_EXTENSIONS[mime.toLowerCase()] || "png";
-	return `${baseName.replace(/\.[a-z0-9]+$/i, "")}.${extension}`;
+	return `${baseName.replace(/\.[a-z0-9]+$/i, "")}-${generateId()}.${extension}`;
 }
 
 function dataURLtoFile(dataurl: string, filename: string) {
@@ -632,6 +634,15 @@ function getBlock(e: MouseEvent) {
 	const canvasStore = useCanvasStore();
 	const blockInfo = getBlockInfo(e);
 	return canvasStore.activeCanvas?.findBlock(blockInfo.blockId);
+}
+
+// offsetLeft and offsetTop reach the border edge, but left and top place the margin edge
+function getRenderedPosition(element: HTMLElement) {
+	const style = getComputedStyle(element);
+	return {
+		left: element.offsetLeft - getNumberFromPx(style.marginLeft),
+		top: element.offsetTop - getNumberFromPx(style.marginTop),
+	};
 }
 
 function getRootBlockTemplate() {
@@ -1023,6 +1034,7 @@ export {
 	getPageUsageMessage,
 	getParentProps,
 	getPropValue,
+	getRenderedPosition,
 	getRepeaterScopedData,
 	getRGB,
 	getRootBlockTemplate,

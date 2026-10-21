@@ -1,4 +1,8 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
+
+// the registry calls __() at import time, which reads window
+vi.hoisted(() => vi.stubGlobal("window", {}));
+
 import { settingsItems } from "./index";
 
 describe("settings registry", () => {

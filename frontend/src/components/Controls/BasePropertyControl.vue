@@ -46,6 +46,8 @@
 				:placeholder="placeholderValue"
 				:dynamicValueKey="dynamicValue?.key"
 				componentClass="w-full"
+				@focusin="clearActiveState"
+				@mousedown="clearActiveState"
 				@update:modelValue="updateValue"
 				@keydown="handleKeyDown"
 				@openDynamicModal="showDynamicValueModal = true"
@@ -70,10 +72,14 @@
 			:defaultValue="defaultValue"
 			:placeholder="placeholderValue"
 			:enableSlider="enableSlider"
+			:isActive="variant.property === activeStateProperty"
 			:isLast="index === visibleVariants.length - 1"
+			@focusin="setActiveState(variant.property)"
+			@mousedown="setActiveState(variant.property)"
 			@update:modelValue="(v: any) => updateVariantValue(variant.name, v)"
 			@keydown="(e: KeyboardEvent) => handleKeyDown(e, variant.name)"
 			@labelMousedown="(e: MouseEvent) => handleSliderMouseDown(e, variant.name)"
+			@endPreview="endStatePreview(variant.property)"
 			@clear="clearVariant(variant.name)">
 			<template v-for="(_, name) in $slots" :key="name" #[name]="slotData">
 				<slot :name="name" v-bind="{ ...slotData, variant: variant.name }" />
@@ -92,7 +98,7 @@ import VariantControl from "@/components/Controls/VariantControl.vue";
 import blockController from "@/utils/blockController";
 import { extractNumberAndUnit, normalizeValueWithUnits, removeDefaultUnit } from "@/utils/helpers";
 import type { Component } from "vue";
-import { computed, ref, useAttrs } from "vue";
+import { computed, ref, useAttrs, watch } from "vue";
 
 const propertyLabelRef = ref<InstanceType<typeof PropertyLabel> | null>(null);
 const emit = defineEmits<{
@@ -200,6 +206,8 @@ const updateValue = (value: string | number | boolean | null | { label: string; 
 // Generic slider handler for both main control and variants
 const handleSliderMouseDown = (e: MouseEvent, variantName?: string) => {
 	if (!props.enableSlider) return;
+	// the state preview lasts while its field has focus, so the drag must keep it
+	if (variantName) e.preventDefault();
 	const currentValue = variantName ? getRawVariantValue(variantName) : rawModelValue.value;
 	const { number } = extractNumberAndUnit(String(currentValue || ""));
 	const startY = e.clientY;
@@ -235,9 +243,37 @@ const updateVariantValue = (
 	props.setVariantValue?.(variantName, normalizeInputValue(value));
 };
 
-const clearVariant = (variantName: string) => props.setVariantValue?.(variantName, null);
-
 const showDynamicValueModal = ref(false);
+
+// The canvas previews this state, so its control stays highlighted even after
+// the input loses focus to a popover.
+const activeStateProperty = computed(() => blockController.getFirstSelectedBlock()?.activeState);
+
+const setActiveState = (property: string) => {
+	if (props.controlType !== "style") return;
+	blockController.getSelectedBlocks().forEach((block) => {
+		block.activeState = property;
+	});
+};
+
+const clearActiveState = () => {
+	blockController.getSelectedBlocks().forEach((block) => {
+		block.activeState = null;
+	});
+};
+
+// The press that ends one preview can start another, so clear only this one.
+const endStatePreview = (property: string) => {
+	blockController.getSelectedBlocks().forEach((block) => {
+		if (block.activeState === property) block.activeState = null;
+	});
+};
+
+const clearVariant = (variantName: string) => {
+	props.setVariantValue?.(variantName, null);
+	addedVariants.value.delete(variantName);
+	clearActiveState();
+};
 
 const dropdownOptions = computed(() => {
 	const options = [];
@@ -250,6 +286,8 @@ const dropdownOptions = computed(() => {
 					onClick: () => {
 						if (props.setVariantValue) {
 							props.setVariantValue(variant.name, rawModelValue.value as string);
+							addedVariants.value.add(variant.name);
+							setActiveState(variant.property);
 						}
 					},
 				})),
@@ -267,9 +305,20 @@ const dropdownOptions = computed(() => {
 	return options;
 });
 
+// A state picked for a property with no value yet has nothing to show, so remember
+// it until the user gives it a value or removes it.
+const addedVariants = ref(new Set<string>());
+
+watch(
+	() => blockController.getFirstSelectedBlock()?.blockId,
+	() => addedVariants.value.clear(),
+);
+
 const visibleVariants = computed(() => {
 	if (!props.variants?.length) return [];
-	return props.variants.filter((variant) => getRawVariantValue(variant.name));
+	return props.variants.filter(
+		(variant) => getRawVariantValue(variant.name) || addedVariants.value.has(variant.name),
+	);
 });
 
 const adjustNumericValue = (step: number, initialValue: number | null = null, variantName?: string) => {

@@ -12,7 +12,7 @@ import getBlockTemplate from "@/utils/blockTemplate";
 import { commandShortcuts } from "@/components/Commands";
 import { __ } from "@/translation";
 import { copyBuilderBlocks, pasteBuilderBlocks } from "@/utils/builderBlockCopyPaste";
-import { promptOversizedSVG } from "@/utils/dialogs";
+import { promptOversizedSVG, promptSaveVersion } from "@/utils/dialogs";
 import {
 	addPxToNumber,
 	getBlockCopy,
@@ -94,7 +94,7 @@ export function useBuilderEvents(
 			if (file) {
 				uploadBuilderAsset(file).then((res: { fileURL: string; fileName: string }) => {
 					const selectedBlocks = blockController.getSelectedBlocks();
-					let parentBlock = selectedBlocks.length
+					let parentBlock: Block | null = selectedBlocks.length
 						? selectedBlocks[0]
 						: (canvasStore.activeCanvas?.getRootBlock() as Block);
 
@@ -251,6 +251,8 @@ export function useBuilderEvents(
 				if (canvasStore.editingMode === "fragment") {
 					saveAndExitFragmentMode(e);
 					e.stopPropagation();
+				} else if (canvasStore.editingMode === "page" && !builderStore.readOnlyMode && !isDialogOpen()) {
+					promptSaveVersion();
 				}
 			},
 		},

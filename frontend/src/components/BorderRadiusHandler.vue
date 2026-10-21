@@ -10,7 +10,7 @@
 			'border-purple-400': targetBlock.isExtendedFromComponent(),
 		}"
 		:style="handlerPosition"
-		@mousedown.stop="handleRounded" />
+		@mousedown.stop.prevent="handleRounded" />
 </template>
 
 <script setup lang="ts">
@@ -51,7 +51,7 @@ const maxRadius = computed(() => {
 });
 
 const borderRadius = computed(() => {
-	const radius = getNumberFromPx(props.targetBlock.getStyle("borderRadius") as string);
+	const radius = getNumberFromPx(props.targetBlock.getActiveStyleValue("borderRadius") as string);
 	return Math.max(0, Math.min(radius, maxRadius.value));
 });
 
@@ -85,7 +85,8 @@ const handleRounded = (ev: MouseEvent) => {
 
 	const handleDimensions = handler.value.getBoundingClientRect();
 	// Native read so Escape can restore the original unit, or its absence when inherited.
-	const startRadiusStyle = props.targetBlock.getStyle("borderRadius", null, true);
+	const radiusStyle = props.targetBlock.getActiveStyleProperty("borderRadius");
+	const startRadiusStyle = props.targetBlock.getStyle(radiusStyle, null, true);
 	const startMinPosition = { ...MIN_POSITION };
 
 	startDrag({
@@ -103,14 +104,14 @@ const handleRounded = (ev: MouseEvent) => {
 
 			const radius = Math.round(Math.max(0, Math.min(borderRadius.value + movement, maxRadius.value)));
 
-			props.targetBlock.setStyle("borderRadius", `${radius}px`);
+			props.targetBlock.setActiveStyle("borderRadius", `${radius}px`);
 			setHandlerPosition(radius);
 
 			lastX = mouseMoveEvent.clientX;
 			lastY = mouseMoveEvent.clientY;
 		},
 		onCancel: () => {
-			props.targetBlock.setStyle("borderRadius", startRadiusStyle ?? null);
+			props.targetBlock.setStyle(radiusStyle, startRadiusStyle ?? null);
 			// onMove drags this below zero to let the handle sit outside the corner
 			Object.assign(MIN_POSITION, startMinPosition);
 			setHandlerPosition(borderRadius.value);

@@ -31,6 +31,7 @@
 <script setup lang="ts">
 import type Block from "@/block";
 import TextBlockBubbleMenu from "@/components/TextBlockBubbleMenu.vue";
+import useBuilderStore from "@/stores/builderStore";
 import useCanvasStore from "@/stores/canvasStore";
 import blockController from "@/utils/blockController";
 import { BlockValueResolver } from "@/utils/blockValueResolver";
@@ -48,6 +49,7 @@ import { Editor, EditorContent, Extension } from "@tiptap/vue-3";
 import { vOnClickOutside } from "@vueuse/components";
 import { Ref, computed, inject, onBeforeMount, onBeforeUnmount, ref, watch } from "vue";
 
+const builderStore = useBuilderStore();
 const canvasStore = useCanvasStore();
 
 const dataChanged = ref(false);
@@ -329,6 +331,8 @@ const handleClickOutside = (e: MouseEvent) => {
 	const target = e.target as HTMLElement;
 	// #overlay holds builder chrome (bubble menu). Using it is not leaving the block.
 	if (target.closest("#overlay")) return;
+	// ignore the click that ends a text-tool draw
+	if (builderStore.mode === "text") return;
 	if (target.closest(".canvas-container")) {
 		canvasStore.editableBlock = null;
 	}

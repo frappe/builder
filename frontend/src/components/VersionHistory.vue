@@ -23,8 +23,8 @@
 				type="text"
 				:placeholder="__('Name this version (optional)')"
 				class="flex-1"
-				@keydown.enter="saveVersion" />
-			<Button variant="solid" size="sm" :loading="saving" :label="__('Save')" @click="saveVersion" />
+				@keydown.enter="saveLabeledVersion" />
+			<Button variant="solid" size="sm" :loading="saving" :label="__('Save')" @click="saveLabeledVersion" />
 		</div>
 
 		<!-- list -->
@@ -143,9 +143,10 @@ import useCanvasStore from "@/stores/canvasStore";
 import usePageStore from "@/stores/pageStore";
 import { BuilderSnapshot } from "@/types/doctypes";
 import { getUserInfo } from "@/usersInfo";
+import { saveVersion } from "@/utils/dialogs";
 import { confirm } from "@/utils/helpers";
 import { UseTimeAgo } from "@vueuse/components";
-import { Avatar, Button, createListResource, TextInput, toast } from "frappe-ui";
+import { Avatar, Button, createListResource, TextInput } from "frappe-ui";
 import { computed, nextTick, onBeforeUnmount, ref, watch } from "vue";
 
 const builderStore = useBuilderStore();
@@ -230,15 +231,14 @@ function toggleSaveRow() {
 	if (showSaveRow.value) nextTick(() => labelInput.value?.focus());
 }
 
-async function saveVersion() {
+async function saveLabeledVersion() {
 	if (saving.value) return;
 	saving.value = true;
 	try {
-		await pageStore.createManualSnapshot(newLabel.value.trim() || undefined);
+		await saveVersion(newLabel.value.trim() || undefined);
 		newLabel.value = "";
 		showSaveRow.value = false;
 		await snapshots.reload();
-		toast.success(__("Version saved"));
 	} finally {
 		saving.value = false;
 	}

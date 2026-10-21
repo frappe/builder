@@ -22,6 +22,9 @@ def get_context(context):
 	frappe.db.commit()
 	context.csrf_token = csrf_token
 	context.site_name = frappe.local.site
+	if frappe._dev_server:
+		# production proxies socket.io on the page's origin, bench start runs it on a port of its own
+		context.socketio_port = frappe.conf.socketio_port
 	context.builder_version = get_app_version("builder")
 	# developer mode
 	context.is_developer_mode = frappe.conf.developer_mode

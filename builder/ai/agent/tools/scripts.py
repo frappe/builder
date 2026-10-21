@@ -108,12 +108,17 @@ def apply_attach_page_script(ctx, args: dict) -> str:
 
 
 def apply_update_script(ctx, args: dict) -> str:
-	"""Headless twin of the editor's update_script apply."""
+	"""Headless twin of the editor's update_script apply. Only a script attached to
+	the open page: the turn's revert snapshot covers no other."""
 	from builder.ai.agent.tree import validate_script
 
 	name = (args.get("script_name") or "").strip()
-	if not name or not frappe.db.exists("Builder Client Script", name):
-		return f"FAILED: script '{name}' not found — call get_page_scripts and use its exact script_name."
+	attached = {"parent": ctx.page_id, "parenttype": "Builder Page", "builder_script": name}
+	if not (name and ctx.page_id and frappe.db.exists("Builder Page Client Script", attached)):
+		return (
+			f"FAILED: script '{name}' is not attached to this page. Call get_page_scripts and use "
+			"its exact script_name."
+		)
 	if (verdict := validate_script(args)) != "Applied.":
 		return verdict
 	doc = frappe.get_doc("Builder Client Script", name)

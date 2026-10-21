@@ -70,13 +70,12 @@ export function useSpacingHandler(getTargetBlock: () => Block, getBreakpoint: ()
 	const cursorPosition = ref({ x: 0, y: 0 });
 
 	const blockStyles = computed(() => {
+		const block = getTargetBlock();
 		const breakpoint = getBreakpoint();
-		let styles = { ...getTargetBlock().baseStyles };
-		if (breakpoint === "mobile" || breakpoint === "tablet") {
-			styles = { ...styles, ...getTargetBlock().mobileStyles };
-		}
-		if (breakpoint === "tablet") {
-			styles = { ...styles, ...getTargetBlock().tabletStyles };
+		const styles = { ...block.getStyles(breakpoint) };
+		if (block.activeState) {
+			const [state] = block.activeState.split(":");
+			Object.assign(styles, block.getStateStyles(state, breakpoint));
 		}
 		return styles;
 	});
@@ -120,8 +119,8 @@ export function useSpacingHandler(getTargetBlock: () => Block, getBreakpoint: ()
 		updatedSides.forEach((updatedSide) => {
 			parts[slotIndex(property, updatedSide)] = `${value}px`;
 		});
-		SPACING_PROPERTIES[property].longhands.forEach((longhand) => block.setStyle(longhand, null));
-		block.setStyle(property, shorthandCodec(property).collapse(parts));
+		SPACING_PROPERTIES[property].longhands.forEach((longhand) => block.setActiveStyle(longhand, null));
+		block.setActiveStyle(property, shorthandCodec(property).collapse(parts));
 	};
 
 	// Shift spreads the value to every slot (four box sides, or both gap axes), alt to

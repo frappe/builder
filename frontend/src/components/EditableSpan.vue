@@ -14,6 +14,7 @@
 import { __ } from "@/translation";
 import { nextTick, ref, watch } from "vue";
 import { toast } from "frappe-ui";
+import { getErrorMessage } from "@/utils/helpers";
 
 const props = withDefaults(
 	defineProps<{
@@ -36,7 +37,6 @@ const focus = () => {
 
 const blur = () => {
 	editableRef.value?.blur();
-	emit("blur");
 };
 
 const editMode = ref(false);
@@ -48,6 +48,7 @@ function handleDoubleClick() {
 
 function handleBlur() {
 	editMode.value = false;
+	emit("blur");
 	const text = editableRef.value?.innerText.trim() ?? "";
 	if (text === props.modelValue) return;
 	if (!text) {
@@ -56,7 +57,7 @@ function handleBlur() {
 	}
 	if (props.onChange) {
 		props.onChange(text).catch((e) => {
-			let error_message = e.exc.split("\n").slice(-2)[0];
+			let error_message = getErrorMessage(e);
 			if (error_message.includes("Duplicate") || error_message.includes("select another name")) {
 				error_message = __("Name already exists");
 			}
@@ -75,6 +76,7 @@ function handleKeydown(e: KeyboardEvent) {
 	}
 	if (e.key === "Escape") {
 		e.preventDefault();
+		editableRef.value!.innerText = props.modelValue;
 		blur();
 	}
 }

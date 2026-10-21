@@ -114,7 +114,7 @@ commands.register({
 	keys: { combo: "Mod+P", description: __("Preview Page") },
 	action: () => {
 		pageStore.savePage();
-		router.push({ name: "preview", params: { pageId: pageStore.selectedPage as string } });
+		pageStore.openPreview(pageStore.selectedPage as string);
 	},
 });
 
@@ -282,6 +282,20 @@ commands.register({
 		if (builderStore.readOnlyMode) return;
 		if (!blockController.isBlockSelected() || blockController.multipleBlocksSelected()) return;
 		blockController.getSelectedBlocks()[0].duplicateBlock();
+	},
+});
+
+// without this the browser selects the editor's own panel text
+commands.register({
+	name: "select-all",
+	title: __("Select All"),
+	icon: "lucide-square-dashed",
+	group: "Edit",
+	inPalette: false,
+	keys: { combo: "Mod+A", description: __("Select Entire Canvas") },
+	action: () => {
+		const rootBlock = canvasStore.getRootBlock();
+		if (rootBlock) canvasStore.selectBlock(rootBlock, null);
 	},
 });
 

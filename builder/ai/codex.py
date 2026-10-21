@@ -22,7 +22,7 @@ CLIENT_ID = "app_EMoamEEZ73f0CkXaXp7hrann"
 TOKEN_URL = "https://auth.openai.com/oauth/token"
 API_BASE = "https://chatgpt.com/backend-api"
 ORIGINATOR = "codex_cli_rs"
-CLIENT_VERSION = "0.145.0"
+CLIENT_VERSION = "0.160.0"
 CONNECT_TIMEOUT = 10
 READ_TIMEOUT = 120  # max stall between bytes, mirrors llm.py
 CATALOG_TIMEOUT = 5
@@ -31,6 +31,7 @@ REFRESH_SLACK_MS = 60_000
 # The ChatGPT serving surface, not the public API. litellm's model map describes
 # the API and gets these wrong; the spark models are text-only.
 CONTEXT_WINDOWS = {
+	"gpt-6-luna": 272_000,
 	"gpt-5.6-sol": 272_000,
 	"gpt-5.6-terra": 272_000,
 	"gpt-5.6-luna": 272_000,
