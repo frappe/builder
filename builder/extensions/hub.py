@@ -153,11 +153,6 @@ def read_release(name: str, release: dict) -> Release:
 		frappe.throw(_("This release is {0}, so it cannot be installed.").format(release.status))
 	if release.protocol_version > PROTOCOL_VERSION:
 		frappe.throw(_('"{0}" needs a newer Builder to run.').format(name))
-	# protocol 1 ran in a sandboxed frame, so its package imports an SDK this Builder does not serve
-	if release.protocol_version < PROTOCOL_VERSION:
-		frappe.throw(
-			_('"{0}" is built for sandboxed extensions, so this Builder cannot run it.').format(name)
-		)
 	if release.package_size > MAX_PACKAGE_BYTES:
 		frappe.throw(_("This release is larger than Builder installs."))
 	return release

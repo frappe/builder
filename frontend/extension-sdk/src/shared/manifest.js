@@ -3,11 +3,10 @@
  */
 
 /**
- * The `v` field of a manifest. 2 is a trusted extension, which runs in the
- * editor's own Vue app. Keep it the same as `PROTOCOL_VERSION` in
+ * The `v` field of a manifest. Keep it the same as `PROTOCOL_VERSION` in
  * `builder/extensions/constants.py`.
  */
-export const PROTOCOL_VERSION = 2;
+export const PROTOCOL_VERSION = 1;
 
 const MANIFEST_FIELDS = new Set(["v", "name", "label", "description", "version", "entry", "icon"]);
 

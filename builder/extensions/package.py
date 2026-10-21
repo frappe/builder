@@ -177,6 +177,11 @@ def validate_manifest(manifest: object) -> dict:
 	if not isinstance(manifest, dict):
 		frappe.throw(_("{0} must hold a JSON object.").format(MANIFEST_FILE))
 
+	# only a sandboxed extension asked for permissions, and its package imports an
+	# SDK this Builder does not serve, so it could never load
+	if "permissions" in manifest:
+		frappe.throw(_("This package is built for sandboxed extensions, so this Builder cannot run it."))
+
 	missing = MANIFEST_REQUIRED_FIELDS - manifest.keys()
 	if missing:
 		frappe.throw(_("{0} is missing {1}.").format(MANIFEST_FILE, sorted(missing)[0]))
@@ -185,11 +190,7 @@ def validate_manifest(manifest: object) -> dict:
 		frappe.throw(_("{0} has an unsupported field: {1}.").format(MANIFEST_FILE, sorted(unknown)[0]))
 
 	if type(manifest["v"]) is not int or manifest["v"] != PROTOCOL_VERSION:
-		frappe.throw(
-			_("This package is built for extension protocol {0}. This Builder runs protocol {1}.").format(
-				manifest["v"], PROTOCOL_VERSION
-			)
-		)
+		frappe.throw(_("The manifest needs protocol {0}.").format(PROTOCOL_VERSION))
 	if not EXTENSION_NAME_PATTERN.match(str(manifest["name"])):
 		frappe.throw(_("The manifest name must read as publisher/name, in lowercase."))
 	if not VERSION_PATTERN.match(str(manifest["version"])):

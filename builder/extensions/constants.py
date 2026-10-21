@@ -45,10 +45,9 @@ MAX_FILE_BYTES = 5 * 1024 * 1024
 # match the default on `Builder Settings.hub_url`.
 DEFAULT_HUB_URL = "https://preview.frappe.cloud"
 
-# The extension protocol this Builder speaks. 2 is a trusted extension, which
-# runs in the editor's own Vue app. Protocol 1 ran in a sandboxed frame, so its
-# packages import an SDK that this Builder does not serve.
-PROTOCOL_VERSION = 2
+# The extension protocol this Builder speaks. A release that needs a newer one is
+# refused, and the Hub is asked for a release at or below this.
+PROTOCOL_VERSION = 1
 
 # A `.builderext` package is one ZIP: the manifest, `main.js` and the icon at the
 # root, and the build's `chunks/` and `assets/`. These bound what Builder will

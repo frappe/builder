@@ -8,8 +8,8 @@ import { computed, reactive, shallowRef } from "vue";
 const METHOD = "builder.extensions.installations";
 const HUB_API = "api/method/builder_hub.extensions.api";
 const CATALOG_CACHE = "extensions-catalog";
-/** Trusted extensions. The Hub lists only the releases of this protocol. Keep in step with `builder/extensions/constants.py`. */
-const PROTOCOL_VERSION = 2;
+/** The Hub lists the releases at or below this protocol. Keep in step with `builder/extensions/constants.py`. */
+const PROTOCOL_VERSION = 1;
 
 /** A choice of this user in this browser. It is not an access control, so the server does not read it. */
 const extensionsDisabled = useStorage("builderExtensionsDisabled", false);
