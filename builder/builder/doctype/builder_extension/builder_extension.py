@@ -1,94 +1,145 @@
 # Copyright (c) 2026, Frappe Technologies Pvt Ltd and contributors
 # For license information, please see license.txt
 
+import base64
 import shutil
+import uuid
 from pathlib import Path
 
 import frappe
 from frappe import _
 from frappe.model.document import Document
+from frappe.utils import get_files_path, now
 
-from builder.api import check_app_permission
-from builder.builder.doctype.builder_extension.extension_package import NAME_PATTERN, ExtensionPackage
+from builder.extensions.constants import (
+	ENTRY_FILE,
+	EXTENSION_NAME_PATTERN,
+	EXTENSIONS_FOLDER,
+	ICON_PATTERN,
+	MAX_README_BYTES,
+	VERSION_PATTERN,
+)
 
-# under the site's public files, which nginx and the dev server already serve at /files
-EXTENSIONS_FOLDER = "builder_extensions"
+STATE_DOCTYPE = "Builder Extension State"
 
 
 class BuilderExtension(Document):
-	"""An extension that the editor loads into its own Vue app. Its code runs with the access of each editor user."""
+	"""One extension that the editor loads into its own Vue app. Its code runs with the access of each editor user."""
+
+	# begin: auto-generated types
+	# This code is auto-generated. Do not modify anything in this block.
+
+	from typing import TYPE_CHECKING
+
+	if TYPE_CHECKING:
+		from frappe.types import DF
+
+		checksum: DF.Data | None
+		description: DF.SmallText | None
+		enabled: DF.Check
+		extension: DF.Data
+		icon: DF.Data | None
+		install_error: DF.SmallText | None
+		install_state: DF.Literal["Installing", "Ready", "Failed"]
+		installed_on: DF.Datetime | None
+		label: DF.Data | None
+		readme: DF.LongText | None
+		source_url: DF.Data | None
+		version: DF.Data
+	# end: auto-generated types
+
+	def autoname(self):
+		# a uuid, and the extension is looked up by field. The name is also the
+		# install directory, so it must hold no separator
+		if not self.name:
+			self.name = str(uuid.uuid4())
 
 	def before_insert(self):
-		if self.source == "Package":
-			self.extension_name = self.extension_name or self.get_package_contents().name
+		self.installed_on = now()
 
 	def validate(self):
-		if not NAME_PATTERN.match(self.extension_name or ""):
-			frappe.throw(_("The extension name must use lowercase letters, numbers and hyphens."))
-		if self.source == "Dev Server":
-			self.use_dev_server()
-		elif self.is_new() or self.has_value_changed("package"):
-			self.install_package()
+		self.validate_identity()
+		self.validate_icon()
+		self.validate_readme()
 
-	# files go only after the commit, so a rolled back save or delete never points at missing files
 	def on_update(self):
-		if self.source == "Package":
-			frappe.db.after_commit.add(self.remove_other_releases)
+		# after the commit, so a rolled back update still finds the release it runs
+		frappe.db.after_commit.add(self.delete_other_releases)
 
 	def on_trash(self):
-		folder = self.folder
-		frappe.db.after_commit.add(lambda: shutil.rmtree(folder, ignore_errors=True))
+		self.delete_extension_state()
+		# the rows roll back with a failed delete, and files would not
+		frappe.db.after_commit.add(self.delete_extension_files)
 
 	@property
-	def folder(self) -> Path:
-		return Path(frappe.get_site_path("public", "files", EXTENSIONS_FOLDER, self.extension_name))
+	def install_path(self) -> Path:
+		"""Every release of this installation, one folder per checksum."""
+		return Path(get_files_path(EXTENSIONS_FOLDER, self.name))
 
 	@property
-	def base_url(self) -> str:
-		return f"/files/{EXTENSIONS_FOLDER}/{self.extension_name}"
+	def release_path(self) -> Path | None:
+		return self.install_path / self.checksum if self.checksum else None
 
-	def get_package_contents(self) -> ExtensionPackage:
-		return ExtensionPackage(frappe.get_doc("File", {"file_url": self.package}).get_content())
+	@property
+	def entry_url(self) -> str | None:
+		"""Where the editor imports the entry. The checksum names the build, so a new release gets a new URL."""
+		if not self.checksum:
+			return None
+		return f"/files/{EXTENSIONS_FOLDER}/{self.name}/{self.checksum}/{ENTRY_FILE}"
 
-	def use_dev_server(self):
-		if not frappe.conf.developer_mode:
-			frappe.throw(_("A dev server extension needs developer mode."))
-		self.label = self.label or self.extension_name
-		self.version = "dev"
-		self.entry_url = self.dev_url
-		self.style_url = None
+	@property
+	def icon_data_uri(self) -> str | None:
+		"""None when the package ships no icon. The editor draws its own glyph then.
 
-	def install_package(self):
-		package = self.get_package_contents()
-		if package.name != self.extension_name:
-			frappe.throw(_("This package is {0}, not {1}.").format(package.name, self.extension_name))
+		A data URI, so the panel draws it with no request of its own.
+		"""
+		if not self.icon or not self.release_path:
+			return None
+		icon = self.release_path / self.icon
+		if not icon.is_file():
+			return None
+		return f"data:image/svg+xml;base64,{base64.b64encode(icon.read_bytes()).decode()}"
 
-		# a new build gets a new folder, so a browser never serves a cached old file under a new release
-		package.unpack(self.folder / package.checksum)
+	def validate_identity(self):
+		if not EXTENSION_NAME_PATTERN.match(self.extension or ""):
+			frappe.throw(_("Extension must read as publisher/name, in lowercase."))
+		if not VERSION_PATTERN.match(self.version or ""):
+			frappe.throw(_("Version must hold only letters, digits, dots, plus signs and hyphens."))
 
-		release_url = f"{self.base_url}/{package.checksum}"
-		self.label = package.manifest["label"]
-		self.version = package.manifest["version"]
-		self.entry_url = f"{release_url}/{package.manifest['entry']}"
-		self.style_url = (
-			f"{release_url}/{package.manifest['style']}" if package.manifest.get("style") else None
-		)
+	def validate_icon(self):
+		if self.icon and not ICON_PATTERN.match(self.icon):
+			frappe.throw(_("Icon must name one SVG file in the install root, such as icon.svg."))
 
-	def remove_other_releases(self):
-		installed = Path(self.entry_url).relative_to(self.base_url).parts[0]
-		for release in self.folder.iterdir():
-			if release.name != installed:
+	def validate_readme(self):
+		if self.readme and len(self.readme.encode()) > MAX_README_BYTES:
+			frappe.throw(_("A README may hold {0} bytes at most.").format(MAX_README_BYTES))
+
+	def write_extension_files(self, files: dict[str, bytes]):
+		"""Write one release to its own folder, keyed by path under the release root.
+
+		The folder is new for each build, so the release the editor runs now stays
+		whole until the record points at the new one.
+		"""
+		release = self.release_path
+		shutil.rmtree(release, ignore_errors=True)
+		for relative_path, content in files.items():
+			target = release / relative_path
+			target.parent.mkdir(parents=True, exist_ok=True)
+			target.write_bytes(content)
+
+	def delete_other_releases(self):
+		if not self.install_path.is_dir():
+			return
+		for release in self.install_path.iterdir():
+			if release.name != self.checksum:
 				shutil.rmtree(release, ignore_errors=True)
 
+	def delete_extension_files(self):
+		shutil.rmtree(self.install_path, ignore_errors=True)
 
-@frappe.whitelist()
-def get_enabled_extensions() -> list[dict]:
-	if not check_app_permission():
-		return []
-	extensions = frappe.get_all(
-		"Builder Extension",
-		filters={"enabled": 1, "entry_url": ["is", "set"]},
-		fields=["name", "label", "source", "entry_url", "style_url"],
-		order_by="creation asc",
-	)
-	return [row for row in extensions if row.source != "Dev Server" or frappe.conf.developer_mode]
+	def delete_extension_state(self):
+		"""A state row Links to this record, so Frappe refuses the delete while one stands.
+
+		One query for every user's row. A state row has no hooks, files or versions to clear.
+		"""
+		frappe.db.delete(STATE_DOCTYPE, {"installation": self.name})

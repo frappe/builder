@@ -27,6 +27,7 @@ class BuilderSettings(Document):
 		favicon: DF.AttachImage | None
 		head_html: DF.Code | None
 		home_page: DF.Data | None
+		hub_url: DF.Data | None
 		restrict_click_handlers: DF.Check
 		script: DF.Code | None
 		script_public_url: DF.ReadOnly | None
