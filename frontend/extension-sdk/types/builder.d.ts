@@ -146,3 +146,14 @@ declare module "builder" {
 		setOpenHandler: (handler: () => void) => void;
 	};
 }
+
+/**
+ * Every other module of the editor, by its path under `frontend/src/`: a `.ts`
+ * module without its suffix, and a `.vue` module with it. For example,
+ * `builder/internal/stores/pageStore` or `builder/internal/components/BlockLayers.vue`.
+ *
+ * These carry no promise. A change in Builder can break an extension that imports
+ * one, so the imports are untyped. Pin the Builder release the extension was
+ * built against.
+ */
+declare module "builder/internal/*";

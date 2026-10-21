@@ -24,6 +24,23 @@ const MANIFEST = "manifest.json";
  */
 export const SHARED_MODULES = ["builder", "vue", "pinia", "frappe-ui"];
 
+/** Every other module of the editor, by its path under `src/`. These carry no promise. */
+const INTERNAL_PREFIX = "builder/internal/";
+
+const isShared = (id) => SHARED_MODULES.includes(id) || id.startsWith(INTERNAL_PREFIX);
+
+/**
+ * A bare re-export of one shared module. `export *` leaves out `default`, which
+ * many internal modules have, so it is passed on as well. A module with no
+ * default passes on `undefined`.
+ */
+const reExport = (name) =>
+	[
+		`export * from ${JSON.stringify(name)};`,
+		`import * as shared from ${JSON.stringify(name)};`,
+		"export default shared.default;",
+	].join("\n");
+
 /** The dev server answers these paths with a bare re-export of a shared module. */
 const SHARED_PATH = "/@builder-shared/";
 
@@ -142,7 +159,7 @@ export default function builderExtension({ builderUrl } = {}) {
 					rollupOptions: {
 						input: entry,
 						preserveEntrySignatures: "strict",
-						external: SHARED_MODULES,
+						external: isShared,
 						output: {
 							entryFileNames: OUTPUT_ENTRY,
 							chunkFileNames: "chunks/[name]-[hash].js",
@@ -171,7 +188,7 @@ export default function builderExtension({ builderUrl } = {}) {
 		 * which answers with a bare re-export that the editor's import map resolves.
 		 */
 		resolveId(id) {
-			if (serving && SHARED_MODULES.includes(id)) {
+			if (serving && isShared(id)) {
 				return { id: `${serverOrigin}${SHARED_PATH}${id}`, external: true };
 			}
 			if (id === HMR_FALLBACK_ID) return `\0${HMR_FALLBACK_ID}`;
@@ -197,10 +214,10 @@ export default function builderExtension({ builderUrl } = {}) {
 			// answered raw, before Vite's own middleware, so the bare name reaches the browser
 			server.middlewares.use(SHARED_PATH, (request, response, next) => {
 				const name = request.url?.slice(1);
-				if (!SHARED_MODULES.includes(name)) return next();
+				if (!isShared(name)) return next();
 				response.setHeader("Content-Type", "text/javascript");
 				response.setHeader("Access-Control-Allow-Origin", builderOrigin);
-				response.end(`export * from ${JSON.stringify(name)};\n`);
+				response.end(reExport(name));
 			});
 
 			/** The data that "Load dev extension" reads: the identity and the entry. */

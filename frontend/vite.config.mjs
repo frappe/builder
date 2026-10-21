@@ -44,7 +44,10 @@ export default defineConfig({
 		}),
 		vue(),
 		frameworkUI(),
-		hostModules({ root: import.meta.dirname }),
+		hostModules({
+			root: import.meta.dirname,
+			configFile: path.resolve(import.meta.dirname, "vite.config.mjs"),
+		}),
 	],
 	build: {
 		chunkSizeWarningLimit: 1500,
