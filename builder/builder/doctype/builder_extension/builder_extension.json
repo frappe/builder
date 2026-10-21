@@ -1,0 +1,115 @@
+{
+ "actions": [],
+ "autoname": "field:extension_name",
+ "creation": "2026-10-21 18:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "extension_name",
+  "label",
+  "enabled",
+  "source",
+  "package",
+  "dev_url",
+  "column_break_installed",
+  "version",
+  "entry_url",
+  "style_url"
+ ],
+ "fields": [
+  {
+   "description": "Lowercase letters, numbers and hyphens. A package fills it from its manifest.",
+   "fieldname": "extension_name",
+   "fieldtype": "Data",
+   "label": "Extension Name",
+   "set_only_once": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "label",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Label"
+  },
+  {
+   "default": "1",
+   "fieldname": "enabled",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "label": "Enabled"
+  },
+  {
+   "default": "Package",
+   "fieldname": "source",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Source",
+   "options": "Package\nDev Server"
+  },
+  {
+   "depends_on": "eval:doc.source == \"Package\"",
+   "description": "The zip that the extension's build makes: manifest.json, its entry module, and the files that the module loads.",
+   "fieldname": "package",
+   "fieldtype": "Attach",
+   "label": "Package",
+   "mandatory_depends_on": "eval:doc.source == \"Package\""
+  },
+  {
+   "depends_on": "eval:doc.source == \"Dev Server\"",
+   "description": "The entry module on the extension's Vite dev server, such as http://localhost:5174/src/main.ts. Developer mode only.",
+   "fieldname": "dev_url",
+   "fieldtype": "Data",
+   "label": "Dev Server URL",
+   "mandatory_depends_on": "eval:doc.source == \"Dev Server\"",
+   "options": "URL"
+  },
+  {
+   "fieldname": "column_break_installed",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "version",
+   "fieldtype": "Data",
+   "label": "Version",
+   "read_only": 1
+  },
+  {
+   "fieldname": "entry_url",
+   "fieldtype": "Data",
+   "label": "Entry URL",
+   "read_only": 1
+  },
+  {
+   "fieldname": "style_url",
+   "fieldtype": "Data",
+   "label": "Style URL",
+   "read_only": 1
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-10-21 18:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Builder",
+ "name": "Builder Extension",
+ "naming_rule": "By fieldname",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "label"
+}
