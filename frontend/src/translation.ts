@@ -1,6 +1,6 @@
 import type { App } from "vue";
 
-type Replacement = string | number;
+type Replacement = string | number | null | undefined;
 
 export function __(source: string, replacements: Replacement[] = [], context?: string) {
 	const messages = window.translated_messages || {};
@@ -34,7 +34,7 @@ declare global {
 	}
 }
 
-declare module "@vue/runtime-core" {
+declare module "vue" {
 	interface ComponentCustomProperties {
 		__: typeof __;
 	}

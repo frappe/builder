@@ -300,6 +300,8 @@ def request_create_doctype(ctx, args: dict) -> str | None:
 			f"REAL fieldnames (schema follows), or propose a different name (e.g. 'Community {name}').\n"
 			f"{get_doctype_schema(ctx, {'doctype': name})}"
 		)
+	if not frappe.has_permission("DocType", "create"):
+		return pending.not_permitted("create DocTypes")
 	summary = f"Create a new DocType '{name}' with {len(fields)} field(s)?"
 	pending.request_confirmation(ctx, "create_doctype", summary, {"name": name, "fields": fields})
 	return None
@@ -312,6 +314,8 @@ def request_seed_sample_data(ctx, args: dict) -> str | None:
 		return f"DECLINED: DocType '{doctype}' does not exist — create it first (create_doctype)."
 	if not rows:
 		return "DECLINED: no rows to insert."
+	if not frappe.has_permission(doctype, "create"):
+		return pending.not_permitted(f"create {doctype} records")
 	# Rows with made-up fieldnames would insert as empty records — bounce them back
 	# with the real schema instead of putting a doomed proposal in front of the user.
 	valid = {f.fieldname for f in frappe.get_meta(doctype).fields}

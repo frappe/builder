@@ -30,7 +30,7 @@ class BuilderAIProvider(Document):
 		return prefix
 
 	def resolved_key(self) -> str | None:
-		"""This provider's key, or None to fall back to the caller's."""
+		"""This provider's key, or None when it has none."""
 		return self.get_password("api_key", raise_exception=False)
 
 	def on_update(self):

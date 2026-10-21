@@ -20,15 +20,6 @@
 			:modelValue="defaultValue"
 			@update:modelValue="handleDefaultValueChange"
 			@input="handleDefaultValueChange"
-			@update:model-value="handleMaxValueChange"
-			:placeholder="__('Enter max value')"></InlineInput>
-	</div>
-	<div class="flex items-center justify-between">
-		<InlineInput
-			:label="__('Default Value')"
-			:modelValue="defaultValue"
-			@update:modelValue="handleDefaultValueChange"
-			@input="handleDefaultValueChange"
 			:placeholder="__('Enter default value')"></InlineInput>
 	</div>
 </template>

@@ -13,6 +13,7 @@
 			@paste="triggerUpdate"
 			@cut="triggerUpdate"
 			@focus="handleFocus"
+			@keydown="commitBeforeSave"
 			@input="($event: Event) => emit('input', ($event.target as HTMLInputElement).value)"
 			autocomplete="off"
 			:autofocus="autofocus"
@@ -50,6 +51,7 @@
 </template>
 <script lang="ts" setup>
 import NumberArrows from "@/components/Controls/NumberArrows.vue";
+import { isCtrlOrCmd } from "@/utils/helpers";
 import { useNumberInput } from "@/utils/useNumberInput";
 import { useDebounceFn, useResizeObserver, useVModel } from "@vueuse/core";
 import { Select } from "frappe-ui";
@@ -170,6 +172,14 @@ const triggerUpdate = useDebounceFn(($event: Event) => {
 		emit("update:modelValue", ($event.target as HTMLInputElement).value);
 	}
 }, 100);
+
+// Ctrl/Cmd+S saves before the change event commits the typed value
+const commitBeforeSave = ($event: KeyboardEvent) => {
+	const target = $event.target as HTMLInputElement;
+	if (!isCtrlOrCmd($event) || $event.key.toLowerCase() !== "s") return;
+	if (!target.matches("input:not([type='checkbox']), textarea")) return;
+	if (target.value !== String(data.value ?? "")) emit("update:modelValue", target.value);
+};
 
 const handleFocus = ($event: Event) => {
 	if (props.selectOnFocus && !props.disabled && props.type !== "checkbox") {

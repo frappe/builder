@@ -357,7 +357,8 @@ class BuilderPage(WebsiteGenerator):
 
 	def on_trash(self):
 		for session in frappe.get_all("Builder AI Session", filters={"page": self.name}, pluck="name"):
-			frappe.delete_doc("Builder AI Session", session, ignore_missing=True)
+			# another user's chat on this page goes too, whoever deletes the page
+			frappe.delete_doc("Builder AI Session", session, ignore_missing=True, ignore_permissions=True)
 
 		if self.is_template and self.template_group:
 			if frappe.conf.developer_mode:
