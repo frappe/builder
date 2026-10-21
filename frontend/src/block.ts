@@ -444,6 +444,18 @@ class Block implements BlockOptions {
 	addOption(label: string) {
 		this.addChild({ element: "option", innerHTML: label }, null, false);
 	}
+	// the option shown before the visitor picks one, like the template's placeholder
+	getSelectedOptionIndex() {
+		return Math.max(
+			0,
+			this.getOptions().findIndex((option) => option.getEffectiveAttribute("selected") != null),
+		);
+	}
+	setSelectedOption(index: number) {
+		this.getOptions().forEach((option, i) =>
+			option.setEffectiveAttribute("selected", i === index ? "" : undefined),
+		);
+	}
 	setStyle(style: styleProperty, value: StyleValue) {
 		const canvasStore = useCanvasStore();
 		let styleObj = this.baseStyles;
