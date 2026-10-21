@@ -53,6 +53,9 @@ export const data = {
 	/** One full document, with its child tables. */
 	getDoc: (doctype: string, name: string) => call("data.getDoc", { doctype, name }) as Promise<Doc>,
 
+	/** The fields and settings of a doctype, as Frappe's `/api/v2/doctype/<doctype>/meta` gives them. */
+	getMeta: (doctype: string) => call("data.getMeta", { doctype }) as Promise<Doc>,
+
 	/** Adds a new document. Returns the new document. */
 	insert: (doctype: string, doc: Doc) => call("data.insert", { doctype, doc }) as Promise<Doc>,
 

@@ -18,7 +18,7 @@ import {
 	state,
 	toolbar,
 } from "./methods";
-import { resourceFetcher } from "./resourceFetcher";
+import { installFetchBridge } from "./fetchBridge";
 import { registerMain, registerSlot, use, type Mounter, type SlotEntry } from "./slots";
 import { ui } from "./ui";
 
@@ -94,18 +94,12 @@ const builder = {
 	/**
 	 * Site data. Each call needs the `data.access` permission.
 	 *
-	 * This file adds `fetcher`, not `methods/data.ts`. So `methods/data.ts` does not
-	 * import the file that reads it. Connect it one time, in the entry:
-	 *
-	 * ```js
-	 * import { setConfig } from "frappe-ui";
-	 * setConfig("resourceFetcher", builder.data.fetcher);
-	 * ```
-	 *
-	 * Then `createListResource` and `createDocumentResource` work as in any Frappe
-	 * app. They get only what the user of the editor can get.
+	 * frappe-ui works too, with no setup: `createResource`, `createListResource`,
+	 * `call()`, and the `use*` composables. The SDK sends their requests through
+	 * Builder. A document request needs `data.access`. A call to a whitelisted
+	 * method of an installed app needs `method.call`.
 	 */
-	data: { ...data, fetcher: resourceFetcher },
+	data,
 
 	/**
 	 * The doctypes of this extension. Each call needs the `schema.write`
@@ -123,5 +117,6 @@ const builder = {
 };
 
 listenForHandshake();
+installFetchBridge();
 
 export default builder;

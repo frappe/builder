@@ -124,6 +124,22 @@ const { fileUrl } = await builder.data.uploadFile(input.files[0]);
 await builder.data.update("Blog Post", name, { cover_image: fileUrl });
 ```
 
+## Use frappe-ui and your app's methods
+
+A frame has no session, so the SDK sends frappe-ui's requests through Builder. `createResource`,
+`createListResource`, `call()`, and the `use*` composables work with no setup.
+
+- A document request, such as `frappe.client.get_list` or `/api/v2/document/<doctype>`, needs `data.access`.
+- A call to a whitelisted method of an installed app needs `method.call`.
+
+```js
+import { call } from "frappe-ui";
+
+const collections = await call("cms.api.collections.get_collections");
+```
+
+Builder refuses every method of `frappe` and `builder`. Use `builder.data` for their documents.
+
 ## Run it in Builder
 
 1. Turn on developer mode for the site.

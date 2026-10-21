@@ -176,3 +176,20 @@ export type AnyVersionMessage = (
 ) & {
 	v: number;
 };
+
+/** A frappe-ui request, as the frame's `fetch` saw it. The host reads it, never the frame. */
+export type ApiRequest = {
+	method: string;
+	/** The path and query, `/api/v2/document/Contact?limit=20`. */
+	url: string;
+	body?: string;
+};
+
+/** What a request answered. The frame wraps it in the envelope its API version expects. */
+export type ApiAnswer = {
+	data: unknown;
+	/** Set on a v2 list, which pages by it. */
+	hasNextPage?: boolean;
+	/** Set by a doc method: the document after it ran, which a frappe-ui document resource reloads from. */
+	docs?: unknown[];
+};

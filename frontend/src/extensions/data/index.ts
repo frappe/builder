@@ -4,9 +4,11 @@
 
 import type { MethodTable } from "../bridge/permissions";
 import { documentMethods } from "./documentMethods";
+import { requestMethods } from "./requestMethods";
 import { schemaMethods } from "./schemaMethods";
 
 export const dataMethods: MethodTable = {
 	...documentMethods,
+	...requestMethods,
 	...schemaMethods,
 };

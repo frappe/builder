@@ -18,7 +18,7 @@ import { closeSlot, runSlot, setActiveSlot } from "./slots";
  * It also gives the hostname that the user really opened. A value set when
  * the page renders can be wrong.
  */
-const HOST_ORIGIN = new URL(import.meta.url).origin;
+export const HOST_ORIGIN = new URL(import.meta.url).origin;
 
 let channel: PortChannel | null = null;
 let slotProps: Record<string, unknown> = {};
