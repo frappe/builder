@@ -89,11 +89,14 @@ const refuseParent = (params: Params) => {
 	}
 };
 
+/** `fetchOne` sends `"*"` as a string, and `getList` reads a list. */
+const fieldList = (value: unknown) => (typeof value === "string" ? [value] : value);
+
 const listOptions = (params: Params, doctype: unknown) => {
 	refuseParent(params);
 	return {
 		doctype,
-		fields: decoded(params.fields),
+		fields: fieldList(decoded(params.fields)),
 		filters: decoded(params.filters),
 		orFilters: decoded(params.or_filters),
 		orderBy: params.order_by,

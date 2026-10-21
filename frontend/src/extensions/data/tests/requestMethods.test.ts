@@ -135,6 +135,16 @@ describe("v1, frappe.client", () => {
 		expect(last().params.order_by).toBeUndefined();
 	});
 
+	it("reads fetchOne's string of fields as a list", async () => {
+		await send("POST", "/api/method/frappe.client.get_list", {
+			doctype: "Contact",
+			fields: "*",
+			filters: { name: "CON-1" },
+		});
+
+		expect(last().params.fields).toEqual(["*"]);
+	});
+
 	it("answers with what the server sent, for the frame to wrap", async () => {
 		answer = [{ name: "CON-1" }];
 
