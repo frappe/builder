@@ -11,6 +11,7 @@ from builder.extensions.hub import (
 	MAX_METADATA_BYTES,
 	assert_installable,
 	hub_get,
+	read_release,
 )
 
 EXTENSION = "acme/installing"
@@ -55,6 +56,25 @@ class TestRetry(FrappeTestCase):
 	def test_refuses_while_the_job_is_queued_or_running(self):
 		with patch("builder.extensions.hub.is_job_enqueued", return_value=True):
 			self.assertRaises(frappe.ValidationError, assert_installable, EXTENSION)
+
+
+class TestReadRelease(FrappeTestCase):
+	def release(self, protocol_version):
+		return {
+			"version": "1.0.0",
+			"protocol_version": protocol_version,
+			"manifest": {},
+			"package_url": "https://example.com/package.builderext",
+			"package_size": 10,
+			"package_sha256": "abc",
+			"status": "Published",
+		}
+
+	def test_refuses_a_sandboxed_release_before_the_download(self):
+		self.assertRaises(frappe.ValidationError, read_release, EXTENSION, self.release(1))
+
+	def test_reads_a_trusted_release(self):
+		self.assertEqual(read_release(EXTENSION, self.release(2)).protocol_version, 2)
 
 
 class TestHubResponseCap(FrappeTestCase):

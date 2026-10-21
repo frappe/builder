@@ -3,7 +3,7 @@
 	<Dialog v-model="showDevExtensionDialog" title="Load Dev Extension" size="sm">
 		<template #default>
 			<p class="text-p-sm text-ink-gray-6">
-				The address of the dev server running the extension. It runs in this editor until you reload it.
+				The address of the dev server running the extension. It runs in this browser tab until you stop it.
 			</p>
 
 			<FormControl
