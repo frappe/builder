@@ -60,6 +60,18 @@ The `context` gives:
 | `state.get()`, `state.set(values)`, `state.unset(key)` | Values stored for the user who opens the editor. `set` merges at the top level. |
 | `setOpenHandler(handler)`                              | What the Open button in the extension's details page runs                       |
 
+### Every other module
+
+`builder` is the stable entry: Builder keeps it working across releases. Every other module of the editor is reachable too, by its path under `frontend/src/`. A `.ts` module drops its suffix, and a `.vue` module keeps it:
+
+```ts
+import usePageStore from "builder/internal/stores/pageStore";
+import { getBlockString } from "builder/internal/utils/helpers";
+import BlockLayers from "builder/internal/components/BlockLayers.vue";
+```
+
+Each one is the editor's own module, so a store or a registry is the same instance the editor uses. These imports carry no promise: a change in Builder can break them, so their types are `any`. When an extension needs something often, ask for it in `builder`.
+
 frappe-ui works with the user's own session. For example, `createListResource` and `call` reach the site's documents and whitelisted methods, and Frappe checks the user's permissions.
 
 ## The manifest

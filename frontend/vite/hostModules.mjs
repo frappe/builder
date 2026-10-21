@@ -1,3 +1,4 @@
+import fs from "node:fs";
 import path from "node:path";
 
 /**
@@ -15,15 +16,71 @@ export const HOST_MODULES = {
 	"frappe-ui": "src/host/frappe-ui.ts",
 };
 
-const entryName = (name) => `host-${name}`;
+/**
+ * Every other module of the editor, as `builder/internal/<path>`. These carry no
+ * promise: a change in Builder can break an extension that imports one.
+ *
+ * `main.ts` would start a second app, and the host modules have names of their own.
+ */
+const INTERNAL_PREFIX = "builder/internal/";
+const SOURCE_FILE = /\.(ts|vue)$/;
+const NOT_A_MODULE = /(\.test\.ts|\.d\.ts)$/;
+const NOT_INTERNAL = new Set(["src/main.ts"]);
 
-export default function hostModules({ root }) {
+/** Set while the plugin runs its own baseline build, which leaves the internal modules out. */
+const BASELINE_BUILD = "BUILDER_HOST_MODULES_BASELINE";
+
+/** A `.ts` module drops its suffix, as an import names it. A `.vue` module keeps it. */
+const internalName = (file) => INTERNAL_PREFIX + file.slice("src/".length).replace(/\.ts$/, "");
+
+const internalModules = (root) =>
+	Object.fromEntries(
+		fs
+			.readdirSync(path.join(root, "src"), { recursive: true })
+			.map((file) => path.posix.join("src", file.split(path.sep).join("/")))
+			.filter((file) => SOURCE_FILE.test(file) && !NOT_A_MODULE.test(file))
+			.filter((file) => !NOT_INTERNAL.has(file) && !file.startsWith("src/host/"))
+			.sort()
+			.map((file) => [internalName(file), file]),
+	);
+
+/** A Rollup entry name, unique per module, that makes a readable file name. */
+const entryName = (name) => `host/${name.replace(/[^a-zA-Z0-9/_-]/g, "_")}`;
+
+/**
+ * Where the editor's own build puts each module, by module id.
+ *
+ * An entry per internal module would split the editor into many more chunks, and
+ * it would load several times as many files at startup. Pinning each module to
+ * the chunk this build puts it in keeps the editor's split as it is. Each internal
+ * entry then becomes a small facade that re-exports from those chunks.
+ */
+const getBaselineChunks = async (configFile) => {
+	const { build } = await import("vite");
+	process.env[BASELINE_BUILD] = "1";
+	try {
+		const result = await build({ configFile, logLevel: "silent", build: { write: false } });
+		const chunks = (Array.isArray(result) ? result : [result])
+			.flatMap((output) => output.output)
+			.filter((item) => item.type === "chunk");
+		// one group per chunk, so each name must be unique
+		return new Map(
+			chunks.flatMap((chunk, index) => chunk.moduleIds.map((id) => [id, `${chunk.name}~${index}`])),
+		);
+	} finally {
+		delete process.env[BASELINE_BUILD];
+	}
+};
+
+export default function hostModules({ root, configFile }) {
 	let base = "/";
+	const isBaseline = Boolean(process.env[BASELINE_BUILD]);
+	const modules = isBaseline ? HOST_MODULES : { ...HOST_MODULES, ...internalModules(root) };
 
 	const buildInput = () => ({
 		index: path.resolve(root, "index.html"),
 		...Object.fromEntries(
-			Object.entries(HOST_MODULES).map(([name, file]) => [entryName(name), path.resolve(root, file)]),
+			Object.entries(modules).map(([name, file]) => [entryName(name), path.resolve(root, file)]),
 		),
 	});
 
@@ -38,19 +95,34 @@ export default function hostModules({ root }) {
 
 	const importMap = (bundle) => ({
 		imports: Object.fromEntries(
-			Object.entries(HOST_MODULES).map(([name, file]) => [
-				name,
-				bundle ? builtUrl(bundle, file) : `/${file}`,
-			]),
+			Object.entries(modules).map(([name, file]) => [name, bundle ? builtUrl(bundle, file) : `/${file}`]),
 		),
 	});
 
+	const pinnedChunks = async () => {
+		const chunkOf = await getBaselineChunks(configFile);
+		return {
+			groups: [{ name: (id) => chunkOf.get(id) ?? null }],
+			// a module goes to its baseline chunk, and its imports stay where they are
+			includeDependenciesRecursively: false,
+		};
+	};
+
 	return {
 		name: "builder-host-modules",
-		config(_config, { command }) {
+		async config(_config, { command }) {
 			if (command !== "build") return;
-			// Vite drops the exports of an app entry by default, and a host module exists only for its exports
-			return { build: { rollupOptions: { input: buildInput(), preserveEntrySignatures: "strict" } } };
+			return {
+				build: {
+					rollupOptions: {
+						input: buildInput(),
+						// Vite drops the exports of an app entry by default, and a host module exists only
+						// for its exports. "allow-extension" lets a pinned chunk carry them, beside its own
+						preserveEntrySignatures: "allow-extension",
+						output: isBaseline ? {} : { codeSplitting: await pinnedChunks() },
+					},
+				},
+			};
 		},
 		configResolved(config) {
 			base = config.base;
