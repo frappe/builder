@@ -56,7 +56,7 @@ const readCall = (params: unknown): ApiCall => {
 	return {
 		verb: text(sent.method, "method").toUpperCase(),
 		path: url.pathname.split("/").filter(Boolean).map(decodeURIComponent),
-		params: withoutEmpty({ ...Object.fromEntries(url.searchParams), ...readBody(sent.body) }),
+		params: { ...withoutEmpty(Object.fromEntries(url.searchParams)), ...readBody(sent.body) },
 	};
 };
 

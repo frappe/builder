@@ -242,6 +242,12 @@ describe("v2, documents", () => {
 		expect(last().url).toBe("builder.extensions.data.delete_doc");
 	});
 
+	it("keeps the empty values in a body, so a patch can clear a field", async () => {
+		await send("PATCH", "/api/v2/document/Contact/CON-1", { first_name: "", company: null });
+
+		expect(last().params.doc).toEqual({ first_name: "", company: null });
+	});
+
 	it("keeps an encoded slash inside one name", async () => {
 		await send("GET", "/api/v2/document/Web%20Page/about%2Fteam");
 
