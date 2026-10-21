@@ -105,6 +105,13 @@ def get_doc(extension: str, doctype: str, name: str) -> dict:
 	return frappe.client.get(doctype=doctype, name=name)
 
 
+@frappe.whitelist()
+def get_meta(extension: str, doctype: str) -> dict:
+	"""The doctype's fields and settings, as `/api/v2/doctype/<doctype>/meta` answers."""
+	assert_extension_access(extension, "data.access")
+	return frappe.get_meta(doctype).as_dict()
+
+
 @frappe.whitelist(methods=["POST"])
 def insert_doc(extension: str, doctype: str, doc: dict | None = None) -> dict:
 	"""The doctype comes from the argument, never from the payload."""

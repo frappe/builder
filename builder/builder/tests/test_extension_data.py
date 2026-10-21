@@ -8,6 +8,7 @@ from builder.builder.tests.extension_fixtures import make_installation, make_use
 from builder.extensions.data import (
 	delete_doc,
 	get_list,
+	get_meta,
 	insert_doc,
 	update_doc,
 	upload_file,
@@ -51,6 +52,12 @@ class TestExtensionDocuments(FrappeTestCase):
 
 		self.assertRaises(frappe.PermissionError, get_list, "acme/no-data", "Contact")
 		self.assertRaises(frappe.PermissionError, upload_file, "acme/no-data")
+
+	def test_reads_a_doctypes_fields(self):
+		meta = get_meta("acme/data", "Contact")
+
+		self.assertEqual(meta["name"], "Contact")
+		self.assertIn("first_name", [field["fieldname"] for field in meta["fields"]])
 
 	def test_inserts_a_document(self):
 		inserted = insert_doc("acme/data", "Contact", {"first_name": "Hedy"})
