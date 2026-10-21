@@ -8,6 +8,8 @@ import { computed, reactive, shallowRef } from "vue";
 const METHOD = "builder.extensions.installations";
 const HUB_API = "api/method/builder_hub.extensions.api";
 const CATALOG_CACHE = "extensions-catalog";
+/** Trusted extensions. The Hub lists only the releases of this protocol. Keep in step with `builder/extensions/constants.py`. */
+const PROTOCOL_VERSION = 2;
 
 /** A choice of this user in this browser. It is not an access control, so the server does not read it. */
 const extensionsDisabled = useStorage("builderExtensionsDisabled", false);
@@ -200,7 +202,7 @@ const getExtensionsCatalog = (page: number = 1) =>
 		// the Hub URL comes from the server, so it is known only when the fetch starts
 		resourceFetcher: async (options: { url: string }) =>
 			frappeRequest({ ...options, url: await getHubMethodUrl(options.url) }),
-		params: { page },
+		params: { page, protocol_version: PROTOCOL_VERSION },
 		auto: true,
 		cache: [CATALOG_CACHE, page],
 		initialData: { extensions: [] as CatalogExtension[] },
@@ -230,7 +232,7 @@ const latestVersion = (releases: HubExtensionResponse["releases"]) =>
 const getHubExtension = async (name: string): Promise<HubExtension> => {
 	const { extension, releases }: HubExtensionResponse = await createResource({
 		url: await getHubMethodUrl("get_extension"),
-		params: { name },
+		params: { name, protocol_version: PROTOCOL_VERSION },
 		onError: (error: Error) => console.error("Could not load extension", error),
 	}).fetch();
 

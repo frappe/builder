@@ -11,6 +11,8 @@ import { loadExtension } from "./loader";
 const DESCRIPTOR_PATH = "/__builder-extension";
 
 const LAST_URL_KEY = "builder-extension:dev-url";
+/** The dev extension of this tab. A reload loads it again, so an edit that needs a reload keeps it. */
+const SESSION_KEY = "builder-extension:dev-session";
 const INSTALL_METHOD = "builder.extensions.development.install_dev_extension";
 const REMOVE_METHOD = "builder.extensions.development.remove_dev_extension";
 
@@ -21,7 +23,7 @@ export type DevelopmentExtension = RunnableExtension & {
 	readme?: string;
 };
 
-/** One at a time. A plugin cannot leave a running app, so a second load needs a reload first. */
+/** One at a time. A plugin cannot leave a running app, so a second load needs a reload and a Stop first. */
 export const devExtension = ref<DevelopmentExtension | null>(null);
 
 export const showDevExtensionDialog = ref(false);
@@ -77,12 +79,26 @@ export const loadDevExtension = async (url: string): Promise<DevelopmentExtensio
 	};
 	await loadExtension(extension);
 	localStorage.setItem(LAST_URL_KEY, origin);
+	sessionStorage.setItem(SESSION_KEY, origin);
 	devExtension.value = extension;
 	return extension;
 };
 
 /** The Stop button in the Extensions panel. Closing the tab does not call this, so another tab keeps the record. */
 export const stopDevExtension = async () => {
+	sessionStorage.removeItem(SESSION_KEY);
 	if (devExtension.value) await remove(devExtension.value.name);
 	devExtension.value = null;
+};
+
+/** After a reload, the dev extension that this tab ran. A dev server that stopped ends it. */
+export const restoreDevExtension = async () => {
+	const origin = sessionStorage.getItem(SESSION_KEY);
+	if (!origin) return;
+	try {
+		await loadDevExtension(origin);
+	} catch (error) {
+		sessionStorage.removeItem(SESSION_KEY);
+		console.warn(`[builder] the dev extension at ${origin} did not load again`, error);
+	}
 };

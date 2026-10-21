@@ -13,6 +13,7 @@ import App from "@/App.vue";
 import Input from "@/components/Controls/Input.vue";
 import { editorDemo } from "@/utils/editorDemo";
 import { getStartupExtensions, listenForExtensionJobs } from "@/data/extensions";
+import { restoreDevExtension } from "@/extensions/devExtension";
 import { importExtensions, installExtensions } from "@/extensions/loader";
 import useBuilderStore from "@/stores/builderStore";
 
@@ -53,6 +54,7 @@ Promise.all([ensureTranslations(), extensions]).then(([, loaded]) => {
 	installExtensions(app, loaded);
 	app.mount("#app");
 	if (!editorDemo) listenForExtensionJobs(useBuilderStore().realtime);
+	if (!editorDemo && window.is_developer_mode) void restoreDevExtension();
 });
 
 declare global {
