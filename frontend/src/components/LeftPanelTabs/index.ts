@@ -14,6 +14,8 @@ import { __ } from "@/translation";
 export type LeftPanelTab = RegistryItem & {
 	label: string;
 	icon: string | Component;
+	/** selecting a block keeps this tab open, where another tab gives way to the layers */
+	keepOpenOnSelection?: boolean;
 	component?: Component;
 	props?: () => Record<string, unknown>;
 	/** binding that opens the tab; the panel labels the button with it */
@@ -61,6 +63,7 @@ leftPanelTabs.register({
 
 leftPanelTabs.register({
 	name: "Code",
+	keepOpenOnSelection: true,
 	label: __("Code"),
 	icon: "lucide-code",
 	component: CodeTab,
@@ -86,6 +89,7 @@ leftPanelTabs.register({
 
 leftPanelTabs.register({
 	name: "Chat",
+	keepOpenOnSelection: true,
 	label: __("Bob AI"),
 	icon: "lucide-sparkle",
 	// the panel brings its own markdown, yaml and sanitiser stack, so it waits to be opened
