@@ -113,6 +113,22 @@ declare module "builder" {
 	/** A lucide icon by name, as a component, for any surface that takes an icon. */
 	export function lucideIcon(name: string): Component;
 
+	/**
+	 * The controls of the property panel. Give one as a `BlockProperty.component`.
+	 *
+	 * `StylePropertyControl` reads and writes the style named by `propertyKey`, and
+	 * `AttributePropertyControl` the attribute. `BasePropertyControl` holds a value
+	 * of the extension's own, through `getModelValue` and `setModelValue`. Each one
+	 * draws a text input unless its `component` names another widget:
+	 * `OptionToggle`, `ColorInput` or `RangeInput`.
+	 */
+	export const AttributePropertyControl: Component;
+	export const BasePropertyControl: Component;
+	export const StylePropertyControl: Component;
+	export const ColorInput: Component;
+	export const OptionToggle: Component;
+	export const RangeInput: Component;
+
 	/** What an extension stores for the user who opens the editor. It merges at the top level. */
 	export type ExtensionState = {
 		get: () => Promise<Record<string, unknown>>;

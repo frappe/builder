@@ -17,4 +17,12 @@ export { default as useBuilderStore } from "@/stores/builderStore";
 export { default as blockController } from "@/utils/blockController";
 export { default as Block } from "@/block";
 export { lucideIcon } from "@/extensions/lucideIcon";
+
+// the controls of the property panel, so an extension's section looks like Builder's own
+export { default as AttributePropertyControl } from "@/components/Controls/AttributePropertyControl.vue";
+export { default as BasePropertyControl } from "@/components/Controls/BasePropertyControl.vue";
+export { default as StylePropertyControl } from "@/components/Controls/StylePropertyControl.vue";
+export { default as ColorInput } from "@/components/Controls/ColorInput.vue";
+export { default as OptionToggle } from "@/components/Controls/OptionToggle.vue";
+export { default as RangeInput } from "@/components/Controls/RangeInput.vue";
 export type { ExtensionContext, ExtensionState } from "@/extensions/context";
