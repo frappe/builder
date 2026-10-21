@@ -145,7 +145,12 @@ const useInstallationDetails = (extension: string) => {
 
 	const reload = async () => {
 		if (!findInstallation(extension)) return;
-		stored.value = await call(`${METHOD}.get_installation_details`, { extension });
+		const { is_updating, ...rest } = (await call(`${METHOD}.get_installation_details`, {
+			extension,
+		})) as { installed_on: string; readme?: string; is_updating: boolean };
+		stored.value = rest;
+		// the job ended, but its realtime message did not arrive
+		if (!is_updating && updatingExtensions.delete(extension)) await reloadInstallations();
 	};
 
 	const details = computed<InstallationDetails | null>(() => {
