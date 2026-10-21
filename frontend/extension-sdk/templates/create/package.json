@@ -13,7 +13,7 @@
 	},
 	"devDependencies": {
 		"@vitejs/plugin-vue": "5.2.4",
-		"frappe-builder-extension-sdk": "^2.0.0",
+		"frappe-builder-extension-sdk": "github:stravo1/frappe-builder-extension-sdk#trusted-extensions-api",
 		"frappe-ui": "^1.0.1",
 		"tailwindcss": "^3.4.19",
 		"typescript": "^5.6.3",
