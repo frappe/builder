@@ -3,7 +3,12 @@
 import { call } from "./call";
 import { getChannel } from "../connect";
 
-export type DataChange = { doctype: string; name: string; operation: "insert" | "update" | "delete" };
+/** `change` is a write from elsewhere, such as an app method or Desk. Frappe does not say which write it was. */
+export type DataChange = {
+	doctype: string;
+	name: string;
+	operation: "insert" | "update" | "delete" | "change";
+};
 
 /** One document, as Frappe keeps it. Its fields are the fields of the doctype. */
 export type Doc = Record<string, unknown>;
@@ -26,12 +31,20 @@ export type ListOptions = {
 };
 
 export const data = {
-	/** Watches this extension's writes across its frames. Returns a function that stops listening. */
-	subscribe: (doctype: string, handler: (change: DataChange) => void) =>
-		getChannel().listen("data.changed", (payload) => {
+	/**
+	 * Watches the writes to a doctype: this extension's own, and any other write
+	 * that Frappe announces, from an app method, Desk, or another user. Returns a
+	 * function that stops listening. It needs the `data.access` permission.
+	 */
+	subscribe: (doctype: string, handler: (change: DataChange) => void) => {
+		call("data.subscribe", { doctype }).catch((error) =>
+			console.error(`[builder] cannot watch ${doctype} for other writes`, error),
+		);
+		return getChannel().listen("data.changed", (payload) => {
 			const change = payload as DataChange;
 			if (change.doctype === doctype) handler(change);
-		}),
+		});
+	},
 
 	/**
 	 * One page of documents.
