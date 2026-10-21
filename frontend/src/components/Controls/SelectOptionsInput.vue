@@ -8,6 +8,7 @@
 				:modelValue="option"
 				hideClearButton
 				@input="(value: string) => emit('rename', index, value)"
+				@paste="(event: ClipboardEvent) => pasteOptions(event, index)"
 				@keydown.stop>
 				<template #suffix>
 					<button
@@ -47,6 +48,18 @@ const emit = defineEmits<{
 }>();
 
 const list = ref<HTMLElement | null>(null);
+
+// a pasted list becomes an option per line
+const pasteOptions = (event: ClipboardEvent, index: number) => {
+	const lines = (event.clipboardData?.getData("text") || "")
+		.split(/\r?\n/)
+		.map((line) => line.trim())
+		.filter(Boolean);
+	if (lines.length < 2) return;
+	event.preventDefault();
+	emit("rename", index, lines[0]);
+	lines.slice(1).forEach((line) => emit("add", line));
+};
 
 // focusing selects the new option's text, so typing replaces it
 const addOption = async () => {
