@@ -16,3 +16,5 @@ export { default as useCanvasStore } from "@/stores/canvasStore";
 export { default as useBuilderStore } from "@/stores/builderStore";
 export { default as blockController } from "@/utils/blockController";
 export { default as Block } from "@/block";
+export { lucideIcon } from "@/extensions/lucideIcon";
+export type { ExtensionContext, ExtensionState } from "@/extensions/context";

@@ -27,6 +27,8 @@ export interface BuilderSettings extends DocType {
 	favicon?: string;
 	/** Home Page: Data */
 	home_page?: string;
+	/** Hub URL: Data */
+	hub_url?: string;
 	/** Auto convert images to WebP: Check */
 	auto_convert_images_to_webp: 0 | 1;
 	/** Disable Auto Dark Mode: Check */

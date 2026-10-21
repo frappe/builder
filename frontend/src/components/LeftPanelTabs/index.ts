@@ -2,7 +2,9 @@ import LayersIcon from "@/components/Icons/Layers.vue";
 import AssetsTab from "@/components/LeftPanelTabs/AssetsTab.vue";
 import BlocksTab from "@/components/LeftPanelTabs/BlocksTab.vue";
 import CodeTab from "@/components/LeftPanelTabs/CodeTab.vue";
+import ExtensionsTab from "@/components/LeftPanelTabs/ExtensionsTab.vue";
 import LayersTab from "@/components/LeftPanelTabs/LayersTab.vue";
+import { extensionsDisabled } from "@/data/extensions";
 import useBuilderStore from "@/stores/builderStore";
 import { createRegistry, type RegistryItem } from "@/utils/createRegistry";
 import type { KeyboardShortcutCombo } from "frappe-ui";
@@ -91,4 +93,12 @@ leftPanelTabs.register({
 	shortcut: "Mod+Shift+O",
 	// the composer's controls and the chat bubbles stop fitting below this
 	minWidth: 300,
+});
+
+leftPanelTabs.register({
+	name: "Extensions",
+	label: __("Extensions"),
+	icon: "lucide-plug",
+	component: ExtensionsTab,
+	condition: () => !extensionsDisabled.value,
 });

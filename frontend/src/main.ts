@@ -12,7 +12,9 @@ import translationPlugin, { ensureTranslations } from "./translation";
 import App from "@/App.vue";
 import Input from "@/components/Controls/Input.vue";
 import { editorDemo } from "@/utils/editorDemo";
-import { importExtensions, installExtensions } from "@/utils/loadExtensions";
+import { getStartupExtensions, listenForExtensionJobs } from "@/data/extensions";
+import { importExtensions, installExtensions } from "@/extensions/loader";
+import useBuilderStore from "@/stores/builderStore";
 
 const app = createApp(App);
 const pinia = createPinia();
@@ -24,10 +26,12 @@ app.use(pinia);
 // the demo runs no extensions. Elsewhere they load while the translations do
 const extensions = editorDemo
 	? Promise.resolve([])
-	: importExtensions().catch((error) => {
-			console.error("[builder] the extensions did not load", error);
-			return [];
-		});
+	: getStartupExtensions()
+			.then(importExtensions)
+			.catch((error) => {
+				console.error("[builder] the extensions did not load", error);
+				return [];
+			});
 
 Promise.all([ensureTranslations(), extensions]).then(([, loaded]) => {
 	app.use(router);
@@ -48,6 +52,7 @@ Promise.all([ensureTranslations(), extensions]).then(([, loaded]) => {
 	// before the first render, so an extension's items show from the start
 	installExtensions(app, loaded);
 	app.mount("#app");
+	if (!editorDemo) listenForExtensionJobs(useBuilderStore().realtime);
 });
 
 declare global {
