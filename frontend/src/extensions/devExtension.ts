@@ -5,14 +5,14 @@
 import { call } from "frappe-ui";
 import { ref } from "vue";
 import type { RunnableExtension } from "./context";
-import { loadExtension } from "./loader";
+import { loadExtension, runningExtensions } from "./loader";
 
 /** Only the SDK's Vite plugin serves this path. */
 const DESCRIPTOR_PATH = "/__builder-extension";
 
 const LAST_URL_KEY = "builder-extension:dev-url";
 /** The dev extension of this tab. A reload loads it again, so an edit that needs a reload keeps it. */
-const SESSION_KEY = "builder-extension:dev-session";
+const SESSION_KEY = "builder-extension:dev";
 const INSTALL_METHOD = "builder.extensions.development.install_dev_extension";
 const REMOVE_METHOD = "builder.extensions.development.remove_dev_extension";
 
@@ -32,6 +32,15 @@ export const showDevExtensionDialog = ref(false);
 export const isDevExtension = (extension: { name: string }) => devExtension.value?.name === extension.name;
 
 export const lastDevUrl = () => localStorage.getItem(LAST_URL_KEY) ?? "";
+
+type DevSession = { origin: string; name: string };
+
+const readSession = (): DevSession | null => JSON.parse(sessionStorage.getItem(SESSION_KEY) ?? "null");
+
+const saveSession = (session: DevSession) => sessionStorage.setItem(SESSION_KEY, JSON.stringify(session));
+
+/** The extension that this tab runs from a dev server. Startup skips its installed copy, so one copy runs. */
+export const getDevSessionExtension = () => (window.is_developer_mode ? readSession()?.name : undefined);
 
 const read = async (origin: string) => {
 	const response = await fetch(`${origin}${DESCRIPTOR_PATH}`).catch(() => {
@@ -57,13 +66,23 @@ const remove = (extension: string) =>
 		console.error(`Could not remove development extension "${extension}"`, error),
 	);
 
-/** Accepts any URL on the dev server. An author pastes the URL from the terminal. */
-export const loadDevExtension = async (url: string): Promise<DevelopmentExtension> => {
+/**
+ * Accepts any URL on the dev server. An author pastes the URL from the terminal.
+ *
+ * Answers null when the installed copy of the extension runs. A plugin cannot
+ * leave the app, so the dev copy takes its place after a reload.
+ */
+export const loadDevExtension = async (url: string): Promise<DevelopmentExtension | null> => {
 	if (devExtension.value) throw new Error("Reload the editor to load another dev extension.");
 
 	const origin = new URL(url.trim()).origin;
 	const descriptor = await read(origin);
 	await install(descriptor.name);
+	if (runningExtensions.has(descriptor.name)) {
+		localStorage.setItem(LAST_URL_KEY, origin);
+		saveSession({ origin, name: descriptor.name });
+		return null;
+	}
 
 	const extension: DevelopmentExtension = {
 		name: descriptor.name,
@@ -79,7 +98,7 @@ export const loadDevExtension = async (url: string): Promise<DevelopmentExtensio
 	};
 	await loadExtension(extension);
 	localStorage.setItem(LAST_URL_KEY, origin);
-	sessionStorage.setItem(SESSION_KEY, origin);
+	saveSession({ origin, name: descriptor.name });
 	devExtension.value = extension;
 	return extension;
 };
@@ -93,12 +112,12 @@ export const stopDevExtension = async () => {
 
 /** After a reload, the dev extension that this tab ran. A dev server that stopped ends it. */
 export const restoreDevExtension = async () => {
-	const origin = sessionStorage.getItem(SESSION_KEY);
-	if (!origin) return;
+	const session = readSession();
+	if (!session) return;
 	try {
-		await loadDevExtension(origin);
+		await loadDevExtension(session.origin);
 	} catch (error) {
 		sessionStorage.removeItem(SESSION_KEY);
-		console.warn(`[builder] the dev extension at ${origin} did not load again`, error);
+		console.warn(`[builder] the dev extension at ${session.origin} did not load again`, error);
 	}
 };

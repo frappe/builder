@@ -1,5 +1,5 @@
 import type { RunnableExtension } from "@/extensions/context";
-import { devExtension, isDevExtension } from "@/extensions/devExtension";
+import { devExtension, getDevSessionExtension, isDevExtension } from "@/extensions/devExtension";
 import { loadExtension, runningExtensions } from "@/extensions/loader";
 import { useStorage } from "@vueuse/core";
 import { call, createResource, frappeRequest, getCachedResource, toast } from "frappe-ui";
@@ -83,11 +83,15 @@ const toRunnable = (row: Installation): RunnableExtension => ({
 	entryUrl: row.entry_url as string,
 });
 
-/** The installed extensions this editor loads at startup. A dev extension loads later, from its dialog. */
+/**
+ * The installed extensions this editor loads at startup. A dev extension loads
+ * later, so its installed copy stays out, and only one copy runs.
+ */
 const getStartupExtensions = async (): Promise<RunnableExtension[]> => {
 	if (extensionsDisabled.value) return [];
 	const rows = (await reloadInstallations()) ?? [];
-	return rows.filter(isRunnable).map(toRunnable);
+	const devSessionExtension = getDevSessionExtension();
+	return rows.filter((row) => isRunnable(row) && row.name !== devSessionExtension).map(toRunnable);
 };
 
 /** The install job writes the package icon last. So an Installing or Failed row uses the icon from the Hub catalog. */

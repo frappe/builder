@@ -27,7 +27,7 @@
 
 <script setup lang="ts">
 import Dialog from "@/components/Controls/Dialog.vue";
-import { reloadInstallations } from "@/data/extensions";
+import { promptReload, reloadInstallations } from "@/data/extensions";
 import { lastDevUrl, loadDevExtension, showDevExtensionDialog } from "@/extensions/devExtension";
 import { Button, FormControl, toast } from "frappe-ui";
 import { ref, watch } from "vue";
@@ -51,7 +51,8 @@ const load = async () => {
 		// the panel opens the new record. So the list must name it
 		await reloadInstallations();
 		showDevExtensionDialog.value = false;
-		toast.success(`Loaded ${extension.label}`);
+		if (extension) toast.success(`Loaded ${extension.label}`);
+		else promptReload("The dev extension replaces its installed copy");
 	} catch (thrown) {
 		error.value = (thrown as Error).message;
 	} finally {
