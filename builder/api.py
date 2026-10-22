@@ -129,6 +129,18 @@ MAX_FONT_BYTES = 6 * 1024 * 1024
 FONT_EXTENSIONS = ("woff2", "woff", "ttf", "otf")
 
 
+def download_remote_file(url: str, max_bytes: int) -> tuple[bytes, str]:
+	"""Body and media type of a remote file, refused as soon as it passes max_bytes."""
+	response = public_session().get(url, timeout=20, stream=True, headers={"User-Agent": "FrappeBuilder/1.0"})
+	response.raise_for_status()
+	content = bytearray()
+	for chunk in response.iter_content(64 * 1024):
+		content += chunk
+		if len(content) > max_bytes:
+			frappe.throw(f"File is larger than {max_bytes // (1024 * 1024)}MB: {url}")
+	return bytes(content), response.headers.get("content-type", "").split(";")[0].strip().lower()
+
+
 def import_remote_font(family: str, url: str) -> str:
 	existing = frappe.db.get_value("User Font", {"font_name": family}, "font_file")
 	if existing:
@@ -138,10 +150,7 @@ def import_remote_font(family: str, url: str) -> str:
 	if not extension:
 		frappe.throw(f"Not a font file: {url}")
 
-	response = public_session().get(url, timeout=20, headers={"User-Agent": "FrappeBuilder/1.0"})
-	response.raise_for_status()
-	if len(response.content) > MAX_FONT_BYTES:
-		frappe.throw(f"Font is larger than {MAX_FONT_BYTES // (1024 * 1024)}MB: {url}")
+	content = download_remote_file(url, MAX_FONT_BYTES)[0]
 
 	file = frappe.get_doc(
 		{
@@ -149,7 +158,7 @@ def import_remote_font(family: str, url: str) -> str:
 			"file_name": f"{frappe.scrub(family)}.{extension}",
 			"is_private": 0,
 			"folder": "Home/Builder Uploads/Fonts",
-			"content": response.content,
+			"content": content,
 		}
 	).insert()
 	frappe.get_doc({"doctype": "User Font", "font_name": family, "font_file": file.file_url}).insert()
@@ -174,13 +183,7 @@ def import_remote_asset(url: str) -> str:
 	if existing:
 		return existing
 
-	response = public_session().get(url, timeout=20, headers={"User-Agent": "FrappeBuilder/1.0"})
-	response.raise_for_status()
-	content = response.content
-	if len(content) > MAX_ASSET_BYTES:
-		frappe.throw(f"Asset is larger than {MAX_ASSET_BYTES // (1024 * 1024)}MB: {url}")
-
-	content_type = response.headers.get("content-type", "").split(";")[0].strip().lower()
+	content, content_type = download_remote_file(url, MAX_ASSET_BYTES)
 	extension = KEEP_AS_IS.get(content_type) or guess_keep_as_is_extension(url)
 	if extension:
 		return save_imported_asset(f"{stem}.{extension}", content)
@@ -291,12 +294,9 @@ def convert_to_webp(image_url: str | None = None, file_doc: Document | None = No
 
 	def handle_external_url(image_url: str) -> str:
 		url = unquote(image_url)
-		response = public_session().get(url, timeout=20, headers={"User-Agent": "FrappeBuilder/1.0"})
-		response.raise_for_status()
-		if len(response.content) > MAX_ASSET_BYTES:
-			frappe.throw(f"Image is larger than {MAX_ASSET_BYTES // (1024 * 1024)}MB: {url}")
+		content = download_remote_file(url, MAX_ASSET_BYTES)[0]
 		buffer = BytesIO()
-		save_as_webp(Image.open(BytesIO(response.content)), buffer)
+		save_as_webp(Image.open(BytesIO(content)), buffer)
 		return save_imported_asset(get_external_webp_filename(url), buffer.getvalue())
 
 	if not image_url and not file_doc:

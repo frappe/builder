@@ -44,6 +44,9 @@ class Response:
 		if self.status >= 400:
 			raise Exception(f"HTTP {self.status}")
 
+	def iter_content(self, chunk_size):
+		yield self.content
+
 
 @contextmanager
 def serving(*responses):
@@ -202,8 +205,10 @@ class TestConvertToWebp(FrappeTestCase):
 		self.assertNotEqual(first, second)
 		self.assertEqual(frappe.get_doc("File", {"file_url": first}).get_content(), first_content)
 
-	def test_leaves_out_an_image_over_the_size_limit(self):
-		with serving(Response(png_bytes())), patch("builder.api.MAX_ASSET_BYTES", 10):
+	def test_stops_downloading_at_the_size_limit(self):
+		endless = Response()
+		endless.iter_content = lambda chunk_size: iter(lambda: b"x" * 1024, None)
+		with serving(endless), patch("builder.api.MAX_ASSET_BYTES", 4096):
 			self.assertRaises(frappe.ValidationError, convert_to_webp, image_url=self.url)
 
 	def test_converts_only_files_inside_builder_assets(self):
