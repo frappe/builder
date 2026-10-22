@@ -33,7 +33,7 @@
 
 				<Tooltip
 					v-if="!isInstalled"
-					text="Only a System Manager can install extensions."
+					text="Only a System Manager or a Website Manager can install extensions."
 					:disabled="canManageExtensions">
 					<!-- a disabled button gets no hover events, so the tooltip listens on this box -->
 					<div>

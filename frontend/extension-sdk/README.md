@@ -9,7 +9,7 @@ A trusted extension is a Vue plugin that the Builder editor loads into its own a
 - the `builder-extension create` and `builder-extension package` commands
 - a GitHub workflow that publishes each release for Builder Hub
 
-An extension runs with the access of each user who opens the editor. Only a System Manager can install one.
+An extension runs with the access of each user who opens the editor. Only a System Manager or a Website Manager can install one.
 
 ## Create an extension
 

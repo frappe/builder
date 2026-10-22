@@ -14,6 +14,7 @@ from builder.builder.tests.extension_fixtures import (
 )
 from builder.extensions.access import assert_extension_access
 from builder.extensions.installations import (
+	can_manage_extensions,
 	get_installation_details,
 	get_installations,
 	set_extension_enabled,
@@ -96,11 +97,19 @@ class TestEnableAndDisable(FrappeTestCase):
 
 		self.assertTrue(listed(EXTENSION)["enabled"])
 
-	def test_refuses_a_website_manager(self):
-		"""An extension runs with the access of every editor user, so only a System Manager decides."""
+	def test_a_website_manager_can_manage(self):
 		make_installation(EXTENSION)
 		frappe.set_user(make_user())
 
+		self.assertTrue(can_manage_extensions())
+		set_extension_enabled(EXTENSION, False)
+		self.assertFalse(listed(EXTENSION)["enabled"])
+
+	def test_refuses_a_user_who_cannot_manage(self):
+		make_installation(EXTENSION)
+		frappe.set_user(make_page_reader(self))
+
+		self.assertFalse(can_manage_extensions())
 		with self.assertRaises(frappe.PermissionError):
 			set_extension_enabled(EXTENSION, False)
 

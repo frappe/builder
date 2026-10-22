@@ -81,7 +81,7 @@ def make_role(name: str) -> str:
 
 
 def make_user(email="extension-tester@example.com", roles=("Website Manager",)):
-	"""A second Builder user. Website Manager reads Builder Pages but cannot manage extensions."""
+	"""A second Builder user. Website Manager edits Builder Pages and manages extensions."""
 	for role in roles:
 		make_role(role)
 	if not frappe.db.exists("User", email):

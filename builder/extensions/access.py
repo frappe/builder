@@ -8,8 +8,9 @@ Frappe's own permission checks apply to everything it does. These checks only
 cover Builder's own extension records.
 
 Changing an installation is a different right: write access to the Builder
-Extension doctype. Only a System Manager has it, because an installed extension
-runs with the access of every editor user.
+Extension doctype. A System Manager and a Website Manager have it. An installed
+extension runs with the access of every editor user, and a Website Manager can
+already add scripts to the site's pages through Builder Client Script.
 """
 
 import frappe
@@ -50,4 +51,4 @@ def is_extension_manager(user: str | None = None) -> bool:
 
 def assert_extension_manager() -> None:
 	if not is_extension_manager():
-		frappe.throw(_("Only a System Manager can change extensions."), frappe.PermissionError)
+		frappe.throw(_("Only a System Manager or a Website Manager can change extensions."), frappe.PermissionError)
