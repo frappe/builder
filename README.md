@@ -34,18 +34,28 @@ Frappe Builder is a low-code website builder designed for simplicity, speed, and
 
 Most existing solutions were either too complex, too restrictive, or difficult to integrate with the Frappe ecosystem. Additionally, pages built with these tools were often bloated with unnecessary scripts and styles. I wanted to take a stab at solving this problem while prioritising performance from day one. I aimed to address two major issues with this project: providing an intuitive way to design a web page and enabling one-click publishing. As a web developer, it helps me scratch my own itch, and I hope it helps others too.
 
-### Key Features
+### What Sets It Apart
 
-- **Intuitive Visual Builder:** Simplify your workflow with a Figma-like editor.
-- **AI Site Builder:** Build and edit pages by chatting with Bob, an agent that grounds itself in your site instead of guessing. It reads your existing pages and follows their design language by default, reuses your components and theme tokens, fits new pages into your route structure (including dynamic detail pages), wires forms and data-driven sections to real doctypes, and researches facts online rather than inventing them. Reads respect your permissions, sensitive changes wait for your approval, and every AI edit is revertable.
-- **Responsive Views:** Ensure your sites look great on any device without the fuss.
-- **Dark Mode Support:** Built-in dark mode with automatic system preference detection and a manual override option.
-- **Built-in CMS:** Leverage Frappe Framework's inbuilt CMS to manage structured content, fetch dynamic data from your database, and power data-driven pages without a separate backend.
-- **Advanced Scripting:** Customize every layer of your page like global scripts, client scripts, per-block data scripts, and typed block props. Bind any property or style to dynamic values sourced from scripts, page data, or query parameters.
-- **One-Click Publishing:** Instantly share your creation with the world in a single click.
-- **Performance Excellence:** Frappe Builder does not bloat web pages with unnecessary scripts hence pages are highly performant, consistently scoring high on Google Lighthouse tests.
-- **Page Analytics:** Built-in analytics dashboard with traffic insights including page views, unique visitors, and top referrers.
-- **Production Ready**: [Frappe.io](https://frappe.io) built on Frappe Builder, stands as a testament to its reliability in delivering production-ready solutions.
+- **Bob, an AI builder that reads your site first.** Ask for a page or a change in plain words. Before it edits, Bob reads your existing pages, theme tokens and components, so new work follows your design language and fits your routes. It wires forms and data sections to real doctypes and looks facts up online instead of inventing them. Sensitive changes wait for your approval, and every AI edit can be reverted.
+
+  <img alt="Bob reading the design tokens and pages before editing a page in Frappe Builder" src=".github/assets/bob.webp">
+
+- **Your Frappe database is the CMS.** A page or component can run a Python data script that fetches from any doctype, then loop over the results and bind them to any property or style. A dynamic route like `/blog/:slug` turns one design into a page for every record, with no separate CMS or API to maintain.
+
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset=".github/assets/data-script-dark.webp">
+    <img alt="A data script fetching products and the product grid it renders" src=".github/assets/data-script.webp">
+  </picture>
+
+- **Components with props and scripts.** Turn any group of blocks into a reusable component with typed props, its own data script and its own client script. Change it once and every page that uses it follows.
+
+- **Fast by default.** Published pages are lean HTML and CSS with no front-end framework to load before they render. [frappe.io](https://frappe.io) runs on Builder.
+
+  <img alt="Lighthouse scores for similar pages built with Builder, Framer, Webflow and Wix" src=".github/assets/lighthouse.webp">
+
+  <sub>Google Lighthouse (mobile) on nearly identical test pages built with each platform, as published on [frappe.io/builder](https://frappe.io/builder).</sub>
+
+- **Works with your coding agent.** The [`frappe-builder`](skills/frappe-builder/SKILL.md) skill lets Claude Code, Codex, OpenCode and other agents build, edit and publish pages on any Frappe site. See [With a Coding Agent](#with-a-coding-agent).
 
 ### Under the Hood
 
@@ -71,33 +81,81 @@ Get started with your personal or business site with a few clicks on Frappe Clou
 
 ### Self Hosting
 
-Follow these steps to set up Frappe Builder in production:
+[Pilot](https://github.com/frappe/pilot) is Frappe's tool for running benches and sites on your own server. It installs Frappe, manages sites and backups, and sets up production with nginx and TLS. Production runs on Linux (macOS works for local development), it needs Frappe v16 or later, and it is still in pre-release.
 
-**Step 1**: Download the easy install script
-
-```bash
-wget https://frappe.io/easy-install.py
-```
-
-**Step 2**: Run the deployment command
+**Step 1**: Install Pilot
 
 ```bash
-python3 ./easy-install.py deploy \
-    --project=builder_prod_setup \
-    --email=email@example.com \
-    --image=ghcr.io/frappe/builder \
-    --version=stable \
-    --app=builder \
-    --sitename subdomain.domain.tld
+curl -fsSL https://raw.githubusercontent.com/frappe/pilot/develop/install.sh | bash
 ```
 
-Replace the following parameters with your values:
-- `email@example.com`: Your email address
-- `subdomain.domain.tld`: Your domain name where Builder will be hosted
+**Step 2**: Create a bench. The first `start` prints the URL of a setup wizard, where you pick the Frappe branch (`version-16`) and set passwords.
 
-The script will set up a production-ready instance of Frappe Builder with all the necessary configurations in about 5 minutes.
+```bash
+pilot new main
+pilot -b main start
+```
+
+**Step 3**: Add Builder and create your site
+
+```bash
+pilot -b main get-app https://github.com/frappe/builder --branch master
+pilot -b main new-site subdomain.domain.tld --admin-password <password>
+pilot -b main install-app subdomain.domain.tld builder
+```
+
+**Step 4**: Go to production
+
+```bash
+pilot -b main setup production --admin-domain admin.domain.tld --tls --letsencrypt-email email@example.com
+```
+
+Pilot's [production guide](https://github.com/frappe/pilot/blob/develop/docs/production.md) covers process managers, domains and TLS. To run production with bench instead, follow Frappe's [production setup](https://docs.frappe.io/framework/user/en/production-setup).
 
 ## Getting Started (Development)
+
+### With a Coding Agent
+
+Add the [`frappe-builder`](skills/frappe-builder/SKILL.md) skill to Claude Code, Codex, OpenCode or another coding agent:
+
+```bash
+npx skills add frappe/builder
+```
+
+Then ask it to set up a local Builder site. The skill reuses a bench you already have or creates one, connects through [frappectl](https://github.com/frappe/frappectl), and from there edits, builds and publishes pages for you, locally or on any Frappe site you sign in to.
+
+### Pilot
+
+On Linux or macOS, [install Pilot](#self-hosting) and create a bench. In the setup wizard, pick Frappe's `develop` branch.
+
+```bash
+pilot new dev
+pilot -b dev start
+```
+
+In a new terminal, add Builder and create a site:
+
+```bash
+pilot -b dev get-app https://github.com/frappe/builder --branch develop
+pilot -b dev new-site builder.localhost
+pilot -b dev install-app builder.localhost builder
+pilot -b dev frappe --site builder.localhost set-config ignore_csrf 1 # prevents CSRFToken errors while using the vite dev server
+```
+
+Open [http://builder.localhost:8000/builder](http://builder.localhost:8000/builder) and log in as `Administrator` / `admin`. Pilot moves to the next free port if 8000 is taken.
+
+### Existing Bench
+
+If you already have a [bench](https://docs.frappe.io/framework/user/en/installation) on Frappe's `develop` branch, run `bench start` and keep it running. Then, in a new terminal inside `frappe-bench`:
+
+```bash
+bench get-app builder --branch develop
+bench new-site builder.localhost --install-app builder
+bench browse builder.localhost --user Administrator
+bench --site builder.localhost set-config ignore_csrf 1 # prevents CSRFToken errors while using the vite dev server
+```
+
+The editor is at `builder.localhost:8000/builder`.
 
 ### Docker
 
@@ -123,37 +181,18 @@ Wait until the setup script creates a site and you see `Current Site set to buil
 Username: `Administrator`
 Password: `admin`
 
-### Local Setup
+### Frontend Development
 
-1. [Setup Bench](https://docs.frappe.io/framework/user/en/installation).
-1. In the frappe-bench directory, run `bench start` and keep it running.
-1. Open a new terminal session and cd into `frappe-bench` directory and run following commands:
-```bash
-bench get-app builder
-bench new-site builder.localhost --install-app builder
-bench browse builder.localhost --user Administrator
-bench --site builder.localhost set-config ignore_csrf 1 # prevents CSRFToken errors while using the vite dev server
-```
-1. Access the builder page at `builder.localhost:8000/builder` in your web browser.
+In a new terminal, from `apps/builder` inside your bench:
 
-**For Frontend Development**
-1. Open a new terminal session and run the following commands:
 ```bash
-cd frappe-bench/apps/builder
 yarn dev-setup
 yarn dev --host
 ```
-1. Now, you can access the site on vite dev server at `http://builder.localhost:8080`
 
-**Note:** You'll find all the code related to Builder's frontend inside `frappe-bench/apps/builder/frontend`
+Now, you can access the site on vite dev server at `http://builder.localhost:8080`
 
-## Manage Your Site With an AI Agent
-
-The [`frappe-builder`](skills/frappe-builder/SKILL.md) skill lets your own coding agent (Claude Code, Codex, OpenCode and others) edit, build and publish Builder pages on any Frappe site through [frappectl](https://github.com/frappe/frappectl):
-
-```bash
-npx skills add frappe/builder
-```
+**Note:** You'll find all the code related to Builder's frontend inside `apps/builder/frontend`
 
 <h2></h2>
 
