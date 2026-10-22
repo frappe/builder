@@ -19,7 +19,8 @@ at a release, not to have vetted it, and the sha256 is the one fact Builder
 takes on faith before it checks the bytes for itself.
 
 A bare Hub host gets HTTPS, because the release that the Hub sends holds the
-sha256. A local Hub can still be plain HTTP, but its URL must say so.
+sha256. A local Hub can still be plain HTTP, but its URL must say so, and only
+developer mode lets a request reach this machine. See `safe_requests`.
 """
 
 from __future__ import annotations
@@ -43,6 +44,7 @@ from builder.extensions.constants import (
 )
 from builder.extensions.installations import NO_BUILDER_ACCESS, describe_installation, install_job_id
 from builder.extensions.package import ValidatedPackage, validate_package
+from builder.extensions.safe_requests import get_safe_request_session
 from builder.utils import has_page_read
 
 NOT_INSTALLABLE = "You cannot install extensions."
@@ -163,7 +165,10 @@ def hub_get(hub_url: str, method: str, params: dict) -> dict:
 	url = f"{hub_url}/{HUB_API}.{method}"
 	too_large = _("The Hub sent more than a release listing should need.")
 	try:
-		with requests.get(url, params=params, timeout=HUB_TIMEOUT, stream=True) as response:
+		with (
+			get_safe_request_session() as session,
+			session.get(url, params=params, timeout=HUB_TIMEOUT, stream=True) as response,
+		):
 			content = read_capped(response, MAX_METADATA_BYTES, too_large)
 	except requests.RequestException:
 		frappe.throw(_("Could not reach the Builder Hub at {0}.").format(hub_url))
@@ -199,11 +204,14 @@ def download_package(release: Release) -> bytes:
 	"""The `.builderext` bytes for one release, proven against its sha256.
 
 	Stops the stream past the release `package_size`, and refuses a download
-	whose sha256 does not match `release.package_sha256`. `package_url` is not
-	address-checked, because the sha256 from the Hub proves the bytes.
+	whose sha256 does not match `release.package_sha256`. The sha256 proves the
+	bytes, but not where the request goes, so the guarded session checks that.
 	"""
 	try:
-		with requests.get(release.package_url, timeout=PACKAGE_TIMEOUT, stream=True) as response:
+		with (
+			get_safe_request_session() as session,
+			session.get(release.package_url, timeout=PACKAGE_TIMEOUT, stream=True) as response,
+		):
 			if not response.ok:
 				frappe.throw(_("The package download failed ({0}).").format(response.status_code))
 			too_large = _("The extension package is larger than its release says.")
