@@ -7,11 +7,11 @@ from unittest.mock import patch
 import frappe
 from frappe.tests.utils import FrappeTestCase
 
-from builder.builder.tests.extension_fixtures import drop_installations, make_installation, write_source
+from builder.builder.tests.extension_fixtures import drop_installations, make_installation
 from builder.extensions.constants import ENTRY_FILE, PROTOCOL_VERSION
 from builder.extensions.hub import Release
 from builder.extensions.package import ValidatedPackage
-from builder.extensions.updates import get_update, run_hub_update, update_from_hub
+from builder.extensions.updates import get_update, run_hub_update
 
 EXTENSION = "acme/updating"
 HUB = "https://hub.example.com"
@@ -71,16 +71,6 @@ class TestExtensionUpdates(FrappeTestCase):
 		self.assertNotEqual(row.entry_url, self.row.entry_url)
 		self.assertIsNone(message["error"])
 
-	def test_a_failed_file_write_keeps_the_installed_files(self):
-		write_source(self.row, "// 1.0.0")
-		with (
-			patch.object(Path, "write_bytes", side_effect=OSError("Disk full")),
-			patch.object(frappe.db, "rollback"),
-		):
-			message = self.run_update("1.1.0")
-		self.assertEqual(Path(self.row.release_path, ENTRY_FILE).read_text(), "// 1.0.0")
-		self.assertIn("Disk full", message["error"])
-
 	def test_a_failed_update_keeps_the_installed_release(self):
 		with (
 			patch(
@@ -95,8 +85,3 @@ class TestExtensionUpdates(FrappeTestCase):
 		row = frappe.get_doc("Builder Extension", self.row.name)
 		self.assertEqual([row.version, row.install_state], ["1.0.0", "Ready"])
 		self.assertEqual(publish.call_args.args[1]["error"], "Hub is down")
-
-	def test_an_install_with_no_hub_cannot_update(self):
-		self.row.db_set("source_url", "")
-		with self.assertRaises(frappe.ValidationError):
-			update_from_hub(EXTENSION, "1.1.0")

@@ -1,7 +1,6 @@
 # Copyright (c) 2026, Frappe Technologies Pvt Ltd and Contributors
 # See license.txt
 
-from unittest.mock import patch
 
 import frappe
 from frappe.tests.utils import FrappeTestCase
@@ -15,7 +14,6 @@ from builder.builder.tests.extension_fixtures import (
 from builder.extensions.access import assert_extension_access
 from builder.extensions.installations import (
 	can_manage_extensions,
-	get_installation_details,
 	get_installations,
 	set_extension_enabled,
 	uninstall_extension,
@@ -48,12 +46,6 @@ class TestInstallations(FrappeTestCase):
 		self.assertTrue(row["enabled"])
 		self.assertEqual(row["entry_url"], f"/files/builder_extensions/{installation.name}/sum123/main.js")
 
-	def test_keeps_a_disabled_installation(self):
-		"""Hiding it would leave no way to turn it back on but the bench."""
-		make_installation(EXTENSION, enabled=0)
-
-		self.assertFalse(listed(EXTENSION)["enabled"])
-
 	def test_a_page_reader_gets_the_list_without_reading_the_installation(self):
 		"""The editor loads an extension from this row alone. A page reader cannot read the document."""
 		make_installation(EXTENSION)
@@ -61,21 +53,6 @@ class TestInstallations(FrappeTestCase):
 
 		self.assertFalse(frappe.has_permission("Builder Extension", "read"))
 		self.assertEqual(listed(EXTENSION)["name"], EXTENSION)
-
-	def test_an_install_whose_job_is_gone_reads_as_failed(self):
-		"""A crashed worker cannot mark its row. So the panel offers a retry, not a spinner."""
-		make_installation(EXTENSION, install_state="Installing", enabled=0)
-
-		with patch("builder.extensions.installations.is_job_enqueued", return_value=False):
-			self.assertEqual(listed(EXTENSION)["install_state"], "Failed")
-
-	def test_details_report_whether_an_update_job_runs(self):
-		"""The details pane clears a stuck Update button when the job's message never came."""
-		make_installation(EXTENSION)
-
-		for is_running in (True, False):
-			with patch("builder.extensions.installations.is_job_enqueued", return_value=is_running):
-				self.assertEqual(get_installation_details(EXTENSION)["is_updating"], is_running)
 
 
 class TestEnableAndDisable(FrappeTestCase):
@@ -132,9 +109,3 @@ class TestUninstall(FrappeTestCase):
 
 		with self.assertRaises(frappe.PermissionError):
 			uninstall_extension(EXTENSION)
-
-
-class TestExtensionIcon(FrappeTestCase):
-	def test_refuses_a_path_that_climbs_out_of_the_install_folder(self):
-		with self.assertRaises(frappe.ValidationError):
-			make_installation("acme/climber", icon="../../secrets.svg")

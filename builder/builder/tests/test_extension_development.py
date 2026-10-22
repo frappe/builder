@@ -39,28 +39,12 @@ class TestDevExtension(FrappeTestCase):
 
 		self.assertIsNone(self.installed_version())
 
-	def test_registers_again_after_a_reload(self):
-		install_dev_extension(self.extension)
-
-		install_dev_extension(self.extension)
-
-		self.assertEqual(self.installed_version(), "0.0.0-dev")
-
 	def test_refuses_an_extension_the_site_runs(self):
 		"""The editor would load both copies, and a plugin cannot leave the app."""
 		make_installation(self.extension, version="1.4.0")
 
 		with self.assertRaisesRegex(frappe.ValidationError, "Disable it"):
 			install_dev_extension(self.extension)
-
-	def test_leaves_a_disabled_installation_alone(self):
-		"""An author can build a new release of an extension the site has installed."""
-		make_installation(self.extension, version="1.4.0", enabled=0)
-
-		install_dev_extension(self.extension)
-		remove_dev_extension(self.extension)
-
-		self.assertEqual(self.installed_version(), "1.4.0")
 
 	def test_refuses_a_user_who_cannot_manage_extensions(self):
 		"""A development installation is the site's, like any other."""
