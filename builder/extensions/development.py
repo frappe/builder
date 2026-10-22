@@ -23,16 +23,27 @@ from builder.extensions.constants import DEV_EXTENSION_VERSION
 def install_dev_extension(extension: str) -> None:
 	"""Give a dev-server extension an installation.
 
-	An extension the site already installed keeps that installation as it stands.
-	Building one you also run is the ordinary case.
+	An enabled installation of the same extension is refused. The editor would
+	load both copies, and a plugin cannot leave the app. A disabled installation
+	keeps its record as it stands, so an author can build a new release of an
+	extension the site has installed.
 	"""
 	assert_developer_mode()
 	frappe.has_permission("Builder Page", ptype="read", throw=True)
 	assert_extension_manager()
 
-	if find_installation(extension):
+	installation = find_installation(extension)
+	if not installation:
+		create_dev_installation(extension)
 		return
+	enabled, version = frappe.db.get_value(INSTALLATION_DOCTYPE, installation, ["enabled", "version"])
+	if enabled and version != DEV_EXTENSION_VERSION:
+		frappe.throw(
+			_('"{0}" is installed on this site. Disable it to load its dev server.').format(extension)
+		)
 
+
+def create_dev_installation(extension: str) -> None:
 	frappe.get_doc(
 		{
 			"doctype": INSTALLATION_DOCTYPE,
