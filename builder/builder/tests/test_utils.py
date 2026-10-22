@@ -1,4 +1,6 @@
+import json
 import os
+from types import SimpleNamespace
 from unittest.mock import patch
 
 import frappe
@@ -224,10 +226,34 @@ class TestBuilderUtils(FrappeTestCase):
 		# Test with local/private IP addresses (should return None)
 		self.assertIsNone(make_safe_get_request("http://127.0.0.1/test"))
 		self.assertIsNone(make_safe_get_request("http://localhost/test"))
+		self.assertIsNone(make_safe_get_request("http://169.254.169.254/latest/meta-data/"))
+		self.assertIsNone(make_safe_get_request("http://0.0.0.0:8000/"))
 
 		# Test with invalid URL
 		with self.assertRaises(Exception):
 			make_safe_get_request("not-a-url")
+
+	def test_make_safe_get_request_decodes_like_make_get_request(self):
+		cases = [
+			({"content-type": "application/json"}, '{"a": 1}', {"a": 1}),
+			({"content-type": "text/plain; charset=utf-8"}, "a=1", {"a": ["1"]}),
+			({"content-type": "text/html"}, "<p>hi</p>", "<p>hi</p>"),
+			({}, "<p>hi</p>", None),
+		]
+		for headers, text, expected in cases:
+			response = SimpleNamespace(
+				headers=headers,
+				text=text,
+				json=lambda text=text: json.loads(text),
+				raise_for_status=lambda: None,
+			)
+			with patch("builder.utils.public_session") as session:
+				session.return_value.get.return_value = response
+				self.assertEqual(make_safe_get_request("https://api.example.com"), expected)
+
+	def test_make_safe_get_request_refuses_a_proxy(self):
+		with self.assertRaises(TypeError):
+			make_safe_get_request("https://api.example.com", proxies={"https": "http://127.0.0.1:8000"})
 
 	def test_split_styles(self):
 		# Test with None

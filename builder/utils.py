@@ -2,11 +2,10 @@ import inspect
 import os
 import re
 import shutil
-import socket
 from dataclasses import dataclass
 from functools import wraps
 from os.path import join
-from urllib.parse import unquote, urlparse
+from urllib.parse import parse_qs, unquote
 
 import frappe
 import yaml
@@ -31,6 +30,8 @@ from frappe.utils.safe_exec import (
 from RestrictedPython import compile_restricted
 from RestrictedPython import safe_globals as restricted_safe_globals
 from werkzeug.routing import Rule
+
+from builder.public_fetch import public_session
 
 
 def compact_json(obj) -> str:
@@ -244,13 +245,29 @@ def get_cached_doc_as_dict(doctype, name):
 	return frappe.get_cached_doc(doctype, name).as_dict()
 
 
-def make_safe_get_request(url, **kwargs):
-	parsed = urlparse(url)
-	parsed_ip = socket.gethostbyname(parsed.hostname)
-	if parsed_ip.startswith(("127", "10", "192", "172")):
-		return
+def make_safe_get_request(url, auth=None, headers=None, data=None, json=None, params=None, timeout=None):
+	# frappe's make_get_request takes no session before v16.50, and kwargs such as
+	# proxies must not reach requests, since a proxied request skips the address check
+	try:
+		response = public_session().get(
+			url, auth=auth, headers=headers, data=data, json=json, params=params, timeout=timeout
+		)
+	except frappe.PermissionError:
+		return None
+	response.raise_for_status()
+	return decode_response(response)
 
-	return frappe.integrations.utils.make_get_request(url, **kwargs)
+
+def decode_response(response):
+	"""What frappe's make_get_request returns for a response."""
+	content_type = response.headers.get("content-type")
+	if not content_type:
+		return None
+	if content_type == "text/plain; charset=utf-8":
+		return parse_qs(response.text)
+	if content_type.startswith("application/") and content_type.split(";")[0].endswith("json"):
+		return response.json()
+	return response.text or None
 
 
 def safe_get_list(*args, **kwargs):
