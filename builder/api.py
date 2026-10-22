@@ -232,7 +232,7 @@ def convert_to_webp(image_url: str | None = None, file_doc: Document | None = No
 	def get_extension(filename: str) -> str:
 		return filename.split(".")[-1].lower() if "." in filename else ""
 
-	def save_as_webp(image, path: str) -> None:
+	def save_as_webp(image, path: str | BytesIO) -> None:
 		# a 5000px original costs ~100MB decoded and thrashes the browser's image cache,
 		# so the canvas re-decodes it on every pan; thumbnail() only ever shrinks
 		image.thumbnail((MAX_IMAGE_EDGE, MAX_IMAGE_EDGE))
@@ -272,10 +272,11 @@ def convert_to_webp(image_url: str | None = None, file_doc: Document | None = No
 		return new_file.file_url
 
 	def handle_builder_asset(image_url: str) -> str:
+		assets_path = os.path.abspath(frappe.get_app_path("builder", "www", "builder_assets"))
 		image_path = os.path.abspath(frappe.get_app_path("builder", "www", image_url.lstrip("/")))
 		image_path = image_path.replace("_", "-").replace("/builder-assets", "/builder_assets")
 		extn = get_extension(image_path)
-		if not can_convert_image(extn):
+		if not image_path.startswith(assets_path + os.sep) or not can_convert_image(extn):
 			return image_url
 		image = Image.open(image_path)
 		save_as_webp(image, to_webp_path(image_path, extn))
@@ -292,12 +293,11 @@ def convert_to_webp(image_url: str | None = None, file_doc: Document | None = No
 		url = unquote(image_url)
 		response = public_session().get(url, timeout=20, headers={"User-Agent": "FrappeBuilder/1.0"})
 		response.raise_for_status()
-		image = Image.open(BytesIO(response.content))
-		filename = get_external_webp_filename(url)
-		file = frappe.get_doc({"doctype": "File", "file_name": filename, "file_url": f"/files/{filename}"})
-		save_as_webp(image, file.get_full_path())
-		file.save()
-		return file.file_url
+		if len(response.content) > MAX_ASSET_BYTES:
+			frappe.throw(f"Image is larger than {MAX_ASSET_BYTES // (1024 * 1024)}MB: {url}")
+		buffer = BytesIO()
+		save_as_webp(Image.open(BytesIO(response.content)), buffer)
+		return save_imported_asset(get_external_webp_filename(url), buffer.getvalue())
 
 	if not image_url and not file_doc:
 		return ""

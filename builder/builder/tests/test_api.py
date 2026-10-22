@@ -1,4 +1,5 @@
 import io
+import os
 from contextlib import contextmanager
 from unittest.mock import patch
 
@@ -190,6 +191,32 @@ class TestConvertToWebp(FrappeTestCase):
 	def test_pulls_an_external_image_as_webp(self):
 		with serving(Response(png_bytes())):
 			self.assertTrue(convert_to_webp(image_url=self.url).endswith(".webp"))
+
+	def test_keeps_an_existing_file_with_the_same_name(self):
+		other_url = self.url.replace("cdn.example.com", "other.example.com")
+		with serving(Response(png_bytes("red")), Response(png_bytes("blue"))):
+			first = convert_to_webp(image_url=self.url)
+			first_content = frappe.get_doc("File", {"file_url": first}).get_content()
+			second = convert_to_webp(image_url=other_url)
+
+		self.assertNotEqual(first, second)
+		self.assertEqual(frappe.get_doc("File", {"file_url": first}).get_content(), first_content)
+
+	def test_leaves_out_an_image_over_the_size_limit(self):
+		with serving(Response(png_bytes())), patch("builder.api.MAX_ASSET_BYTES", 10):
+			self.assertRaises(frappe.ValidationError, convert_to_webp, image_url=self.url)
+
+	def test_converts_only_files_inside_builder_assets(self):
+		outside = frappe.get_app_path("builder", "www", "outside.png")
+		converted = outside.replace(".png", ".webp")
+		with open(outside, "wb") as f:
+			f.write(png_bytes())
+		self.addCleanup(os.remove, outside)
+		self.addCleanup(lambda: os.path.exists(converted) and os.remove(converted))
+
+		url = "/builder_assets/../outside.png"
+		self.assertEqual(convert_to_webp(image_url=url), url)
+		self.assertFalse(os.path.exists(converted))
 
 	def test_refuses_a_user_who_cannot_edit_pages(self):
 		email = "builder-website-user@example.com"
