@@ -26,13 +26,15 @@ class TestReadRelease(FrappeTestCase):
 		self.assertRaises(frappe.ValidationError, read_release, "acme/installing", release)
 
 
-def start_local_hub(test_case: FrappeTestCase) -> str:
-	"""A Hub on this machine. Answers with its URL."""
+def start_local_hub(test_case: FrappeTestCase, status: int = 200, headers: dict | None = None) -> str:
+	"""A Hub on this machine that answers every GET the same way. Answers with its URL."""
 	body = b'{"message": {"ok": 1}}'
 
 	class Handler(BaseHTTPRequestHandler):
 		def do_GET(self):
-			self.send_response(200)
+			self.send_response(status)
+			for name, value in (headers or {}).items():
+				self.send_header(name, value)
 			self.send_header("Content-Length", str(len(body)))
 			self.end_headers()
 			self.wfile.write(body)
@@ -63,3 +65,14 @@ class TestHubAddresses(FrappeTestCase):
 		hub_url = start_local_hub(self)
 		with self.developer_mode(True):
 			self.assertEqual(hub_get(hub_url, "get_catalog", {}), {"ok": 1})
+
+	def test_refuses_a_redirect_to_an_internal_address(self):
+		hub_url = start_local_hub(self, status=302, headers={"Location": "http://10.0.0.1/"})
+		with self.developer_mode(True):
+			self.assertRaises(BlockedRequest, hub_get, hub_url, "get_catalog", {})
+
+	def test_checks_the_address_that_the_connection_reaches(self):
+		"""A name can resolve to a public address for the check, then to this machine."""
+		hub_url = start_local_hub(self)
+		with self.developer_mode(False), patch("builder.extensions.safe_requests.validate_request_url"):
+			self.assertRaises(BlockedRequest, hub_get, hub_url, "get_catalog", {})
