@@ -18,14 +18,13 @@ import logging
 import re
 
 import frappe
-import requests
 
 from builder.ai import llm
 from builder.ai.block_codec import BlockCodec
 from builder.ai.models import ModelRegistry
 from builder.ai.prompts import Prompts
 from builder.ai.session import AISession
-from builder.api import assert_not_private_url
+from builder.public_fetch import public_session
 
 logger = frappe.logger("builder.ai.agent.artifact")
 logger.setLevel(logging.INFO)
@@ -53,10 +52,10 @@ def image_url_resolves(url: str) -> bool:
 	A 3xx still counts as resolvable, since the provider will follow it.
 	"""
 	try:
-		assert_not_private_url(url)
-		r = requests.head(url, timeout=IMAGE_CHECK_TIMEOUT, allow_redirects=False)
+		session = public_session()
+		r = session.head(url, timeout=IMAGE_CHECK_TIMEOUT, allow_redirects=False)
 		if r.status_code in (403, 405):  # some CDNs only answer GET
-			r = requests.get(url, timeout=IMAGE_CHECK_TIMEOUT, stream=True, allow_redirects=False)
+			r = session.get(url, timeout=IMAGE_CHECK_TIMEOUT, stream=True, allow_redirects=False)
 			r.close()
 		return r.ok
 	except Exception as e:

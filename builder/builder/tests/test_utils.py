@@ -224,6 +224,8 @@ class TestBuilderUtils(FrappeTestCase):
 		# Test with local/private IP addresses (should return None)
 		self.assertIsNone(make_safe_get_request("http://127.0.0.1/test"))
 		self.assertIsNone(make_safe_get_request("http://localhost/test"))
+		self.assertIsNone(make_safe_get_request("http://169.254.169.254/latest/meta-data/"))
+		self.assertIsNone(make_safe_get_request("http://0.0.0.0:8000/"))
 
 		# Test with invalid URL
 		with self.assertRaises(Exception):

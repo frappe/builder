@@ -7,6 +7,7 @@ from frappe.tests.utils import FrappeTestCase
 from PIL import Image
 
 from builder.api import (
+	convert_to_webp,
 	create_import_folder,
 	duplicate_page,
 	get_copy_script_name,
@@ -45,11 +46,9 @@ class Response:
 
 @contextmanager
 def serving(*responses):
-	with (
-		patch("builder.api.requests.get", side_effect=list(responses)) as get,
-		patch("builder.api.assert_not_private_url"),
-	):
-		yield get
+	with patch("builder.api.public_session") as session:
+		session.return_value.get.side_effect = list(responses)
+		yield session.return_value.get
 
 
 class TestImportRemoteAssets(FrappeTestCase):
@@ -182,6 +181,27 @@ class TestImportRemoteFonts(FrappeTestCase):
 			imported = import_remote_fonts(fonts)
 
 		self.assertEqual(len(imported), 2)
+
+
+class TestConvertToWebp(FrappeTestCase):
+	def setUp(self):
+		self.url = f"https://cdn.example.com/{frappe.generate_hash(length=8)}.png"
+
+	def test_pulls_an_external_image_as_webp(self):
+		with serving(Response(png_bytes())):
+			self.assertTrue(convert_to_webp(image_url=self.url).endswith(".webp"))
+
+	def test_refuses_a_user_who_cannot_edit_pages(self):
+		email = "builder-website-user@example.com"
+		if not frappe.db.exists("User", email):
+			frappe.get_doc(
+				{"doctype": "User", "email": email, "first_name": "Website", "user_type": "Website User"}
+			).insert(ignore_permissions=True)
+
+		with serving(Response(png_bytes())) as get, self.set_user(email):
+			self.assertRaises(frappe.ValidationError, convert_to_webp, image_url=self.url)
+
+		get.assert_not_called()
 
 
 class TestDuplicatePage(FrappeTestCase):
