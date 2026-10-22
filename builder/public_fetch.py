@@ -25,10 +25,18 @@ def public_session() -> requests.Session:
 	# a proxy dials the target itself, out of reach of the check
 	session.trust_env = False
 	session.max_redirects = MAX_REDIRECTS
+	session.hooks["response"].append(close_redirect_body)
 	adapter = PublicAddressAdapter()
 	session.mount("http://", adapter)
 	session.mount("https://", adapter)
 	return session
+
+
+def close_redirect_body(response: requests.Response, *args, **kwargs) -> None:
+	# requests reads a redirect's whole body before following it, even when the caller
+	# streams or bounds the final one; a closed body reads as empty
+	if response.is_redirect:
+		response.raw.close()
 
 
 def public_addresses(hostname: str) -> list[str]:
