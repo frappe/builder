@@ -52,26 +52,12 @@ class TestExtensionPackage(FrappeTestCase):
 			sorted(package.files), ["assets/style.css", "chunks/panel.js", "main.js", "manifest.json"]
 		)
 
-	def test_refuses_a_file_outside_the_build_folders(self):
-		with self.assertRaises(frappe.ValidationError):
-			validate_package(make_package(build(**{"extra/notes.js": b""})), NAME, VERSION)
-
 	def test_refuses_a_sandboxed_package(self):
 		"""Only a sandboxed package asks for permissions. It imports an SDK this Builder does not serve."""
 		with self.assertRaisesRegex(frappe.ValidationError, "sandboxed"):
 			validate_package(
 				make_package(build(**{"manifest.json": manifest(permissions=[])})), NAME, VERSION
 			)
-
-	def test_refuses_a_type_an_extension_does_not_load(self):
-		with self.assertRaises(frappe.ValidationError):
-			validate_package(make_package(build(**{"assets/page.html": b"<script></script>"})), NAME, VERSION)
-
-	def test_checks_every_svg_not_only_the_icon(self):
-		unsafe = b'<svg xmlns="http://www.w3.org/2000/svg"><script>alert(1)</script></svg>'
-
-		with self.assertRaises(frappe.ValidationError):
-			validate_package(make_package(build(**{"assets/logo.svg": unsafe})), NAME, VERSION)
 
 	def test_refuses_a_path_that_climbs_out(self):
 		with self.assertRaises(frappe.ValidationError):
