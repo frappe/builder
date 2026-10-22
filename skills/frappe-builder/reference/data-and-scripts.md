@@ -28,6 +28,8 @@ In both:
 - It runs as the visitor, usually Guest. `frappe.db.get_all` skips permission checks, so filter to public records; `frappe.db.get_list` raises for Guests.
 - No imports, no tuple unpacking (`a, b = x`), no names starting with `_` (so no `frappe._`), no `.strftime()`, no SQL functions in `fields`.
 - A `def` can't see the script's top-level names; pass them in.
+- Builtins are RestrictedPython's safe set plus `all`, `any`, `dict`, `enumerate`, `list`, `max`, `min`, `range`, `set`, `sorted`, `sum`: no `reversed` (slice with `[::-1]`). Augmented assignment to an item fails to compile: write `counts[key] = counts[key] + 1`, not `counts[key] += 1`.
+- `frappe.make_get_request` returns parsed JSON for a JSON response and the text for most others, but `parse_qs` of the body for exactly `text/plain; charset=utf-8`, which raw.githubusercontent.com sends; fetch such files from a host that sends another type. A failed request raises and writes an Error Log, so check a listing instead of probing URLs for a 404.
 - Any exception fails the page. `redirect("/path")` returns a 302.
 
 `data` merges into the page's template context: `data.style` wipes every block style, `data.preview` drops the token stylesheet; name keys after your content. `data.title` sets `<title>`.
@@ -42,6 +44,9 @@ A route like `events/:event` matches every value; the script reads `frappe.form_
 - Nothing 404s on its own: an unknown value renders with empty bindings. Check the record and `redirect("/404")`, or show an empty state. (`frappe.get_doc` on a missing name gives Guests a 403; `raise frappe.PageDoesNotExistError()` shows the not-found page with status 200.)
 - `canonical_url` is rendered as Jinja: `https://example.com/events/{{ frappe.form_dict.event }}`.
 - The draft preview takes route values as query parameters, except `page`, which it uses itself.
+- A route variable matches one path segment, and route validation rejects converters such as `<path:rest>`. For paths of varying depth, publish one page per depth (`docs/:p1`, `docs/:p1/:p2`, ...) that each embed the same component, and let the component's data script read `frappe.form_dict.p1`, `p2`, ...: the template and its logic stay in one place.
+- In the editor canvas a component's data script sees no route values. Read a prop as the fallback, so the canvas shows a real record.
+- Only a page data script sets `<title>` (`data.title`). A component that renders the page sets `document.title` from its client script.
 
 ## Client scripts
 
