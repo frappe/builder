@@ -4,7 +4,7 @@
 			v-if="canOpen"
 			ref="openAction"
 			class="inline-flex shrink-0"
-			:class="{ 'absolute invisible': !isActionVisible('open') }">
+			:class="{ 'invisible absolute': !isActionVisible('open') }">
 			<Button variant="solid" size="sm" icon-left="lucide-panel-right" label="Open" @click="emit('open')" />
 		</span>
 
@@ -12,7 +12,7 @@
 			v-if="canManage"
 			ref="toggleAction"
 			class="inline-flex shrink-0"
-			:class="{ 'absolute invisible': !isActionVisible('toggle') }">
+			:class="{ 'invisible absolute': !isActionVisible('toggle') }">
 			<Button
 				variant="subtle"
 				size="sm"
@@ -26,7 +26,7 @@
 			v-if="canManage"
 			ref="uninstallAction"
 			class="inline-flex shrink-0"
-			:class="{ 'absolute invisible': !isActionVisible('uninstall') }">
+			:class="{ 'invisible absolute': !isActionVisible('uninstall') }">
 			<Button
 				variant="subtle"
 				theme="red"
@@ -40,7 +40,7 @@
 		<span
 			ref="moreAction"
 			class="ml-auto inline-flex shrink-0"
-			:class="{ 'absolute invisible': !overflowActionIds.length }">
+			:class="{ 'invisible absolute': !overflowActionIds.length }">
 			<Dropdown :options="moreActions" align="end">
 				<template #trigger>
 					<Button
