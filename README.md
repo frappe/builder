@@ -38,22 +38,21 @@ Most existing solutions were either too complex, too restrictive, or difficult t
 
 - **Bob, an AI builder that reads your site first.** Ask for a page or a change in plain words. Before it edits, Bob reads your existing pages, theme tokens and components, so new work follows your design language and fits your routes. It wires forms and data sections to real doctypes and looks facts up online instead of inventing them. Sensitive changes wait for your approval, and every AI edit can be reverted.
 
-  <img alt="Bob reading the design tokens and pages before editing a page in Frappe Builder" src=".github/assets/bob.webp">
-
 - **Your Frappe database is the CMS.** A page or component can run a Python data script that fetches from any doctype, then loop over the results and bind them to any property or style. A dynamic route like `/blog/:slug` turns one design into a page for every record, with no separate CMS or API to maintain.
 
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset=".github/assets/data-script-dark.webp">
-    <img alt="A data script fetching products and the product grid it renders" src=".github/assets/data-script.webp">
+    <img alt="The data script behind a byculla/colour/:colour route, with the Paint Colour record it returns" src=".github/assets/data-script.webp">
   </picture>
 
-- **Components with props and scripts.** Turn any group of blocks into a reusable component with typed props, its own data script and its own client script. Change it once and every page that uses it follows.
+- **Components with props and scripts.** Turn any group of blocks into a reusable component with typed props, its own data script and its own client script. Bind its props to page data to repeat it over your records. Change it once and every page that uses it follows.
+
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset=".github/assets/components-dark.webp">
+    <img alt="A colour chip component repeated over Paint Colour records, its props bound to fields from the page data" src=".github/assets/components.webp">
+  </picture>
 
 - **Fast by default.** Published pages are lean HTML and CSS with no front-end framework to load before they render. [frappe.io](https://frappe.io) runs on Builder.
-
-  <img alt="Lighthouse scores for similar pages built with Builder, Framer, Webflow and Wix" src=".github/assets/lighthouse.webp">
-
-  <sub>Google Lighthouse (mobile) on nearly identical test pages built with each platform, as published on [frappe.io/builder](https://frappe.io/builder).</sub>
 
 - **Works with your coding agent.** The [`frappe-builder`](skills/frappe-builder/SKILL.md) skill lets Claude Code, Codex, OpenCode and other agents build, edit and publish pages on any Frappe site. See [With a Coding Agent](#with-a-coding-agent).
 
