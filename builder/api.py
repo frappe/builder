@@ -1,7 +1,5 @@
-import ipaddress
 import os
 import re
-import socket
 from io import BytesIO
 from itertools import count
 from types import FunctionType, MethodType, ModuleType
@@ -9,7 +7,6 @@ from typing import Any
 from urllib.parse import unquote, urlparse
 
 import frappe
-import requests
 from frappe import _
 from frappe.apps import get_apps as get_permitted_apps
 from frappe.core.doctype.file.file import get_local_image
@@ -23,6 +20,7 @@ from werkzeug.wrappers import Response
 from builder import builder_analytics
 from builder.builder.doctype.builder_page.builder_page import BuilderPageRenderer
 from builder.builder.doctype.builder_snapshot import builder_snapshot
+from builder.public_fetch import public_session
 from builder.utils import compact_json, has_page_read, has_page_write, normalize_renamed_doc
 
 
@@ -136,12 +134,11 @@ def import_remote_font(family: str, url: str) -> str:
 	if existing:
 		return existing
 
-	assert_not_private_url(url)
 	extension = next((e for e in FONT_EXTENSIONS if urlparse(url).path.lower().endswith(f".{e}")), None)
 	if not extension:
 		frappe.throw(f"Not a font file: {url}")
 
-	response = requests.get(url, timeout=20, headers={"User-Agent": "FrappeBuilder/1.0"})
+	response = public_session().get(url, timeout=20, headers={"User-Agent": "FrappeBuilder/1.0"})
 	response.raise_for_status()
 	if len(response.content) > MAX_FONT_BYTES:
 		frappe.throw(f"Font is larger than {MAX_FONT_BYTES // (1024 * 1024)}MB: {url}")
@@ -170,7 +167,6 @@ MAX_IMAGE_EDGE = 2048
 def import_remote_asset(url: str) -> str:
 	import hashlib
 
-	assert_not_private_url(url)
 	digest = hashlib.md5(url.encode()).hexdigest()[:10]
 	# the name is derived from the URL, so importing the same asset twice reuses the file
 	stem = f"builder-import-{digest}"
@@ -178,7 +174,7 @@ def import_remote_asset(url: str) -> str:
 	if existing:
 		return existing
 
-	response = requests.get(url, timeout=20, headers={"User-Agent": "FrappeBuilder/1.0"})
+	response = public_session().get(url, timeout=20, headers={"User-Agent": "FrappeBuilder/1.0"})
 	response.raise_for_status()
 	content = response.content
 	if len(content) > MAX_ASSET_BYTES:
@@ -219,6 +215,7 @@ def save_imported_asset(file_name: str, content: bytes) -> str:
 
 
 @frappe.whitelist()
+@has_page_write("You do not have permission to convert images.")
 def convert_to_webp(image_url: str | None = None, file_doc: Document | None = None) -> str:
 	"""
 	Convert image to webp format.
@@ -293,8 +290,9 @@ def convert_to_webp(image_url: str | None = None, file_doc: Document | None = No
 
 	def handle_external_url(image_url: str) -> str:
 		url = unquote(image_url)
-		assert_not_private_url(url)
-		image = Image.open(BytesIO(requests.get(url).content))
+		response = public_session().get(url, timeout=20, headers={"User-Agent": "FrappeBuilder/1.0"})
+		response.raise_for_status()
+		image = Image.open(BytesIO(response.content))
 		filename = get_external_webp_filename(url)
 		file = frappe.get_doc({"doctype": "File", "file_name": filename, "file_url": f"/files/{filename}"})
 		save_as_webp(image, file.get_full_path())
@@ -314,31 +312,6 @@ def convert_to_webp(image_url: str | None = None, file_doc: Document | None = No
 	if image_url.startswith("http"):
 		return handle_external_url(image_url)
 	return image_url
-
-
-def assert_not_private_url(url: str) -> list[str]:
-	"""Raise PermissionError if the URL resolves to a private/internal IP (SSRF guard).
-	Returns the addresses it validated so a caller can PIN its connection to one — a
-	second DNS resolution at connect time can answer differently (DNS rebinding)."""
-	parsed = urlparse(url)
-	if parsed.scheme not in ("http", "https"):
-		frappe.throw(_("Only HTTP/HTTPS URLs are allowed for external images."), frappe.PermissionError)
-	hostname = parsed.hostname
-	if not hostname:
-		frappe.throw(_("Invalid URL: missing hostname."), frappe.ValidationError)
-	try:
-		addr_infos = socket.getaddrinfo(hostname, None)
-	except socket.gaierror:
-		frappe.throw(_("Could not resolve hostname: {0}").format(hostname), frappe.ValidationError)
-	ips = []
-	for addr_info in addr_infos:
-		ip = ipaddress.ip_address(addr_info[4][0])
-		if ip.is_private or ip.is_loopback or ip.is_link_local or ip.is_reserved or ip.is_multicast:
-			frappe.throw(
-				_("Requests to private or internal addresses are not allowed."), frappe.PermissionError
-			)
-		ips.append(str(ip))
-	return ips
 
 
 def check_app_permission():

@@ -2,11 +2,10 @@ import inspect
 import os
 import re
 import shutil
-import socket
 from dataclasses import dataclass
 from functools import wraps
 from os.path import join
-from urllib.parse import unquote, urlparse
+from urllib.parse import unquote
 
 import frappe
 import yaml
@@ -31,6 +30,8 @@ from frappe.utils.safe_exec import (
 from RestrictedPython import compile_restricted
 from RestrictedPython import safe_globals as restricted_safe_globals
 from werkzeug.routing import Rule
+
+from builder.public_fetch import public_session
 
 
 def compact_json(obj) -> str:
@@ -245,12 +246,10 @@ def get_cached_doc_as_dict(doctype, name):
 
 
 def make_safe_get_request(url, **kwargs):
-	parsed = urlparse(url)
-	parsed_ip = socket.gethostbyname(parsed.hostname)
-	if parsed_ip.startswith(("127", "10", "192", "172")):
-		return
-
-	return frappe.integrations.utils.make_get_request(url, **kwargs)
+	try:
+		return frappe.integrations.utils.make_get_request(url, session=public_session(), **kwargs)
+	except frappe.PermissionError:
+		return None
 
 
 def safe_get_list(*args, **kwargs):
