@@ -41,10 +41,7 @@ def close_redirect_body(response: requests.Response, *args, **kwargs) -> None:
 
 def public_addresses(hostname: str) -> list[str]:
 	"""Every address the hostname resolves to, refused unless all of them are public."""
-	try:
-		addresses = list(dict.fromkeys(info[4][0] for info in socket.getaddrinfo(hostname, None)))
-	except (socket.gaierror, UnicodeError):
-		frappe.throw(_("Could not resolve hostname: {0}").format(hostname), frappe.ValidationError)
+	addresses = list(dict.fromkeys(info[4][0] for info in socket.getaddrinfo(hostname, None)))
 	if not all(is_public_address(address) for address in addresses):
 		frappe.throw(_("Requests to private or internal addresses are not allowed."), frappe.PermissionError)
 	return addresses

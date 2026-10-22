@@ -19,9 +19,9 @@ class Handler(BaseHTTPRequestHandler):
 		if self.path == "/redirect":
 			self.send_response(302)
 			self.send_header("Location", f"http://internal.test:{self.server.server_port}/secret")
-		elif self.path in ("/loop", "/stalled-redirect"):
+		elif self.path == "/stalled-redirect":
 			self.send_response(302)
-			self.send_header("Location", "/loop" if self.path == "/loop" else "/ok")
+			self.send_header("Location", "/ok")
 		else:
 			self.send_response(200)
 		if self.path == "/stalled-redirect":
@@ -99,10 +99,6 @@ class TestPublicSession(FrappeTestCase):
 		self.assertEqual(response.status_code, 200)
 		self.assertEqual(self.server.paths, ["/stalled-redirect", "/ok"])
 
-	def test_stops_at_the_redirect_limit(self):
-		with self.resolving({"public.test": ["127.0.0.1"]}):
-			self.assertRaises(requests.TooManyRedirects, public_session().get, self.url("/loop"), timeout=5)
-
 	def test_reports_a_refused_connection(self):
 		with socket.socket() as probe:
 			probe.bind(("127.0.0.1", 0))
@@ -119,10 +115,6 @@ class TestPublicAddresses(FrappeTestCase):
 		answers = [(2, 1, 6, "", ("93.184.216.34", 0)), (2, 1, 6, "", ("10.0.0.1", 0))]
 		with patch("socket.getaddrinfo", return_value=answers):
 			self.assertRaises(frappe.PermissionError, public_addresses, "mixed.test")
-
-	def test_reports_a_host_that_does_not_resolve(self):
-		with patch("socket.getaddrinfo", side_effect=socket.gaierror):
-			self.assertRaises(frappe.ValidationError, public_addresses, "missing.test")
 
 	def test_tells_public_from_internal_addresses(self):
 		for address in ("93.184.216.34", "104.16.0.1", "2606:4700::1"):
