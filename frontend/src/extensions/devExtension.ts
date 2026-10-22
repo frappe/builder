@@ -12,7 +12,7 @@ const DESCRIPTOR_PATH = "/__builder-extension";
 
 const LAST_URL_KEY = "builder-extension:dev-url";
 /** The dev extension of this tab. A reload loads it again, so an edit that needs a reload keeps it. */
-const SESSION_KEY = "builder-extension:dev";
+const SESSION_KEY = "builder-extension:dev-session";
 const INSTALL_METHOD = "builder.extensions.development.install_dev_extension";
 const REMOVE_METHOD = "builder.extensions.development.remove_dev_extension";
 
@@ -33,15 +33,6 @@ export const isDevExtension = (extension: { name: string }) => devExtension.valu
 
 export const lastDevUrl = () => localStorage.getItem(LAST_URL_KEY) ?? "";
 
-type DevSession = { origin: string; name: string };
-
-const readSession = (): DevSession | null => JSON.parse(sessionStorage.getItem(SESSION_KEY) ?? "null");
-
-const saveSession = (session: DevSession) => sessionStorage.setItem(SESSION_KEY, JSON.stringify(session));
-
-/** The extension that this tab runs from a dev server. Startup skips its installed copy, so one copy runs. */
-export const getDevSessionExtension = () => (window.is_developer_mode ? readSession()?.name : undefined);
-
 const read = async (origin: string) => {
 	const response = await fetch(`${origin}${DESCRIPTOR_PATH}`).catch(() => {
 		throw new Error(`Nothing is answering at ${origin}. Is the dev server running?`);
@@ -57,8 +48,11 @@ const read = async (origin: string) => {
 
 /** The record lets the panel list the extension. If the site already installed it, it keeps that installation. */
 const install = (extension: string) =>
-	call(INSTALL_METHOD, { extension }).catch(() => {
-		throw new Error(`Builder could not register "${extension}". Is the site in developer mode?`);
+	// frappe-ui puts the server's own text in `messages`
+	call(INSTALL_METHOD, { extension }).catch((error: { messages?: string[] }) => {
+		throw new Error(
+			error.messages?.[0] ?? `Builder could not register "${extension}". Is the site in developer mode?`,
+		);
 	});
 
 const remove = (extension: string) =>
@@ -69,20 +63,18 @@ const remove = (extension: string) =>
 /**
  * Accepts any URL on the dev server. An author pastes the URL from the terminal.
  *
- * Answers null when the installed copy of the extension runs. A plugin cannot
- * leave the app, so the dev copy takes its place after a reload.
+ * Refuses an extension that this editor already runs. A plugin cannot leave the
+ * app, so the dev copy would run beside it.
  */
-export const loadDevExtension = async (url: string): Promise<DevelopmentExtension | null> => {
+export const loadDevExtension = async (url: string): Promise<DevelopmentExtension> => {
 	if (devExtension.value) throw new Error("Reload the editor to load another dev extension.");
 
 	const origin = new URL(url.trim()).origin;
 	const descriptor = await read(origin);
-	await install(descriptor.name);
 	if (runningExtensions.has(descriptor.name)) {
-		localStorage.setItem(LAST_URL_KEY, origin);
-		saveSession({ origin, name: descriptor.name });
-		return null;
+		throw new Error(`${descriptor.name} already runs here. Disable it, reload the editor, then load it again.`);
 	}
+	await install(descriptor.name);
 
 	const extension: DevelopmentExtension = {
 		name: descriptor.name,
@@ -98,7 +90,7 @@ export const loadDevExtension = async (url: string): Promise<DevelopmentExtensio
 	};
 	await loadExtension(extension);
 	localStorage.setItem(LAST_URL_KEY, origin);
-	saveSession({ origin, name: descriptor.name });
+	sessionStorage.setItem(SESSION_KEY, origin);
 	devExtension.value = extension;
 	return extension;
 };
@@ -112,12 +104,12 @@ export const stopDevExtension = async () => {
 
 /** After a reload, the dev extension that this tab ran. A dev server that stopped ends it. */
 export const restoreDevExtension = async () => {
-	const session = readSession();
-	if (!session) return;
+	const origin = sessionStorage.getItem(SESSION_KEY);
+	if (!origin) return;
 	try {
-		await loadDevExtension(session.origin);
+		await loadDevExtension(origin);
 	} catch (error) {
 		sessionStorage.removeItem(SESSION_KEY);
-		console.warn(`[builder] the dev extension at ${session.origin} did not load again`, error);
+		console.warn(`[builder] the dev extension at ${origin} did not load again`, error);
 	}
 };
