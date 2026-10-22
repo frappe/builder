@@ -1,5 +1,6 @@
 import socket
 import threading
+import time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from unittest.mock import patch
 
@@ -18,8 +19,18 @@ class Handler(BaseHTTPRequestHandler):
 		if self.path == "/redirect":
 			self.send_response(302)
 			self.send_header("Location", f"http://internal.test:{self.server.server_port}/secret")
+		elif self.path in ("/loop", "/stalled-redirect"):
+			self.send_response(302)
+			self.send_header("Location", "/loop" if self.path == "/loop" else "/ok")
 		else:
 			self.send_response(200)
+		if self.path == "/stalled-redirect":
+			# promises a body it never sends, so reading it can only time out
+			self.send_header("Content-Length", "1000000")
+			self.end_headers()
+			self.wfile.flush()
+			time.sleep(3)
+			return
 		self.send_header("Content-Length", "0")
 		self.end_headers()
 
@@ -80,6 +91,17 @@ class TestPublicSession(FrappeTestCase):
 
 		self.assertEqual(response.status_code, 200)
 		self.assertEqual(self.lookups, ["rebind.test"])
+
+	def test_follows_a_redirect_without_reading_its_body(self):
+		with self.resolving({"public.test": ["127.0.0.1"]}):
+			response = public_session().get(self.url("/stalled-redirect"), stream=True, timeout=(5, 1))
+
+		self.assertEqual(response.status_code, 200)
+		self.assertEqual(self.server.paths, ["/stalled-redirect", "/ok"])
+
+	def test_stops_at_the_redirect_limit(self):
+		with self.resolving({"public.test": ["127.0.0.1"]}):
+			self.assertRaises(requests.TooManyRedirects, public_session().get, self.url("/loop"), timeout=5)
 
 	def test_reports_a_refused_connection(self):
 		with socket.socket() as probe:
