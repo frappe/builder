@@ -57,9 +57,13 @@ class TestHubAddresses(FrappeTestCase):
 
 	def test_refuses_an_internal_address(self):
 		with self.developer_mode(False):
-			for hub_url in ("http://127.0.0.1:9", "http://10.0.0.1", "http://169.254.169.254"):
+			for hub_url in ("https://127.0.0.1:9", "https://10.0.0.1", "https://169.254.169.254"):
 				with self.subTest(hub_url=hub_url):
 					self.assertRaises(BlockedRequest, hub_get, hub_url, "get_catalog", {})
+
+	def test_refuses_plain_http_outside_developer_mode(self):
+		with self.developer_mode(False):
+			self.assertRaises(BlockedRequest, hub_get, "http://hub.example.com", "get_catalog", {})
 
 	def test_developer_mode_reaches_a_local_hub(self):
 		hub_url = start_local_hub(self)

@@ -5,7 +5,8 @@
 
 A manager sets the Hub URL, and a Hub response sets the package URL. Either one
 could point the server at an internal service. So each request must reach a
-public address. Developer mode also allows this machine, so a local Hub works.
+public address over HTTPS. Developer mode also allows plain HTTP and this
+machine, so a local Hub works.
 
 Frappe has the same guard as `frappe.utils.safe_exec.get_safe_request_session`,
 but only in releases newer than the oldest Frappe that Builder supports. Use
@@ -42,8 +43,10 @@ def validate_request_address(ip: str) -> None:
 def validate_request_url(url: str) -> None:
 	"""Before the connection opens, so a refusal tells nothing about the port."""
 	parsed = urlparse(url)
-	if parsed.scheme not in ("http", "https") or not parsed.hostname:
-		raise BlockedRequest(_("Builder sends requests only to http and https URLs."))
+	# the Hub sends the sha256 that proves a package, so only HTTPS can carry it
+	schemes = ("http", "https") if frappe.conf.developer_mode else ("https",)
+	if parsed.scheme not in schemes or not parsed.hostname:
+		raise BlockedRequest(_("Builder sends requests only to {0} URLs.").format(" and ".join(schemes)))
 
 	try:
 		records = socket.getaddrinfo(parsed.hostname, parsed.port, proto=socket.IPPROTO_TCP)
