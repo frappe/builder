@@ -107,7 +107,11 @@
 
 				<ExtensionUpdate
 					v-if="
-						canManageExtensions && isInstalled && isReady && details.source_url && !details.is_development
+						canManageExtensions &&
+						isInstalled &&
+						isReady &&
+						details.source === 'Hub' &&
+						!details.is_development
 					"
 					:extension="details.name"
 					@updated="load" />
@@ -119,10 +123,10 @@
 					v-html="readme" />
 
 				<div class="flex flex-col gap-1 border-t border-outline-gray-1 pt-4 text-xs text-ink-gray-5">
-					<p v-if="!isInstalled">{{ details.source_url || "From the Builder Hub" }}</p>
+					<p v-if="!isInstalled">{{ details.repository_url || "From the Builder Hub" }}</p>
 					<p v-else-if="details.is_development">Served by {{ details.development_server }}</p>
 					<template v-else-if="isReady">
-						<p>{{ details.source_url }}</p>
+						<p v-if="details.source === 'Hub'">{{ details.hub_url }}</p>
 						<p>Installed on {{ installedOn }}</p>
 					</template>
 				</div>
@@ -215,7 +219,7 @@ const load = async () => {
 const fromHub = (hub: Awaited<ReturnType<typeof getHubExtension>>): InstallationDetails => ({
 	...hub,
 	installation_id: "",
-	source_url: hub.source_url ?? "",
+	source: "Hub",
 	enabled: false,
 	installed_on: "",
 });
@@ -282,7 +286,7 @@ const uninstall = async () => {
 	try {
 		const message = "This removes it for everyone. Your site keeps any data it saved.";
 		if (await confirm(message, `Uninstall ${details.value?.label}?`)) {
-			const isFromHub = Boolean(details.value?.source_url);
+			const isFromHub = details.value?.source === "Hub";
 			await uninstallExtension(props.extension);
 			// the watch shows the Hub page. An extension with no Hub has no page to show
 			if (!isFromHub) emit("back");

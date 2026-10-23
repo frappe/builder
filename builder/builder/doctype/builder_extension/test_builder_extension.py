@@ -4,7 +4,7 @@
 import frappe
 from frappe.tests.utils import FrappeTestCase
 
-from builder.builder.tests.extension_fixtures import drop_installations, make_installation, write_source
+from builder.builder.tests.extension_fixtures import drop_installations, make_installation, write_entry
 
 EXTENSION = "acme/released"
 
@@ -14,14 +14,14 @@ class TestBuilderExtension(FrappeTestCase):
 		drop_installations(EXTENSION)
 		self.addCleanup(drop_installations, EXTENSION)
 
-	def release(self, installation, checksum: str, source: str):
+	def release(self, installation, checksum: str, entry: str):
 		installation.checksum = checksum
-		write_source(installation, source)
+		write_entry(installation, entry)
 		installation.save()
 		frappe.db.after_commit.run()
 
 	def test_each_release_has_its_own_folder_and_url(self):
-		installation = make_installation(EXTENSION, checksum="first", source="// 1")
+		installation = make_installation(EXTENSION, checksum="first", entry="// 1")
 		first = installation.release_path
 
 		self.release(installation, "second", "// 2")
@@ -34,7 +34,7 @@ class TestBuilderExtension(FrappeTestCase):
 		self.assertFalse(first.is_dir())
 
 	def test_a_delete_removes_the_files_after_the_commit(self):
-		installation = make_installation(EXTENSION, source="// 1")
+		installation = make_installation(EXTENSION, entry="// 1")
 
 		installation.delete()
 		frappe.db.after_commit.run()

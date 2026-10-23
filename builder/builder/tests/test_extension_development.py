@@ -27,10 +27,14 @@ class TestDevExtension(FrappeTestCase):
 	def installed_version(self):
 		return frappe.db.get_value(INSTALLATION_DOCTYPE, {"extension": self.extension}, "version")
 
+	def installed_source(self):
+		return frappe.db.get_value(INSTALLATION_DOCTYPE, {"extension": self.extension}, "source")
+
 	def test_registers_a_development_installation(self):
 		install_dev_extension(self.extension)
 
 		self.assertEqual(self.installed_version(), "0.0.0-dev")
+		self.assertEqual(self.installed_source(), "Development")
 
 	def test_removes_the_installation(self):
 		install_dev_extension(self.extension)

@@ -18,9 +18,16 @@ INSTALLATION_DOCTYPE = "Builder Extension"
 TEST_ROLE = "Extension Tester"
 
 
-def make_installation(extension="acme/listed", source=None, **values):
-	"""The site's installation of one extension, with files when a source is given."""
-	fields = {"label": extension, "version": "1.0.0", "checksum": "sum123", "enabled": 1, **values}
+def make_installation(extension="acme/listed", entry=None, **values):
+	"""The site's installation of one extension, with files when an entry is given."""
+	fields = {
+		"label": extension,
+		"source": "Hub",
+		"version": "1.0.0",
+		"checksum": "sum123",
+		"enabled": 1,
+		**values,
+	}
 
 	name = find_installation(extension)
 	if name:
@@ -30,8 +37,8 @@ def make_installation(extension="acme/listed", source=None, **values):
 			{"doctype": INSTALLATION_DOCTYPE, "extension": extension, **fields}
 		).insert()
 
-	if source is not None:
-		write_source(installation, source)
+	if entry is not None:
+		write_entry(installation, entry)
 	return installation
 
 
@@ -39,9 +46,9 @@ def find_installation(extension):
 	return frappe.db.get_value(INSTALLATION_DOCTYPE, {"extension": extension}, "name")
 
 
-def write_source(installation, source: str):
+def write_entry(installation, entry: str):
 	"""The one file a release holds, plus an icon when the record names one."""
-	files = {ENTRY_FILE: source.encode()}
+	files = {ENTRY_FILE: entry.encode()}
 	if installation.icon:
 		files[installation.icon] = b"<svg />"
 	installation.write_extension_files(files)

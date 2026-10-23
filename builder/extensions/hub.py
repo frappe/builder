@@ -320,11 +320,11 @@ def assert_installable(name: str) -> None:
 	existing = find_installation(name)
 	if not existing:
 		return
-	state, source = frappe.db.get_value(INSTALLATION_DOCTYPE, existing, ["install_state", "source_url"])
+	state, hub_url = frappe.db.get_value(INSTALLATION_DOCTYPE, existing, ["install_state", "hub_url"])
 	if state == "Installing" and is_job_enqueued(install_job_id(existing)):
 		frappe.throw(_('"{0}" is already installing.').format(name))
 	if state not in ("Failed", "Installing"):
-		frappe.throw(_('"{0}" is already installed from {1}.').format(name, source or _("a directory")))
+		frappe.throw(_('"{0}" is already installed from {1}.').format(name, hub_url or _("a dev server")))
 
 
 def create_pending_installation(name: str, version: str, listing: dict) -> str:
@@ -335,6 +335,7 @@ def create_pending_installation(name: str, version: str, listing: dict) -> str:
 	from the manifest.
 	"""
 	shown = {
+		"source": "Hub",
 		"label": listing.get("label") or name,
 		"description": listing.get("description"),
 		"readme": listing.get("readme"),
@@ -361,12 +362,12 @@ def create_pending_installation(name: str, version: str, listing: dict) -> str:
 	)
 
 
-def apply_release(doc, source_url: str, release: Release, package: ValidatedPackage) -> None:
+def apply_release(doc, hub_url: str, release: Release, package: ValidatedPackage) -> None:
 	"""Fill the pending row from the release and write the site's copy."""
 	manifest = package.manifest
 	doc.update(
 		{
-			"source_url": source_url,
+			"hub_url": hub_url,
 			"label": manifest["label"],
 			"description": manifest["description"],
 			"icon": manifest.get("icon"),
