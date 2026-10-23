@@ -71,31 +71,27 @@ const DEFAULT_PORT = 5173;
 const OUTPUT_ENTRY = "main.js";
 
 /**
- * The editor's styles sit in no cascade layer, and those beat every layer. So with
- * the extension's styles in one, a class such as `rounded-4` cannot restyle the
- * editor's own elements, whatever order the stylesheets load in.
+ * The editor loads the extension's styles before its own. So where an extension
+ * class and an editor class are equally specific, such as `rounded-4` and
+ * `rounded-tr-none`, the editor's comes later and wins on the editor's elements.
+ * The dev server adds each `<style>` itself, so this module moves the extension's
+ * to the start of the head, in the order the dev server adds them.
  */
-const STYLE_LAYER = "builder-extension";
+const STYLE_ORDER_ID = "virtual:builder-style-order";
+const STYLE_ORDER = (root) => `const root = ${JSON.stringify(root)};
+let last = null;
+const place = (node) => {
+	if (node === last || node.tagName !== "STYLE" || !node.dataset.viteDevId?.startsWith(root)) return;
+	const inPlace = last ? node.previousElementSibling === last : node === document.head.firstElementChild;
+	if (!inPlace) last ? last.after(node) : document.head.prepend(node);
+	last = node;
+};
+new MutationObserver((records) => records.forEach((record) => record.addedNodes.forEach(place))).observe(document.head, { childList: true });
+`;
 
-/** Vite compiles these to CSS. A special query asks for something else, such as the raw text. */
-const STYLESHEET = /\.(css|less|sass|scss|styl|stylus|pcss|postcss|sss)(\?|$)/;
-const SPECIAL_QUERY = /[?&](worker|sharedworker|raw|url)\b/;
-
-/**
- * Its own plugin with no `enforce`, so it runs after Vite compiles a stylesheet,
- * and before Vite turns it into a module, in the dev server and in the build.
- */
-const layerStyles = () => ({
-	name: "builder-extension-style-layer",
-	transform(code, id) {
-		if (!STYLESHEET.test(id) || SPECIAL_QUERY.test(id)) return;
-		return { code: `@layer ${STYLE_LAYER} {\n${code}\n}`, map: null };
-	},
-});
-
-/** A link, not an inline style, so each `url(...)` in the CSS resolves against the stylesheet. */
+/** A link, not an inline style, so each `url(...)` in the CSS resolves against the stylesheet. First in the head, so the editor's styles win a tie. */
 const STYLESHEET_LINK = (fileName) =>
-	`(() => { const link = document.createElement("link"); link.rel = "stylesheet"; link.href = new URL(${JSON.stringify(fileName)}, import.meta.url).href; document.head.append(link); })();`;
+	`(() => { const link = document.createElement("link"); link.rel = "stylesheet"; link.href = new URL(${JSON.stringify(fileName)}, import.meta.url).href; document.head.prepend(link); })();`;
 
 /** One entry. So Rollup sees the full graph, and shared code goes into one chunk. */
 const ENTRY_CANDIDATES = ["src/main.ts", "src/main.js"];
@@ -158,7 +154,7 @@ export default function builderExtension({ builderUrl } = {}) {
 		return fs.readFileSync(file);
 	};
 
-	const plugin = {
+	return {
 		name: "builder-extension",
 		// run before the resolver of Vite. If not, Vite finds the shared modules on
 		// disk, and the extension gets a second copy of Vue
@@ -214,11 +210,12 @@ export default function builderExtension({ builderUrl } = {}) {
 			if (serving && isShared(id)) {
 				return { id: `${serverOrigin}${SHARED_PATH}${id}`, external: true };
 			}
-			if (id === HMR_FALLBACK_ID) return `\0${HMR_FALLBACK_ID}`;
+			if (id === HMR_FALLBACK_ID || id === STYLE_ORDER_ID) return `\0${id}`;
 		},
 
 		load(id) {
 			if (id === `\0${HMR_FALLBACK_ID}`) return HMR_FALLBACK;
+			if (id === `\0${STYLE_ORDER_ID}`) return STYLE_ORDER(`${root.split(path.sep).join("/")}/`);
 		},
 
 		/**
@@ -229,7 +226,9 @@ export default function builderExtension({ builderUrl } = {}) {
 		 */
 		transform(code, id) {
 			if (!serving || id !== entry) return;
-			const imports = [HMR_CLIENT, HMR_FALLBACK_ID].map((id) => `import ${JSON.stringify(id)};`).join("\n");
+			const imports = [STYLE_ORDER_ID, HMR_CLIENT, HMR_FALLBACK_ID]
+				.map((id) => `import ${JSON.stringify(id)};`)
+				.join("\n");
 			return { code: `${imports}\n${code}`, map: null };
 		},
 
@@ -283,5 +282,4 @@ export default function builderExtension({ builderUrl } = {}) {
 			},
 		},
 	};
-	return [plugin, layerStyles()];
 }
