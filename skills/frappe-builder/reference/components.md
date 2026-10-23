@@ -41,6 +41,7 @@ Declared on the definition root under `props.<name>`, in the shape the editor wr
 `clientScript: {"js": ..., "css": ...}` on a block runs once per rendered instance: `js` is the body of an async function with `this` = the block's element and `(component_data, props)` as arguments; it runs inline while the page parses, before page scripts. `css` is scoped to the block.
 
 - Plain selectors match descendants; `&` or `:scope` is the block itself.
+- The canvas applies this CSS and tokens, but not stylesheets linked from `head_html`. Put styles that blocks depend on here or in tokens, so the editor looks like the live page.
 - Scope every query to `this`: several instances share one page.
 - Props that contain `<` or `&` arrive HTML-escaped (`&lt;`, `&amp;`) in the script.
 - `window.events.dispatch(name, data)` / `events.listen(name, callback)` connect components.
