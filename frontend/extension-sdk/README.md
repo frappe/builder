@@ -76,7 +76,7 @@ frappe-ui works with the user's own session. For example, `createListResource` a
 
 ### Styles
 
-The SDK puts the extension's styles in the `builder-extension` cascade layer. The editor's own styles sit in no layer, so they win where both style one element. So an extension cannot restyle the editor by accident. To change a style that the editor sets on a shared component, such as a frappe-ui `Button`, use `!important`, for example `!h-8`.
+The editor loads the extension's styles before its own. Where an extension class and an editor class are equally specific, the editor's wins, so an extension cannot restyle the editor by accident. A more specific rule still wins as usual, so the extension's own classes beat the editor's base styles. To change a style that the editor sets on a shared component, such as a frappe-ui `Button`, use `!important`, for example `!h-8`.
 
 ## The manifest
 
