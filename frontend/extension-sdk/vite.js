@@ -70,6 +70,29 @@ const DEFAULT_PORT = 5173;
 /** The entry of an install. The editor imports it, and it imports its chunks by relative path. */
 const OUTPUT_ENTRY = "main.js";
 
+/**
+ * The editor's styles sit in no cascade layer, and those beat every layer. So with
+ * the extension's styles in one, a class such as `rounded-4` cannot restyle the
+ * editor's own elements, whatever order the stylesheets load in.
+ */
+const STYLE_LAYER = "builder-extension";
+
+/** Vite compiles these to CSS. A special query asks for something else, such as the raw text. */
+const STYLESHEET = /\.(css|less|sass|scss|styl|stylus|pcss|postcss|sss)(\?|$)/;
+const SPECIAL_QUERY = /[?&](worker|sharedworker|raw|url)\b/;
+
+/**
+ * Its own plugin with no `enforce`, so it runs after Vite compiles a stylesheet,
+ * and before Vite turns it into a module, in the dev server and in the build.
+ */
+const layerStyles = () => ({
+	name: "builder-extension-style-layer",
+	transform(code, id) {
+		if (!STYLESHEET.test(id) || SPECIAL_QUERY.test(id)) return;
+		return { code: `@layer ${STYLE_LAYER} {\n${code}\n}`, map: null };
+	},
+});
+
 /** A link, not an inline style, so each `url(...)` in the CSS resolves against the stylesheet. */
 const STYLESHEET_LINK = (fileName) =>
 	`(() => { const link = document.createElement("link"); link.rel = "stylesheet"; link.href = new URL(${JSON.stringify(fileName)}, import.meta.url).href; document.head.append(link); })();`;
@@ -135,7 +158,7 @@ export default function builderExtension({ builderUrl } = {}) {
 		return fs.readFileSync(file);
 	};
 
-	return {
+	const plugin = {
 		name: "builder-extension",
 		// run before the resolver of Vite. If not, Vite finds the shared modules on
 		// disk, and the extension gets a second copy of Vue
@@ -260,4 +283,5 @@ export default function builderExtension({ builderUrl } = {}) {
 			},
 		},
 	};
+	return [plugin, layerStyles()];
 }
