@@ -106,7 +106,9 @@ class TestHubInstallation(FrappeTestCase):
 			package_sha256="100abcdef0123456",
 			status="Published",
 		)
-		package = ValidatedPackage(manifest={"label": "Hub install", "description": ""}, files={"main.js": b""})
+		package = ValidatedPackage(
+			manifest={"label": "Hub install", "description": ""}, files={"main.js": b""}
+		)
 
 		apply_release(doc, self.hub, release, package)
 
