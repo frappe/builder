@@ -129,6 +129,18 @@ MAX_FONT_BYTES = 6 * 1024 * 1024
 FONT_EXTENSIONS = ("woff2", "woff", "ttf", "otf")
 
 
+def download_remote_file(url: str, max_bytes: int) -> tuple[bytes, str]:
+	"""Body and media type of a remote file, refused as soon as it passes max_bytes."""
+	response = public_session().get(url, timeout=20, stream=True, headers={"User-Agent": "FrappeBuilder/1.0"})
+	response.raise_for_status()
+	content = bytearray()
+	for chunk in response.iter_content(64 * 1024):
+		content += chunk
+		if len(content) > max_bytes:
+			frappe.throw(f"File is larger than {max_bytes // (1024 * 1024)}MB: {url}")
+	return bytes(content), response.headers.get("content-type", "").split(";")[0].strip().lower()
+
+
 def import_remote_font(family: str, url: str) -> str:
 	existing = frappe.db.get_value("User Font", {"font_name": family}, "font_file")
 	if existing:
@@ -138,10 +150,7 @@ def import_remote_font(family: str, url: str) -> str:
 	if not extension:
 		frappe.throw(f"Not a font file: {url}")
 
-	response = public_session().get(url, timeout=20, headers={"User-Agent": "FrappeBuilder/1.0"})
-	response.raise_for_status()
-	if len(response.content) > MAX_FONT_BYTES:
-		frappe.throw(f"Font is larger than {MAX_FONT_BYTES // (1024 * 1024)}MB: {url}")
+	content = download_remote_file(url, MAX_FONT_BYTES)[0]
 
 	file = frappe.get_doc(
 		{
@@ -149,7 +158,7 @@ def import_remote_font(family: str, url: str) -> str:
 			"file_name": f"{frappe.scrub(family)}.{extension}",
 			"is_private": 0,
 			"folder": "Home/Builder Uploads/Fonts",
-			"content": response.content,
+			"content": content,
 		}
 	).insert()
 	frappe.get_doc({"doctype": "User Font", "font_name": family, "font_file": file.file_url}).insert()
@@ -174,13 +183,7 @@ def import_remote_asset(url: str) -> str:
 	if existing:
 		return existing
 
-	response = public_session().get(url, timeout=20, headers={"User-Agent": "FrappeBuilder/1.0"})
-	response.raise_for_status()
-	content = response.content
-	if len(content) > MAX_ASSET_BYTES:
-		frappe.throw(f"Asset is larger than {MAX_ASSET_BYTES // (1024 * 1024)}MB: {url}")
-
-	content_type = response.headers.get("content-type", "").split(";")[0].strip().lower()
+	content, content_type = download_remote_file(url, MAX_ASSET_BYTES)
 	extension = KEEP_AS_IS.get(content_type) or guess_keep_as_is_extension(url)
 	if extension:
 		return save_imported_asset(f"{stem}.{extension}", content)
@@ -232,7 +235,7 @@ def convert_to_webp(image_url: str | None = None, file_doc: Document | None = No
 	def get_extension(filename: str) -> str:
 		return filename.split(".")[-1].lower() if "." in filename else ""
 
-	def save_as_webp(image, path: str) -> None:
+	def save_as_webp(image, path: str | BytesIO) -> None:
 		# a 5000px original costs ~100MB decoded and thrashes the browser's image cache,
 		# so the canvas re-decodes it on every pan; thumbnail() only ever shrinks
 		image.thumbnail((MAX_IMAGE_EDGE, MAX_IMAGE_EDGE))
@@ -272,10 +275,11 @@ def convert_to_webp(image_url: str | None = None, file_doc: Document | None = No
 		return new_file.file_url
 
 	def handle_builder_asset(image_url: str) -> str:
+		assets_path = os.path.abspath(frappe.get_app_path("builder", "www", "builder_assets"))
 		image_path = os.path.abspath(frappe.get_app_path("builder", "www", image_url.lstrip("/")))
 		image_path = image_path.replace("_", "-").replace("/builder-assets", "/builder_assets")
 		extn = get_extension(image_path)
-		if not can_convert_image(extn):
+		if not image_path.startswith(assets_path + os.sep) or not can_convert_image(extn):
 			return image_url
 		image = Image.open(image_path)
 		save_as_webp(image, to_webp_path(image_path, extn))
@@ -290,14 +294,10 @@ def convert_to_webp(image_url: str | None = None, file_doc: Document | None = No
 
 	def handle_external_url(image_url: str) -> str:
 		url = unquote(image_url)
-		response = public_session().get(url, timeout=20, headers={"User-Agent": "FrappeBuilder/1.0"})
-		response.raise_for_status()
-		image = Image.open(BytesIO(response.content))
-		filename = get_external_webp_filename(url)
-		file = frappe.get_doc({"doctype": "File", "file_name": filename, "file_url": f"/files/{filename}"})
-		save_as_webp(image, file.get_full_path())
-		file.save()
-		return file.file_url
+		content = download_remote_file(url, MAX_ASSET_BYTES)[0]
+		buffer = BytesIO()
+		save_as_webp(Image.open(BytesIO(content)), buffer)
+		return save_imported_asset(get_external_webp_filename(url), buffer.getvalue())
 
 	if not image_url and not file_doc:
 		return ""
