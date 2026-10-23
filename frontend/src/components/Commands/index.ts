@@ -5,6 +5,7 @@ import usePageStore from "@/stores/pageStore";
 import { __ } from "@/translation";
 import blockController from "@/utils/blockController";
 import { createRegistry, type RegistryItem } from "@/utils/createRegistry";
+import { useBuilderToken } from "@/utils/useBuilderToken";
 import { useDark, useStorage, useToggle } from "@vueuse/core";
 import type { KeyboardShortcutCombo } from "frappe-ui";
 import { nextTick, type Ref } from "vue";
@@ -308,7 +309,10 @@ commands.register({
 	keys: { combo: "Mod+Z", description: __("Undo") },
 	action: () => {
 		const canvas = canvasStore.activeCanvas;
-		if (canvas?.history?.canUndo) canvas.history.undo();
+		const tokens = useBuilderToken();
+		tokens.flushPendingEdits();
+		if (tokens.lastTokenUndoAt() > (canvas?.history?.lastUndoAt() ?? 0)) tokens.undoTokenChange();
+		else if (canvas?.history?.canUndo) canvas.history.undo();
 	},
 });
 
@@ -321,6 +325,9 @@ commands.register({
 	keys: { combo: "Mod+Shift+Z", description: __("Redo") },
 	action: () => {
 		const canvas = canvasStore.activeCanvas;
-		if (canvas?.history?.canRedo) canvas.history.redo();
+		const tokens = useBuilderToken();
+		tokens.flushPendingEdits();
+		if (tokens.lastTokenRedoAt() > (canvas?.history?.lastRedoAt() ?? 0)) tokens.redoTokenChange();
+		else if (canvas?.history?.canRedo) canvas.history.redo();
 	},
 });

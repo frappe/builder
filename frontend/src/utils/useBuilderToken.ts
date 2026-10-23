@@ -1,6 +1,7 @@
 import builderTokenStore from "@/data/builderToken";
 import { BuilderToken } from "@/types/doctypes";
-import { computed } from "vue";
+import { toast } from "frappe-ui";
+import { computed, ref } from "vue";
 
 export const defaultBuilderToken = {
 	token_name: "",
@@ -17,6 +18,10 @@ export const tokenType = (token: Partial<BuilderToken>): NonNullable<BuilderToke
 	if (type === "dimension") return "Dimension";
 	return "Color";
 };
+
+type TokenFields = Pick<BuilderToken, "token_name" | "value" | "dark_value" | "group">;
+type TokenChange = { name: string; before: TokenFields; after: TokenFields };
+type TokenHistoryEntry = { changes: TokenChange[]; at: number };
 
 let instance: ReturnType<typeof builderTokenComposable> | null = null;
 
@@ -105,11 +110,67 @@ function builderTokenComposable() {
 			throw new Error("Variable name is required");
 		}
 		await builderTokenStore.delete.submit(name);
+		forgetTokenHistory([name]);
 	};
 
 	const fontTokens = computed(() =>
 		(builderTokenStore.data || []).filter((t: BuilderToken) => tokenType(t) === "Font" && t.value),
 	);
+
+	const tokenUndoStack: TokenHistoryEntry[] = [];
+	const tokenRedoStack: TokenHistoryEntry[] = [];
+	const tokenHistoryVersion = ref(0);
+	const tokenEditVersion = ref(0);
+	const pendingEditFlushes = new Set<() => void>();
+	const flushPendingEdits = () => pendingEditFlushes.forEach((flush) => flush());
+
+	const clearTokenRedo = () => {
+		tokenRedoStack.length = 0;
+	};
+
+	const clearTokenHistory = () => {
+		tokenUndoStack.length = 0;
+		clearTokenRedo();
+	};
+
+	const forgetTokenHistory = (names: string[]) => {
+		const forgotten = new Set(names);
+		for (const stack of [tokenUndoStack, tokenRedoStack]) {
+			const kept = stack
+				.map((entry) => ({
+					...entry,
+					changes: entry.changes.filter((change) => !forgotten.has(change.name)),
+				}))
+				.filter((entry) => entry.changes.length);
+			stack.splice(0, stack.length, ...kept);
+		}
+	};
+
+	const recordTokenChange = (changes: TokenChange[]) => {
+		const changed = changes.filter(({ before, after }) =>
+			(Object.keys(after) as (keyof TokenFields)[]).some((key) => before[key] !== after[key]),
+		);
+		if (!changed.length) return;
+		tokenUndoStack.unshift({ changes: changed, at: Date.now() });
+		clearTokenRedo();
+		tokenEditVersion.value++;
+	};
+
+	const moveTokenChange = (from: TokenHistoryEntry[], to: TokenHistoryEntry[], side: "before" | "after") => {
+		const entry = from.shift();
+		if (!entry) return;
+		to.unshift({ ...entry, at: Date.now() });
+		const values = new Map(entry.changes.map((change) => [change.name, change[side]]));
+		builderTokenStore.data = (builderTokenStore.data || []).map((token: BuilderToken) =>
+			values.has(token.name) ? { ...token, ...values.get(token.name) } : token,
+		);
+		tokenHistoryVersion.value++;
+		for (const [name, fields] of values) {
+			updateVariable({ name, ...fields }).catch((error) =>
+				toast.error((error as Error).message || "Failed to update variable"),
+			);
+		}
+	};
 
 	return {
 		cssVariables,
@@ -120,6 +181,18 @@ function builderTokenComposable() {
 		createVariable,
 		updateVariable,
 		deleteVariable,
+		recordTokenChange,
+		clearTokenRedo,
+		clearTokenHistory,
+		forgetTokenHistory,
+		pendingEditFlushes,
+		flushPendingEdits,
+		undoTokenChange: () => moveTokenChange(tokenUndoStack, tokenRedoStack, "before"),
+		redoTokenChange: () => moveTokenChange(tokenRedoStack, tokenUndoStack, "after"),
+		lastTokenUndoAt: () => tokenUndoStack[0]?.at ?? 0,
+		lastTokenRedoAt: () => tokenRedoStack[0]?.at ?? 0,
+		tokenHistoryVersion,
+		tokenEditVersion,
 		variables: computed({
 			get: () => (builderTokenStore.data as BuilderToken[]) || [],
 			set: (value: BuilderToken[]) => {
