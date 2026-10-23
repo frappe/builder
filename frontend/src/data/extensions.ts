@@ -2,7 +2,7 @@ import type { RunnableExtension } from "@/extensions/context";
 import { devExtension, isDevExtension } from "@/extensions/devExtension";
 import { loadExtension, runningExtensions } from "@/extensions/loader";
 import { useStorage } from "@vueuse/core";
-import { call, createResource, frappeRequest, getCachedResource, toast } from "frappe-ui";
+import { call, createResource, getCachedResource, toast } from "frappe-ui";
 import { computed, reactive, shallowRef } from "vue";
 
 const METHOD = "builder.extensions.installations";
@@ -17,6 +17,17 @@ const extensionsDisabled = useStorage("builderExtensionsDisabled", false);
 /** The server names the Hub, because only a manager can read Builder Settings. */
 const getHubMethodUrl = async (method: string) =>
 	`${await call("builder.extensions.hub.get_hub_url")}/${HUB_API}.${method}`;
+
+/**
+ * A GET to the Hub with no cookies and no headers. `frappeRequest` sends the
+ * CSRF token of this site, and the Hub must never get it.
+ */
+const hubRequest = async (method: string, params: Record<string, string | number>) => {
+	const query = new URLSearchParams(Object.entries(params).map(([key, value]) => [key, String(value)]));
+	const response = await fetch(`${await getHubMethodUrl(method)}?${query}`, { credentials: "omit" });
+	if (!response.ok) throw new Error(`The Builder Hub returned an error (${response.status}).`);
+	return (await response.json()).message;
+};
 
 /** One row of the installation list of the site. */
 type Installation = {
@@ -204,9 +215,8 @@ type CatalogExtension = Pick<Installation, "name" | "label" | "description" | "i
 const getExtensionsCatalog = (page: number = 1) =>
 	createResource({
 		url: "get_catalog",
-		// the Hub URL comes from the server, so it is known only when the fetch starts
-		resourceFetcher: async (options: { url: string }) =>
-			frappeRequest({ ...options, url: await getHubMethodUrl(options.url) }),
+		resourceFetcher: (options: { url: string; params: Record<string, number> }) =>
+			hubRequest(options.url, options.params),
 		params: { page, protocol_version: PROTOCOL_VERSION },
 		auto: true,
 		cache: [CATALOG_CACHE, page],
@@ -235,11 +245,10 @@ const latestVersion = (releases: HubExtensionResponse["releases"]) =>
 
 /** One extension from the Hub. It asks the Hub, not the site, because the site has no record of it yet. */
 const getHubExtension = async (name: string): Promise<HubExtension> => {
-	const { extension, releases }: HubExtensionResponse = await createResource({
-		url: await getHubMethodUrl("get_extension"),
-		params: { name, protocol_version: PROTOCOL_VERSION },
-		onError: (error: Error) => console.error("Could not load extension", error),
-	}).fetch();
+	const { extension, releases }: HubExtensionResponse = await hubRequest("get_extension", {
+		name,
+		protocol_version: PROTOCOL_VERSION,
+	});
 
 	return {
 		name: extension.name,
