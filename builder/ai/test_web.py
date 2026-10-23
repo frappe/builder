@@ -51,6 +51,21 @@ class TestReadUrl(FrappeTestCase):
 		self.assertIn("FAILED", out)
 		self.assertIn("private or internal", out)
 
+	def test_reads_a_public_page(self):
+		page = SimpleNamespace(
+			headers={"content-type": "text/html"},
+			status_code=200,
+			url="https://example.com/",
+			encoding="utf-8",
+			iter_content=lambda **kwargs: iter([b"<title>Example</title><p>Hello there</p>"]),
+		)
+		with patch("builder.ai.agent.tools.web.public_session") as session:
+			session.return_value.get.return_value = page
+			out = run_read_url(ctx(), {"url": "https://example.com"})
+
+		self.assertTrue(out.startswith("Read https://example.com/"))
+		self.assertIn("Hello there", out)
+
 	def test_refuses_non_http_schemes(self):
 		self.assertIn("FAILED", run_read_url(ctx(), {"url": "ftp://example.com/file"}))
 
@@ -78,21 +93,3 @@ class TestResearch(FrappeTestCase):
 		out = run_research(ctx(research_count=MAX_RESEARCH_PER_TURN), {"question": "q"})
 
 		self.assertIn("limit reached", out)
-
-
-class TestPinnedUrl(FrappeTestCase):
-	def test_dials_the_ip_and_keeps_the_host_header(self):
-		from builder.ai.agent.tools.web import pinned_url
-
-		self.assertEqual(
-			pinned_url("https://example.com/a?b=1", "93.184.216.34"),
-			("https://93.184.216.34/a?b=1", "example.com"),
-		)
-
-	def test_brackets_ipv6_and_keeps_ports(self):
-		from builder.ai.agent.tools.web import pinned_url
-
-		self.assertEqual(
-			pinned_url("http://example.com:8080/x", "2606:2800:220:1::1"),
-			("http://[2606:2800:220:1::1]:8080/x", "example.com:8080"),
-		)
