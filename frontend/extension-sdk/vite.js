@@ -75,13 +75,17 @@ const OUTPUT_ENTRY = "main.js";
  * class and an editor class are equally specific, such as `rounded-4` and
  * `rounded-tr-none`, the editor's comes later and wins on the editor's elements.
  * The dev server adds each `<style>` itself, so this module moves the extension's
- * to the start of the head, in the order the dev server adds them.
+ * to the start of the head, in the order the dev server adds them. Each node is
+ * placed once: a move is itself an addition the observer sees, and placing it
+ * again would swap two styles forever.
  */
 const STYLE_ORDER_ID = "virtual:builder-style-order";
 const STYLE_ORDER = (root) => `const root = ${JSON.stringify(root)};
+const placed = new WeakSet();
 let last = null;
 const place = (node) => {
-	if (node === last || node.tagName !== "STYLE" || !node.dataset.viteDevId?.startsWith(root)) return;
+	if (placed.has(node) || node.tagName !== "STYLE" || !node.dataset.viteDevId?.startsWith(root)) return;
+	placed.add(node);
 	const inPlace = last ? node.previousElementSibling === last : node === document.head.firstElementChild;
 	if (!inPlace) last ? last.after(node) : document.head.prepend(node);
 	last = node;
