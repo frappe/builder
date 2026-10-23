@@ -264,9 +264,10 @@ const detachBlockFromComponent = (block: Block, componentId: null | string) => {
 		Object.entries(block.getBlockProps()).map(([key, prop]) => {
 			const propCopy = { ...prop }; // creating copy to avoid mutating original prop
 			if (propCopy.isStandard) {
-				let value = propCopy.value || propCopy.propOptions?.options?.defaultValue;
+				const hasVal = propCopy.value !== undefined && propCopy.value !== null && propCopy.value !== "";
+				let value = hasVal ? propCopy.value : propCopy.propOptions?.options?.defaultValue;
 				if (!["string", "select"].includes(propCopy.propOptions?.type!)) {
-					propCopy.value = JSON.stringify(value);
+					propCopy.value = typeof value === "string" ? value : JSON.stringify(value);
 				} else {
 					propCopy.value = value;
 				}
@@ -369,13 +370,16 @@ async function uploadBuilderAsset(file: File, silent = false) {
 		folder: "Home/Builder Uploads",
 		upload_endpoint: "/api/method/builder.api.upload_builder_asset",
 	});
-	await new Promise((resolve) => {
+	// a failed upload rejects, so callers never write an empty URL into the page
+	await new Promise((resolve, reject) => {
 		if (silent) {
-			upload.then((data: { file_name: string; file_url: string }) => {
-				fileDoc.file_name = data.file_name;
-				fileDoc.file_url = data.file_url;
-				resolve(fileDoc);
-			});
+			upload
+				.then((data: { file_name: string; file_url: string }) => {
+					fileDoc.file_name = data.file_name;
+					fileDoc.file_url = data.file_url;
+					resolve(fileDoc);
+				})
+				.catch(reject);
 			return;
 		}
 		toast.promise(upload, {
@@ -386,7 +390,10 @@ async function uploadBuilderAsset(file: File, silent = false) {
 				resolve(fileDoc);
 				return __("Uploaded");
 			},
-			error: () => __("Failed to upload"),
+			error: (err: any) => {
+				reject(err);
+				return __("Failed to upload");
+			},
 			duration: 500,
 		});
 	});
@@ -416,8 +423,9 @@ async function uploadSVGAsFile(svg: string) {
 
 async function convertSVGBlockToImage(block: Block) {
 	const svg = block.getInnerHTML() || "";
-	const { fileURL } = await uploadSVGAsFile(svg);
-	if (!fileURL) return;
+	const upload = await uploadSVGAsFile(svg).catch(() => null);
+	if (!upload) return;
+	const { fileURL } = upload;
 
 	const source = new DOMParser().parseFromString(svg, "text/html").body.querySelector("svg");
 	const width = source?.getAttribute("width");
@@ -492,9 +500,9 @@ function handleBase64Attribute(block: Block, attrName: string, baseName: string)
 		const file = dataURLtoFile(attrValue, dataURLFileName(attrValue, baseName));
 		if (file) {
 			block.setAttribute(attrName, "");
-			uploadBuilderAsset(file, true).then((obj) => {
-				block.setAttribute(attrName, obj.fileURL);
-			});
+			uploadBuilderAsset(file, true)
+				.then((obj) => block.setAttribute(attrName, obj.fileURL))
+				.catch(() => block.setAttribute(attrName, attrValue));
 		}
 	}
 }
@@ -837,6 +845,10 @@ const getPropValue = (
 	if (defaultProps?.[propName] !== undefined) {
 		return defaultProps[propName].value;
 	}
+	const [rootName, ...path] = propName.split(".");
+	if (path.length && defaultProps?.[rootName] !== undefined) {
+		return getDataForKey(Object(defaultProps[rootName].value), path.join("."));
+	}
 
 	let parentProps: BlockPropsWithTraceback | null = null;
 
@@ -889,16 +901,26 @@ const getPropValue = (
 		const defaultValue = options?.defaultValue ?? null;
 
 		if (PARSEABLE_STANDARD_TYPES.includes(type)) {
-			if (matchingProp.value) {
-				return JSON.parse(matchingProp.value);
-			} else {
-				if (typeof defaultValue === "string") {
-					return JSON.parse(defaultValue);
+			const parse = (raw: any, fallback: any) => {
+				try {
+					return JSON.parse(raw);
+				} catch {
+					return fallback;
 				}
-				return defaultValue;
+			};
+			const hasValue =
+				matchingProp.value !== undefined && matchingProp.value !== null && matchingProp.value !== "";
+			if (hasValue) {
+				return parse(matchingProp.value, defaultValue);
 			}
+			if (typeof defaultValue === "string") {
+				return parse(defaultValue, null);
+			}
+			return defaultValue;
 		}
-		return matchingProp.value || defaultValue;
+		const hasValue =
+			matchingProp.value !== undefined && matchingProp.value !== null && matchingProp.value !== "";
+		return hasValue ? matchingProp.value : defaultValue;
 	}
 
 	return matchingProp.value;
@@ -912,17 +934,32 @@ const getStandardPropValue = (
 	if (propsOfComponentRoot) {
 		for (const [name, value] of Object.entries(propsOfComponentRoot)) {
 			if (propName === name && value.isStandard) {
+				const hasValue = value.value !== undefined && value.value !== null && value.value !== "";
 				if (PARSEABLE_STANDARD_TYPES.includes(value.propOptions?.type || "string")) {
-					const parsedValue = value.value
-						? JSON.parse(value.value)
-						: value.propOptions?.options?.defaultValue || null;
+					let parsedValue: any = null;
+					if (hasValue) {
+						try {
+							parsedValue = JSON.parse(value.value);
+						} catch {
+							parsedValue = value.value;
+						}
+					} else {
+						const def = value.propOptions?.options?.defaultValue;
+						if (def !== undefined && def !== null) {
+							try {
+								parsedValue = JSON.parse(def);
+							} catch {
+								parsedValue = def;
+							}
+						}
+					}
 					return {
 						value: parsedValue,
 						options: value.propOptions?.options || {},
 					};
 				} else {
 					return {
-						value: value.value || value.propOptions?.options?.defaultValue || null,
+						value: hasValue ? value.value : value.propOptions?.options?.defaultValue || null,
 						options: value.propOptions?.options || {},
 					};
 				}

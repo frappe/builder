@@ -8,7 +8,7 @@
 					</InputLabel>
 				</div>
 				<div class="relative w-full">
-					<Button class="w-full" variant="subtle" icon="lucide-pencil" />
+					<Button class="!w-full w-full" variant="subtle" icon="lucide-pencil" />
 				</div>
 			</div>
 		</template>
