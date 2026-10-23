@@ -6,7 +6,8 @@
  "engine": "InnoDB",
  "field_order": [
   "extension",
-  "source_url",
+  "source",
+  "hub_url",
   "enabled",
   "label",
   "description",
@@ -31,11 +32,22 @@
    "unique": 1
   },
   {
-   "description": "The Builder Hub the files came from. Shown in the panel, but not part of the extension's identity.",
-   "fieldname": "source_url",
-   "fieldtype": "Data",
+   "description": "Where the files came from: a Builder Hub, a Frappe app, or a dev server.",
+   "fieldname": "source",
+   "fieldtype": "Select",
+   "in_list_view": 1,
    "in_standard_filter": 1,
-   "label": "Source URL",
+   "label": "Source",
+   "options": "Hub\nApp\nDevelopment",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "depends_on": "eval:doc.source == \"Hub\"",
+   "description": "The Builder Hub the files came from. Shown in the panel, but not part of the extension's identity.",
+   "fieldname": "hub_url",
+   "fieldtype": "Data",
+   "label": "Hub URL",
    "read_only": 1
   },
   {
@@ -115,7 +127,7 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 0,
  "links": [],
- "modified": "2026-10-22 16:00:00.000000",
+ "modified": "2026-10-23 12:00:00.000000",
  "modified_by": "Administrator",
  "module": "Builder",
  "name": "Builder Extension",

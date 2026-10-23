@@ -40,7 +40,7 @@ def get_update(extension: str) -> dict | None:
 	"""
 	assert_extension_manager()
 	row = get_updatable(extension)
-	version = latest_version(hub_extension(row.source_url, extension), extension)
+	version = latest_version(hub_extension(row.hub_url, extension), extension)
 	if version == row.version:
 		return None
 	return {"version": version}
@@ -64,7 +64,7 @@ def update_from_hub(extension: str, version: str) -> dict:
 		installation=row.name,
 		name=extension,
 		version=version,
-		hub_url=row.source_url,
+		hub_url=row.hub_url,
 		user=frappe.session.user,
 	)
 	return describe_installation(row.name)
@@ -99,8 +99,8 @@ def run_hub_update(installation: str, name: str, version: str, hub_url: str, use
 
 
 def get_updatable(extension: str):
-	"""A ready Hub install. A directory or dev install has no Hub release to update to."""
+	"""A ready Hub install. An app or dev install has no Hub release to update to."""
 	row = frappe.get_doc(INSTALLATION_DOCTYPE, get_installation(extension))
-	if row.install_state != "Ready" or not row.source_url or row.version == DEV_EXTENSION_VERSION:
+	if row.install_state != "Ready" or row.source != "Hub" or row.version == DEV_EXTENSION_VERSION:
 		frappe.throw(_('"{0}" did not come from a Builder Hub, so it cannot update.').format(extension))
 	return row

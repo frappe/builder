@@ -48,6 +48,7 @@ def create_dev_installation(extension: str) -> None:
 		{
 			"doctype": INSTALLATION_DOCTYPE,
 			"extension": extension,
+			"source": "Development",
 			"label": extension,
 			"version": DEV_EXTENSION_VERSION,
 			"enabled": 1,

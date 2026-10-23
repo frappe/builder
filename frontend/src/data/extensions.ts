@@ -39,8 +39,10 @@ type Installation = {
 	description?: string;
 	icon?: string;
 	version: string;
-	/** The Builder Hub that it came from. */
-	source_url: string;
+	/** Where the files came from. */
+	source: "Hub" | "App" | "Development";
+	/** The Builder Hub that it came from, when `source` is "Hub". */
+	hub_url?: string;
 	enabled: boolean;
 	/** A Hub install is "Installing" until its background job ends. Then it is "Ready" or "Failed". */
 	install_state?: "Installing" | "Ready" | "Failed";
@@ -54,6 +56,8 @@ type Installation = {
 
 type InstallationDetails = Installation & {
 	installed_on: string;
+	/** The code repository. Only a Hub listing has it. */
+	repository_url?: string;
 	readme?: string;
 	development_server?: string;
 };
@@ -228,7 +232,7 @@ const getExtensionsCatalog = (page: number = 1) =>
 type HubExtension = CatalogExtension & {
 	version: string;
 	readme?: string;
-	source_url?: string;
+	repository_url?: string;
 };
 
 /** The data that `get_extension` returns: the manifest entry and each release. */
@@ -256,7 +260,7 @@ const getHubExtension = async (name: string): Promise<HubExtension> => {
 		description: extension.description,
 		icon: extension.icon,
 		readme: extension.readme,
-		source_url: extension.repository_url,
+		repository_url: extension.repository_url,
 		version: latestVersion(releases),
 	};
 };

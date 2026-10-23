@@ -39,13 +39,14 @@ class BuilderExtension(Document):
 		description: DF.SmallText | None
 		enabled: DF.Check
 		extension: DF.Data
+		hub_url: DF.Data | None
 		icon: DF.Data | None
 		install_error: DF.SmallText | None
 		install_state: DF.Literal["Installing", "Ready", "Failed"]
 		installed_on: DF.Datetime | None
 		label: DF.Data | None
 		readme: DF.LongText | None
-		source_url: DF.Data | None
+		source: DF.Literal["Hub", "App", "Development"]
 		version: DF.Data
 	# end: auto-generated types
 

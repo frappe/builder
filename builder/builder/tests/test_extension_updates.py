@@ -38,7 +38,7 @@ def package(version: str) -> ValidatedPackage:
 class TestExtensionUpdates(FrappeTestCase):
 	def setUp(self):
 		drop_installations(EXTENSION)
-		self.row = make_installation(EXTENSION, source_url=HUB, install_state="Ready", enabled=0)
+		self.row = make_installation(EXTENSION, hub_url=HUB, install_state="Ready", enabled=0)
 
 	def tearDown(self):
 		drop_installations(EXTENSION)
@@ -61,6 +61,12 @@ class TestExtensionUpdates(FrappeTestCase):
 			"builder.extensions.updates.hub_extension", return_value={"releases": [{"version": "1.1.0"}]}
 		):
 			self.assertEqual(get_update(EXTENSION), {"version": "1.1.0"})
+
+	def test_refuses_an_extension_that_did_not_come_from_a_hub(self):
+		make_installation(EXTENSION, source="Development")
+
+		with self.assertRaises(frappe.ValidationError):
+			get_update(EXTENSION)
 
 	def test_applies_the_release_to_a_new_folder_and_keeps_the_extension_disabled(self):
 		message = self.run_update("1.1.0")

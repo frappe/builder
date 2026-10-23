@@ -38,11 +38,12 @@ class TestInstallations(FrappeTestCase):
 		self.addCleanup(frappe.set_user, "Administrator")
 
 	def test_lists_the_sites_installation_with_its_entry(self):
-		installation = make_installation(EXTENSION, version="2.1.0")
+		installation = make_installation(EXTENSION, version="2.1.0", hub_url="https://hub.example.com")
 
 		row = listed(EXTENSION)
 
 		self.assertEqual(row["version"], "2.1.0")
+		self.assertEqual([row["source"], row["hub_url"]], ["Hub", "https://hub.example.com"])
 		self.assertTrue(row["enabled"])
 		self.assertEqual(row["entry_url"], f"/files/builder_extensions/{installation.name}/sum123/main.js")
 

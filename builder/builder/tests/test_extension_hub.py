@@ -8,7 +8,10 @@ from unittest.mock import patch
 import frappe
 from frappe.tests.utils import FrappeTestCase
 
-from builder.extensions.hub import hub_get, read_release
+from builder.builder.tests.extension_fixtures import INSTALLATION_DOCTYPE, drop_installations
+from builder.extensions.constants import PROTOCOL_VERSION
+from builder.extensions.hub import Release, apply_release, create_pending_installation, hub_get, read_release
+from builder.extensions.package import ValidatedPackage
 from builder.extensions.safe_requests import BlockedRequest
 
 
@@ -76,3 +79,35 @@ class TestHubAddresses(FrappeTestCase):
 		hub_url = start_local_hub(self)
 		with self.developer_mode(False), patch("builder.extensions.safe_requests.validate_request_url"):
 			self.assertRaises(BlockedRequest, hub_get, hub_url, "get_catalog", {})
+
+
+class TestHubInstallation(FrappeTestCase):
+	extension = "acme/hub-install"
+	hub = "https://hub.example.com"
+
+	def setUp(self):
+		drop_installations(self.extension)
+		self.addCleanup(drop_installations, self.extension)
+
+	def test_a_pending_installation_comes_from_the_hub(self):
+		installation = create_pending_installation(self.extension, "1.0.0", {})
+
+		self.assertEqual(frappe.db.get_value(INSTALLATION_DOCTYPE, installation, "source"), "Hub")
+
+	def test_a_finished_install_records_its_hub(self):
+		doc = frappe.get_doc(INSTALLATION_DOCTYPE, create_pending_installation(self.extension, "1.0.0", {}))
+		release = Release(
+			name=self.extension,
+			version="1.0.0",
+			protocol_version=PROTOCOL_VERSION,
+			manifest={},
+			package_url=f"{self.hub}/1.0.0.builderext",
+			package_size=10,
+			package_sha256="100abcdef0123456",
+			status="Published",
+		)
+		package = ValidatedPackage(manifest={"label": "Hub install", "description": ""}, files={"main.js": b""})
+
+		apply_release(doc, self.hub, release, package)
+
+		self.assertEqual(frappe.db.get_value(INSTALLATION_DOCTYPE, doc.name, "hub_url"), self.hub)
