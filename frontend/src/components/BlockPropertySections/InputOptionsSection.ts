@@ -102,7 +102,7 @@ const inputOptionsSectionProperties = [
 			rename: (index: number, label: string) =>
 				blockController.getFirstSelectedBlock().renameOption(index, label),
 			remove: (index: number) => blockController.getFirstSelectedBlock().removeOption(index),
-			add: (label: string) => blockController.getFirstSelectedBlock().addOption(label),
+			add: (label: string, index?: number) => blockController.getFirstSelectedBlock().addOption(label, index),
 		},
 		// each select has its own options, so they are edited one select at a time
 		condition: () => blockController.isSelect() && !blockController.multipleBlocksSelected(),

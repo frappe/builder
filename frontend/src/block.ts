@@ -441,8 +441,10 @@ class Block implements BlockOptions {
 		const option = this.getOptions()[index];
 		if (option) this.removeChild(option);
 	}
-	addOption(label: string) {
-		this.addChild({ element: "option", innerHTML: label }, null, false);
+	// before the option at index, or last
+	addOption(label: string, index?: number) {
+		const before = index === undefined ? undefined : this.getOptions()[index];
+		this.addChild({ element: "option", innerHTML: label }, before ? this.getChildIndex(before) : null, false);
 	}
 	// the option shown before the visitor picks one, like the template's placeholder
 	getSelectedOptionIndex() {
