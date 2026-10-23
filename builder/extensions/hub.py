@@ -19,8 +19,8 @@ at a release, not to have vetted it, and the sha256 is the one fact Builder
 takes on faith before it checks the bytes for itself.
 
 A bare Hub host gets HTTPS, because the release that the Hub sends holds the
-sha256. A local Hub can still be plain HTTP, but its URL must say so, and only
-developer mode lets a request reach this machine. See `safe_requests`.
+sha256. Only developer mode allows a plain HTTP Hub, and only developer mode
+lets a request reach this machine. See `safe_requests`.
 """
 
 from __future__ import annotations
