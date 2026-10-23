@@ -1,5 +1,6 @@
 <template>
 	<div class="flex flex-col gap-5">
+		<Alert theme="amber" :title="__('Extensions are experimental. They can change between releases.')" />
 		<Switch
 			size="sm"
 			:label="__('Disable Extensions')"
@@ -28,7 +29,7 @@ import { builderSettings } from "@/data/builderSettings";
 import { extensionsDisabled } from "@/data/extensions";
 import useBuilderStore from "@/stores/builderStore";
 import { __ } from "@/translation";
-import { Switch } from "frappe-ui";
+import { Alert, Switch } from "frappe-ui";
 
 const builderStore = useBuilderStore();
 </script>
