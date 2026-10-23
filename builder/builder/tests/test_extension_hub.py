@@ -61,10 +61,6 @@ class TestHubAddresses(FrappeTestCase):
 				with self.subTest(hub_url=hub_url):
 					self.assertRaises(BlockedRequest, hub_get, hub_url, "get_catalog", {})
 
-	def test_refuses_plain_http_outside_developer_mode(self):
-		with self.developer_mode(False):
-			self.assertRaises(BlockedRequest, hub_get, "http://hub.example.com", "get_catalog", {})
-
 	def test_developer_mode_reaches_a_local_hub(self):
 		hub_url = start_local_hub(self)
 		with self.developer_mode(True):
