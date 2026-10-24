@@ -23,7 +23,7 @@ function withRawComponents<T extends object>(item: T): T {
  * relative to another item's name.
  *
  * An unknown `before` name puts the item first, an unknown `after` name puts it
- * last, so an extension that anchors to a feature this site does not have still
+ * last, so a plugin that anchors to a feature this site does not have still
  * lands somewhere sensible.
  */
 export type RegistryEntry = {
@@ -38,7 +38,7 @@ export type RegistryItem = RegistryEntry & {
 };
 
 /**
- * A registry backs one editor surface. Built-in features and, later, extensions
+ * A registry backs one editor surface. Built-in features and, later, plugins
  * register through the same function.
  *
  * Leave `before` and `after` unset in the common case: items then display in

@@ -11,5 +11,5 @@ export type SlashCommand = RegistryItem & {
 	run: (arg: string) => MenuStep | Promise<MenuStep>;
 };
 
-/** Bob's "/" commands. Built-ins and extensions register through the same call. */
+/** Bob's "/" commands. Built-ins and plugins register through the same call. */
 export const slashCommands = createRegistry<SlashCommand>();
