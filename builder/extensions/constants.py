@@ -41,8 +41,8 @@ MAX_STATE_BYTES = 100_000
 # The largest file a package may hold. It matches the Hub.
 MAX_FILE_BYTES = 5 * 1024 * 1024
 
-# The Builder Hub a site reads its catalog from when no other URL is set. It must
-# match the default on `Builder Settings.hub_url`.
+# The Builder Hub a site reads its catalog from when the site config sets no
+# `builder_hub_url`.
 DEFAULT_HUB_URL = "https://preview.frappe.cloud"
 
 # The extension protocol this Builder speaks. A release that needs a newer one is

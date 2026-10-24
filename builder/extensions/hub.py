@@ -83,15 +83,15 @@ class Release:
 
 
 def resolve_hub_url() -> str:
-	"""The Hub URL on Builder Settings, given a scheme and no trailing slash."""
-	url = frappe.db.get_single_value("Builder Settings", "hub_url") or DEFAULT_HUB_URL
+	"""`builder_hub_url` from the site config, given a scheme and no trailing slash."""
+	url = frappe.conf.get("builder_hub_url") or DEFAULT_HUB_URL
 	return ensure_protocol(url)
 
 
 @frappe.whitelist()
 @has_page_read(NO_BUILDER_ACCESS)
 def get_hub_url() -> str:
-	"""The Hub the panel reads its catalog from. Only a manager can read Builder Settings."""
+	"""The Hub the panel reads its catalog from. Only the server can read the site config."""
 	return resolve_hub_url()
 
 
