@@ -1,7 +1,7 @@
 # Copyright (c) 2026, Frappe Technologies Pvt Ltd and contributors
 # For license information, please see license.txt
 
-"""Bounded checks on a `.builderext` package before Builder writes any of it.
+"""Bounded checks on a `.builderplugin` package before Builder writes any of it.
 
 Builder Hub validates a package when it indexes a release, but the Hub is a code
 source Builder trusts to point at a release, not one it trusts to have vetted

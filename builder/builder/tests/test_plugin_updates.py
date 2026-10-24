@@ -23,7 +23,7 @@ def release(version: str) -> Release:
 		version=version,
 		protocol_version=PROTOCOL_VERSION,
 		manifest={},
-		package_url=f"{HUB}/{version}.builderext",
+		package_url=f"{HUB}/{version}.builderplugin",
 		package_size=10,
 		package_sha256=f"{version.replace('.', '')}abcdef0123456",
 		status="Published",

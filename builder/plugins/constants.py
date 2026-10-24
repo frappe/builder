@@ -49,7 +49,7 @@ DEFAULT_HUB_URL = "https://preview.frappe.cloud"
 # refused, and the Hub is asked for a release at or below this.
 PROTOCOL_VERSION = 1
 
-# A `.builderext` package is one ZIP: the manifest, `main.js` and the icon at the
+# A `.builderplugin` package is one ZIP: the manifest, `main.js` and the icon at the
 # root, and the build's `chunks/` and `assets/`. These bound what Builder will
 # download and unpack from it. They match the Hub.
 PACKAGE_FOLDERS = frozenset({"chunks", "assets"})

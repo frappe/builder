@@ -240,7 +240,7 @@ export const packagePlugin = ({ root = process.cwd(), dist = "dist", output = "r
 
 	const outputRoot = resolveProjectPath(projectRoot, output, "output directory");
 	fs.mkdirSync(outputRoot, { recursive: true });
-	const filename = `${manifest.name.replace("/", "-")}-${manifest.version}.builderext`;
+	const filename = `${manifest.name.replace("/", "-")}-${manifest.version}.builderplugin`;
 	const destination = path.join(outputRoot, filename);
 	const temporary = `${destination}.tmp`;
 	fs.writeFileSync(temporary, archive, { mode: 0o644 });
