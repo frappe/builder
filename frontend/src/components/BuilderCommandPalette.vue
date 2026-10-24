@@ -110,7 +110,7 @@ function openSettings(tab: string) {
 }
 
 // read from the same registry the settings dialog renders, so a pane registered
-// by an extension shows up here too
+// by a plugin shows up here too
 const settingsCommands = computed<PaletteItem[]>(() =>
 	settingsItems.visible.value
 		.filter((item) => !item.disabled)

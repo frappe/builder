@@ -2,9 +2,9 @@ import LayersIcon from "@/components/Icons/Layers.vue";
 import AssetsTab from "@/components/LeftPanelTabs/AssetsTab.vue";
 import BlocksTab from "@/components/LeftPanelTabs/BlocksTab.vue";
 import CodeTab from "@/components/LeftPanelTabs/CodeTab.vue";
-import ExtensionsTab from "@/components/LeftPanelTabs/ExtensionsTab.vue";
+import PluginsTab from "@/components/LeftPanelTabs/PluginsTab.vue";
 import LayersTab from "@/components/LeftPanelTabs/LayersTab.vue";
-import { extensionsDisabled } from "@/data/extensions";
+import { pluginsDisabled } from "@/data/plugins";
 import useBuilderStore from "@/stores/builderStore";
 import { createRegistry, type RegistryItem } from "@/utils/createRegistry";
 import type { KeyboardShortcutCombo } from "frappe-ui";
@@ -100,9 +100,9 @@ leftPanelTabs.register({
 });
 
 leftPanelTabs.register({
-	name: "Extensions",
-	label: __("Extensions"),
+	name: "Plugins",
+	label: __("Plugins"),
 	icon: "lucide-plug",
-	component: ExtensionsTab,
-	condition: () => !extensionsDisabled.value,
+	component: PluginsTab,
+	condition: () => !pluginsDisabled.value,
 });

@@ -12,9 +12,9 @@ import translationPlugin, { ensureTranslations } from "./translation";
 import App from "@/App.vue";
 import Input from "@/components/Controls/Input.vue";
 import { editorDemo } from "@/utils/editorDemo";
-import { extensionsDisabled, getStartupExtensions, listenForExtensionJobs } from "@/data/extensions";
-import { restoreDevExtension } from "@/extensions/devExtension";
-import { importExtensions, installExtensions } from "@/extensions/loader";
+import { pluginsDisabled, getStartupPlugins, listenForPluginJobs } from "@/data/plugins";
+import { restoreDevPlugin } from "@/plugins/devPlugin";
+import { importPlugins, installPlugins } from "@/plugins/loader";
 import useBuilderStore from "@/stores/builderStore";
 
 const app = createApp(App);
@@ -24,17 +24,17 @@ const pinia = createPinia();
 // chunk looks up stores as it loads
 app.use(pinia);
 
-// the demo runs no extensions. Elsewhere they load while the translations do
-const extensions = editorDemo
+// the demo runs no plugins. Elsewhere they load while the translations do
+const plugins = editorDemo
 	? Promise.resolve([])
-	: getStartupExtensions()
-			.then(importExtensions)
+	: getStartupPlugins()
+			.then(importPlugins)
 			.catch((error) => {
-				console.error("[builder] the extensions did not load", error);
+				console.error("[builder] the plugins did not load", error);
 				return [];
 			});
 
-Promise.all([ensureTranslations(), extensions]).then(([, loaded]) => {
+Promise.all([ensureTranslations(), plugins]).then(([, loaded]) => {
 	app.use(router);
 	app.use(FrappeUI);
 	if (!editorDemo) {
@@ -50,11 +50,11 @@ Promise.all([ensureTranslations(), extensions]).then(([, loaded]) => {
 	app.component("FormControl", FormControl);
 	app.component("BuilderInput", Input);
 
-	// before the first render, so an extension's items show from the start
-	installExtensions(app, loaded);
+	// before the first render, so a plugin's items show from the start
+	installPlugins(app, loaded);
 	app.mount("#app");
-	if (!editorDemo) listenForExtensionJobs(useBuilderStore().realtime);
-	if (!editorDemo && window.is_developer_mode && !extensionsDisabled.value) void restoreDevExtension();
+	if (!editorDemo) listenForPluginJobs(useBuilderStore().realtime);
+	if (!editorDemo && window.is_developer_mode && !pluginsDisabled.value) void restoreDevPlugin();
 });
 
 declare global {
