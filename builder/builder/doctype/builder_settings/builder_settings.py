@@ -7,8 +7,6 @@ from frappe.utils import get_files_path
 from frappe.utils.caching import redis_cache
 from frappe.website.utils import clear_cache
 
-from builder.extensions.hub import ensure_protocol
-from builder.extensions.safe_requests import validate_request_url
 from builder.utils import has_page_read, has_page_write
 
 
@@ -29,18 +27,12 @@ class BuilderSettings(Document):
 		favicon: DF.AttachImage | None
 		head_html: DF.Code | None
 		home_page: DF.Data | None
-		hub_url: DF.Data | None
 		restrict_click_handlers: DF.Check
 		script: DF.Code | None
 		script_public_url: DF.ReadOnly | None
 		style: DF.Code | None
 		style_public_url: DF.ReadOnly | None
 	# end: auto-generated types
-
-	def validate(self):
-		# only on a change, so an old HTTP URL does not block the other settings
-		if self.hub_url and self.has_value_changed("hub_url"):
-			validate_request_url(ensure_protocol(self.hub_url))
 
 	def on_update(self):
 		self.handle_script_update("script", "JavaScript", "js", "page_scripts")

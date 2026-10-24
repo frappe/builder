@@ -13,23 +13,17 @@
 
 		<hr class="w-full border-outline-gray-2" />
 
-		<BuilderInput
-			type="text"
-			class="[&>p]:text-p-xs"
-			:label="__('Hub URL')"
-			:description="__('Fetch the extensions catalog from this URL')"
-			placeholder="https://preview.frappe.cloud"
-			:modelValue="builderSettings.doc?.hub_url"
-			:hideClearButton="true"
-			@update:modelValue="(value: string) => builderStore.updateBuilderSettings('hub_url', value)" />
+		<p class="text-p-xs text-ink-gray-5">
+			{{
+				__(
+					"The catalog comes from the Builder Hub. To use another Hub, set builder_hub_url in the site config.",
+				)
+			}}
+		</p>
 	</div>
 </template>
 <script setup lang="ts">
-import { builderSettings } from "@/data/builderSettings";
 import { extensionsDisabled } from "@/data/extensions";
-import useBuilderStore from "@/stores/builderStore";
 import { __ } from "@/translation";
 import { Alert, Switch } from "frappe-ui";
-
-const builderStore = useBuilderStore();
 </script>

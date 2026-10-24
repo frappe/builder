@@ -9,8 +9,15 @@ import frappe
 from frappe.tests.utils import FrappeTestCase
 
 from builder.builder.tests.extension_fixtures import INSTALLATION_DOCTYPE, drop_installations
-from builder.extensions.constants import PROTOCOL_VERSION
-from builder.extensions.hub import Release, apply_release, create_pending_installation, hub_get, read_release
+from builder.extensions.constants import DEFAULT_HUB_URL, PROTOCOL_VERSION
+from builder.extensions.hub import (
+	Release,
+	apply_release,
+	create_pending_installation,
+	hub_get,
+	read_release,
+	resolve_hub_url,
+)
 from builder.extensions.package import ValidatedPackage
 from builder.extensions.safe_requests import BlockedRequest
 
@@ -57,6 +64,12 @@ class TestHubAddresses(FrappeTestCase):
 
 	def developer_mode(self, enabled: bool):
 		return patch.dict(frappe.conf, {"developer_mode": int(enabled)})
+
+	def test_reads_the_hub_from_the_site_config(self):
+		with patch.dict(frappe.conf, {"builder_hub_url": "hub.example.com/"}):
+			self.assertEqual(resolve_hub_url(), "https://hub.example.com")
+		with patch.dict(frappe.conf, {"builder_hub_url": ""}):
+			self.assertEqual(resolve_hub_url(), DEFAULT_HUB_URL)
 
 	def test_refuses_an_internal_address(self):
 		with self.developer_mode(False):
