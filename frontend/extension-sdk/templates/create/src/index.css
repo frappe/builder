@@ -1,3 +1,0 @@
-/* The editor already loads frappe-ui's styles and fonts. This adds only the classes the extension uses. */
-@tailwind components;
-@tailwind utilities;

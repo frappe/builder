@@ -1,6 +1,6 @@
 # Host modules
 
-A trusted extension imports `builder`, `vue`, `pinia` and `frappe-ui` by their bare names. The editor page's import map resolves each name to one of these modules, so an extension shares the editor's own instances.
+A trusted plugin imports `builder`, `vue`, `pinia` and `frappe-ui` by their bare names. The editor page's import map resolves each name to one of these modules, so a plugin shares the editor's own instances.
 
 | File                             | Bare name   | What it gives                                                                                   |
 | -------------------------------- | ----------- | ----------------------------------------------------------------------------------------------- |
@@ -13,6 +13,6 @@ Every other module under `src/` is reachable as `builder/internal/<path>`, with 
 
 `frontend/vite/hostModules.mjs` makes each module a build entry and writes the import map. An entry per module would make the bundler split the editor much more finely, so the editor would load several times as many files at startup. So the plugin first runs a quiet build without the internal entries, and pins each module to the chunk that build gives it. Each internal entry then only re-exports from the editor's usual chunks, and the editor loads what it loaded before.
 
-`builder.ts` is the stable surface. A change to its exports breaks extensions, so keep `frontend/extension-sdk/types/builder.d.ts` in step with it.
+`builder.ts` is the stable surface. A change to its exports breaks plugins, so keep `frontend/plugin-sdk/types/builder.d.ts` in step with it.
 
-To write an extension, read [the SDK guide](../../extension-sdk/README.md).
+To write a plugin, read [the SDK guide](../../plugin-sdk/README.md).

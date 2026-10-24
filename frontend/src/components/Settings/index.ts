@@ -7,7 +7,7 @@ export type SettingsGroup = "Current Page" | "Global";
 export type SettingsItem = RegistryItem & {
 	label: string;
 	title: string;
-	/** a lucide class name, or a component, such as an extension's `lucideIcon()` */
+	/** a lucide class name, or a component, such as a plugin's `lucideIcon()` */
 	icon: string | Component;
 	group: SettingsGroup;
 	component: Component;
@@ -142,12 +142,12 @@ const panes: SettingsPane[] = [
 		load: () => import("@/components/Settings/GlobalAgents.vue"),
 	},
 	{
-		name: "global_extensions",
-		label: __("Extensions"),
-		title: __("Extensions Settings"),
+		name: "global_plugins",
+		label: __("Plugins"),
+		title: __("Plugins Settings"),
 		icon: "lucide-plug",
 		group: "Global",
-		load: () => import("@/components/Settings/GlobalExtensions.vue"),
+		load: () => import("@/components/Settings/GlobalPlugins.vue"),
 	},
 ];
 

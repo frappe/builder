@@ -122,12 +122,12 @@ describe("createRegistry", () => {
 		const registry = createRegistry<TestItem>();
 		registry.register({ name: "a" });
 		registry.register({ name: "b" });
-		registry.register({ name: "extension" });
+		registry.register({ name: "plugin" });
 
 		registry.register({ name: "a" });
 		registry.register({ name: "b" });
 
-		expect(names(registry.visible.value)).toEqual(["a", "b", "extension"]);
+		expect(names(registry.visible.value)).toEqual(["a", "b", "plugin"]);
 	});
 
 	it("moves an item when it registers again with an anchor", () => {

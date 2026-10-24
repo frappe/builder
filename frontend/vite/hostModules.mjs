@@ -2,11 +2,11 @@ import fs from "node:fs";
 import path from "node:path";
 
 /**
- * Shares the editor's own modules with extensions.
+ * Shares the editor's own modules with plugins.
  *
  * Each host module is one more build entry, so it reuses the editor's chunks and
  * its instances of Vue, pinia and frappe-ui. An import map in the editor page
- * gives each module a bare name. An extension that imports "vue" or "builder"
+ * gives each module a bare name. A plugin that imports "vue" or "builder"
  * then gets the editor's copy, not one of its own.
  */
 export const HOST_MODULES = {
@@ -18,7 +18,7 @@ export const HOST_MODULES = {
 
 /**
  * Every other module of the editor, as `builder/internal/<path>`. These carry no
- * promise: a change in Builder can break an extension that imports one.
+ * promise: a change in Builder can break a plugin that imports one.
  *
  * `main.ts` would start a second app, and the host modules have names of their own.
  */
