@@ -36,9 +36,9 @@ jobs:
         if: github.event_name == 'push'
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release create "$RELEASE_TAG" release/*.builderext --verify-tag --generate-notes
+        run: gh release create "$RELEASE_TAG" release/*.builderplugin --verify-tag --generate-notes
       - name: Upload to GitHub release
         if: github.event_name == 'release'
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release upload "$RELEASE_TAG" release/*.builderext
+        run: gh release upload "$RELEASE_TAG" release/*.builderplugin

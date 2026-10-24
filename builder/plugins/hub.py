@@ -201,7 +201,7 @@ def hub_error(content: bytes, status_code: int) -> str:
 
 
 def download_package(release: Release) -> bytes:
-	"""The `.builderext` bytes for one release, proven against its sha256.
+	"""The `.builderplugin` bytes for one release, proven against its sha256.
 
 	Stops the stream past the release `package_size`, and refuses a download
 	whose sha256 does not match `release.package_sha256`. The sha256 proves the

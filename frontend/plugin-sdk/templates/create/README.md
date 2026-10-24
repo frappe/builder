@@ -38,7 +38,7 @@ npm run build
 npm run package -- --tag v1.0.0
 ~~~
 
-The package command writes `release/__PUBLISHER__-__PLUGIN_SLUG__-1.0.0.builderext`.
+The package command writes `release/__PUBLISHER__-__PLUGIN_SLUG__-1.0.0.builderplugin`.
 The release directory is generated and is not committed.
 
 ## Publish
@@ -58,7 +58,7 @@ You can publish either way:
 2. Create a GitHub release in the repository UI with tag `v1.0.0`.
 
 The included release workflow builds the plugin and attaches the
-`.builderext` package. It refuses to replace an existing release asset.
+`.builderplugin` package. It refuses to replace an existing release asset.
 
 For the next release, update the version in both `manifest.json` and
 `package.json`, commit the change, and publish the matching tag.

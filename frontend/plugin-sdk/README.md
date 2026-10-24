@@ -110,6 +110,6 @@ npm run build
 npm run package -- --tag v1.0.0
 ```
 
-The package command checks the build against the limits that Builder and Builder Hub use. Then it writes `release/<publisher>-<plugin>-<version>.builderext` and prints its SHA-256.
+The package command checks the build against the limits that Builder and Builder Hub use. Then it writes `release/<publisher>-<plugin>-<version>.builderplugin` and prints its SHA-256.
 
 The release workflow does the same on each `v*` tag, and attaches the package to the GitHub release.
