@@ -9,6 +9,7 @@ import { fileURLToPath } from "node:url";
 
 const TEMPLATE_ROOT = fileURLToPath(new URL("./templates/create", import.meta.url));
 const RELEASE_WORKFLOW = fileURLToPath(new URL("./templates/github/workflows/release.yml", import.meta.url));
+const SDK_PACKAGE = JSON.parse(fs.readFileSync(new URL("./package.json", import.meta.url), "utf8"));
 const GENERIC_DESCRIPTION = "A Frappe Builder plugin.";
 const PLAIN_TEXT = /^[^<>\u0000-\u001f\u007f]*$/;
 
@@ -114,6 +115,7 @@ export const createPlugin = ({
 		LABEL_JSON: JSON.stringify(label),
 		PACKAGE_NAME_JSON: JSON.stringify(`@${publisherSlug}/${pluginSlug}`),
 		PUBLISHER: publisherSlug,
+		SDK_VERSION_JSON: JSON.stringify(`^${SDK_PACKAGE.version}`),
 		TOOLTIP_JSON: JSON.stringify("Open " + label),
 		YEAR: String(new Date().getFullYear()),
 	};
