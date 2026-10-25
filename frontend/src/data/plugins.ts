@@ -82,10 +82,20 @@ const managerResource = createResource<boolean>({
 
 const canManagePlugins = computed(() => Boolean(managerResource.data));
 
-/** Gets the list. Call it after each change. */
-const reloadInstallations = () => {
+/**
+ * Gets the list. Call it after each change.
+ *
+ * Starts each plugin whose install ended since the last list. So an install
+ * still starts when the browser missed its realtime message.
+ */
+const reloadInstallations = async () => {
 	if (managerResource.data === null) void managerResource.fetch();
-	return installationsResource.fetch();
+	const installing = (installationsResource.data ?? [])
+		.filter((row) => row.install_state === "Installing")
+		.map((row) => row.name);
+	const rows = await installationsResource.fetch();
+	for (const plugin of installing) await loadInstalled(plugin);
+	return rows;
 };
 
 const isRunnable = (row: Installation) =>
@@ -206,7 +216,7 @@ const uninstallPlugin = async (plugin: string) => {
 /** Loads one installed plugin while the editor runs. */
 const loadInstalled = async (plugin: string) => {
 	const row = (installationsResource.data ?? []).find((installation) => installation.name === plugin);
-	if (!row || !isRunnable(row) || pluginsDisabled.value) return;
+	if (!row || !isRunnable(row) || pluginsDisabled.value || runningPlugins.has(plugin)) return;
 	try {
 		await loadPlugin(toRunnable(row));
 	} catch (error) {
