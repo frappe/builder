@@ -49,8 +49,9 @@ MANIFEST_REQUIRED_FIELDS = frozenset({"v", "name", "label", "description", "vers
 MANIFEST_OPTIONAL_FIELDS = frozenset({"icon"})
 
 # A url() that is not a local fragment, or a value that opens with an external scheme.
+# The lookahead holds the spaces and the optional quote, so neither can stand in for the "#".
 SVG_EXTERNAL_REFERENCE = re.compile(
-	r"(?:url\s*\(\s*['\"]?\s*(?!#)|^\s*(?:https?:|//|data:|javascript:))", re.I
+	r"(?:url\s*\((?!\s*['\"]?\s*#)|^\s*(?:https?:|//|data:|javascript:))", re.I
 )
 
 
