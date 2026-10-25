@@ -1,7 +1,7 @@
 {
  "actions": [],
  "creation": "2026-09-02 12:00:00.000000",
- "description": "One plugin installed on this site. The editor loads it into its own app, with the access of each editor user.",
+ "description": "A plugin that is installed on this site. The editor runs it with the permissions of the user who uses the editor.",
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
@@ -21,7 +21,7 @@
  ],
  "fields": [
   {
-   "description": "The plugin's namespaced identity, in the form \"publisher/name\".",
+   "description": "The unique name of the plugin, in the form \"publisher/name\".",
    "fieldname": "plugin",
    "fieldtype": "Data",
    "in_list_view": 1,
@@ -32,7 +32,7 @@
    "unique": 1
   },
   {
-   "description": "Where the files came from: a Builder Hub, a Frappe app, or a dev server.",
+   "description": "Where the plugin files come from: a Builder Hub, a Frappe app or a development server.",
    "fieldname": "source",
    "fieldtype": "Select",
    "in_list_view": 1,
@@ -44,7 +44,7 @@
   },
   {
    "depends_on": "eval:doc.source == \"Hub\"",
-   "description": "The Builder Hub the files came from. Shown in the panel, but not part of the plugin's identity.",
+   "description": "The URL of the Builder Hub that supplied the files. The Plugins panel shows it. Builder does not use it to identify the plugin.",
    "fieldname": "hub_url",
    "fieldtype": "Data",
    "label": "Hub URL",
@@ -52,7 +52,7 @@
   },
   {
    "default": "1",
-   "description": "Off stops this plugin for every user.",
+   "description": "When this is off, the plugin does not run for any user.",
    "fieldname": "enabled",
    "fieldtype": "Check",
    "in_list_view": 1,
@@ -66,26 +66,26 @@
    "label": "Label"
   },
   {
-   "description": "A brief summary shown below the label in the Plugins panel.",
+   "description": "A short summary. The Plugins panel shows it below the label.",
    "fieldname": "description",
    "fieldtype": "Small Text",
    "label": "Description"
   },
   {
-   "description": "One SVG file in the install root, such as icon.svg. The editor draws it beside the plugin.",
+   "description": "The name of an SVG file in the root folder of the package, such as icon.svg. The editor shows this icon next to the plugin.",
    "fieldname": "icon",
    "fieldtype": "Data",
    "label": "Icon"
   },
   {
-   "description": "The plugin's README, in Markdown. Builder Hub sends it, or the dev server reads it from the author's folder.",
+   "description": "The README of the plugin, in Markdown. The Builder Hub supplies it. For a development server, Builder reads it from the plugin folder of the author.",
    "fieldname": "readme",
    "fieldtype": "Long Text",
    "ignore_xss_filter": 1,
    "label": "Readme"
   },
   {
-   "description": "The release this site runs.",
+   "description": "The version of the plugin that this site uses.",
    "fieldname": "version",
    "fieldtype": "Data",
    "in_list_view": 1,
@@ -93,7 +93,7 @@
    "reqd": 1
   },
   {
-   "description": "A hash of the installed package. It names the folder of the release, so a new release gets new URLs.",
+   "description": "A hash of the installed package. Builder uses it as the name of the release folder, so each release has different file URLs.",
    "fieldname": "checksum",
    "fieldtype": "Data",
    "label": "Checksum",
@@ -107,7 +107,7 @@
   },
   {
    "default": "Ready",
-   "description": "A Hub install starts as Installing while a background job downloads it. It then becomes Ready or Failed.",
+   "description": "The status of a Hub install. It is Installing while a background job downloads the package. Then it changes to Ready or Failed.",
    "fieldname": "install_state",
    "fieldtype": "Select",
    "in_standard_filter": 1,
@@ -117,7 +117,7 @@
   },
   {
    "depends_on": "eval:doc.install_state == \"Failed\"",
-   "description": "Why the last Hub install did not finish. Shown in the panel with a Retry.",
+   "description": "The reason that the last Hub install failed. The Plugins panel shows it with a Retry button.",
    "fieldname": "install_error",
    "fieldtype": "Small Text",
    "label": "Install Error",
@@ -127,7 +127,7 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 0,
  "links": [],
- "modified": "2026-10-23 12:00:00.000000",
+ "modified": "2026-10-25 12:00:00.000000",
  "modified_by": "Administrator",
  "module": "Builder",
  "name": "Builder Plugin",
