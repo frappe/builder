@@ -314,7 +314,7 @@ def assert_installable(name: str) -> None:
 	if frappe.session.user == "Guest":
 		frappe.throw(_("Sign in to install plugins."), frappe.PermissionError)
 	assert_plugin_manager()
-	if not PLUGIN_NAME_PATTERN.match(name or ""):
+	if not PLUGIN_NAME_PATTERN.fullmatch(name or ""):
 		frappe.throw(_("A plugin name reads as publisher/name, in lowercase."))
 
 	existing = find_installation(name)

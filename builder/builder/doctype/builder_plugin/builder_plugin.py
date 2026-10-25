@@ -12,6 +12,7 @@ from frappe.model.document import Document
 from frappe.utils import get_files_path, now
 
 from builder.plugins.constants import (
+	CHECKSUM_PATTERN,
 	ENTRY_FILE,
 	ICON_PATTERN,
 	MAX_README_BYTES,
@@ -61,6 +62,7 @@ class BuilderPlugin(Document):
 
 	def validate(self):
 		self.validate_identity()
+		self.validate_checksum()
 		self.validate_icon()
 		self.validate_readme()
 
@@ -103,13 +105,17 @@ class BuilderPlugin(Document):
 		return f"data:image/svg+xml;base64,{base64.b64encode(icon.read_bytes()).decode()}"
 
 	def validate_identity(self):
-		if not PLUGIN_NAME_PATTERN.match(self.plugin or ""):
+		if not PLUGIN_NAME_PATTERN.fullmatch(self.plugin or ""):
 			frappe.throw(_("Plugin must read as publisher/name, in lowercase."))
-		if not VERSION_PATTERN.match(self.version or ""):
+		if not VERSION_PATTERN.fullmatch(self.version or ""):
 			frappe.throw(_("Version must hold only letters, digits, dots, plus signs and hyphens."))
 
+	def validate_checksum(self):
+		if self.checksum and not CHECKSUM_PATTERN.fullmatch(self.checksum):
+			frappe.throw(_("Checksum must be 12 lowercase hex digits."))
+
 	def validate_icon(self):
-		if self.icon and not ICON_PATTERN.match(self.icon):
+		if self.icon and not ICON_PATTERN.fullmatch(self.icon):
 			frappe.throw(_("Icon must name one SVG file in the install root, such as icon.svg."))
 
 	def validate_readme(self):

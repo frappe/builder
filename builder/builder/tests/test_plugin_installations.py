@@ -45,7 +45,7 @@ class TestInstallations(FrappeTestCase):
 		self.assertEqual(row["version"], "2.1.0")
 		self.assertEqual([row["source"], row["hub_url"]], ["Hub", "https://hub.example.com"])
 		self.assertTrue(row["enabled"])
-		self.assertEqual(row["entry_url"], f"/files/builder_plugins/{installation.name}/sum123/main.js")
+		self.assertEqual(row["entry_url"], f"/files/builder_plugins/{installation.name}/0123456789ab/main.js")
 
 	def test_a_page_reader_gets_the_list_without_reading_the_installation(self):
 		"""The editor loads a plugin from this row alone. A page reader cannot read the document."""

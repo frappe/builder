@@ -191,9 +191,9 @@ def validate_manifest(manifest: object) -> dict:
 
 	if type(manifest["v"]) is not int or manifest["v"] != PROTOCOL_VERSION:
 		frappe.throw(_("The manifest needs protocol {0}.").format(PROTOCOL_VERSION))
-	if not PLUGIN_NAME_PATTERN.match(str(manifest["name"])):
+	if not PLUGIN_NAME_PATTERN.fullmatch(str(manifest["name"])):
 		frappe.throw(_("The manifest name must read as publisher/name, in lowercase."))
-	if not VERSION_PATTERN.match(str(manifest["version"])):
+	if not VERSION_PATTERN.fullmatch(str(manifest["version"])):
 		frappe.throw(_("The manifest version holds a character it may not."))
 	if manifest["entry"] != ENTRY_FILE:
 		frappe.throw(_("The manifest entry must be {0}.").format(ENTRY_FILE))

@@ -20,11 +20,15 @@ ASSET_TYPES = {".js", ".css", ".json", ".svg", ".png", ".jpg", ".jpeg", ".gif", 
 
 # publisher/name, lowercase. The slash is the only separator, and no install path
 # is built from it, so a name can add no path segment.
-PLUGIN_NAME_PATTERN = re.compile(r"^[a-z0-9][a-z0-9-]*/[a-z0-9][a-z0-9-]*$")
-VERSION_PATTERN = re.compile(r"^[A-Za-z0-9][A-Za-z0-9.+-]*$")
+PLUGIN_NAME_PATTERN = re.compile(r"[a-z0-9][a-z0-9-]*/[a-z0-9][a-z0-9-]*")
+VERSION_PATTERN = re.compile(r"[A-Za-z0-9][A-Za-z0-9.+-]*")
 
 # One SVG in the install root. No separator, so an icon names no file outside it.
-ICON_PATTERN = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]*\.svg$")
+ICON_PATTERN = re.compile(r"[A-Za-z0-9][A-Za-z0-9._-]*\.svg")
+
+# The first 12 hex digits of the package sha256. It names the release folder and the
+# entry URL, so it must hold no path segment.
+CHECKSUM_PATTERN = re.compile(r"[0-9a-f]{12}")
 
 # An installation loaded from a dev server this session. It has no files, and the
 # browser loads its entry from the dev server.

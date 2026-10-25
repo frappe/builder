@@ -24,7 +24,7 @@ def make_installation(plugin="acme/listed", entry=None, **values):
 		"label": plugin,
 		"source": "Hub",
 		"version": "1.0.0",
-		"checksum": "sum123",
+		"checksum": "0123456789ab",
 		"enabled": 1,
 		**values,
 	}
