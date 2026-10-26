@@ -147,6 +147,17 @@ const blockController = {
 			block.setEffectiveAttribute(attribute, value);
 		});
 	},
+	getSharedValue: <T>(getValue: (block: Block) => T) => {
+		let value: T | "__initial__" | "Mixed" = "__initial__";
+		canvasStore.activeCanvas?.selectedBlocks.forEach((block) => {
+			if (value === "__initial__") {
+				value = getValue(block);
+			} else if (value !== getValue(block)) {
+				value = "Mixed";
+			}
+		});
+		return value;
+	},
 	getKeyValue: (key: "element" | "innerHTML" | "visibilityCondition") => {
 		if (key !== "visibilityCondition") {
 			let keyValue = "__initial__" as StyleValue | undefined;

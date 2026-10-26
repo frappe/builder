@@ -4,7 +4,8 @@ import blockController from "@/utils/blockController";
 import { __ } from "@/translation";
 
 // boolean attributes are on whenever present, whatever their value ("", "true", "required")
-const hasAttribute = (attribute: string) => blockController.getEffectiveAttribute(attribute) != null;
+const hasAttribute = (attribute: string) =>
+	blockController.getSharedValue((block) => block.getEffectiveAttribute(attribute) != null);
 
 const inputOptionsSectionProperties = [
 	{

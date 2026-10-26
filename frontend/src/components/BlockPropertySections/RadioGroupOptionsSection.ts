@@ -13,7 +13,7 @@ const radioGroupOptionsSectionProperties = [
 					{ label: __("Yes"), value: true },
 					{ label: __("No"), value: false },
 				],
-				modelValue: blockController.getFirstSelectedBlock().isGroupRequired(),
+				modelValue: blockController.getSharedValue((block) => block.isGroupRequired()),
 			};
 		},
 		searchKeyWords: "Required, Mandatory, Validation, Radio, Radio Group, form",
