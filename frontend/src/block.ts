@@ -487,7 +487,7 @@ class Block implements BlockOptions {
 		const activeState = this.activeState?.split(":")[0];
 		return (activeState ? `${activeState}:${String(style)}` : style) as styleProperty;
 	}
-	setAttribute(attribute: string, value: string | undefined) {
+	setAttribute(attribute: string, value: string | null | undefined) {
 		this.attributes[attribute] = value;
 	}
 	removeAttribute(attribute: string) {
@@ -506,13 +506,17 @@ class Block implements BlockOptions {
 		return this.getCustomAttributes()[attribute] ?? this.getAttribute(attribute);
 	}
 	setEffectiveAttribute(attribute: string, value: string | undefined) {
+		// a missing key falls back to the component's copy, so an instance saves null to remove one
+		const component = this.isExtendedFromComponent() ? this.referenceComponent : null;
 		if (value !== undefined && attribute in this.getCustomAttributes()) {
 			this.customAttributes[attribute] = value;
+		} else if (value === undefined && component?.customAttributes[attribute] != null) {
+			this.customAttributes[attribute] = null;
 		} else {
 			// clearing drops both copies, or the one left behind becomes the value again
 			delete this.customAttributes[attribute];
 		}
-		this.setAttribute(attribute, value);
+		this.setAttribute(attribute, value ?? (component?.attributes[attribute] != null ? null : undefined));
 	}
 	getAttribute(attribute: string) {
 		return this.getAttributes()[attribute];

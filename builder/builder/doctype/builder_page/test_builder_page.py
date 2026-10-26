@@ -2,6 +2,7 @@
 # See license.txt
 
 
+import bs4 as bs
 import frappe
 from frappe.desk.form.load import getdoc
 from frappe.tests.utils import FrappeTestCase
@@ -1097,6 +1098,40 @@ class TestBuilderPage(FrappeTestCase):
 			self.assertNotIn(block_css, content)
 			self.assertIn(r"<\/script><p>Component Script</p>", content)
 			self.assertIn(r"<\/style><p>Component Style</p>", content)
+		finally:
+			page.delete()
+			component.delete()
+
+	def test_component_instance_can_remove_component_attributes(self):
+		component_root = Block(element="div", blockId="comp-root")
+		component_root.attach_children(
+			Block(element="input", blockId="comp-email", attributes={"name": "email", "required": "required"}),
+			Block(element="input", blockId="comp-phone", attributes={"name": "phone"}, customAttributes={"required": ""}),
+		)
+		component = frappe.get_doc({"doctype": "Builder Component", "block": component_root.as_json()}).insert()
+
+		body = Block(element="div", originalElement="body")
+		component_root_copy = Block(extendedFromComponent=component.name)
+		component_root_copy.attach_children(
+			Block(isChildOfComponent=component.name, referenceBlockId="comp-email", attributes={"required": None}),
+			Block(isChildOfComponent=component.name, referenceBlockId="comp-phone", customAttributes={"required": None}),
+		)
+		body.attach_children(component_root_copy)
+		page = frappe.get_doc(
+			{
+				"doctype": "Builder Page",
+				"page_title": "Component Attribute Removal Test",
+				"published": 1,
+				"route": "/component-attribute-removal-test",
+				"blocks": body.as_json(wrap_in_array=True),
+			}
+		).insert()
+
+		try:
+			content = get_response_content("/component-attribute-removal-test")
+			inputs = bs.BeautifulSoup(content, "html.parser").find_all("input")
+			self.assertEqual([tag.get("name") for tag in inputs], ["email", "phone"])
+			self.assertFalse(any(tag.has_attr("required") for tag in inputs))
 		finally:
 			page.delete()
 			component.delete()
