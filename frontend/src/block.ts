@@ -808,6 +808,9 @@ class Block implements BlockOptions {
 			this.isImage() ||
 			this.isSVG() ||
 			this.isInput() ||
+			// a select holds only its options, which its Options property adds; a drop there vanishes from the canvas
+			this.isSelect() ||
+			this.getElement() === "option" ||
 			this.isVideo() ||
 			(this.isText() && !this.isLink()) ||
 			this.isHTML() ||
