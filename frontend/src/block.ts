@@ -476,11 +476,16 @@ class Block implements BlockOptions {
 	setEffectiveAttribute(attribute: string, value: string | undefined) {
 		if (value !== undefined && attribute in this.getCustomAttributes()) {
 			this.customAttributes[attribute] = value;
+		} else if (value === undefined && this.referenceComponent?.customAttributes[attribute] != null) {
+			// a deleted key lets the component's value show through, so null marks it removed
+			this.customAttributes[attribute] = null;
 		} else {
 			// clearing drops both copies, or the one left behind becomes the value again
 			delete this.customAttributes[attribute];
 		}
-		this.setAttribute(attribute, value);
+		// undefined is dropped when saved, which would bring the component's value back
+		const cleared = this.getComponentAttributes()[attribute] != null ? null : undefined;
+		this.attributes[attribute] = value ?? cleared;
 	}
 	getAttribute(attribute: string) {
 		return this.getAttributes()[attribute];
