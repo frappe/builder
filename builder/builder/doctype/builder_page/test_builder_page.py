@@ -1105,16 +1105,33 @@ class TestBuilderPage(FrappeTestCase):
 	def test_component_instance_can_remove_component_attributes(self):
 		component_root = Block(element="div", blockId="comp-root")
 		component_root.attach_children(
-			Block(element="input", blockId="comp-email", attributes={"name": "email", "required": "required"}),
-			Block(element="input", blockId="comp-phone", attributes={"name": "phone"}, customAttributes={"required": ""}),
+			Block(
+				element="input", blockId="comp-email", attributes={"name": "email", "required": "required"}
+			),
+			Block(
+				element="input",
+				blockId="comp-phone",
+				attributes={"name": "phone"},
+				customAttributes={"required": ""},
+			),
 		)
-		component = frappe.get_doc({"doctype": "Builder Component", "block": component_root.as_json()}).insert()
+		component = frappe.get_doc(
+			{"doctype": "Builder Component", "block": component_root.as_json()}
+		).insert()
 
 		body = Block(element="div", originalElement="body")
 		component_root_copy = Block(extendedFromComponent=component.name)
 		component_root_copy.attach_children(
-			Block(isChildOfComponent=component.name, referenceBlockId="comp-email", attributes={"required": None}),
-			Block(isChildOfComponent=component.name, referenceBlockId="comp-phone", customAttributes={"required": None}),
+			Block(
+				isChildOfComponent=component.name,
+				referenceBlockId="comp-email",
+				attributes={"required": None},
+			),
+			Block(
+				isChildOfComponent=component.name,
+				referenceBlockId="comp-phone",
+				customAttributes={"required": None},
+			),
 		)
 		body.attach_children(component_root_copy)
 		page = frappe.get_doc(
