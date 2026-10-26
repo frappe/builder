@@ -3,8 +3,14 @@ import OptionToggle from "@/components/Controls/OptionToggle.vue";
 import blockController from "@/utils/blockController";
 import { __ } from "@/translation";
 
-// boolean attributes are on whenever present, whatever their value ("", "true", "required")
-const hasAttribute = (attribute: string) => blockController.getEffectiveAttribute(attribute) != null;
+// boolean attributes are on whenever present, whatever their value ("", "true", "required"),
+// so blocks are compared by that; a mix matches neither option
+const hasAttribute = (attribute: string) => {
+	const states = new Set(
+		blockController.getSelectedBlocks().map((block) => block.getEffectiveAttribute(attribute) != null),
+	);
+	return states.size > 1 ? "Mixed" : states.has(true);
+};
 
 const inputOptionsSectionProperties = [
 	{
