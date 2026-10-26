@@ -12,7 +12,6 @@ AI Provider / Builder AI Model row, editable afterwards like any other.
 import frappe
 from frappe import _
 
-from builder.ai.llm import NO_KEY
 from builder.ai.models import ModelRegistry
 
 PRESETS = [
@@ -242,7 +241,10 @@ def verify_key(preset: dict, api_key: str, api_base: str, model_id: str) -> dict
 		from builder.ai import codex
 
 		return codex.verify_credential(api_key)
+	# Imported here so the upgrade_ai_models patch, and with it migrate, never needs litellm
 	import litellm
+
+	from builder.ai.llm import NO_KEY
 
 	base = api_base or preset["api_base"]
 	# Mirrors BuilderAIProvider.derive_routing, so the test call routes exactly the
