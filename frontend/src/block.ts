@@ -13,6 +13,7 @@ import {
 	cssUrl,
 	dataURLFileName,
 	dataURLtoFile,
+	escapeHtml,
 	generateId,
 	getBlockCopy,
 	getBlockInstance,
@@ -434,8 +435,9 @@ class Block implements BlockOptions {
 	}
 	// renaming keeps an option's attributes, so a placeholder (empty value) stays one; an option
 	// without a value attribute submits its label, so the two stay in step
+	// labels are plain text but publish as HTML, so they are escaped or "&copy;" would become "©"
 	renameOption(index: number, label: string) {
-		this.getOptions()[index]?.setInnerHTML(label);
+		this.getOptions()[index]?.setInnerHTML(escapeHtml(label));
 	}
 	removeOption(index: number) {
 		const option = this.getOptions()[index];
@@ -444,7 +446,11 @@ class Block implements BlockOptions {
 	// before the option at index, or last
 	addOption(label: string, index?: number) {
 		const before = index === undefined ? undefined : this.getOptions()[index];
-		this.addChild({ element: "option", innerHTML: label }, before ? this.getChildIndex(before) : null, false);
+		this.addChild(
+			{ element: "option", innerHTML: escapeHtml(label) },
+			before ? this.getChildIndex(before) : null,
+			false,
+		);
 	}
 	// the option shown before the visitor picks one, like the template's placeholder
 	getSelectedOptionIndex() {
