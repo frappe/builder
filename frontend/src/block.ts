@@ -782,7 +782,8 @@ class Block implements BlockOptions {
 			this.isSVG() ||
 			this.isInput() ||
 			this.isVideo() ||
-			(this.isText() && !this.isLink()) ||
+			// a label wrapping a field takes more blocks, like helper text, the way a link does
+			(this.isText() && !this.isLink() && !(this.getElement() === "label" && this.hasChildren())) ||
 			this.isHTML() ||
 			this.isExtendedFromComponent()
 		);
