@@ -58,6 +58,13 @@ const HEADER_ELEMENTS = new Set(["h1", "h2", "h3", "h4", "h5", "h6"]);
 
 const CHECKABLE_INPUT_TYPES = new Set(["checkbox", "radio"]);
 
+const getNumberedName = (name: string, takenNames: Set<string>) => {
+	let count = 2;
+	while (takenNames.has(`${name}-${count}`)) count++;
+	takenNames.add(`${name}-${count}`);
+	return `${name}-${count}`;
+};
+
 // editor of the currently editable text block; kept off Block instances to
 // avoid Vue reactivity and serialization. Owner tracked by blockId since
 // undo/redo swaps instances but keeps ids.
@@ -447,6 +454,20 @@ class Block implements BlockOptions {
 		this.getRadios().forEach((radio) =>
 			radio.setEffectiveAttribute("required", required ? "required" : undefined),
 		);
+	}
+	getRadioNames() {
+		return new Set(this.getRadios().map((radio) => radio.getEffectiveAttribute("name") as string));
+	}
+	// a name the page already uses gets a number, or two inserted radio groups would act as one
+	renameTakenRadioNames(takenNames: Set<string>) {
+		const newNames = new Map<string, string>();
+		this.getRadios().forEach((radio) => {
+			const name = radio.getEffectiveAttribute("name") as string;
+			if (name && !newNames.has(name) && takenNames.has(name)) {
+				newNames.set(name, getNumberedName(name, takenNames));
+			}
+			if (newNames.has(name)) radio.setEffectiveAttribute("name", newNames.get(name));
+		});
 	}
 	setStyle(style: styleProperty, value: StyleValue) {
 		const canvasStore = useCanvasStore();

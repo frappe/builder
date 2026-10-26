@@ -223,6 +223,7 @@ export function useCanvasDropZone(
 		} else if (blockTemplate) {
 			await blockTemplateStore.fetchBlockTemplate(blockTemplate);
 			const newBlock = getBlockInstance(blockTemplateStore.getBlockTemplate(blockTemplate).block, false);
+			newBlock.renameTakenRadioNames(canvasStore.activeCanvas?.getRootBlock().getRadioNames() ?? new Set());
 			// if shift key is pressed, replace parent block with new block
 			if (ev.shiftKey) {
 				parentBlock = getBlockToReplace(ev);
