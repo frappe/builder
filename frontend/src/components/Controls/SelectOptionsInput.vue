@@ -1,6 +1,6 @@
 <template>
 	<div class="flex items-start justify-between gap-2">
-		<InputLabel class="h-7 w-1/3 min-w-[88px] shrink-0">{{ label }}</InputLabel>
+		<InputLabel class="h-7 w-1/3 min-w-[88px] shrink-0" :description="description">{{ label }}</InputLabel>
 		<div ref="list" class="flex w-full min-w-0 flex-col gap-1.5">
 			<BuilderInput
 				v-for="(option, index) in options"
@@ -10,7 +10,7 @@
 				@input="(value: string) => emit('rename', index, value)"
 				@paste="(event: ClipboardEvent) => pasteOptions(event, index)"
 				@keydown.stop>
-				<template #suffix>
+				<template v-if="!renameOnly" #suffix>
 					<button
 						type="button"
 						class="text-ink-gray-4 hover:text-ink-gray-7"
@@ -22,6 +22,7 @@
 				</template>
 			</BuilderInput>
 			<Button
+				v-if="!renameOnly"
 				variant="subtle"
 				icon-left="lucide-plus"
 				:label="__('Add option')"
@@ -36,9 +37,12 @@ import InputLabel from "@/components/Controls/InputLabel.vue";
 import { __ } from "@/translation";
 import { nextTick, ref } from "vue";
 
-defineProps<{
+const props = defineProps<{
 	label: string;
 	options: string[];
+	description?: string;
+	// options can be renamed but not added or removed
+	renameOnly?: boolean;
 }>();
 
 const emit = defineEmits<{
@@ -55,7 +59,7 @@ const pasteOptions = (event: ClipboardEvent, index: number) => {
 		.split(/\r?\n/)
 		.map((line) => line.trim())
 		.filter(Boolean);
-	if (lines.length < 2) return;
+	if (lines.length < 2 || props.renameOnly) return;
 	event.preventDefault();
 	emit("rename", index, lines[0]);
 	lines.slice(1).forEach((line, i) => emit("add", line, index + 1 + i));

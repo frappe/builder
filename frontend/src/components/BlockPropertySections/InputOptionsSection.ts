@@ -92,9 +92,14 @@ const inputOptionsSectionProperties = [
 	{
 		component: SelectOptionsInput,
 		getProps: () => {
+			const select = blockController.getFirstSelectedBlock();
+			// a component update rebuilds an instance's options from the component, keeping only renames
+			const inComponent = select.isExtendedFromComponent();
 			return {
 				label: __("Options"),
-				options: blockController.getFirstSelectedBlock().getOptionLabels(),
+				options: select.getOptionLabels(),
+				renameOnly: inComponent,
+				description: inComponent ? __("Add or remove options in the component, with Edit Component.") : "",
 			};
 		},
 		searchKeyWords: "Options, Choices, Items, Select, Dropdown, Placeholder",
