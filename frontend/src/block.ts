@@ -514,9 +514,15 @@ class Block implements BlockOptions {
 	}
 	// what the published page renders, since customAttributes win over attributes there
 	getEffectiveAttribute(attribute: string) {
-		return this.getCustomAttributes()[attribute] ?? this.getAttribute(attribute);
+		return this.getCustomAttributes()[attribute] ?? this.getAttribute(attribute) ?? undefined;
 	}
 	setEffectiveAttribute(attribute: string, value: string | undefined) {
+		// a removed key falls back to the component's value, so an instance stores null instead
+		if (value === undefined && this.referenceComponent?.getEffectiveAttribute(attribute) != null) {
+			this.customAttributes[attribute] = null;
+			this.attributes[attribute] = null;
+			return;
+		}
 		if (value !== undefined && attribute in this.getCustomAttributes()) {
 			this.customAttributes[attribute] = value;
 		} else {
