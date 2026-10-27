@@ -14,32 +14,13 @@ from frappe import _
 
 from builder.ai.agent.loop import run_agent_job
 from builder.ai.block_codec import BlockCodec
-from builder.ai.models import ModelRegistry
+from builder.ai.llm import resolve_api_key, settings_api_key
+from builder.ai.models import GatewayListing, ModelRegistry
 from builder.ai.session import AISession
 from builder.utils import has_page_write
 
 logger = frappe.logger("builder.ai.api")
 logger.setLevel(logging.INFO)
-
-
-def resolve_api_key(model: str | None = None) -> str:
-	"""The key to call `model` with: its provider's own key when it has one (a
-	local or self-hosted gateway needs no OpenRouter account at all), otherwise
-	the OpenRouter key from Builder Settings."""
-	if model:
-		from builder.ai.llm import provider_api_key
-
-		info = ModelRegistry.find(model)
-		if info and (key := provider_api_key(info)):
-			return key
-	api_key = frappe.get_single("Builder Settings").get_password("ai_api_key", raise_exception=False)
-	if not api_key:
-		frappe.throw(
-			_(
-				"Please configure an OpenRouter API key in Settings → AI, or an API key on the model's provider"
-			)
-		)
-	return api_key
 
 
 def save_attached_image(data_url: str) -> str | None:
@@ -125,7 +106,8 @@ def run(
 				resolved_model
 			)
 		)
-	api_key = resolve_api_key(resolved_model)
+	# Fails fast on a missing key; the job resolves its own copy so the key never sits in the queue.
+	resolve_api_key(resolved_model)
 
 	# Background queue (not now=True): a streaming generation can run 30-60s, and
 	# now=True would hold this web worker open for the entire stream — exhausting the
@@ -137,7 +119,6 @@ def run(
 		timeout=600,
 		prompt=prompt,
 		model=resolved_model,
-		api_key=api_key,
 		user=frappe.session.user,
 		page_id=page_id,
 		session_id=session_id,
@@ -149,34 +130,6 @@ def run(
 	)
 	frappe.local.response.http_status_code = 202
 	return {"status": "accepted", "session_id": session_id}
-
-
-IMPROVE_PROMPT_INSTRUCTION = """You rewrite a user's draft prompt for a website-builder AI into a sharper version of ITSELF.
-Preserve every stated fact, constraint, language and the request's SCOPE: a small edit request stays a small edit request, only made clearer; a vague page or section request gains concrete specifics (purpose, audience, section list, tone, style direction).
-Write it as the user speaking, plain text, no headings or bullets unless the draft had them, under 120 words. Do not use em dashes. Output ONLY the rewritten prompt."""
-
-
-@frappe.whitelist()
-def improve_prompt(prompt: str, model: str | None = None) -> str:
-	"""One cheap completion that sharpens the composer draft in place — the user
-	reviews and edits the result before sending it."""
-	from builder.ai import llm
-
-	prompt = (prompt or "").strip()
-	if not prompt:
-		frappe.throw(_("Type a prompt first"))
-	resolved_model = ModelRegistry.get_default(model or "openrouter")
-	text = llm.complete(
-		resolved_model,
-		[
-			{"role": "system", "content": IMPROVE_PROMPT_INSTRUCTION},
-			{"role": "user", "content": prompt},
-		],
-		llm.TASK_PARAMS["simple"],
-		stream=False,
-		api_key=resolve_api_key(resolved_model),
-	)
-	return (text or "").strip()
 
 
 def ensure_session_owner(session_id: str) -> None:
@@ -237,6 +190,8 @@ def resume_after_action(session_id: str, outcome: str) -> bool:
 		if not page_id:
 			return False
 		resolved_model = ModelRegistry.get_default(model or "openrouter")
+		# A job that can't find its key fails out of sight, so check before queueing it.
+		resolve_api_key(resolved_model)
 		frappe.enqueue(
 			run_agent_job,
 			queue="default",
@@ -244,7 +199,6 @@ def resume_after_action(session_id: str, outcome: str) -> bool:
 			# run_agent_job does not persist its prompt, so no phantom "continue" in the chat
 			prompt=f"{outcome}\n\nContinue with what you were doing. Do not repeat this step.",
 			model=resolved_model,
-			api_key=resolve_api_key(resolved_model),
 			user=frappe.session.user,
 			page_id=page_id,
 			session_id=session_id,
@@ -326,59 +280,53 @@ def save_ai_provider(provider: dict, name: str | None = None) -> str:
 	return doc.name
 
 
-# Embeddings and rerankers answer /v1/models too, and fail as chat models.
-NON_CHAT_MARKERS = ("embed", "embedding", "rerank", "reranker", "whisper", "tts", "moderation")
-
-
 @frappe.whitelist()
 def import_provider_models(provider: str) -> dict:
-	"""Add every chat model an OpenAI-compatible provider advertises at /models.
-
-	Saves typing model ids by hand, and is the only way to discover what a private
-	or self-hosted gateway actually serves. Existing rows are left alone, so this
-	is safe to re-run when a provider adds a model."""
+	"""Add every chat model a gateway advertises at /models, right now rather than
+	on the picker's next sync. Existing rows are left alone, so this is safe to re-run."""
 	if not frappe.has_permission("Builder AI Model", "create"):
 		frappe.throw(_("You are not permitted to manage AI models"), frappe.PermissionError)
 
 	doc = frappe.get_doc("Builder AI Provider", provider)
 	if not doc.api_base:
 		frappe.throw(_("This provider has no API Base to ask"))
-
-	import requests
-
-	url = f"{doc.api_base.rstrip('/')}/models"
-	headers = {"Content-Type": "application/json"}
-	if key := (doc.resolved_key() or resolve_api_key()):
-		headers["Authorization"] = f"Bearer {key}"
 	try:
-		response = requests.get(url, headers=headers, timeout=20)
-		response.raise_for_status()
-		listed = response.json().get("data") or []
+		return GatewayListing(doc).sync()
 	except Exception as e:
 		logger.warning(f"import_provider_models failed for {provider}: {e}")
-		frappe.throw(_("Could not reach {0}: {1}").format(url, str(e)[:200]))
+		frappe.throw(_("Could not reach {0}: {1}").format(doc.api_base, str(e)[:200]))
 
-	added, skipped = [], []
-	for entry in listed:
-		model_id = (entry or {}).get("id")
-		if not model_id:
-			continue
-		if any(marker in model_id.lower() for marker in NON_CHAT_MARKERS):
-			skipped.append(model_id)
-			continue
-		if frappe.db.exists("Builder AI Model", f"{doc.route_prefix}/{model_id}"):
-			continue
-		frappe.get_doc(
-			{"doctype": "Builder AI Model", "provider": provider, "model_id": model_id, "enabled": 1}
-		).insert()
-		added.append(model_id)
 
-	return {"added": added, "skipped": skipped, "found": len(listed)}
+@frappe.whitelist()
+def delete_ai_provider(provider: str) -> None:
+	"""Delete a provider with its models. A provider refuses to go while models still
+	point at it, so they go first, in the same request."""
+	for model in frappe.get_all("Builder AI Model", filters={"provider": provider}, pluck="name"):
+		frappe.delete_doc("Builder AI Model", model)
+	frappe.delete_doc("Builder AI Provider", provider)
+
+
+@frappe.whitelist()
+def sync_ai_models() -> None:
+	"""Pick up models the gateways added or retired since the last sync."""
+	if frappe.has_permission("Builder AI Model", "create"):
+		GatewayListing.sync_all(force=True)
+
+
+@frappe.whitelist()
+def get_provider_credits(provider: str) -> dict | None:
+	"""The balance a gateway reports at <api_base>/credits, or None when it reports none."""
+	if not frappe.has_permission("Builder AI Provider", "read"):
+		frappe.throw(_("You are not permitted to view AI providers"), frappe.PermissionError)
+
+	doc = frappe.get_doc("Builder AI Provider", provider)
+	return GatewayListing(doc).credits() if doc.api_base else None
 
 
 @frappe.whitelist()
 @has_page_write()
 def get_ai_models():
+	GatewayListing.refresh_in_background()
 	return ModelRegistry.available()
 
 
@@ -395,7 +343,7 @@ def ai_setup_state():
 		return {"configured": False, "models": 0, "providers": 0, "needs_migrate": True, "presets": []}
 
 	providers = frappe.get_all("Builder AI Provider", filters={"enabled": 1}, fields=["name", "api_key"])
-	settings_key = frappe.get_single("Builder Settings").get_password("ai_api_key", raise_exception=False)
+	settings_key = settings_api_key()
 	# A provider carrying its own key is enough on its own — a self-hosted gateway
 	# never needs the shared OpenRouter one.
 	has_key = bool(settings_key) or any(p.api_key for p in providers)
@@ -616,7 +564,7 @@ def test_api_key(provider: str | None = None, api_key: str | None = None):
 		actual_model = model
 		api_key = typed_key or resolve_api_key(model)
 	else:
-		api_key = frappe.get_single("Builder Settings").get_password("ai_api_key", raise_exception=False)
+		api_key = settings_api_key()
 		if not api_key:
 			return {"success": False, "message": _("Please set an OpenRouter API key")}
 		actual_model = ModelRegistry.get_default("openrouter")

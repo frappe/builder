@@ -128,7 +128,7 @@
 						<Switch
 							size="sm"
 							:label="__('Standard Page')"
-							:disabled="!isDeveloperMode && pageStore.activePage?.is_standard"
+							:disabled="!isDeveloperMode && Boolean(pageStore.activePage?.is_standard)"
 							:description="__('Make this page a standard page that can be exported to an app')"
 							:modelValue="Boolean(pageStore.activePage?.is_standard)"
 							@update:modelValue="handleStandardPageToggle" />

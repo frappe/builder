@@ -7,7 +7,8 @@ export type SettingsGroup = "Current Page" | "Global";
 export type SettingsItem = RegistryItem & {
 	label: string;
 	title: string;
-	icon: string;
+	/** a lucide class name, or a component, such as a plugin's `lucideIcon()` */
+	icon: string | Component;
 	group: SettingsGroup;
 	component: Component;
 	disabled?: boolean;
@@ -106,14 +107,6 @@ const panes: SettingsPane[] = [
 		load: () => import("@/components/Settings/GlobalRedirects.vue"),
 	},
 	{
-		name: "global_robots",
-		label: __("Robots"),
-		title: __("Robots.txt"),
-		icon: "lucide-bot",
-		group: "Global",
-		load: () => import("@/components/Settings/PageRobots.vue"),
-	},
-	{
 		name: "global_domains",
 		label: __("Domains"),
 		title: __("Custom Domains"),
@@ -142,19 +135,19 @@ const panes: SettingsPane[] = [
 	},
 	{
 		name: "global_agents",
-		label: __("Agents"),
+		label: __("AI Agents"),
 		title: __("Connect Your Agent"),
-		icon: "lucide-plug",
+		icon: "lucide-bot",
 		group: "Global",
 		load: () => import("@/components/Settings/GlobalAgents.vue"),
 	},
 	{
-		name: "global_ai",
-		label: __("AI"),
-		title: __("AI Settings"),
-		icon: "lucide-sparkles",
+		name: "global_plugins",
+		label: __("Plugins"),
+		title: __("Plugins Settings"),
+		icon: "lucide-plug",
 		group: "Global",
-		load: () => import("@/components/Settings/GlobalAI.vue"),
+		load: () => import("@/components/Settings/GlobalPlugins.vue"),
 	},
 ];
 

@@ -61,7 +61,7 @@ import { Button } from "frappe-ui";
 import { __ } from "@/translation";
 import type { PauseId } from "@/utils/useCanvasHistory";
 import { useElementSize, useMouseInElement } from "@vueuse/core";
-import { computed, nextTick, onMounted, ref, watch } from "vue";
+import { type CSSProperties, computed, nextTick, onMounted, ref, watch } from "vue";
 
 const props = defineProps<{
 	modelValue?: string;
@@ -74,7 +74,7 @@ const props = defineProps<{
 	// plain preview: no dot, frame, hint, or zoom (non-cover fits)
 	disabled?: boolean;
 	// the actual object-fit, so the plain preview mirrors what the element shows
-	fit?: string;
+	fit?: CSSProperties["objectFit"];
 }>();
 
 const emit = defineEmits(["update:modelValue", "update:viewBox"]);

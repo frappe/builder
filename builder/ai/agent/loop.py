@@ -1488,5 +1488,7 @@ class AgentRunner:
 		return " ".join(parts)
 
 
-def run_agent_job(prompt: str, model: str, api_key: str, **kwargs):
-	AgentRunner(prompt, model, api_key, **kwargs).run()
+def run_agent_job(prompt: str, model: str, **kwargs):
+	# Resolved here so the key never sits in Redis; jobs queued by older code still pass one.
+	kwargs.pop("api_key", None)
+	AgentRunner(prompt, model, llm.resolve_api_key(model), **kwargs).run()

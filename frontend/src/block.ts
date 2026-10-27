@@ -444,7 +444,7 @@ class Block implements BlockOptions {
 	}
 	getActiveStyleProperty(style: styleProperty) {
 		const activeState = this.activeState?.split(":")[0];
-		return (activeState ? `${activeState}:${style}` : style) as styleProperty;
+		return (activeState ? `${activeState}:${String(style)}` : style) as styleProperty;
 	}
 	setAttribute(attribute: string, value: string | undefined) {
 		this.attributes[attribute] = value;
@@ -502,7 +502,7 @@ class Block implements BlockOptions {
 		return styleValue ?? this.getComponentStyleFallback(style, currentBreakpoint, nativeOnly, cascading);
 	}
 
-	private getStyleMapForBreakpoint(breakpoint: string) {
+	getStyleMapForBreakpoint(breakpoint: string) {
 		const styleMap = {
 			mobile: this.mobileStyles,
 			tablet: this.tabletStyles,
@@ -511,7 +511,7 @@ class Block implements BlockOptions {
 		return styleMap[breakpoint as keyof typeof styleMap] || this.baseStyles;
 	}
 
-	private getStyleWithCascading(style: styleProperty, breakpoint: string): StyleValue | undefined {
+	getStyleWithCascading(style: styleProperty, breakpoint: string): StyleValue | undefined {
 		if (this.isExtendedFromComponent()) {
 			const componentValue = this.referenceComponent?.getStyle(style, breakpoint, true, false);
 			if (componentValue) return componentValue;
@@ -531,7 +531,7 @@ class Block implements BlockOptions {
 		return this.getStyle(style, "desktop");
 	}
 
-	private getInheritedStyleValue(style: styleProperty, breakpoint: string): StyleValue | undefined {
+	getInheritedStyleValue(style: styleProperty, breakpoint: string): StyleValue | undefined {
 		switch (breakpoint) {
 			case "mobile":
 				return this.mobileStyles[style] || this.tabletStyles[style] || this.baseStyles[style];
@@ -542,7 +542,7 @@ class Block implements BlockOptions {
 		}
 	}
 
-	private getComponentStyleFallback(
+	getComponentStyleFallback(
 		style: styleProperty,
 		breakpoint: string,
 		nativeOnly: boolean,
@@ -895,7 +895,7 @@ class Block implements BlockOptions {
 		}
 		return dataKey;
 	}
-	setDataKey(key: keyof BlockDataKey, value: string) {
+	setDataKey<K extends keyof BlockDataKey>(key: K, value: BlockDataKey[K] | null) {
 		if (!this.dataKey || !this.dataKey[key]) {
 			this.dataKey = {
 				key: "",
@@ -907,7 +907,7 @@ class Block implements BlockOptions {
 		if (!value && key === "key") {
 			this.dataKey = {};
 		} else {
-			this.dataKey[key] = value;
+			this.dataKey[key] = value ?? undefined;
 		}
 	}
 	getInnerHTML(): string {

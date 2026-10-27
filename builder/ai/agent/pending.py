@@ -26,6 +26,16 @@ KINDS = {
 GLOBAL_SETTING_FIELDS = {"script", "style", "head_html", "body_html"}
 
 
+def not_permitted(action: str) -> str:
+	"""Declines a proposal the user couldn't apply, so Bob says so instead of raising a
+	card whose Apply would fail."""
+	return (
+		f"DECLINED: this user isn't permitted to {action}, so no card was shown. Tell them in "
+		"one plain sentence that someone with that permission (usually a System Manager) has "
+		"to do it, then carry on with what you can do."
+	)
+
+
 def request_confirmation(ctx, kind: str, summary: str, payload: dict) -> None:
 	"""Persist + emit a pending sensitive action, then end the turn without mutating."""
 	metadata = {"status": "pending_action", "kind": kind, "payload": payload}
@@ -56,7 +66,8 @@ def request_confirmation(ctx, kind: str, summary: str, payload: dict) -> None:
 
 def apply_pending_action(kind: str, payload: dict) -> str:
 	"""Run the real mutation for a confirmed action. Called ONLY from the confirm
-	endpoint (user-triggered). Returns a short human summary of what happened."""
+	endpoint (user-triggered), with the confirming user's own permissions, since the
+	model wrote the payload. Returns a short human summary of what happened."""
 	if kind not in KINDS:
 		frappe.throw(frappe._("Unknown pending action: {0}").format(kind))
 	payload = payload or {}
@@ -88,8 +99,8 @@ def apply_global_settings(payload: dict) -> str:
 
 
 def apply_create_doctype(payload: dict) -> str:
-	"""Create a Custom DocType (custom=1, created at runtime — no code files / app
-	migration) with Guest read so public pages can query it."""
+	"""Create a Custom DocType (custom=1, no code files or migration). No Guest read:
+	it would publish every field over the REST API; public pages use a data script."""
 	name = (payload.get("name") or "").strip()
 	if not name:
 		frappe.throw(frappe._("Doctype name is required"))
@@ -123,11 +134,9 @@ def apply_create_doctype(payload: dict) -> str:
 			"fields": fields,
 			"permissions": [
 				{"role": "System Manager", "read": 1, "write": 1, "create": 1, "delete": 1},
-				# Public website pages read data as Guest.
-				{"role": "Guest", "read": 1},
 			],
 		}
-	).insert(ignore_permissions=True)
+	).insert()
 	return frappe._("Created DocType {0} with {1} field(s)").format(name, len(fields))
 
 
@@ -140,7 +149,7 @@ def apply_seed_sample_data(payload: dict) -> str:
 	for row in rows:
 		if not isinstance(row, dict):
 			continue
-		frappe.get_doc({"doctype": doctype, **row}).insert(ignore_permissions=True)
+		frappe.get_doc({**row, "doctype": doctype}).insert()
 		created += 1
 	return frappe._("Seeded {0} sample record(s) into {1}").format(created, doctype)
 
@@ -150,7 +159,11 @@ def apply_connect_form(payload: dict) -> str:
 	Web Form (the trusted, rate-limited, field-whitelisted boundary) + a client
 	script that POSTs the form's fields to the Web Form's accept endpoint. Reused
 	if the doctype/web form already exist. Returns the Desk link to the entries."""
-	from builder.ai.agent.tools.forms import desk_slug
+	from builder.ai.agent.tools.forms import (
+		desk_slug,
+		is_builder_submission_doctype,
+		missing_create_permission,
+	)
 
 	doctype = (payload.get("doctype_name") or "").strip()
 	fields = payload.get("fields") or []
@@ -158,6 +171,11 @@ def apply_connect_form(payload: dict) -> str:
 	selector = (payload.get("form_selector") or "").strip()
 	if not doctype or not fields or not selector:
 		frappe.throw(frappe._("connect_form needs a doctype, fields, and a form selector"))
+	if frappe.db.exists("DocType", doctype) and not is_builder_submission_doctype(doctype):
+		frappe.throw(frappe._("{0} already exists and is not a form submission DocType").format(doctype))
+	# Checked for both before creating either, so a missing permission leaves nothing half-made.
+	if action := missing_create_permission(doctype):
+		frappe.throw(frappe._("You are not permitted to {0}").format(action), frappe.PermissionError)
 
 	# 1. private submission DocType — System Manager only, NO guest permission
 	#    (the Web Form is the trusted boundary; submissions must not be readable by
@@ -179,7 +197,7 @@ def apply_connect_form(payload: dict) -> str:
 				"fields": doctype_fields,
 				"permissions": [{"role": "System Manager", "read": 1, "write": 1, "create": 1, "delete": 1}],
 			}
-		).insert(ignore_permissions=True)
+		).insert()
 
 	# 2. Web Form bound to it — guest-allowed (login_required off), published.
 	wf_name = desk_slug(doctype)
@@ -200,7 +218,7 @@ def apply_connect_form(payload: dict) -> str:
 					for f in fields
 				],
 			}
-		).insert(ignore_permissions=True)
+		).insert(ignore_permissions=True)  # missing_create_permission above is the gate
 
 	# 3. client script on the page: capture the form's fields and POST them to the
 	#    stock Web Form accept endpoint (guest-safe, rate-limited, ignore_permissions).

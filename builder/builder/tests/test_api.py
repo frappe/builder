@@ -1,4 +1,5 @@
 import io
+import os
 from contextlib import contextmanager
 from unittest.mock import patch
 
@@ -7,6 +8,7 @@ from frappe.tests.utils import FrappeTestCase
 from PIL import Image
 
 from builder.api import (
+	convert_to_webp,
 	create_import_folder,
 	duplicate_page,
 	get_copy_script_name,
@@ -42,14 +44,15 @@ class Response:
 		if self.status >= 400:
 			raise Exception(f"HTTP {self.status}")
 
+	def iter_content(self, chunk_size):
+		yield self.content
+
 
 @contextmanager
 def serving(*responses):
-	with (
-		patch("builder.api.requests.get", side_effect=list(responses)) as get,
-		patch("builder.api.assert_not_private_url"),
-	):
-		yield get
+	with patch("builder.api.public_session") as session:
+		session.return_value.get.side_effect = list(responses)
+		yield session.return_value.get
 
 
 class TestImportRemoteAssets(FrappeTestCase):
@@ -182,6 +185,55 @@ class TestImportRemoteFonts(FrappeTestCase):
 			imported = import_remote_fonts(fonts)
 
 		self.assertEqual(len(imported), 2)
+
+
+class TestConvertToWebp(FrappeTestCase):
+	def setUp(self):
+		self.url = f"https://cdn.example.com/{frappe.generate_hash(length=8)}.png"
+
+	def test_pulls_an_external_image_as_webp(self):
+		with serving(Response(png_bytes())):
+			self.assertTrue(convert_to_webp(image_url=self.url).endswith(".webp"))
+
+	def test_keeps_an_existing_file_with_the_same_name(self):
+		other_url = self.url.replace("cdn.example.com", "other.example.com")
+		with serving(Response(png_bytes("red")), Response(png_bytes("blue"))):
+			first = convert_to_webp(image_url=self.url)
+			first_content = frappe.get_doc("File", {"file_url": first}).get_content()
+			second = convert_to_webp(image_url=other_url)
+
+		self.assertNotEqual(first, second)
+		self.assertEqual(frappe.get_doc("File", {"file_url": first}).get_content(), first_content)
+
+	def test_stops_downloading_at_the_size_limit(self):
+		endless = Response()
+		endless.iter_content = lambda chunk_size: iter(lambda: b"x" * 1024, None)
+		with serving(endless), patch("builder.api.MAX_ASSET_BYTES", 4096):
+			self.assertRaises(frappe.ValidationError, convert_to_webp, image_url=self.url)
+
+	def test_converts_only_files_inside_builder_assets(self):
+		outside = frappe.get_app_path("builder", "www", "outside.png")
+		converted = outside.replace(".png", ".webp")
+		with open(outside, "wb") as f:
+			f.write(png_bytes())
+		self.addCleanup(os.remove, outside)
+		self.addCleanup(lambda: os.path.exists(converted) and os.remove(converted))
+
+		url = "/builder_assets/../outside.png"
+		self.assertEqual(convert_to_webp(image_url=url), url)
+		self.assertFalse(os.path.exists(converted))
+
+	def test_refuses_a_user_who_cannot_edit_pages(self):
+		email = "builder-website-user@example.com"
+		if not frappe.db.exists("User", email):
+			frappe.get_doc(
+				{"doctype": "User", "email": email, "first_name": "Website", "user_type": "Website User"}
+			).insert(ignore_permissions=True)
+
+		with serving(Response(png_bytes())) as get, self.set_user(email):
+			self.assertRaises(frappe.ValidationError, convert_to_webp, image_url=self.url)
+
+		get.assert_not_called()
 
 
 class TestDuplicatePage(FrappeTestCase):

@@ -1,13 +1,5 @@
 declare type StyleValue = string | number | boolean | null | undefined;
 
-declare module "csstype" {
-	interface Properties {
-		// crops an img/video to a sub-rect; Chromium + Safari render it, Firefox
-		// falls back to the uncropped cover fit
-		objectViewBox?: string;
-	}
-}
-
 declare type styleProperty = keyof CSSProperties | `${string}:${keyof CSSProperties}` | `__${string}`;
 
 declare interface BlockStyleMap {
@@ -111,7 +103,7 @@ declare type HashString = `#${string}`;
 
 declare type RGBString = `rgb(${number}, ${number}, ${number})`;
 
-// the literals keep autocomplete; the string widens it for extension tabs
+// the literals keep autocomplete; the string widens it for plugin tabs
 declare type LeftSidebarTabOption =
 	| "Blocks"
 	| "Layers"

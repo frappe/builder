@@ -8,7 +8,7 @@ site_config, from when those were the only two gateways. A provider now carries
 its own key, so every key sits in the same place and a new gateway needs no
 special case.
 
-Builder Settings keeps its field as a fallback (builder.ai.api.resolve_api_key),
+Builder Settings keeps its field as a fallback (builder.ai.llm.resolve_api_key),
 so a site that never migrated still works.
 """
 

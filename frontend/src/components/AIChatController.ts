@@ -130,26 +130,6 @@ export class AIChatController {
 		this.scheduleStreamRender();
 	}
 
-	readonly isImprovingPrompt = ref(false);
-
-	/** One cheap completion that sharpens the composer draft in place — the user
-	 * still reads and edits it before sending. */
-	improvePrompt = async () => {
-		const draft = this.prompt.value.trim();
-		if (!draft || this.isImprovingPrompt.value) return;
-		this.isImprovingPrompt.value = true;
-		try {
-			const improved = (await createResource({ url: "builder.ai.api.improve_prompt" }).submit({
-				prompt: draft,
-				model: this.selectedModel.value,
-			})) as string;
-			if (improved) this.prompt.value = improved;
-		} catch (error) {
-			toast.error(getErrorMessage(error, "Could not improve the prompt"));
-		} finally {
-			this.isImprovingPrompt.value = false;
-		}
-	};
 	// Compact display line for a card-composed reply (set by selectOption).
 	private pendingDisplayText: string | null = null;
 
@@ -203,12 +183,6 @@ export class AIChatController {
 		() =>
 			this.currentProviderModels.value.find((m) => m.name === this.selectedModel.value)?.label ||
 			"Select model",
-	);
-	readonly modelOptions = computed(() =>
-		this.currentProviderModels.value.map((m) => ({
-			label: m.label,
-			onClick: () => (this.selectedModel.value = m.name),
-		})),
 	);
 	readonly isVisionModel = computed(
 		() => this.currentProviderModels.value.find((m) => m.name === this.selectedModel.value)?.vision ?? false,
@@ -401,7 +375,7 @@ export class AIChatController {
 			const session = result as { session_id: string; messages: ChatMessage[] };
 			this.sessionId.value = session.session_id;
 			this.messages.value = (session.messages || []).map(
-				(m) => ({ ...m, role: m.role === "user" ? "user" : "assistant" } as ChatMessage),
+				(m) => ({ ...m, role: m.role === "user" ? "user" : "assistant" }) as ChatMessage,
 			);
 			this.scrollToBottom();
 			this.loadSessions();

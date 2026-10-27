@@ -1,5 +1,5 @@
 import { useStorage } from "@vueuse/core";
-import { ref, Ref } from "vue";
+import { computed, ref, Ref } from "vue";
 
 const searchFilter = ref("");
 const selectionMode = ref(false);
@@ -15,7 +15,19 @@ const templateCategoryFilter = useStorage("templateCategoryFilter", "") as Ref<s
 
 const displayType = useStorage("displayType", "grid") as Ref<"grid" | "list" | "tree">;
 // a fresh key: values saved under the old "typeFilter" key (published/unpublished) no longer exist
-const statusFilter = useStorage("pageStatusFilter", "") as Ref<"" | "all" | "live" | "staging" | "draft">;
+const statusFilter = useStorage("pageStatusFilter", "") as Ref<
+	"" | "all" | "live" | "staging" | "draft" | "unpublished_changes"
+>;
+const accessFilter = useStorage("pageAccessFilter", "all") as Ref<"all" | "public" | "protected">;
+const createdByFilter = useStorage("pageCreatedByFilter", "") as Ref<string>;
+const activeFilterCount = computed(
+	() =>
+		[
+			!["", "all"].includes(statusFilter.value),
+			accessFilter.value !== "all",
+			Boolean(createdByFilter.value),
+		].filter(Boolean).length,
+);
 const orderBy = useStorage("orderBy", "creation") as Ref<
 	"creation" | "modified" | "alphabetically_a_z" | "alphabetically_z_a"
 >;
@@ -34,6 +46,9 @@ export function useDashboardState() {
 		templateCategoryFilter,
 		displayType,
 		statusFilter,
+		accessFilter,
+		createdByFilter,
+		activeFilterCount,
 		orderBy,
 		expandTreeFn,
 		collapseTreeFn,

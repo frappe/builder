@@ -68,6 +68,20 @@ def connected_submission_doctype(page_id: str) -> str | None:
 	return None
 
 
+def missing_create_permission(doctype: str) -> str | None:
+	"""What connecting a form to `doctype` would create that this user can't. Only
+	Website Manager holds Web Form create, but whoever can create DocTypes can grant
+	themselves any role, so either one may create the form."""
+	can_create_doctype = frappe.has_permission("DocType", "create")
+	if not frappe.db.exists("DocType", doctype) and not can_create_doctype:
+		return "create the DocType a form saves to"
+	if not frappe.db.exists("Web Form", desk_slug(doctype)) and not (
+		can_create_doctype or frappe.has_permission("Web Form", "create")
+	):
+		return "create the Web Form a form submits through"
+	return None
+
+
 def request_connect_form(ctx, args: dict) -> str | None:
 	"""Validate the proposal and raise the confirm card. Nothing is created until
 	the user approves (see pending.apply_connect_form)."""
@@ -95,6 +109,8 @@ def request_connect_form(ctx, args: dict) -> str | None:
 			f"DECLINED: '{doctype}' already exists and isn't a Builder submission doctype — pick a new "
 			f"name (e.g. '{doctype} Submission') so real data isn't touched."
 		)
+	if action := missing_create_permission(doctype):
+		return pending.not_permitted(action)
 	summary = (
 		f"Create the DocType '{doctype}' ({len(fields)} field(s)) and wire this form to save "
 		f"submissions to it? You'll see entries in Desk at /app/{desk_slug(doctype)}."

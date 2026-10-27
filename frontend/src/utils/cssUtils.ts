@@ -5,8 +5,8 @@ import Block from "@/block";
 
 const numericValuePattern = /^(-?(?:\d+(?:\.\d*)?|\.\d+))([a-z%]*)$/i;
 
-function getNumberFromPx(px: string | number | null | undefined): number {
-	if (!px) {
+function getNumberFromPx(px: StyleValue): number {
+	if (!px || typeof px === "boolean") {
 		return 0;
 	}
 	if (typeof px === "number") {
@@ -273,7 +273,7 @@ function getSpacing(
  * @returns Object containing the number and unit parts
  */
 function extractNumberAndUnit(value: string): { number: string; unit: string } {
-	const match = value.match(/([0-9.]+)([a-z%]*)/) || ["", "0", ""];
+	const match = value.match(/(-?[0-9.]+)([a-z%]*)/) || ["", "0", ""];
 	return { number: match[1], unit: match[2] };
 }
 

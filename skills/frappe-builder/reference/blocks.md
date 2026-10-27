@@ -16,7 +16,7 @@
 - `attributes` holds `src`, `darkSrc`, `alt`, `href`, `target`, `rel`, `placeholder`, `type`, `value`, `title`; `customAttributes` everything else (`id`, `data-*`, `aria-*`, `role`). `darkSrc` works only in `attributes`, and wraps the image in `<picture>`.
 - Text in `innerHTML` shows in the editor only on `span h1-h6 p b label a cite li strong em i blockquote summary button`; on a `div` it renders live but is invisible in the canvas.
 - Raw HTML (`element: "div"`, `originalElement: "__raw_html__"`, markup in `innerHTML`) is for SVG, iframes and embeds: its text can't be edited in the editor, and its `<script>` never runs there.
-- Images: `frappectl file upload <path>`, or `method call builder.api.import_remote_assets -F 'urls:=["https://..."]'` to copy remote images into the site (returns old URL -> new URL).
+- Images: upload a `File`, or call `builder.api.import_remote_assets` with `urls` (a list) to copy remote images into the site (returns old URL -> new URL).
 
 ## Styles
 
@@ -30,7 +30,9 @@
 
 ## Tokens
 
-A `Builder Token` is referenced as `var(--<doc name>)`; its `token_name` is only a label and resolves to nothing. Create one with an explicit `name` to know its handle: `{"name": "acme-ink", "token_name": "Ink", "type": "Color", "value": "#1d1b16", "dark_value": "#f4efe6"}`. `dark_value` applies when the visitor's system is in dark mode.
+A `Builder Token` is referenced as `var(--<doc name>)`; its `token_name` is only a label and resolves to nothing. The doc name is a UUID: outside an import, Frappe drops a `name` sent on insert and the token's `autoname` sets one. Use the `name` the insert returns, or find the token later by `token_name` and `group`: `{"token_name": "Ink", "group": "Acme", "type": "Color", "value": "#1d1b16", "dark_value": "#f4efe6"}`.
+
+A token with a `dark_value` renders as `light-dark(value, dark_value)`, so it follows the page's `color-scheme`: the visitor's system setting, or `data-theme="dark"` / `"light"` on `<html>` for a theme switch. `disable_auto_dark_mode` in Builder Settings stops the system setting from switching it.
 
 ## Bindings
 
@@ -42,6 +44,7 @@ A `Builder Token` is referenced as `var(--<doc name>)`; its `token_name` is only
 - Keys are bare dotted paths. A top-level `post.title` 500s the page when `post` is missing; set it to `{}` in the data script. No concatenation: compute values in the data script.
 - Fallbacks: text bindings show `0` and `""` but fall back to the block's own text on `None`; attribute and style bindings fall back on any falsy value.
 - A style binding is inline, so it beats `tabletStyles`/`mobileStyles`.
+- Bound HTML (such as `frappe.utils.md_to_html` output from a data script) shows in the canvas only on a text element. Bind it on a `p`: the published page renders `p` as `div`, so headings, lists and tables inside it are valid.
 
 ## Repeaters
 
@@ -55,4 +58,5 @@ A `Builder Token` is referenced as `var(--<doc name>)`; its `token_name` is only
 `visibilityCondition: {"key": "has_events", "comesFrom": "dataScript"}` removes the block live when falsy.
 
 - Live, the key may be an expression with `==`, `!=`, `and`, `or`, `not`; `<` and `>` fail the page. The canvas only tests truthiness, so prefer a boolean computed in the data script.
+- The canvas dims a hidden block instead of removing it, so it keeps its space there. Put alternatives (two navigations, say) inside one shared container, not side by side in a row.
 - A condition on a repeater's direct child is ignored; put it on a block inside the template.
