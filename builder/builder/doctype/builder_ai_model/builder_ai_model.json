@@ -13,10 +13,12 @@
   "model_id",
   "column_break_head",
   "enabled",
+  "discovered",
   "capability_section",
   "supports_vision",
   "max_tokens",
-  "column_break_cap"
+  "column_break_cap",
+  "frontier_rank"
  ],
  "fields": [
   {
@@ -55,6 +57,14 @@
    "label": "Enabled"
   },
   {
+   "default": "0",
+   "fieldname": "discovered",
+   "fieldtype": "Check",
+   "label": "Discovered",
+   "read_only": 1,
+   "description": "Found and managed by Builder: switched on while the model is on the frontier, off once newer ones replace it. Switching it on or off by hand makes it yours."
+  },
+  {
    "fieldname": "capability_section",
    "fieldtype": "Section Break",
    "label": "Capabilities"
@@ -74,12 +84,20 @@
   {
    "fieldname": "column_break_cap",
    "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "frontier_rank",
+   "fieldtype": "Int",
+   "hidden": 1,
+   "label": "Frontier Rank",
+   "read_only": 1,
+   "description": "Where discovery placed it among its provider's models, best first."
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-08-04 10:00:00.000000",
+ "modified": "2026-10-27 12:00:00.000000",
  "modified_by": "Administrator",
  "module": "Builder",
  "name": "Builder AI Model",

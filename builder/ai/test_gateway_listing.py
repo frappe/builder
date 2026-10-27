@@ -150,4 +150,6 @@ class TestGatewayListing(FrappeTestCase):
 			patch("builder.ai.models.fetch_openrouter_catalog", return_value={}),
 		):
 			get_ai_models()
-		self.assertEqual(enqueue.call_args.kwargs["job_id"], "builder_ai_gateway_sync")
+		# discovery queues its own job beside this one
+		queued = [call.kwargs.get("job_id") for call in enqueue.call_args_list]
+		self.assertIn("builder_ai_gateway_sync", queued)

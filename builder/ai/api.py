@@ -6,7 +6,6 @@ endpoints are flow-agnostic session/model helpers.
 """
 
 import logging
-import re
 
 import frappe
 import litellm
@@ -14,6 +13,7 @@ from frappe import _
 
 from builder.ai.agent.loop import run_agent_job
 from builder.ai.block_codec import BlockCodec
+from builder.ai.discovery import Discovery
 from builder.ai.llm import resolve_api_key, settings_api_key
 from builder.ai.models import GatewayListing, ModelRegistry
 from builder.ai.session import AISession
@@ -307,10 +307,30 @@ def delete_ai_provider(provider: str) -> None:
 
 
 @frappe.whitelist()
-def sync_ai_models() -> None:
-	"""Pick up models the gateways added or retired since the last sync."""
-	if frappe.has_permission("Builder AI Model", "create"):
-		GatewayListing.sync_all(force=True)
+def sync_ai_models(provider: str | None = None) -> None:
+	"""Pick up models the providers added or retired since the last sync: one
+	provider right now (its errors reach the user), or every gateway, with the
+	stale discovered providers queued so opening /providers never waits on them."""
+	if not frappe.has_permission("Builder AI Model", "create"):
+		return
+	if provider:
+		sync_one_provider(frappe.get_doc("Builder AI Provider", provider))
+		return
+	GatewayListing.sync_all(force=True)
+	Discovery.refresh_in_background()
+
+
+def sync_one_provider(doc) -> None:
+	from builder.ai.presets import readable_error
+
+	discovery = Discovery(doc)
+	try:
+		if doc.api_base:
+			GatewayListing(doc).sync()
+		elif discovery.preset:
+			discovery.sync()
+	except Exception as e:
+		frappe.throw(readable_error(str(e))[0])
 
 
 @frappe.whitelist()
@@ -326,15 +346,17 @@ def get_provider_credits(provider: str) -> dict | None:
 @frappe.whitelist()
 @has_page_write()
 def get_ai_models():
+	# a stale list is refreshed behind the picker, which shows what is stored meanwhile
 	GatewayListing.refresh_in_background()
+	Discovery.refresh_in_background()
 	return ModelRegistry.available()
 
 
 @frappe.whitelist()
 @has_page_write()
 def ai_setup_state():
-	"""What the setup flow needs to decide whether to run: the provider catalogue,
-	and whether anything usable is already configured. Never returns a key."""
+	"""What the connect menu needs: the providers on offer, and whether anything
+	usable is already connected. Never returns a key."""
 	from builder.ai import presets
 
 	# An install that hasn't migrated has no provider table at all. Say so plainly
@@ -357,49 +379,57 @@ def ai_setup_state():
 
 @frappe.whitelist()
 @has_page_write()
-def verify_ai_key(preset: str, api_key: str = "", api_base: str = "", model_id: str = ""):
-	"""Make one small real call so a bad key fails here, not on the first build."""
+def connect_ai_provider(preset: str, api_key: str = ""):
+	"""Connect a provider by its key: checked, saved, and its frontier models found.
+	Returns the provider and the models now on offer, best first."""
 	from builder.ai import presets
 
 	found = presets.find_preset(preset)
-	if not found:
-		frappe.throw(_("Unknown provider: {0}").format(preset))
-	model = model_id or next((m[0] for m in found["models"] if m[3]), "")
-	if not model:
-		return {"success": False, "severity": "error", "message": _("Enter a model id to test with")}
-	# Re-entering setup for a provider that's already connected shows an empty key
-	# box, because a stored key is never sent back. Test the stored one rather than
-	# making someone dig out a key the site already has.
-	if not api_key and found["name"] and frappe.db.exists("Builder AI Provider", found["name"]):
-		api_key = frappe.get_cached_doc("Builder AI Provider", found["name"]).resolved_key() or ""
-	return presets.verify_key(found, api_key, api_base, model)
+	if not found or found.get("custom") or found.get("oauth"):
+		frappe.throw(_("{0} doesn't connect with a key").format(preset))
+	return presets.connect(found, api_key)
 
 
 @frappe.whitelist()
 @has_page_write()
 def start_codex_login():
-	"""Begin a ChatGPT browser sign-in: the URL to open, the state to poll on,
-	and whether the localhost redirect can be captured from here."""
+	"""Begin a ChatGPT sign-in: the code to show, the page to enter it on, and the state to poll."""
 	from builder.ai import codex_login
+	from builder.ai.codex import CodexError
 
-	return codex_login.start()
+	try:
+		return codex_login.start()
+	except CodexError as e:
+		return {"status": "failed", "message": str(e)}
 
 
 @frappe.whitelist()
 @has_page_write()
 def poll_codex_login(state: str):
-	"""Where a started sign-in stands: pending, connected, failed or expired.
-	Connecting installs the ChatGPT provider; models come from setup_ai_provider."""
+	"""Where a ChatGPT sign-in stands: pending, connected (with its models), failed or expired."""
+	from builder.ai import codex_login
+	from builder.ai.codex import CodexError
+
+	try:
+		return codex_login.poll(state)
+	except CodexError as e:
+		return {"status": "failed", "message": str(e)}
+
+
+@frappe.whitelist()
+@has_page_write()
+def start_codex_browser_login():
+	"""The fallback sign-in, for a workspace without device codes: a link to open,
+	whose localhost redirect the user pastes into finish_codex_login."""
 	from builder.ai import codex_login
 
-	return codex_login.poll(state)
+	return codex_login.start_browser()
 
 
 @frappe.whitelist()
 @has_page_write()
 def finish_codex_login(redirect_url: str):
-	"""Complete a sign-in from the pasted redirect URL, for when the localhost
-	listener couldn't see it (remote server, port in use)."""
+	"""Complete a browser-link sign-in from the pasted redirect URL."""
 	from builder.ai import codex_login
 	from builder.ai.codex import CodexError
 
@@ -407,67 +437,6 @@ def finish_codex_login(redirect_url: str):
 		return codex_login.finish(redirect_url)
 	except CodexError as e:
 		return {"status": "failed", "message": str(e)}
-
-
-@frappe.whitelist()
-@has_page_write()
-def setup_ai_provider(
-	preset: str,
-	api_key: str = "",
-	api_base: str = "",
-	models: list | str | None = None,
-	provider_name: str = "",
-):
-	"""Finish setup: save the provider and switch on the chosen models."""
-	from builder.ai import presets
-
-	found = presets.find_preset(preset)
-	if not found:
-		frappe.throw(_("Unknown provider: {0}").format(preset))
-	chosen = parse_model_ids(models)
-	if not chosen:
-		frappe.throw(_("Pick at least one model"))
-	name = presets.install_preset(found, api_key, api_base, chosen, provider_name)
-	# `installed` is what THIS call switched on, not the site total: when the two
-	# disagree with what was ticked, the client can say so instead of reporting
-	# success over a selection that never arrived.
-	return {
-		"provider": name,
-		"installed": chosen,
-		"models": frappe.db.count("Builder AI Model", {"enabled": 1}),
-	}
-
-
-def parse_model_ids(models) -> list[str]:
-	"""Take the selected ids in whatever shape they survived the request in.
-
-	A list does not cross the wire intact: form encoding collapses it to its first
-	value, and a JSON body can hand back the raw string. Both used to be iterated
-	as-is, so three ticked models became one, and a JSON string became one model
-	per CHARACTER ('anthropic/[', 'anthropic/"', …)."""
-	if not models:
-		return []
-	if isinstance(models, str):
-		text = models.strip()
-		try:
-			parsed = frappe.parse_json(text)
-		except Exception:
-			parsed = None
-		if isinstance(parsed, list):
-			models = parsed
-		elif isinstance(parsed, str):
-			models = [parsed]
-		else:
-			models = re.split(r"[,\n]", text)
-	if not isinstance(models, list | tuple):
-		models = [models]
-	seen, out = set(), []
-	for m in models:
-		mid = str(m).strip()
-		if mid and mid not in seen:
-			seen.add(mid)
-			out.append(mid)
-	return out
 
 
 @frappe.whitelist()

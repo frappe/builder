@@ -1,10 +1,10 @@
 """The model registry: Builder AI Provider / Builder AI Model rows + live metadata.
 
-Which models are offered is a configuration decision, not a code one. Providers
-and models are DocTypes, so a new gateway (OpenRouter, any OpenAI-compatible
-endpoint, a local Ollama) or a new model is added from the desk UI without a
-deploy; `builder.builder.patches.seed_ai_providers_and_models` seeds the shipped
-shortlist on migrate.
+Which models are offered is found, not configured in code. Providers are
+DocTypes connected from Bob's /providers menu; their models are discovered from
+each provider's own listing and kept to the frontier (builder/ai/discovery.py),
+and a gateway with its own api_base lists its models through GatewayListing
+below. A row can still be added, switched on or off by hand from the desk.
 
 Everything factual about an OpenRouter model — context window, pricing (incl.
 cache-read), vision support — is still fetched from OpenRouter's public models
@@ -73,6 +73,7 @@ def load_models() -> list[dict]:
 					"litellm_provider",
 					"api_base",
 				],
+				order_by="creation asc",
 			)
 		}
 		rows = frappe.get_all(
@@ -84,6 +85,7 @@ def load_models() -> list[dict]:
 				"provider",
 				"supports_vision",
 				"max_tokens",
+				"frontier_rank",
 			],
 			order_by="creation asc",
 		)
@@ -91,6 +93,10 @@ def load_models() -> list[dict]:
 		logger.warning(f"AI model rows unavailable, using the built-in fallback: {e}")
 		return [dict(FALLBACK_MODEL)]
 
+	# providers in the order they were connected; within one, discovery's ranking
+	# (best first), and rows added by hand after the ranked ones
+	order = {name: i for i, name in enumerate(providers)}
+	rows = sorted(rows, key=lambda r: (order.get(r.provider, 0), r.frontier_rank or len(rows) + 1))
 	models = []
 	for row in rows:
 		provider = providers.get(row.provider)
@@ -116,11 +122,6 @@ def lookup_metadata(qualified_name: str, model_id: str) -> dict:
 	OpenRouter models come from its catalog; everything else from litellm's own model
 	map, which knows the mainstream hosted models. An unknown model returns {} and
 	keeps whatever defaults it was given."""
-	if qualified_name.startswith("codex/"):
-		from builder.ai.codex import model_metadata
-
-		if found := model_metadata(model_id):
-			return found
 	if qualified_name.startswith("openrouter/"):
 		try:
 			if found := fetch_openrouter_catalog().get(qualified_name):
@@ -316,11 +317,11 @@ class ModelRegistry:
 	def available(cls) -> list[dict]:
 		"""Provider-grouped catalog — the shape the model picker consumes.
 
-		`ready` says whether this model can actually be called: its provider's own
-		key, a gateway's api_base (which may need no key), or for OpenRouter the
-		shared one in Builder Settings. Computed here rather than in the cached row
-		loader, so key state is never held in redis, and so the picker can say a
-		model is unusable BEFORE someone writes a prompt for it."""
+		Only models that can actually be called: their provider's own key, a
+		gateway's api_base (which may need no key), or for OpenRouter the shared one
+		in Builder Settings. A model with nothing behind it belongs to a provider
+		that isn't connected, and connecting is what /providers is for. Computed
+		here rather than in the cached row loader, so key state is never held in redis."""
 		from builder.ai.llm import provider_api_key, settings_api_key, uses_settings_key
 
 		fallback = bool(settings_api_key())
@@ -328,8 +329,9 @@ class ModelRegistry:
 		for m in cls.catalog():
 			if not cls.still_served(m):
 				continue
-			ready = bool(m.get("api_base") or provider_api_key(m)) or (fallback and uses_settings_key(m))
-			grouped.setdefault(m["provider"], []).append({**m, "ready": ready})
+			if not (m.get("api_base") or provider_api_key(m) or (fallback and uses_settings_key(m))):
+				continue
+			grouped.setdefault(m["provider"], []).append({**m, "ready": True})
 		return [{"provider": provider, "models": models} for provider, models in grouped.items()]
 
 	@staticmethod

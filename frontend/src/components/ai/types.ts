@@ -13,24 +13,42 @@ export interface AIProvider {
 	models: AIModel[];
 }
 
-/** A provider the setup flow offers (presets.public_preset). */
+/** A provider the connect menu offers (presets.public_preset). It names no models:
+ * the server discovers those once the provider is connected. */
 export interface AIPreset {
 	id: string;
 	name: string;
 	tagline: string;
-	blurb: string;
 	key_url: string;
 	key_prefix: string;
-	key_steps: string[];
-	api_base: string | null;
-	custom: boolean;
 	oauth: boolean;
-	has_key: boolean;
-	needs_name: boolean;
-	needs_api_base: boolean;
-	configured: boolean;
-	models: { model_id: string; label: string; note: string; recommended: boolean }[];
+	custom: boolean;
+	connected: boolean;
 }
+
+/** A provider just connected, and its models on offer, best first. */
+export interface ConnectResult {
+	provider: string;
+	models: { name: string; label: string }[];
+}
+
+/** A started ChatGPT sign-in: the code to enter, where, and how often to ask about it. */
+export interface DeviceSignIn {
+	state: string;
+	code: string;
+	url: string;
+	interval: number;
+	message?: string;
+}
+
+/** The fallback ChatGPT sign-in: a link whose redirect the user pastes back. */
+export interface BrowserSignIn {
+	state: string;
+	url: string;
+}
+
+export type SignInStatus =
+	({ status: "connected" } & ConnectResult) | { status: "pending" | "failed" | "expired"; message?: string };
 
 /** What builder.ai.api.ai_setup_state reports. */
 export interface AISetupState {

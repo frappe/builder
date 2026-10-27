@@ -11,10 +11,7 @@ export type BobContext = {
 };
 
 export type Credits = { balance: number; spent: number | null };
-export type KeyCheck = { success: boolean; severity: "ok" | "warn" | "error"; message: string };
 export type ImportResult = { added: string[]; skipped: string[]; found: number };
-export type SignInStart = { url: string; state: string };
-export type SignInStatus = { status: "pending" | "connected" | "failed" | "expired"; message?: string };
 
 /** frappe-ui's call() resolves to unknown; this is the one place a response gets its shape. */
 export const api = <T>(method: string, params?: Record<string, unknown>) =>
