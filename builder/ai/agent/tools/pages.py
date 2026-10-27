@@ -79,40 +79,40 @@ def slugify(title: str) -> str:
 	return re.sub(r"[^a-z0-9]+", "-", title.lower()).strip("-") or "page"
 
 
-TOOLS = [
-	Tool(
-		name="create_page",
-		side="server",
-		handler=create_page,
-		description=(
-			"Create another page and hand its build to that page's own chat. Your edits only "
-			"ever land on the open page, so this is the one way to make a different page. When "
-			"your turn ends, the editor opens the new page and sends `brief` there as its first "
-			"message, and the build runs live on that canvas. One page per turn. Don't build its "
-			"content here, and don't use this to redesign the open page."
-		),
-		parameters={
-			"type": "object",
-			"properties": {
-				"title": {"type": "string", "description": "The page title, e.g. 'Room to Move'."},
-				"route": {
-					"type": "string",
-					"description": (
-						"URL path without a leading slash, fitted into the site's existing routes "
-						"(e.g. 'classes/room-to-move'). Defaults to a slug of the title."
-					),
-				},
-				"brief": {
-					"type": "string",
-					"description": (
-						"The request the new page's chat receives, written as the user would ask it: "
-						"what the page is for, its sections and content, and which existing page to "
-						"match by page_id. That chat starts fresh and knows only this brief and a "
-						"pointer back to the page it came from."
-					),
-				},
+create_page_tool = Tool(
+	name="create_page",
+	side="server",
+	handler=create_page,
+	description=(
+		"Create another page and hand its build to that page's own chat. Your edits only "
+		"ever land on the open page, so this is the one way to make a different page. When "
+		"your turn ends, the editor opens the new page and sends `brief` there as its first "
+		"message, and the build runs live on that canvas. One page per turn. Don't build its "
+		"content here, and don't use this to redesign the open page."
+	),
+	parameters={
+		"type": "object",
+		"properties": {
+			"title": {"type": "string", "description": "The page title, e.g. 'Room to Move'."},
+			"route": {
+				"type": "string",
+				"description": (
+					"URL path without a leading slash, fitted into the site's existing routes "
+					"(e.g. 'classes/room-to-move'). Defaults to a slug of the title."
+				),
 			},
-			"required": ["title", "brief"],
+			"brief": {
+				"type": "string",
+				"description": (
+					"The request the new page's chat receives, written as the user would ask it: "
+					"what the page is for, its sections and content, and which existing page to "
+					"match by page_id. That chat starts fresh and knows only this brief and a "
+					"pointer back to the page it came from."
+				),
+			},
 		},
-	)
-]
+		"required": ["title", "brief"],
+	},
+)
+
+TOOLS = [create_page_tool]
