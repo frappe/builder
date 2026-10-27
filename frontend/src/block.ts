@@ -483,9 +483,18 @@ class Block implements BlockOptions {
 			// clearing drops both copies, or the one left behind becomes the value again
 			delete this.customAttributes[attribute];
 		}
+		if (value === undefined) this.removeAttributeBinding(attribute);
 		// undefined is dropped when saved, which would bring the component's value back
 		const cleared = this.getComponentAttributes()[attribute] != null ? null : undefined;
 		this.attributes[attribute] = value ?? cleared;
+	}
+	removeAttributeBinding(attribute: string) {
+		this.removeDynamicValue(attribute, "attribute");
+		const inherited = this.getDynamicValues().some(
+			(v) => v.type === "attribute" && v.property === attribute && v.key,
+		);
+		// an empty key hides the component's binding without binding anything
+		if (inherited) this.setDynamicValue(attribute, "attribute");
 	}
 	getAttribute(attribute: string) {
 		return this.getAttributes()[attribute];
