@@ -12,18 +12,22 @@ import { confirm, getErrorMessage } from "@/utils/helpers";
 import { useLocalStorage } from "@vueuse/core";
 import { createResource, toast } from "frappe-ui";
 import { computed, inject, nextTick, ref, shallowRef, watch } from "vue";
-import { useRoute } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
 
 /**
  * Orchestrates the Builder AI chat: holds UI state, sends each user turn to the
  * single `builder.ai.api.run` endpoint, and reacts to the `ai_chat_*` realtime
  * events. Block-tree mutation lives in ToolDispatcher; YAML parsing in ./ai/yaml.
  */
+/** A page create_page made, and the brief its chat starts with. */
+type PageHandoff = { pageId: string; title: string; prompt: string };
+
 export class AIChatController {
 	private readonly builderStore = useBuilderStore();
 	private readonly canvasStore = useCanvasStore();
 	private readonly pageStore = usePageStore();
 	private readonly route = useRoute();
+	private readonly router = useRouter();
 	// Bob edits the page, so everything lands here even while a component is open
 	private readonly pageCanvas: PageCanvas = inject(
 		"pageCanvas",
@@ -132,6 +136,10 @@ export class AIChatController {
 
 	// Compact display line for a card-composed reply (set by selectOption).
 	private pendingDisplayText: string | null = null;
+	// A page create_page made this turn opens once the turn completes; its brief then
+	// waits as the kickoff until that page's chat has loaded.
+	private pageToOpen: PageHandoff | null = null;
+	private pendingKickoff: PageHandoff | null = null;
 
 	private readonly pageStreamContent = ref(""); // accumulates kind="page_yaml" chunks
 	// True while the canvas shows a streamed preview that no authoritative
@@ -236,6 +244,7 @@ export class AIChatController {
 			// A build may be mid-stream on this page (opened from another chat's link,
 			// or a refresh mid-generation): replay the buffered stream as live preview.
 			this.syncActiveBuild();
+			this.startKickoff(newPageId);
 		});
 
 		// loadSession stands down until AI is known to be on — but that answer only
@@ -261,6 +270,7 @@ export class AIChatController {
 			onError: this.onError,
 			onStep: this.onStep,
 			onRefetch: this.onRefetch,
+			onOpenPage: this.onOpenPage,
 		};
 	}
 
@@ -681,6 +691,8 @@ export class AIChatController {
 				.catch(() => null);
 		}
 
+		if (this.openHandedOffPage()) return;
+
 		const turn = this.turnCount;
 		await this.loadSession();
 		// a turn sent during the reload owns the chat's tail now
@@ -712,6 +724,7 @@ export class AIChatController {
 	onError = async (data: { message?: string; session_id?: string }) => {
 		if (this.holdUntilSessionKnown(data, () => this.onError(data))) return;
 		if (this.isForeignSession(data)) return;
+		this.pageToOpen = null;
 		this.clearStreamRenderTimer();
 		this.endCanvasBuild(this.previewUnconfirmed);
 		this.previewUnconfirmed = false;
@@ -766,6 +779,33 @@ export class AIChatController {
 		this.scrollToBottom();
 	};
 
+	/** create_page made another page. It opens when this turn completes, so the
+	 * turn's own reply lands first. */
+	onOpenPage = (data: { new_page_id: string; title: string; prompt: string; session_id?: string }) => {
+		if (this.holdUntilSessionKnown(data, () => this.onOpenPage(data))) return;
+		if (this.isForeignSession(data)) return;
+		this.pageToOpen = { pageId: data.new_page_id, title: data.title, prompt: data.prompt };
+	};
+
+	/** Opens the page create_page made this turn. Returns whether it navigated. */
+	private openHandedOffPage(): boolean {
+		const handoff = this.pageToOpen;
+		this.pageToOpen = null;
+		if (!handoff) return false;
+		this.pendingKickoff = handoff;
+		this.router.push({ name: "builder", params: { pageId: handoff.pageId } });
+		return true;
+	}
+
+	/** The new page's first turn: the brief, sent as if typed there. If it can't go
+	 * yet, it stays in the composer for the user to send. */
+	private startKickoff(pageId: string) {
+		const kickoff = this.pendingKickoff;
+		if (kickoff?.pageId !== pageId) return;
+		this.pendingKickoff = null;
+		this.selectOption(kickoff.prompt, `Build ${kickoff.title}`);
+	}
+
 	// --- user actions -----------------------------------------------------
 
 	/** Submit a reply composed by an agent UI card (option tap, action button,
@@ -817,6 +857,7 @@ export class AIChatController {
 	 * so we show "Cancelling" locally right away for instant feedback; that event
 	 * (or onError/onClarify) clears isCancelling when the turn actually ends. */
 	cancel = async () => {
+		this.pageToOpen = null;
 		if (!this.sessionId.value && this.liveSend) {
 			// the turn's session isn't known yet; cancel it the moment run names it
 			this.cancelOnceKnown = true;

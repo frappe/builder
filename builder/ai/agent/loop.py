@@ -256,6 +256,7 @@ TOOL_LABELS = {
 	"connect_form": ("Connecting the form", "Connected the form"),
 	"edit_global_settings": ("Updating site settings", "Updated site settings"),
 	"set_home_page": ("Setting the home page", "Set the home page"),
+	"create_page": ("Creating the page", "Created the page"),
 }
 
 

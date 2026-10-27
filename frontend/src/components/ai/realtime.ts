@@ -16,6 +16,8 @@ export interface AIChatHandlers {
 	/** A server tool changed state the canvas loads once at editor start
 	 * (theme variables, page data, page doc) — refetch the named resources. */
 	onRefetch?: Handler;
+	/** create_page made another page: open it once this turn ends, and send it the brief. */
+	onOpenPage?: Handler;
 }
 
 interface Realtime {
@@ -34,6 +36,7 @@ function listenerMap(h: AIChatHandlers): Record<string, Handler> {
 	};
 	if (h.onStep) map.ai_chat_step = h.onStep;
 	if (h.onRefetch) map.ai_chat_refetch = h.onRefetch;
+	if (h.onOpenPage) map.ai_chat_open_page = h.onOpenPage;
 	return map;
 }
 

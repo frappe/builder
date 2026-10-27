@@ -153,6 +153,7 @@ const TOOL_ICONS: Record<string, string> = {
 	connect_form: "lucide-link-2",
 	edit_global_settings: "lucide-settings",
 	set_home_page: "lucide-home",
+	create_page: "lucide-file-plus",
 };
 
 const toolIcon = (tool?: string) => TOOL_ICONS[tool || ""] || "lucide-wrench";
