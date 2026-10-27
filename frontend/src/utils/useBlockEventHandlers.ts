@@ -1,4 +1,5 @@
 import useBuilderStore from "@/stores/builderStore";
+import { leftPanelTabs } from "@/components/LeftPanelTabs";
 import useCanvasStore from "@/stores/canvasStore";
 import getBlockTemplate from "@/utils/blockTemplate";
 import { getBlock, getBlockInfo, isBlock } from "@/utils/helpers";
@@ -131,7 +132,8 @@ const selectBlock = (e: MouseEvent) => {
 	canvasStore.selectBlock(block, e);
 	canvasStore.activeCanvas?.setActiveBreakpoint(breakpoint);
 
-	if (!["Code", "Chat"].includes(builderStore.leftPanelActiveTab)) {
+	const activeTab = leftPanelTabs.all.value.find((tab) => tab.name === builderStore.leftPanelActiveTab);
+	if (!activeTab?.keepOpenOnSelection) {
 		builderStore.leftPanelActiveTab = "Layers";
 	}
 };

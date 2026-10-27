@@ -1,0 +1,9 @@
+{
+	"v": 1,
+	"name": __PLUGIN_ID_JSON__,
+	"label": __LABEL_JSON__,
+	"description": __DESCRIPTION_JSON__,
+	"version": "1.0.0",
+	"entry": "main.js",
+	"icon": "icon.svg"
+}
