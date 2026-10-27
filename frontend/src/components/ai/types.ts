@@ -32,6 +32,16 @@ export interface ConnectResult {
 	models: { name: string; label: string }[];
 }
 
+/** A model a provider serves that the picker doesn't offer yet (catalog.ProviderCatalog). */
+export interface AddableModel {
+	model_id: string;
+	label: string;
+	released?: string;
+	context?: number;
+	/** null when nothing describes the model */
+	vision: boolean | null;
+}
+
 /** A started ChatGPT sign-in: the code to enter, where, and how often to ask about it. */
 export interface DeviceSignIn {
 	state: string;

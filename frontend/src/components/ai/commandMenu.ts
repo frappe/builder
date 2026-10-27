@@ -17,6 +17,8 @@ export type MenuItem = {
 	submenu?: boolean;
 	theme?: "red";
 	group?: string;
+	/** stays listed whatever the filter, like the way to add what the filter didn't find */
+	pinned?: boolean;
 	run: () => MenuStep | Promise<MenuStep>;
 };
 
@@ -233,7 +235,9 @@ function commandItems({ name, arg, hasArg }: TypedCommand): MenuItem[] {
 function filterItems(items: MenuItem[], query: string): MenuItem[] {
 	const needle = query.trim().toLowerCase();
 	if (!needle) return items;
-	return items.filter((item) =>
-		`${item.label} ${item.description ?? ""} ${item.group ?? ""}`.toLowerCase().includes(needle),
+	return items.filter(
+		(item) =>
+			item.pinned ||
+			`${item.label} ${item.description ?? ""} ${item.group ?? ""}`.toLowerCase().includes(needle),
 	);
 }

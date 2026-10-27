@@ -1,4 +1,5 @@
 import type { MenuItem, MenuLevel, MenuStep } from "@/components/ai/commandMenu";
+import { catalogLevel } from "@/components/ai/commands/addModel";
 import { chatGPTLevel, connectLevel, keyLevel as presetKeyLevel } from "@/components/ai/commands/connect";
 import {
 	api,
@@ -63,6 +64,13 @@ export function providerLevel(ctx: BobContext, name: string): MenuLevel {
 						switchValue: !!m.enabled,
 						run: () => toggleModel(ctx, m),
 					})),
+				{
+					key: "add",
+					label: "Add a model",
+					icon: "lucide-plus",
+					submenu: true,
+					run: () => catalogLevel(ctx, name),
+				},
 				{
 					key: "refresh",
 					label: "Check for new models",

@@ -1,4 +1,5 @@
 import type { MenuItem, MenuLevel } from "@/components/ai/commandMenu";
+import { addModelItem } from "@/components/ai/commands/addModel";
 import { api, creditsLabel, withCredits, type BobContext } from "@/components/ai/commands/shared";
 import type { AIProvider } from "@/components/ai/types";
 
@@ -11,8 +12,8 @@ export function modelLevel(ctx: BobContext, query = ""): MenuLevel {
 			ctx,
 			() => loadGroups(ctx),
 			(groups) => groups.filter((g) => g.models.some((m) => m.api_base)).map((g) => g.provider),
-			(groups, credits) =>
-				groups.flatMap((group) =>
+			(groups, credits) => [
+				...groups.flatMap((group) =>
 					group.models.map((model): MenuItem => ({
 						key: model.name,
 						label: model.label,
@@ -24,6 +25,15 @@ export function modelLevel(ctx: BobContext, query = ""): MenuLevel {
 						},
 					})),
 				),
+				...(groups.length
+					? [
+							addModelItem(
+								ctx,
+								groups.map((g) => g.provider),
+							),
+						]
+					: []),
+			],
 		),
 	};
 }

@@ -392,6 +392,40 @@ def connect_ai_provider(preset: str, api_key: str = ""):
 
 @frappe.whitelist()
 @has_page_write()
+def get_addable_models(provider: str):
+	"""Everything a provider serves that Bob could use and isn't offering, newest
+	first: the way to a model the frontier leaves out, like an open-weights one."""
+	from builder.ai.catalog import ProviderCatalog
+	from builder.ai.presets import readable_error
+
+	try:
+		models = ProviderCatalog(frappe.get_doc("Builder AI Provider", provider)).offered()
+	except Exception as e:
+		frappe.throw(readable_error(str(e))[0])
+	return [
+		{
+			"model_id": m["id"],
+			"label": m["label"],
+			"released": m.get("released"),
+			"context": m.get("context"),
+			# unknown for a gateway's models, which nothing describes
+			"vision": "image" in m["input"] if m.get("input") else None,
+		}
+		for m in models
+	]
+
+
+@frappe.whitelist()
+@has_page_write()
+def add_ai_model(provider: str, model_id: str):
+	"""Switch a model on by hand. Discovery never switches it off again."""
+	from builder.ai.catalog import ProviderCatalog
+
+	return ProviderCatalog(frappe.get_doc("Builder AI Provider", provider)).add(model_id)
+
+
+@frappe.whitelist()
+@has_page_write()
 def start_codex_login():
 	"""Begin a ChatGPT sign-in: the code to show, the page to enter it on, and the state to poll."""
 	from builder.ai import codex_login
