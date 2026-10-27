@@ -461,10 +461,11 @@ class Block implements BlockOptions {
 	// a name the page already uses gets a number, or two inserted radio groups would act as one
 	renameTakenRadioNames(takenNames: Set<string>) {
 		const newNames = new Map<string, string>();
+		const reservedNames = new Set([...takenNames, ...this.getRadioNames()]);
 		this.getRadios().forEach((radio) => {
 			const name = radio.getEffectiveAttribute("name") as string;
 			if (name && !newNames.has(name) && takenNames.has(name)) {
-				newNames.set(name, getNumberedName(name, takenNames));
+				newNames.set(name, getNumberedName(name, reservedNames));
 			}
 			if (newNames.has(name)) radio.setEffectiveAttribute("name", newNames.get(name));
 		});
