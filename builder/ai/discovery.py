@@ -22,7 +22,6 @@ per site with `builder_ai_frontier` in site_config.json:
 """
 
 import fnmatch
-import json
 import os
 from collections import Counter
 from datetime import date
@@ -232,9 +231,7 @@ def recent(candidates: list[dict], days: int) -> list[dict]:
 
 
 def load_policy() -> dict:
-	with open(POLICY_FILE) as f:
-		policy = json.load(f)
-	return {**policy, **(frappe.conf.get("builder_ai_frontier") or {})}
+	return {**frappe.get_file_json(POLICY_FILE), **(frappe.conf.get("builder_ai_frontier") or {})}
 
 
 @redis_cache(ttl=DESCRIBE_TTL)
