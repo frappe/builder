@@ -17,6 +17,8 @@ export type MenuItem = {
 	submenu?: boolean;
 	theme?: "red";
 	group?: string;
+	/** stays listed whatever the filter, like the way to add what the filter didn't find */
+	pinned?: boolean;
 	run: () => MenuStep | Promise<MenuStep>;
 };
 
@@ -51,7 +53,15 @@ export function useCommandMenu(prompt: Ref<string>) {
 	const dismissed = ref(false);
 	let stopLevel: (() => void) | void;
 
+	// the command list as a level of its own: every menu leads back to it, so Back always
+	// has somewhere to go, even from a menu opened straight from a button
+	const root: MenuLevel = {
+		title: "Commands",
+		items: () => commandItems({ name: "", arg: "", hasArg: false }),
+	};
+
 	const level = computed(() => stack.value.at(-1) ?? null);
+	const atRoot = computed(() => level.value === root);
 	const typed = computed(() => (stack.value.length ? null : parseSlash(prompt.value)));
 	const rootItems = computed(() => (typed.value ? commandItems(typed.value) : []));
 	const visibleItems = computed(() =>
@@ -81,9 +91,10 @@ export function useCommandMenu(prompt: Ref<string>) {
 
 	async function back(levels = 1) {
 		// close() needs the stack intact to know a level held the composer
-		if (stack.value.length <= levels) return close();
+		if (atRoot.value) return close();
 		stopLevel?.();
-		stack.value = stack.value.slice(0, -levels);
+		const rest = stack.value.slice(0, -levels);
+		stack.value = rest.length ? rest : [root];
 		await enter();
 	}
 
@@ -177,7 +188,9 @@ export function useCommandMenu(prompt: Ref<string>) {
 
 	const menu = {
 		stack,
+		root,
 		level,
+		atRoot,
 		visibleItems,
 		note,
 		noteIsError,
@@ -222,7 +235,9 @@ function commandItems({ name, arg, hasArg }: TypedCommand): MenuItem[] {
 function filterItems(items: MenuItem[], query: string): MenuItem[] {
 	const needle = query.trim().toLowerCase();
 	if (!needle) return items;
-	return items.filter((item) =>
-		`${item.label} ${item.description ?? ""} ${item.group ?? ""}`.toLowerCase().includes(needle),
+	return items.filter(
+		(item) =>
+			item.pinned ||
+			`${item.label} ${item.description ?? ""} ${item.group ?? ""}`.toLowerCase().includes(needle),
 	);
 }

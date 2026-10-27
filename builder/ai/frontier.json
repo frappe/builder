@@ -1,0 +1,32 @@
+{
+	"labs": ["anthropic", "openai", "google"],
+	"require": {
+		"tool_call": true,
+		"input": ["text", "image"],
+		"output": ["text"],
+		"min_context": 128000
+	},
+	"exclude": [
+		"*-mini*",
+		"*-nano*",
+		"*lite*",
+		"*haiku*",
+		"*gemma*",
+		"*-latest",
+		"*:free",
+		"*-image*",
+		"*-audio*",
+		"*-realtime*",
+		"*-search*",
+		"*-tts*",
+		"*embed*",
+		"*-spark*",
+		"*-chat*",
+		"*gpt-*-pro",
+		"*deep-research*",
+		"*-customtools*"
+	],
+	"newest_per_family": 1,
+	"within_days_of_newest": 120,
+	"per_lab": 3
+}

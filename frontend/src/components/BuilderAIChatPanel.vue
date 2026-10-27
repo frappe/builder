@@ -48,11 +48,9 @@
 			</span>
 			<div class="flex flex-col items-center gap-1 text-center">
 				<p class="text-sm font-medium text-ink-gray-8">Build pages by describing them</p>
-				<p class="text-p-xs text-ink-gray-5">
-					Connect a model first. Takes a minute if you already have an API key.
-				</p>
+				<p class="text-p-xs text-ink-gray-5">Sign in with ChatGPT, or paste an API key.</p>
 			</div>
-			<Button variant="solid" size="sm" @click="menu.open(connectLevel(bob))">Set up AI</Button>
+			<Button variant="solid" size="sm" @click="menu.open(connectLevel(bob))">Connect a model</Button>
 		</div>
 
 		<template v-else>
@@ -329,7 +327,7 @@
 			</div>
 			<!-- one box: the field on top, its controls along the bottom edge -->
 			<div
-				class="relative rounded-6 border border-outline-gray-2 bg-surface-base transition-colors hover:border-outline-gray-3 hover:shadow-sm focus-within:border-outline-gray-4 focus-within:shadow-sm"
+				class="relative rounded-6 border border-outline-gray-2 bg-surface-base transition-colors focus-within:border-outline-gray-4 focus-within:shadow-sm hover:border-outline-gray-3 hover:shadow-sm"
 				@paste.stop="handlePaste"
 				@dragover.prevent="isDragging = isVisionModel ? true : isDragging"
 				@dragleave="isDragging = false"
@@ -728,9 +726,9 @@ function debugHasSignal(debug: Record<string, any>): boolean {
 	if (!debug) return false;
 	return Boolean(
 		(debug.argsRepaired ?? 0) > 0 ||
-		(debug.toolFailures?.length ?? 0) > 0 ||
-		(debug.finishReasons || []).includes("length") ||
-		debug.stopReason === "max_rounds",
+			(debug.toolFailures?.length ?? 0) > 0 ||
+			(debug.finishReasons || []).includes("length") ||
+			debug.stopReason === "max_rounds",
 	);
 }
 

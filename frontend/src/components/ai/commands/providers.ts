@@ -1,6 +1,14 @@
 import type { MenuItem, MenuLevel, MenuStep } from "@/components/ai/commandMenu";
-import { connectLevel } from "@/components/ai/commands/connect";
-import { confirmLevel, creditsLabel, withCredits, type BobContext } from "@/components/ai/commands/shared";
+import { catalogLevel } from "@/components/ai/commands/addModel";
+import { chatGPTLevel, connectLevel, keyLevel as presetKeyLevel } from "@/components/ai/commands/connect";
+import {
+	api,
+	confirmLevel,
+	creditsLabel,
+	withCredits,
+	type BobContext,
+} from "@/components/ai/commands/shared";
+import type { AISetupState } from "@/components/ai/types";
 import { aiModels, aiProviders, reloadAIRegistry } from "@/data/aiModels";
 import type { BuilderAIModel, BuilderAIProvider } from "@/types/doctypes";
 import { call, toast } from "frappe-ui";
@@ -46,13 +54,29 @@ export function providerLevel(ctx: BobContext, name: string): MenuLevel {
 		items: async () => {
 			await reloadAIRegistry();
 			return [
-				...modelsOf(name).map((m): MenuItem => ({
-					key: m.name,
-					label: m.label || m.model_id,
-					group: "Models",
-					switchValue: !!m.enabled,
-					run: () => toggleModel(ctx, m),
-				})),
+				// a model discovery retired is gone, not switched off: only the ones someone chose stay listed
+				...modelsOf(name)
+					.filter((m) => m.enabled || !m.discovered)
+					.map((m): MenuItem => ({
+						key: m.name,
+						label: m.label || m.model_id,
+						group: "Models",
+						switchValue: !!m.enabled,
+						run: () => toggleModel(ctx, m),
+					})),
+				{
+					key: "add",
+					label: "Add a model",
+					icon: "lucide-plus",
+					submenu: true,
+					run: () => catalogLevel(ctx, name),
+				},
+				{
+					key: "refresh",
+					label: "Check for new models",
+					icon: "lucide-refresh-cw",
+					run: () => refreshModels(ctx, name),
+				},
 				{
 					key: "enabled",
 					label: "Use this provider",
@@ -60,25 +84,56 @@ export function providerLevel(ctx: BobContext, name: string): MenuLevel {
 					switchValue: !!providerDoc(name)?.enabled,
 					run: () => toggleProvider(ctx, name),
 				},
-				{
-					key: "key",
-					label: "Change API key",
-					icon: "lucide-key-round",
-					submenu: true,
-					run: () => keyLevel(ctx, name),
-				},
+				credentialItem(ctx, name),
 				{
 					key: "delete",
-					label: "Delete provider",
-					icon: "lucide-trash-2",
+					label: "Disconnect",
+					icon: "lucide-unplug",
 					theme: "red",
 					submenu: true,
 					run: () =>
-						confirmLevel(`Delete ${name}?`, `Delete ${name} and its models`, () => remove(ctx, name)),
+						confirmLevel(`Disconnect ${name}?`, `Disconnect ${name} and remove its models`, () =>
+							remove(ctx, name),
+						),
 				},
 			];
 		},
 	};
+}
+
+/** A ChatGPT sign-in is renewed by signing in again; a key goes through the same check as connecting. */
+function credentialItem(ctx: BobContext, name: string): MenuItem {
+	const provider = providerDoc(name);
+	if (provider?.litellm_provider === "codex")
+		return {
+			key: "signin",
+			label: "Sign in again",
+			icon: "lucide-log-in",
+			submenu: true,
+			run: () => chatGPTLevel(ctx),
+		};
+	return {
+		key: "key",
+		label: "Change API key",
+		icon: "lucide-key-round",
+		submenu: true,
+		run: async () => {
+			if (provider?.api_base) return keyLevel(ctx, name);
+			const state = await api<AISetupState>("builder.ai.api.ai_setup_state");
+			const preset = state.presets.find((p) => p.name === name);
+			return preset ? presetKeyLevel(ctx, preset) : keyLevel(ctx, name);
+		},
+	};
+}
+
+async function refreshModels(ctx: BobContext, name: string): Promise<MenuStep> {
+	const before = modelsOf(name).filter((m) => m.enabled).length;
+	await call("builder.ai.api.sync_ai_models", { provider: name });
+	await ctx.refreshAI();
+	await reloadAIRegistry();
+	const after = modelsOf(name).filter((m) => m.enabled).length;
+	toast.success(after === before ? "Up to date" : `${name} now offers ${modelCount(name)}`);
+	return "stay";
 }
 
 function keyLevel(ctx: BobContext, name: string): MenuLevel {

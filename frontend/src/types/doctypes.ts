@@ -213,7 +213,7 @@ export interface BuilderAIProvider extends DocType {
   api_key?: string;
 }
 
-// Last updated: 2026-08-04 10:00:00.000000
+// Last updated: 2026-10-27 12:00:00.000000
 export interface BuilderAIModel extends DocType {
   /** Label: Data */
   label: string;
@@ -223,8 +223,12 @@ export interface BuilderAIModel extends DocType {
   model_id: string;
   /** Enabled: Check */
   enabled: 0 | 1;
+  /** Discovered: Check */
+  discovered: 0 | 1;
   /** Supports Vision: Check */
   supports_vision: 0 | 1;
   /** Context Window: Int */
   max_tokens?: number;
+  /** Frontier Rank: Int */
+  frontier_rank?: number;
 }

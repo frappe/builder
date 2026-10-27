@@ -22,9 +22,17 @@ class BuilderAIModel(Document):
 		if not self.model_id:
 			frappe.throw(_("Model ID is required"))
 		self.label = (self.label or "").strip() or self.model_id
+		self.claim_from_discovery()
 		self.detect_metadata()
 		if not self.is_new() and self.name != self.qualified_name():
 			frappe.rename_doc(self.doctype, self.name, self.qualified_name(), force=True)
+
+	def claim_from_discovery(self) -> None:
+		"""Switching a discovered model on or off by hand is a decision discovery must
+		not undo on its next sync, so the row stops being discovery's to manage."""
+		if self.discovered and not self.is_new() and not self.flags.from_discovery:
+			if self.has_value_changed("enabled"):
+				self.discovered = 0
 
 	def detect_metadata(self) -> None:
 		"""Fill in what can be looked up — context window and vision — so adding a

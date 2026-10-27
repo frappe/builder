@@ -25,25 +25,8 @@ ORIGINATOR = "codex_cli_rs"
 CLIENT_VERSION = "0.160.0"
 CONNECT_TIMEOUT = 10
 READ_TIMEOUT = 120  # max stall between bytes, mirrors llm.py
-CATALOG_TIMEOUT = 5
+CATALOG_TIMEOUT = 10
 REFRESH_SLACK_MS = 60_000
-
-# The ChatGPT serving surface, not the public API. litellm's model map describes
-# the API and gets these wrong; the spark models are text-only.
-CONTEXT_WINDOWS = {
-	"gpt-6-luna": 272_000,
-	"gpt-5.6-sol": 272_000,
-	"gpt-5.6-terra": 272_000,
-	"gpt-5.6-luna": 272_000,
-	"gpt-5.6": 272_000,
-	"gpt-5.5": 272_000,
-	"gpt-5.4-mini": 272_000,
-	"gpt-5.4-pro": 272_000,
-	"gpt-5.4": 272_000,
-	"gpt-5.3-codex-spark": 128_000,
-	"gpt-5.3-codex": 400_000,
-	"gpt-5.2": 400_000,
-}
 
 
 class CodexError(Exception):
@@ -86,41 +69,40 @@ def complete(
 	return "".join(c.choices[0].delta.content or "" for c in chunks)
 
 
-def verify_credential(raw: str) -> dict:
-	"""The smallest real proof this login works: refresh the token, then hit the
-	authenticated model catalog. Spends no completion tokens. The refreshed access
-	token is discarded; OpenAI keeps the refresh token stable, so the pasted
-	credential stays valid to store afterwards."""
-	from frappe import _
+def list_models(raw: str) -> dict[str, dict]:
+	"""The models this ChatGPT plan offers, as the ChatGPT catalog describes them.
 
-	try:
-		cred = refresh_credential(parse_credential(raw))
-		headers = request_headers(cred["access"], cred["account_id"], accept="application/json")
-		headers.pop("content-type")
-		resp = requests.get(
-			f"{API_BASE}/codex/models",
-			params={"client_version": CLIENT_VERSION},
-			headers=headers,
-			timeout=CATALOG_TIMEOUT,
-		)
-		if resp.status_code >= 400:
-			raise http_error(resp)
-		return {"success": True, "severity": "ok", "message": _("Connected")}
-	except CodexError as e:
-		return {"success": False, "severity": "error", "message": str(e)}
-	except Exception as e:
-		from builder.ai.presets import readable_error
-
-		message, severity = readable_error(str(e))
-		return {"success": False, "severity": severity, "message": message}
+	Its facts beat the public API's (models.dev): the ChatGPT surface serves a
+	smaller context window. Hidden entries are internal (review, reserve) models.
+	Spends no tokens, so connecting uses it to prove the sign-in works."""
+	cred = parse_credential(raw)
+	if cred.get("expires", 0) - REFRESH_SLACK_MS < time.time() * 1000:
+		cred = refresh_credential(cred)
+	headers = request_headers(cred["access"], cred["account_id"], accept="application/json")
+	headers.pop("content-type")
+	resp = requests.get(
+		f"{API_BASE}/codex/models",
+		params={"client_version": CLIENT_VERSION},
+		headers=headers,
+		timeout=CATALOG_TIMEOUT,
+	)
+	if resp.status_code >= 400:
+		raise http_error(resp)
+	return {
+		m["slug"]: catalog_facts(m)
+		for m in resp.json().get("models") or []
+		if m.get("slug") and m.get("visibility") == "list"
+	}
 
 
-def model_metadata(model_id: str) -> dict:
-	"""Context window and vision for a codex model, from the table above."""
-	for known, window in CONTEXT_WINDOWS.items():
-		if model_id == known or model_id.startswith(f"{known}-20"):
-			return {"max_tokens": window, "vision": "spark" not in model_id}
-	return {}
+def catalog_facts(model: dict) -> dict:
+	facts = {
+		"label": model.get("display_name"),
+		"context": model.get("context_window"),
+		"input": model.get("input_modalities"),
+		"tools": True,  # every ChatGPT model is a Codex agent model
+	}
+	return {k: v for k, v in facts.items() if v}
 
 
 # --- request + stream --------------------------------------------------------
