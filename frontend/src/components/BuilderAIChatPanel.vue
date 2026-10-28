@@ -342,9 +342,7 @@
 					class="no-scrollbar max-h-60 min-h-14 resize-none placeholder-ink-gray-4 disabled:border-0 disabled:bg-transparent"
 					:disabled="isSubmitting || !isEditingPage"
 					:placeholder="composerPlaceholder"
-					@keydown="menu.onKeydown"
-					@keydown.meta.enter="submitPrompt"
-					@keydown.ctrl.enter="submitPrompt" />
+					@keydown="onPromptKeydown" />
 				<div class="flex items-center gap-0.5 p-1.5">
 					<Button
 						variant="ghost"
@@ -373,7 +371,7 @@
 						<template #content>
 							<span class="flex items-center gap-1.5">
 								Send
-								<KeyboardShortcut combo="Mod+Enter" class="!text-xs !text-ink-gray-4" />
+								<KeyboardShortcut combo="Enter" class="!text-xs !text-ink-gray-4" />
 							</span>
 						</template>
 						<Button
@@ -771,9 +769,17 @@ watch(menuLevel, (level) => {
 });
 
 const submitPrompt = () => {
-	// the menu took this Enter already
+	// while the menu is open, the prompt is a "/" command or a filter, not a message
 	if (menuOpen.value) return;
 	chat.submitPrompt();
+};
+
+// Enter sends and Shift+Enter adds a new line. Enter while an IME composes picks a candidate.
+const onPromptKeydown = (event: KeyboardEvent) => {
+	if (menu.onKeydown(event)) return;
+	if (event.key !== "Enter" || event.shiftKey || event.isComposing) return;
+	event.preventDefault();
+	submitPrompt();
 };
 
 const messageContainer = ref<HTMLElement | null>(null);
