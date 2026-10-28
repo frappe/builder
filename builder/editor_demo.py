@@ -109,7 +109,7 @@ class EditorDemo:
 				"Builder Page Client Script",
 				filters={"parent": self.page.name, "parenttype": "Builder Page"},
 				fields=["builder_script.script_type as script_type", "builder_script.script as script"],
-				order_by="idx",
+				order_by="`tabBuilder Page Client Script`.idx",
 			),
 		}
 
