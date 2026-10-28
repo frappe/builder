@@ -342,7 +342,8 @@
 					class="no-scrollbar max-h-60 min-h-14 resize-none placeholder-ink-gray-4 disabled:border-0 disabled:bg-transparent"
 					:disabled="isSubmitting || !isEditingPage"
 					:placeholder="composerPlaceholder"
-					@keydown="onPromptKeydown" />
+					@keydown="menu.onKeydown"
+					@keydown.enter.exact="onEnter" />
 				<div class="flex items-center gap-0.5 p-1.5">
 					<Button
 						variant="ghost"
@@ -774,10 +775,9 @@ const submitPrompt = () => {
 	chat.submitPrompt();
 };
 
-// Enter sends and Shift+Enter adds a new line. Enter while an IME composes picks a candidate.
-const onPromptKeydown = (event: KeyboardEvent) => {
-	if (menu.onKeydown(event)) return;
-	if (event.key !== "Enter" || event.shiftKey || event.isComposing) return;
+// Enter sends. Shift+Enter is the textarea default (newline), .exact skips it.
+const onEnter = (event: KeyboardEvent) => {
+	if (event.isComposing) return;
 	event.preventDefault();
 	submitPrompt();
 };
