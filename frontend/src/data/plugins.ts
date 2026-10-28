@@ -1,11 +1,12 @@
 import type { RunnablePlugin } from "@/plugins/context";
 import { devPlugin, isDevPlugin } from "@/plugins/devPlugin";
-import { loadPlugin, runningPlugins } from "@/plugins/loader";
+import { loadPlugin, replacePlugin, runningPlugins, unloadPlugin } from "@/plugins/loader";
 import { useStorage } from "@vueuse/core";
 import { call, createResource, getCachedResource, toast } from "frappe-ui";
 import { computed, reactive, shallowRef } from "vue";
 
 const METHOD = "builder.plugins.installations";
+const DRAFTS_METHOD = "builder.plugins.drafts";
 const HUB_API = "api/method/builder_hub.plugins.api";
 const CATALOG_CACHE = "plugins-catalog";
 /** The Hub lists the releases at or below this protocol. Keep in step with `builder/plugins/constants.py`. */
@@ -40,7 +41,7 @@ type Installation = {
 	icon?: string;
 	version: string;
 	/** Where the files came from. */
-	source: "Hub" | "App" | "Development";
+	source: "Hub" | "App" | "Development" | "Bob";
 	/** The Builder Hub that it came from, when `source` is "Hub". */
 	hub_url?: string;
 	enabled: boolean;
@@ -52,6 +53,10 @@ type Installation = {
 	entry_url?: string;
 	/** A dev server load made this row. The browser loads its entry from the dev server. */
 	is_development?: boolean;
+	/** This user runs a draft that Bob wrote, and no one else does. */
+	has_draft?: boolean;
+	/** Everyone runs a release of it. A plugin Bob wrote is not shared until its user shares it. */
+	is_shared?: boolean;
 };
 
 type InstallationDetails = Installation & {
@@ -206,6 +211,32 @@ const setPluginEnabled = async (plugin: string, enabled: boolean) => {
 	else promptReload(enabled ? "Plugin enabled" : "Plugin disabled");
 };
 
+/** Left bar tabs a plugin added while the editor ran, which the user has not opened yet. */
+const unseenTabs = reactive(new Set<string>());
+
+/** The draft becomes what everyone runs. This user already runs it, so nothing reloads here. */
+const shareDraft = async (plugin: string) => {
+	await call(`${DRAFTS_METHOD}.share_draft`, { plugin });
+	await reloadInstallations();
+	toast.success(`Shared ${labelOf(plugin)}`, {
+		description: "Everyone who edits this site gets it the next time they open the editor.",
+	});
+};
+
+/** Back to the shared release, or gone when there was none. Either way it changes in place. */
+const discardDraft = async (plugin: string) => {
+	const label = labelOf(plugin);
+	await call(`${DRAFTS_METHOD}.discard_draft`, { plugin });
+	const row = (await reloadInstallations())?.find((installation) => installation.name === plugin);
+	if (row && isRunnable(row)) await replacePlugin(toRunnable(row));
+	else unloadPlugin(plugin);
+	toast.success(row ? `Back to the shared ${label}` : `Removed ${label}`);
+};
+
+/** The code this user runs, for a review before sharing it. */
+const getPluginCode = (plugin: string) =>
+	call(`${DRAFTS_METHOD}.get_plugin_code`, { plugin }) as Promise<string | null>;
+
 const uninstallPlugin = async (plugin: string) => {
 	const wasRunning = runningPlugins.has(plugin);
 	await call(`${METHOD}.uninstall_plugin`, { plugin });
@@ -331,6 +362,10 @@ const listenForPluginJobs = (realtime: { on: (event: string, handler: (data: any
 
 export {
 	canManagePlugins,
+	discardDraft,
+	getPluginCode,
+	shareDraft,
+	unseenTabs,
 	pluginsDisabled,
 	getPluginsCatalog,
 	getPluginUpdate,

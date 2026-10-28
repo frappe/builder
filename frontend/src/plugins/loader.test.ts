@@ -3,7 +3,16 @@ import { createApp } from "vue";
 
 vi.mock("frappe-ui", () => ({ call: vi.fn() }));
 
-import { importPlugins, installPlugins, loadPlugin, runningPlugins } from "./loader";
+import { createRegistry } from "@/utils/createRegistry";
+import {
+	getRunningEntry,
+	importPlugins,
+	installPlugins,
+	loadPlugin,
+	replacePlugin,
+	runningPlugins,
+	unloadPlugin,
+} from "./loader";
 
 type Installed = { names: string[]; contexts: Record<string, unknown>[] };
 const installed = () => (globalThis as unknown as { installed: Installed }).installed;
@@ -55,5 +64,52 @@ describe("plugins", () => {
 
 		expect(installed().names).toEqual(["later"]);
 		expect(runningPlugins.has("acme/later")).toBe(true);
+	});
+
+	it("replaces a running plugin with its new version, taking back what the old one registered", async () => {
+		const registry = createRegistry<{ name: string }>();
+		(globalThis as unknown as { registry: typeof registry }).registry = registry;
+		const registering = (name: string) =>
+			`export default { install: () => globalThis.registry.register({ name: '${name}' }) }`;
+		installPlugins(createApp({}), []);
+		await loadPlugin(plugin("bob/tabs", registering("old-tab")));
+
+		const next = plugin("bob/tabs", registering("new-tab"));
+		await replacePlugin(next);
+
+		expect(registry.all.value.map((item) => item.name)).toEqual(["new-tab"]);
+		expect(getRunningEntry("bob/tabs")).toBe(next.entryUrl);
+
+		unloadPlugin("bob/tabs");
+		expect(registry.all.value).toEqual([]);
+		expect(runningPlugins.has("bob/tabs")).toBe(false);
+	});
+
+	it("goes back to a release this page already ran", async () => {
+		const registry = createRegistry<{ name: string }>();
+		(globalThis as unknown as { registry: typeof registry }).registry = registry;
+		const registering = (name: string) =>
+			`export default { install: () => globalThis.registry.register({ name: '${name}' }) }`;
+		const shared = plugin("bob/back", registering("shared-tab"));
+		installPlugins(createApp({}), []);
+		await loadPlugin(shared);
+		await replacePlugin(plugin("bob/back", registering("draft-tab")));
+
+		await replacePlugin(shared);
+
+		expect(registry.all.value.map((item) => item.name)).toEqual(["shared-tab"]);
+	});
+
+	it("keeps the old version running when the new one fails to import", async () => {
+		const registry = createRegistry<{ name: string }>();
+		(globalThis as unknown as { registry: typeof registry }).registry = registry;
+		installPlugins(createApp({}), []);
+		await loadPlugin(
+			plugin("bob/kept", "export default { install: () => globalThis.registry.register({ name: 'kept' }) }"),
+		);
+
+		await expect(replacePlugin(plugin("bob/kept", "export default {"))).rejects.toThrow();
+
+		expect(registry.all.value.map((item) => item.name)).toEqual(["kept"]);
 	});
 });

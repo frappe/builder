@@ -9,6 +9,17 @@
 		</div>
 
 		<div class="flex flex-col px-3 pb-3">
+			<button
+				v-if="canManagePlugins && builderStore.isAIEnabled"
+				class="rounded-lg mb-3 flex items-center gap-2.5 border border-dashed border-outline-gray-2 px-3 py-2.5 text-left transition-colors hover:border-outline-gray-3 hover:bg-surface-gray-1"
+				@click="buildWithBob">
+				<span class="lucide-sparkle size-4 shrink-0 text-ink-gray-7" aria-hidden="true" />
+				<span class="flex min-w-0 flex-col gap-0.5">
+					<span class="text-sm text-ink-gray-9">Build one with Bob</span>
+					<span class="text-xs text-ink-gray-5">Describe a tool, and Bob adds it to your editor.</span>
+				</span>
+			</button>
+
 			<CollapsibleSection section-name="Installed">
 				<p v-if="!installed.length" class="text-p-sm italic text-ink-gray-5">
 					{{ filter ? "Nothing here matches that." : "No plugins installed." }}
@@ -51,6 +62,7 @@
 								<Tooltip v-else-if="isDevPlugin(plugin)" text="Served by a dev server in this browser tab.">
 									<Badge size="sm" theme="amber" label="Dev" />
 								</Tooltip>
+								<PluginStatusBadge v-else :plugin="plugin" />
 								<!-- <Badge v-else-if="!plugin.enabled" size="sm" theme="gray" label="Disabled" /> -->
 							</div>
 						</div>
@@ -124,6 +136,7 @@
 <script setup lang="ts">
 import CollapsibleSection from "@/components/CollapsibleSection.vue";
 import DevPluginDialog from "@/components/LeftPanelTabs/Plugins/DevPluginDialog.vue";
+import PluginStatusBadge from "@/components/LeftPanelTabs/Plugins/PluginStatusBadge.vue";
 import {
 	canManagePlugins,
 	getPluginsCatalog,
@@ -133,12 +146,21 @@ import {
 	type CatalogPlugin,
 } from "@/data/plugins";
 import { isDevPlugin, showDevPluginDialog, stopDevPlugin } from "@/plugins/devPlugin";
+import useBuilderStore from "@/stores/builderStore";
 import { Badge, Button, ItemListRow, LoadingIndicator, Tooltip } from "frappe-ui";
 import { computed, ref } from "vue";
 
 const emit = defineEmits<{ select: [plugin: string] }>();
 
 const open = (plugin: string) => emit("select", plugin);
+
+const builderStore = useBuilderStore();
+
+/** Opens Bob with the sentence started, so the user only says what the tool does. */
+const buildWithBob = () => {
+	builderStore.leftPanelActiveTab = "Chat";
+	builderStore.aiPromptDraft = "Build an editor plugin that ";
+};
 
 const stop = async () => {
 	await stopDevPlugin();

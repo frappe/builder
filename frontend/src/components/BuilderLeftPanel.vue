@@ -16,12 +16,18 @@
 						<KeyboardShortcut v-if="tab.shortcut" :combo="tab.shortcut" class="!text-xs !text-ink-gray-4" />
 					</span>
 				</template>
-				<Button
-					:icon="tab.icon"
-					size="md"
-					:class="{ '!text-ink-gray-6': !isActive(tab) }"
-					:variant="isActive(tab) ? 'subtle' : 'ghost'"
-					@click.stop="select(tab)"></Button>
+				<span class="relative inline-flex">
+					<Button
+						:icon="tab.icon"
+						size="md"
+						:class="{ '!text-ink-gray-6': !isActive(tab) }"
+						:variant="isActive(tab) ? 'subtle' : 'ghost'"
+						@click.stop="select(tab)"></Button>
+					<!-- a tab a plugin added while the editor ran, until the user opens it -->
+					<span
+						v-if="unseenTabs.has(tab.name)"
+						class="pointer-events-none absolute right-1 top-1 size-2 animate-pulse rounded-full bg-surface-blue-6" />
+				</span>
 			</Tooltip>
 		</div>
 		<div
@@ -47,6 +53,7 @@
 </template>
 <script setup lang="ts">
 import { leftPanelTabs, type LeftPanelTab } from "@/components/LeftPanelTabs";
+import { unseenTabs } from "@/data/plugins";
 import TokenManager from "@/components/Modals/TokenManager.vue";
 import { editorDemo } from "@/utils/editorDemo";
 import useBuilderStore from "@/stores/builderStore";
@@ -77,6 +84,11 @@ const miniSidebar = ref(null) as Ref<HTMLElement | null>;
 const mountedTabs = reactive(new Set<string>());
 
 const isActive = (tab: LeftPanelTab) => tab.isActive?.() ?? builderStore.leftPanelActiveTab === tab.name;
+
+watch(
+	() => builderStore.leftPanelActiveTab,
+	(tab) => unseenTabs.delete(tab),
+);
 
 const select = (tab: LeftPanelTab) => {
 	if (tab.action) return tab.action();

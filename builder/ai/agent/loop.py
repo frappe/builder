@@ -134,6 +134,7 @@ READ_ONLY_SERVER_TOOLS = frozenset(
 		"get_doctype_schema",
 		"get_page_scripts",
 		"preview_page",
+		"read_plugin",
 	}
 )
 
@@ -256,6 +257,7 @@ TOOL_LABELS = {
 	"connect_form": ("Connecting the form", "Connected the form"),
 	"edit_global_settings": ("Updating site settings", "Updated site settings"),
 	"set_home_page": ("Setting the home page", "Set the home page"),
+	"read_plugin": ("Reading the editor plugins", "Read the editor plugins"),
 }
 
 
@@ -302,6 +304,13 @@ def activity_summary(tool_name: str, args: dict, tree=None, done: bool = True) -
 		return f"{voice('Adding', 'Added')} script: {args.get('name') or ''}".rstrip(": ")
 	if tool_name == "update_script":
 		return f"{voice('Updating', 'Updated')} script: {args.get('script_name') or ''}".rstrip(": ")
+	if tool_name == "write_plugin":
+		label = args.get("label") or args.get("name")
+		return (
+			f"{voice('Building', 'Built')} plugin: {label}"
+			if label
+			else voice("Building a plugin", "Built a plugin")
+		)
 	if tool_name == "create_component":
 		return f"{voice('Creating', 'Created')} component: {args.get('name') or ''}".strip()
 	if tool_name == "get_doctype_schema":
@@ -416,6 +425,8 @@ class AgentRunner:
 		# Client ops a server tool queued mid-call (extract_component rewriting the
 		# page). Drained right after the handler returns — see drain_queued_ops.
 		self.pending_client_ops: list[dict] = []
+		# The plugins write_plugin saved this turn, for the chat's plugin cards.
+		self.plugins_written: list[str] = []
 		# Tiered model selection: resolved in run() once we know the scenario.
 		self.loop_model = self.model
 		# Cache-breakpoint anchors, set by build_messages (see refresh_cache_markers).
@@ -1351,6 +1362,8 @@ class AgentRunner:
 		}
 		if self.revert_snapshot:
 			final_metadata["revertSnapshot"] = self.revert_snapshot
+		if self.plugins_written:
+			final_metadata["plugins"] = self.plugins_written
 		if timeline := self.timeline():
 			# The turn's timeline — rendered live from step events, rehydrated from
 			# here on a session reload.

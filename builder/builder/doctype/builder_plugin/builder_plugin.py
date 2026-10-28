@@ -38,6 +38,8 @@ class BuilderPlugin(Document):
 
 		checksum: DF.Data | None
 		description: DF.SmallText | None
+		draft_checksum: DF.Data | None
+		draft_owner: DF.Data | None
 		enabled: DF.Check
 		plugin: DF.Data
 		hub_url: DF.Data | None
@@ -47,7 +49,7 @@ class BuilderPlugin(Document):
 		installed_on: DF.Datetime | None
 		label: DF.Data | None
 		readme: DF.LongText | None
-		source: DF.Literal["Hub", "App", "Development"]
+		source: DF.Literal["Hub", "App", "Development", "Bob"]
 		version: DF.Data
 	# end: auto-generated types
 
@@ -87,9 +89,22 @@ class BuilderPlugin(Document):
 	@property
 	def entry_url(self) -> str | None:
 		"""Where the editor imports the entry. The checksum names the build, so a new release gets a new URL."""
-		if not self.checksum:
+		return self.release_entry_url(self.checksum)
+
+	def release_entry_url(self, checksum: str | None) -> str | None:
+		if not checksum:
 			return None
-		return f"/files/{PLUGINS_FOLDER}/{self.name}/{self.checksum}/{ENTRY_FILE}"
+		return f"/files/{PLUGINS_FOLDER}/{self.name}/{checksum}/{ENTRY_FILE}"
+
+	def entry_url_for(self, user: str) -> str | None:
+		"""A draft runs only for its owner. Everyone else runs the shared release, if there is one."""
+		if self.draft_checksum and self.draft_owner == user:
+			return self.release_entry_url(self.draft_checksum)
+		return self.entry_url
+
+	@property
+	def is_draft_only(self) -> bool:
+		return bool(self.draft_checksum) and not self.checksum
 
 	@property
 	def icon_data_uri(self) -> str | None:
@@ -97,9 +112,11 @@ class BuilderPlugin(Document):
 
 		A data URI, so the panel draws it with no request of its own.
 		"""
-		if not self.icon or not self.release_path:
+		# a draft that was never shared still has its icon, in the draft release
+		checksum = self.checksum or self.draft_checksum
+		if not self.icon or not checksum:
 			return None
-		icon = self.release_path / self.icon
+		icon = self.install_path / checksum / self.icon
 		if not icon.is_file():
 			return None
 		return f"data:image/svg+xml;base64,{base64.b64encode(icon.read_bytes()).decode()}"
@@ -111,8 +128,9 @@ class BuilderPlugin(Document):
 			frappe.throw(_("Version must hold only letters, digits, dots, plus signs and hyphens."))
 
 	def validate_checksum(self):
-		if self.checksum and not CHECKSUM_PATTERN.fullmatch(self.checksum):
-			frappe.throw(_("Checksum must be 12 lowercase hex digits."))
+		for checksum in (self.checksum, self.draft_checksum):
+			if checksum and not CHECKSUM_PATTERN.fullmatch(checksum):
+				frappe.throw(_("Checksum must be 12 lowercase hex digits."))
 
 	def validate_icon(self):
 		if self.icon and not ICON_PATTERN.fullmatch(self.icon):
@@ -122,14 +140,14 @@ class BuilderPlugin(Document):
 		if self.readme and len(self.readme.encode()) > MAX_README_BYTES:
 			frappe.throw(_("A README may hold {0} bytes at most.").format(MAX_README_BYTES))
 
-	def write_plugin_files(self, files: dict[str, bytes]):
+	def write_plugin_files(self, files: dict[str, bytes], checksum: str | None = None):
 		"""Write one release to its own folder, keyed by path under the release root.
 
 		The files go to a staging folder that moves into place in one rename. So a
 		release folder is always whole, and the checksum names its package, so an
 		existing one is reused.
 		"""
-		release = self.release_path
+		release = self.install_path / (checksum or self.checksum)
 		if release.is_dir():
 			return
 		staging = self.install_path / f".staging-{uuid.uuid4().hex}"
@@ -150,14 +168,37 @@ class BuilderPlugin(Document):
 		releases = [
 			release
 			for release in self.install_path.iterdir()
-			if release.name != self.checksum and not release.name.startswith(".")
+			if release.name not in (self.checksum, self.draft_checksum) and not release.name.startswith(".")
 		]
 		return sorted(releases, key=lambda release: release.stat().st_mtime, reverse=True)
 
 	def delete_old_releases(self):
+		# a later save in the same transaction may have moved the releases on, so read them as committed
+		current = frappe.db.get_value(self.doctype, self.name, ["checksum", "draft_checksum"], as_dict=True)
+		if not current:
+			return
+		self.checksum, self.draft_checksum = current.checksum, current.draft_checksum
 		# an open editor tab may still run the previous release and load its chunks lazily
 		for release in self.previous_releases[KEPT_PREVIOUS_RELEASES:]:
 			shutil.rmtree(release, ignore_errors=True)
+
+	def share_draft(self):
+		"""The draft becomes the release everyone runs, from their next editor load."""
+		if not self.draft_checksum:
+			frappe.throw(_("{0} has no draft to share.").format(self.label or self.plugin))
+		self.checksum = self.draft_checksum
+		self.draft_checksum = None
+		self.draft_owner = None
+		self.save()
+
+	def discard_draft(self):
+		"""Back to the shared release. A plugin that was never shared has nothing to go back to."""
+		if self.is_draft_only:
+			self.delete()
+			return
+		self.draft_checksum = None
+		self.draft_owner = None
+		self.save()
 
 	def delete_plugin_files(self):
 		shutil.rmtree(self.install_path, ignore_errors=True)
