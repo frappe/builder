@@ -43,6 +43,8 @@ function builderTokenComposable() {
 		);
 	});
 
+	const hasDarkTokens = computed(() => Object.keys(darkCssVariables.value).length > 0);
+
 	// extracts the variable key (e.g. "--uuid") from values like "var(--uuid)" or "--uuid"
 	const extractVariableKey = (value: string): string | null => {
 		if (!value || value.startsWith("#")) {
@@ -114,6 +116,7 @@ function builderTokenComposable() {
 	return {
 		cssVariables,
 		darkCssVariables,
+		hasDarkTokens,
 		fontTokens,
 		resolveVariableValue,
 		getVariableName,

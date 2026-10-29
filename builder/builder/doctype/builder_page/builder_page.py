@@ -546,12 +546,12 @@ class BuilderPage(WebsiteGenerator):
 
 		context.preview = getattr(getattr(frappe.local, "request", None), "for_preview", None)
 
+		from builder.builder.doctype.builder_token.builder_token import get_variables_css, has_dark_tokens
+
 		if context.preview:
-			context.disable_auto_dark_mode = 0
+			context.disable_auto_dark_mode = not has_dark_tokens()
 			# /builder_assets/tokens.css is a rendered route, not a real file, so
 			# the preview/PDF generator can't fetch it. Inline the variables instead.
-			from builder.builder.doctype.builder_token.builder_token import get_variables_css
-
 			context.inline_tokens_css = get_variables_css()
 			# Honour the dark/light mode the editor previews in (canvasDarkMode), so the
 			# initial server render matches it instead of falling back to the OS scheme.
@@ -559,7 +559,7 @@ class BuilderPage(WebsiteGenerator):
 			if scheme in ("dark", "light"):
 				context.prefers_color_scheme = scheme
 		else:
-			context.disable_auto_dark_mode = frappe.get_cached_value(
+			context.disable_auto_dark_mode = not has_dark_tokens() or frappe.get_cached_value(
 				"Builder Settings", "Builder Settings", "disable_auto_dark_mode"
 			)
 

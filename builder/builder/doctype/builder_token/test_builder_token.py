@@ -4,12 +4,17 @@
 import json
 import os
 import tempfile
+from unittest.mock import patch
 
 import frappe
 from frappe.tests.utils import FrappeTestCase
 
 from builder.builder.doctype.builder_page.builder_page import get_font_family, resolve_font_token
-from builder.builder.doctype.builder_token.builder_token import get_css_variables, get_variables_css
+from builder.builder.doctype.builder_token.builder_token import (
+	get_css_variables,
+	get_variables_css,
+	has_dark_tokens,
+)
 from builder.builder.patches.refactor_builder_variables import build_maps, rewrite_doctype_blocks
 from builder.utils import import_fixture_record, normalize_renamed_doc, sync_builder_tokens
 
@@ -53,6 +58,22 @@ class TestBuilderToken(FrappeTestCase):
 		token.value = "#222222"
 		token.save()
 		self.assertIn("#222222", get_variables_css())
+
+	def test_a_dark_value_turns_on_dark_mode(self):
+		make_token(token_name="duo", value="#ffffff", dark_value="#000000")
+		self.assertTrue(has_dark_tokens())
+
+	def test_only_adding_or_removing_a_dark_value_clears_cached_pages(self):
+		with patch("builder.builder.doctype.builder_token.builder_token.clear_cache") as clear_cache:
+			token = make_token(token_name="plain", value="#111111")
+			token.value = "#222222"
+			token.save()
+			clear_cache.assert_not_called()
+
+			token.dark_value = "#eeeeee"
+			token.save()
+			token.delete()
+			self.assertEqual(clear_cache.call_count, 2)
 
 
 class TestFontToken(FrappeTestCase):

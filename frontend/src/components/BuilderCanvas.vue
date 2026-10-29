@@ -26,19 +26,24 @@
 				colorScheme: builderStore.canvasDarkMode ? 'dark' : 'light',
 			}">
 			<div class="absolute right-0 top-[-60px] flex rounded-5 bg-surface-base px-3">
-				<Tooltip :text="__('Toggle Canvas Dark Mode (⌘⇧D)')" :hoverDelay="600">
+				<template v-if="hasDarkTokens">
+					<Tooltip :text="__('Toggle Canvas Dark Mode (⌘⇧D)')" :hoverDelay="600">
+						<div
+							v-show="!canvasProps.scaling && !canvasProps.panning"
+							class="w-auto cursor-pointer p-2"
+							@click.stop="builderStore.canvasDarkMode = !builderStore.canvasDarkMode">
+							<span
+								:class="[
+									builderStore.canvasDarkMode ? 'lucide-sun' : 'lucide-moon',
+									'h-8 w-6 text-ink-gray-8',
+								]"
+								aria-hidden="true" />
+						</div>
+					</Tooltip>
 					<div
 						v-show="!canvasProps.scaling && !canvasProps.panning"
-						class="w-auto cursor-pointer p-2"
-						@click.stop="builderStore.canvasDarkMode = !builderStore.canvasDarkMode">
-						<span
-							:class="[builderStore.canvasDarkMode ? 'lucide-sun' : 'lucide-moon', 'h-8 w-6 text-ink-gray-8']"
-							aria-hidden="true" />
-					</div>
-				</Tooltip>
-				<div
-					v-show="!canvasProps.scaling && !canvasProps.panning"
-					class="m-2 my-3 w-px bg-[var(--outline-gray-2)]"></div>
+						class="m-2 my-3 w-px bg-[var(--outline-gray-2)]"></div>
+				</template>
 				<div
 					v-show="!canvasProps.scaling && !canvasProps.panning"
 					class="w-auto cursor-pointer p-2"
@@ -169,7 +174,7 @@ const canvasStore = useCanvasStore();
 const pageStore = usePageStore();
 const canvasId = `builder-canvas-${useId()}`;
 
-const { cssVariables, darkCssVariables, fontTokens } = useBuilderToken();
+const { cssVariables, darkCssVariables, hasDarkTokens, fontTokens } = useBuilderToken();
 
 // Font tokens' families must be loaded for the canvas to render them — blocks
 // reference var(--id), which resolves via CSS but never hits a font loader.
