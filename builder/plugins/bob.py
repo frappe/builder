@@ -147,16 +147,6 @@ def read_code(doc) -> str | None:
 	return entry.read_text() if entry and entry.is_file() else None
 
 
-@frappe.whitelist()
-@has_page_read(NO_BUILDER_ACCESS)
-def get_plugin_code(plugin: str) -> str | None:
-	"""What the details pane shows. It is the code the editor already loads."""
-	installation = find_installation(plugin)
-	if not installation:
-		return None
-	return read_code(frappe.get_cached_doc(INSTALLATION_DOCTYPE, installation))
-
-
 def load_report_key(user: str, token: str) -> str:
 	return f"builder_plugin_load:{user}:{token}"
 

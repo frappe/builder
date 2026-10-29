@@ -6,7 +6,6 @@ import { call, createResource, getCachedResource, toast } from "frappe-ui";
 import { computed, reactive, shallowRef } from "vue";
 
 const METHOD = "builder.plugins.installations";
-const BOB_METHOD = "builder.plugins.bob";
 const HUB_API = "api/method/builder_hub.plugins.api";
 const CATALOG_CACHE = "plugins-catalog";
 /** The Hub lists the releases at or below this protocol. Keep in step with `builder/plugins/constants.py`. */
@@ -210,10 +209,6 @@ const setPluginEnabled = async (plugin: string, enabled: boolean) => {
 /** Left bar tabs a plugin added while the editor ran, which the user has not opened yet. */
 const unseenTabs = reactive(new Set<string>());
 
-/** The code of a plugin Bob wrote, for its details pane. */
-const getPluginCode = (plugin: string) =>
-	call(`${BOB_METHOD}.get_plugin_code`, { plugin }) as Promise<string | null>;
-
 /** A plugin Bob wrote registers its items in install(), so they come off in place. Others may hold more, so they ask for a reload. */
 const uninstallPlugin = async (plugin: string) => {
 	const wasRunning = runningPlugins.has(plugin);
@@ -342,7 +337,6 @@ const listenForPluginJobs = (realtime: { on: (event: string, handler: (data: any
 
 export {
 	canManagePlugins,
-	getPluginCode,
 	unseenTabs,
 	pluginsDisabled,
 	getPluginsCatalog,
