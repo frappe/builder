@@ -15,6 +15,8 @@ jobs:
   release:
     name: Release
     runs-on: ubuntu-latest
+    outputs:
+      commit: ${{ steps.commit.outputs.commit }}
 
     steps:
       - name: Checkout Entire Repository
@@ -37,3 +39,21 @@ jobs:
           GIT_COMMITTER_EMAIL: "developers@frappe.io"
         # npx carries the plugins, so the release never installs the frontend workspace
         run: npx -y -p semantic-release -p @semantic-release/git -p @semantic-release/exec -- semantic-release
+
+      # A push made with GITHUB_TOKEN starts no workflow, so the version commit gets its assets here.
+      - name: Read the release commit
+        id: commit
+        run: |
+          if [ "$(git rev-parse HEAD)" != "$GITHUB_SHA" ]; then
+            echo "commit=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+          fi
+
+  assets:
+    name: Pre-build assets
+    needs: release
+    if: needs.release.outputs.commit
+    uses: ./.github/workflows/assets.yml
+    with:
+      ref: ${{ needs.release.outputs.commit }}
+    permissions:
+      contents: write

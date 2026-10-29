@@ -3,12 +3,25 @@ name: Pre-build assets
 on:
   push:
     branches: [develop, master]
+  workflow_call:
+    inputs:
+      ref:
+        description: Commit to build. Defaults to the commit that started the workflow.
+        type: string
+        required: false
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: Commit to build, such as a release commit. Leave empty for the branch head.
+        type: string
+        required: false
 
 jobs:
   assets:
     name: Pre-build assets
     uses: frappe/pilot/.github/workflows/app-assets.yml@develop
     with:
+      ref: ${{ inputs.ref }}
       frappe-branch: ${{ github.ref_name == 'master' && 'version-16' || 'develop' }}
     permissions:
       contents: write
