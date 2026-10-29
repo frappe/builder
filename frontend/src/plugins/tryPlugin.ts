@@ -10,6 +10,7 @@ import { call } from "frappe-ui";
 import { createVNode, isVNode, nextTick, render, type Component, type VNode } from "vue";
 import type { RunnablePlugin } from "./context";
 import { getEditorApp, getRunningEntry, loadPlugin, replacePlugin, runningPlugins } from "./loader";
+import { loadSiteFiles, siteErrors } from "./siteEffects";
 
 /** What Bob's write_plugin tool sent: the release to load and the token to answer with. */
 export type PluginLoadRequest = {
@@ -17,6 +18,8 @@ export type PluginLoadRequest = {
 	label: string;
 	version: string;
 	entry_url: string;
+	site_script?: string | null;
+	site_style?: string | null;
 	token: string;
 };
 
@@ -115,7 +118,18 @@ async function loadAndCheck(request: PluginLoadRequest): Promise<LoadReport> {
 		.map(({ item }) => item)
 		.filter((item): item is RenderableItem => Boolean(item.component));
 	const componentProblems = await checkComponents(components, request.entry_url);
-	return { registered, problems: [...iconProblems(added.map(({ item }) => item)), ...componentProblems] };
+	const siteProblems = await checkSiteFiles(request);
+	return {
+		registered,
+		problems: [...iconProblems(added.map(({ item }) => item)), ...componentProblems, ...siteProblems],
+	};
+}
+
+/** Its site code runs on the canvas as on the published page, so its errors show up here too. */
+async function checkSiteFiles(request: PluginLoadRequest): Promise<string[]> {
+	await loadSiteFiles({ plugin: request.plugin, script: request.site_script, style: request.site_style });
+	await new Promise((resolve) => setTimeout(resolve, RENDER_SETTLE_MS));
+	return siteErrors(request.plugin).map((error) => `site.js threw on the canvas: ${error}`);
 }
 
 /** A string draws only as a lucide class that the editor's own build uses, so a plugin passes lucideIcon(). */

@@ -21,7 +21,7 @@ from builder.plugins.access import (
 	find_installation,
 	is_plugin_manager,
 )
-from builder.plugins.constants import DEV_PLUGIN_VERSION
+from builder.plugins.constants import DEV_PLUGIN_VERSION, SITE_SCRIPT, SITE_STYLE
 from builder.utils import has_page_read
 
 NO_BUILDER_ACCESS = "You need access to Builder to use plugins."
@@ -118,6 +118,9 @@ def describe_installation(installation: str) -> dict:
 		"icon": row.icon_data_uri,
 		"version": row.version,
 		"entry_url": row.entry_url,
+		# the editor runs them too, so an effect shows on the canvas as on the published page
+		"site_script_url": site_file_url(row, SITE_SCRIPT),
+		"site_style_url": site_file_url(row, SITE_STYLE),
 		"source": row.source,
 		"hub_url": row.hub_url,
 		"enabled": bool(row.enabled),
@@ -125,6 +128,10 @@ def describe_installation(installation: str) -> dict:
 		"install_error": row.install_error,
 		"is_development": row.version == DEV_PLUGIN_VERSION,
 	}
+
+
+def site_file_url(row, file: str) -> str | None:
+	return row.release_file_url(file) if row.release_path and (row.release_path / file).is_file() else None
 
 
 def get_installation(plugin: str) -> str:

@@ -1,6 +1,7 @@
 import type { RunnablePlugin } from "@/plugins/context";
 import { devPlugin, isDevPlugin } from "@/plugins/devPlugin";
 import { loadPlugin, runningPlugins, unloadPlugin } from "@/plugins/loader";
+import { loadSiteFiles, unloadSiteFiles, type SiteFiles } from "@/plugins/siteEffects";
 import { useStorage } from "@vueuse/core";
 import { call, createResource, getCachedResource, toast } from "frappe-ui";
 import { computed, reactive, shallowRef } from "vue";
@@ -50,6 +51,9 @@ type Installation = {
 	install_error?: string;
 	/** The entry URL, with the checksum of the build. */
 	entry_url?: string;
+	/** What published pages load from the release. The editor runs them too, on the canvas. */
+	site_script_url?: string | null;
+	site_style_url?: string | null;
 	/** A dev server load made this row. The browser loads its entry from the dev server. */
 	is_development?: boolean;
 };
@@ -111,9 +115,16 @@ const toRunnable = (row: Installation): RunnablePlugin => ({
 /** The installed plugins this editor loads at startup. A dev plugin loads later, from its dialog. */
 const getStartupPlugins = async (): Promise<RunnablePlugin[]> => {
 	if (pluginsDisabled.value) return [];
-	const rows = (await reloadInstallations()) ?? [];
-	return rows.filter(isRunnable).map(toRunnable);
+	const rows = ((await reloadInstallations()) ?? []).filter(isRunnable);
+	for (const row of rows) void loadSiteFiles(siteFilesOf(row));
+	return rows.map(toRunnable);
 };
+
+const siteFilesOf = (row: Installation): SiteFiles => ({
+	plugin: row.name,
+	script: row.site_script_url,
+	style: row.site_style_url,
+});
 
 /** The install job writes the package icon last. So an Installing or Failed row uses the icon from the Hub catalog. */
 const withCatalogIcon = (row: Installation): Installation => {
@@ -215,8 +226,10 @@ const uninstallPlugin = async (plugin: string) => {
 	const fromBob = findInstallation(plugin)?.source === "Bob";
 	await call(`${METHOD}.uninstall_plugin`, { plugin });
 	await reloadInstallations();
-	if (wasRunning && fromBob) unloadPlugin(plugin);
-	else if (wasRunning) promptReload("Plugin uninstalled");
+	if (wasRunning && fromBob) {
+		unloadPlugin(plugin);
+		unloadSiteFiles(plugin);
+	} else if (wasRunning) promptReload("Plugin uninstalled");
 };
 
 /** Loads one installed plugin while the editor runs. */

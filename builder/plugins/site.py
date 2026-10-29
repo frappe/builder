@@ -16,6 +16,8 @@ from builder.plugins.access import INSTALLATION_DOCTYPE
 from builder.plugins.constants import SITE_SCRIPT, SITE_STYLE
 
 CACHE_KEY = "builder_plugin_site_assets"
+# defines builderSite.onBlock, which every plugin's site code registers its effects with
+SITE_RUNTIME = "/assets/builder/js/plugin_site.js?v=1"
 
 
 def get_site_assets() -> dict[str, list[str]]:

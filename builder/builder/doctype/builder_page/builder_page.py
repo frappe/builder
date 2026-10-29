@@ -38,7 +38,7 @@ from builder.editor_demo import is_demo_page
 from builder.export_import_standard_page import export_page_as_standard
 from builder.hooks import builder_path
 from builder.html_preview_image import generate_preview
-from builder.plugins.site import get_site_assets
+from builder.plugins.site import SITE_RUNTIME, get_site_assets
 from builder.template_sync import delete_template_page_fixture, export_template_group
 from builder.utils import (
 	ColonRule,
@@ -662,6 +662,8 @@ class BuilderPage(WebsiteGenerator):
 
 		# after the site-wide code and before the page's own, so a page can still override a plugin
 		plugin_assets = get_site_assets()
+		if plugin_assets["scripts"]:
+			context.setdefault("scripts", []).append(SITE_RUNTIME)
 		context.setdefault("scripts", []).extend(plugin_assets["scripts"])
 		context.setdefault("styles", []).extend(plugin_assets["styles"])
 
