@@ -107,13 +107,14 @@ def loads_tolerant(raw: str) -> tuple[object | None, bool]:
 # Token/temperature budgets per task tier.
 TASK_PARAMS = {
 	"simple": {"max_tokens": 1000, "temperature": 0.5},
-	"complex": {"max_tokens": 40000, "temperature": 0.7},
+	# a ceiling the model may not reach, but without it GPT thought less than at medium
+	"complex": {"max_tokens": 40000, "temperature": 0.7, "reasoning_effort": "high"},
 	"clarify": {"max_tokens": 700, "temperature": 0.1},
 	# 0.7 (not 0.3): the agent tier also composes the creative option cards
 	# (layout directions, font pairings) — at 0.3 every session got the same
 	# three flat options and the same famous fonts. Matches the "complex"
 	# generation tier, which already proves 0.7 is safe for structured output.
-	"agent": {"max_tokens": 16000, "temperature": 0.7},
+	"agent": {"max_tokens": 16000, "temperature": 0.7, "reasoning_effort": "high"},
 }
 
 
@@ -145,9 +146,12 @@ def provider_kwargs(model: str) -> dict:
 
 
 def patch_params_for_provider(model: str, params: dict) -> dict:
-	"""Moonshot's Kimi rejects every temperature but 1, so coerce it instead of
-	failing the whole turn over a tuning knob."""
-	if "kimi" in model and params.get("temperature") not in (None, 1):
+	"""Moonshot's Kimi rejects every temperature but 1, and so does Anthropic's own API
+	once thinking is on, so coerce it instead of failing the whole turn over a tuning knob.
+	OpenRouter takes any temperature with thinking."""
+	direct_claude = "claude-" in model and not model.startswith("openrouter/")
+	needs_one = "kimi" in model or (direct_claude and params.get("reasoning_effort"))
+	if needs_one and params.get("temperature") not in (None, 1):
 		return {**params, "temperature": 1}
 	return params
 

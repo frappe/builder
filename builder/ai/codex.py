@@ -58,10 +58,10 @@ def complete(
 ):
 	"""Chat-completions-compatible entry for the codex route: an iterator of
 	chunks when streaming, else the response text (tool calls need streaming).
-	`params` (the TASK_PARAMS tier) is accepted for interface parity and
-	deliberately unsent: the codex backend 400s on temperature AND on
-	max_output_tokens, and budgets output itself."""
-	payload = build_payload(model, messages, tools)
+	Of `params` (the TASK_PARAMS tier) only the reasoning effort is sent: the
+	codex backend 400s on temperature AND on max_output_tokens, and budgets
+	output itself."""
+	payload = build_payload(model, messages, tools, params.get("reasoning_effort"))
 	log(f"Codex | model={model} stream={stream} tools={len(tools or [])} messages={len(messages)}")
 	chunks = stream_chunks(provider, payload)
 	if stream:
@@ -347,11 +347,12 @@ def error_detail(event: dict) -> str:
 # --- chat transcript -> Responses payload ------------------------------------
 
 
-def build_payload(model: str, messages: list, tools: list | None) -> dict:
+def build_payload(model: str, messages: list, tools: list | None, effort: str | None = None) -> dict:
 	"""No tuning knobs on purpose: the backend rejects temperature and
 	max_output_tokens outright (400 Unsupported parameter). The reasoning
 	setting is required; without it the summary text never streams and the
-	thinking step stays empty."""
+	thinking step stays empty. Without an effort the server picks one, and
+	measured below medium."""
 	instructions, items = responses_input(messages)
 	payload = {
 		"model": model,
@@ -359,7 +360,7 @@ def build_payload(model: str, messages: list, tools: list | None) -> dict:
 		"stream": True,
 		"instructions": instructions,
 		"input": items,
-		"reasoning": {"summary": "auto"},
+		"reasoning": {"summary": "auto", **({"effort": effort} if effort else {})},
 		"tool_choice": "auto",
 		"parallel_tool_calls": True,
 	}
