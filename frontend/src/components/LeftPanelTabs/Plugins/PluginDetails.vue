@@ -25,7 +25,6 @@
 						<div class="flex items-center gap-1.5">
 							<span class="text-xs text-ink-gray-5">Version {{ details.version }}</span>
 							<Badge v-if="details.is_development" size="sm" theme="amber" label="Dev" />
-							<PluginStatusBadge v-else :plugin="details" />
 						</div>
 					</div>
 				</div>
@@ -96,8 +95,6 @@
 					</div>
 				</div>
 
-				<PluginDraftActions v-else-if="details.has_draft" :plugin="details" />
-
 				<PluginActions
 					v-else
 					:can-open="Boolean(openHandler)"
@@ -109,7 +106,6 @@
 					@uninstall="uninstall" />
 
 				<div v-if="details.source === 'Bob'" class="flex flex-col gap-3">
-					<p class="text-p-sm text-ink-gray-6">{{ bobNote }}</p>
 					<Button
 						v-if="builderStore.isAIEnabled"
 						class="self-start"
@@ -161,8 +157,6 @@
 <script setup lang="ts">
 import CollapsibleSection from "@/components/CollapsibleSection.vue";
 import PluginActions from "@/components/LeftPanelTabs/Plugins/PluginActions.vue";
-import PluginDraftActions from "@/components/LeftPanelTabs/Plugins/PluginDraftActions.vue";
-import PluginStatusBadge from "@/components/LeftPanelTabs/Plugins/PluginStatusBadge.vue";
 import PluginInstallDialog from "@/components/LeftPanelTabs/Plugins/PluginInstallDialog.vue";
 import PluginUpdate from "@/components/LeftPanelTabs/Plugins/PluginUpdate.vue";
 import { renderMarkdown } from "@/components/ai/markdown";
@@ -217,13 +211,7 @@ const readme = computed(() => (details.value?.readme ? renderMarkdown(details.va
 
 const builderStore = useBuilderStore();
 
-const bobNote = computed(() => {
-	if (!details.value?.has_draft) return "Bob built it. Everyone who edits this site runs it.";
-	if (!details.value.is_shared) return "Bob built it for you. No one else runs it until you share it.";
-	return "You run changes that no one else has yet. Share the update to give them out.";
-});
-
-/** The code this user runs. Fetched when its version changes, so a new draft shows at once. */
+/** Fetched when its version changes, so a new release from Bob shows at once. */
 const code = ref<string | null>(null);
 watch(
 	() => details.value?.source === "Bob" && `${props.plugin}@${details.value.version}`,

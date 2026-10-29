@@ -3,12 +3,9 @@
 
 """Plugins that Bob writes on this site.
 
-Bob only ever writes a draft, and a draft runs only for the user who asked for it.
-Everyone else keeps the shared release until that user shares the draft, so Bob
-can never change the code that another user runs.
-
-A draft is a package like any other. It is built here from Bob's module and runs
-through the same `validate_package` checks as a Hub release.
+A plugin Bob writes is a package like any other: built here from Bob's module, run
+through the same `validate_package` checks as a Hub release, and installed for
+everyone who edits the site. Only a plugin manager can have Bob write one.
 """
 
 import hashlib
@@ -43,8 +40,8 @@ ICON_COLOR = "#7c7c7c"
 MAX_REPORT_BYTES = 20_000
 
 
-def save_draft(slug: str, label: str, description: str, code: str, icon: str | None = None):
-	"""Build, check and store a draft for the session user. Answers with the installation."""
+def save_plugin(slug: str, label: str, description: str, code: str, icon: str | None = None):
+	"""Build, check and install a new release. Answers with the installation."""
 	assert_plugin_manager()
 	if not SLUG_PATTERN.fullmatch(slug or ""):
 		frappe.throw(_("A plugin name holds lowercase letters, digits and hyphens."))
@@ -55,7 +52,6 @@ def save_draft(slug: str, label: str, description: str, code: str, icon: str | N
 	icon_svg = lucide_icon_svg(icon)
 	package = build_package(plugin, label, description, version, code, icon_svg)
 	validated = validate_package(package, plugin, version)
-	checksum = hashlib.sha256(package).hexdigest()[:12]
 
 	doc.update(
 		{
@@ -63,13 +59,12 @@ def save_draft(slug: str, label: str, description: str, code: str, icon: str | N
 			"description": description,
 			"icon": ICON_FILE if icon_svg else None,
 			"version": version,
-			"draft_checksum": checksum,
-			"draft_owner": frappe.session.user,
+			"checksum": hashlib.sha256(package).hexdigest()[:12],
 			"install_state": "Ready",
 		}
 	)
 	doc.save()
-	doc.write_plugin_files(validated.files, checksum)
+	doc.write_plugin_files(validated.files)
 	return doc
 
 
@@ -84,7 +79,7 @@ def get_or_new_installation(plugin: str):
 
 
 def next_version(version: str | None) -> str:
-	"""Each draft gets its own version, so the panel shows that something changed."""
+	"""Each release gets its own version, so the panel shows that something changed."""
 	if not re.fullmatch(r"\d+\.\d+\.\d+", version or ""):
 		return FIRST_VERSION
 	major, minor, patch = version.split(".")
@@ -146,45 +141,20 @@ def syntax_error(code: str) -> str | None:
 	)[:2000].strip()
 
 
-def read_code(doc, user: str) -> str | None:
-	"""The entry module of the release this user runs."""
-	checksum = doc.draft_checksum if doc.draft_owner == user and doc.draft_checksum else doc.checksum
-	if not checksum:
-		return None
-	entry = doc.install_path / checksum / ENTRY_FILE
-	return entry.read_text() if entry.is_file() else None
-
-
-def get_own_draft(plugin: str):
-	"""Only the user who asked Bob for a draft can share it or throw it away."""
-	installation = find_installation(plugin)
-	doc = installation and frappe.get_doc(INSTALLATION_DOCTYPE, installation)
-	if not doc or not doc.draft_checksum or doc.draft_owner != frappe.session.user:
-		frappe.throw(_("You have no draft of {0}.").format(plugin), frappe.PermissionError)
-	return doc
-
-
-@frappe.whitelist(methods=["POST"])
-@has_page_read(NO_BUILDER_ACCESS)
-def share_draft(plugin: str) -> None:
-	assert_plugin_manager()
-	get_own_draft(plugin).share_draft()
-
-
-@frappe.whitelist(methods=["POST"])
-@has_page_read(NO_BUILDER_ACCESS)
-def discard_draft(plugin: str) -> None:
-	get_own_draft(plugin).discard_draft()
+def read_code(doc) -> str | None:
+	"""The entry module of the installed release."""
+	entry = doc.release_path and doc.release_path / ENTRY_FILE
+	return entry.read_text() if entry and entry.is_file() else None
 
 
 @frappe.whitelist()
 @has_page_read(NO_BUILDER_ACCESS)
 def get_plugin_code(plugin: str) -> str | None:
-	"""What the Share dialog shows. It is the code that the editor already loads for this user."""
+	"""What the details pane shows. It is the code the editor already loads."""
 	installation = find_installation(plugin)
 	if not installation:
 		return None
-	return read_code(frappe.get_cached_doc(INSTALLATION_DOCTYPE, installation), frappe.session.user)
+	return read_code(frappe.get_cached_doc(INSTALLATION_DOCTYPE, installation))
 
 
 def load_report_key(user: str, token: str) -> str:
@@ -194,7 +164,7 @@ def load_report_key(user: str, token: str) -> str:
 @frappe.whitelist(methods=["POST"])
 @has_page_read(NO_BUILDER_ACCESS)
 def report_load(token: str, report: dict) -> None:
-	"""The editor tells Bob how its draft loaded. Keyed by user, so no one answers for another."""
+	"""The editor tells Bob how the plugin loaded. Keyed by user, so no one answers for another."""
 	if not isinstance(report, dict) or len(json.dumps(report)) > MAX_REPORT_BYTES:
 		frappe.throw(_("The load report is not valid."))
 	frappe.cache.set_value(load_report_key(frappe.session.user, token), report, expires_in_sec=120)

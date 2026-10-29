@@ -15,8 +15,6 @@
   "readme",
   "version",
   "checksum",
-  "draft_checksum",
-  "draft_owner",
   "installed_on",
   "install_state",
   "install_error"
@@ -102,20 +100,6 @@
    "read_only": 1
   },
   {
-   "description": "The release that only the draft owner runs. Share makes it the release everyone runs.",
-   "fieldname": "draft_checksum",
-   "fieldtype": "Data",
-   "label": "Draft Checksum",
-   "read_only": 1
-  },
-  {
-   "description": "The user who runs the draft. Data, not a Link, so deleting the user is not blocked.",
-   "fieldname": "draft_owner",
-   "fieldtype": "Data",
-   "label": "Draft Owner",
-   "read_only": 1
-  },
-  {
    "fieldname": "installed_on",
    "fieldtype": "Datetime",
    "label": "Installed On",
@@ -143,7 +127,7 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 0,
  "links": [],
- "modified": "2026-10-28 12:00:00.000000",
+ "modified": "2026-10-29 12:00:00.000000",
  "modified_by": "Administrator",
  "module": "Builder",
  "name": "Builder Plugin",

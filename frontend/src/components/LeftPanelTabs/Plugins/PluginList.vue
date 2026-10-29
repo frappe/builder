@@ -51,7 +51,6 @@
 								<Tooltip v-else-if="isDevPlugin(plugin)" text="Served by a dev server in this browser tab.">
 									<Badge size="sm" theme="amber" label="Dev" />
 								</Tooltip>
-								<PluginStatusBadge v-else :plugin="plugin" />
 								<!-- <Badge v-else-if="!plugin.enabled" size="sm" theme="gray" label="Disabled" /> -->
 							</div>
 						</div>
@@ -139,7 +138,6 @@
 <script setup lang="ts">
 import CollapsibleSection from "@/components/CollapsibleSection.vue";
 import DevPluginDialog from "@/components/LeftPanelTabs/Plugins/DevPluginDialog.vue";
-import PluginStatusBadge from "@/components/LeftPanelTabs/Plugins/PluginStatusBadge.vue";
 import {
 	canManagePlugins,
 	getPluginsCatalog,

@@ -1,16 +1,16 @@
 """Editor plugins Bob writes for the user: a panel, a toolbar button, a block
 menu action. They extend the editor itself, never the page.
 
-`write_plugin` saves a draft that runs only for this user (builder.plugins.drafts),
-then has the open editor load it and report back: the error, or what the plugin
-put on screen. So Bob fixes its own plugin in the same turn, the way it re-reads
-a page after editing it. Sharing with the team is the user's click, never Bob's.
+`write_plugin` installs the plugin for everyone who edits the site
+(builder.plugins.bob), then has the open editor load it and report back: the
+error, or what the plugin put on screen. So Bob fixes its own plugin in the same
+turn, the way it re-reads a page after editing it.
 """
 
 import frappe
 
 from builder.ai.agent.registry import Tool
-from builder.plugins import drafts
+from builder.plugins import bob
 from builder.plugins.access import INSTALLATION_DOCTYPE, find_installation, is_plugin_manager
 
 # long enough for a cold editor to fetch and import the module, short enough to give up
@@ -33,12 +33,12 @@ def run_write_plugin(ctx, args: dict) -> str:
 			"saved. Tell the user in one plain sentence."
 		)
 	code = args.get("code") or ""
-	if error := drafts.syntax_error(code):
+	if error := bob.syntax_error(code):
 		return f"FAILED: main.js does not parse, so nothing was saved. Fix it and call write_plugin again.\n{error}"
 
-	doc = drafts.save_draft(
+	doc = bob.save_plugin(
 		# read_plugin lists the full id, and models pass it back as the name
-		(args.get("name") or "").strip().removeprefix(f"{drafts.PUBLISHER}/"),
+		(args.get("name") or "").strip().removeprefix(f"{bob.PUBLISHER}/"),
 		(args.get("label") or "").strip(),
 		(args.get("description") or "").strip(),
 		code,
@@ -47,7 +47,7 @@ def run_write_plugin(ctx, args: dict) -> str:
 	if doc.plugin not in ctx.plugins_written:
 		ctx.plugins_written.append(doc.plugin)
 	if not ctx.page_id:
-		return "Saved as a draft only this user runs. It loads the next time they open the editor."
+		return "Installed. It loads the next time each user opens the editor."
 	if not doc.enabled:
 		return "Saved, but the plugin is turned off on this site. Tell the user to turn it on in the Plugins panel."
 	return load_in_editor(ctx, doc)
@@ -66,7 +66,7 @@ def load_in_editor(ctx, doc) -> str:
 	except CancelledError:
 		raise
 	except Exception as e:
-		return f"Saved as a draft, but the editor could not be asked to load it ({e})."
+		return f"Installed, but the editor could not be asked to load it ({e})."
 	return describe_report(doc, report)
 
 
@@ -86,7 +86,7 @@ def load_op(doc, token: str) -> dict:
 def wait_for_report(ctx, token: str) -> dict | None:
 	waited = 0.0
 	while waited < LOAD_REPORT_TIMEOUT:
-		if report := drafts.get_load_report(ctx.user, token):
+		if report := bob.get_load_report(ctx.user, token):
 			return report
 		ctx.interruptible_sleep(0.25)
 		waited += 0.25
@@ -96,7 +96,7 @@ def wait_for_report(ctx, token: str) -> dict | None:
 def describe_report(doc, report: dict | None) -> str:
 	if report is None:
 		return (
-			"Saved as a draft, but the editor did not report back, so it is not confirmed working. "
+			"Installed, but the editor did not report back, so it is not confirmed working. "
 			"It loads the next time the user opens the editor."
 		)
 	if report.get("disabled"):
@@ -105,7 +105,7 @@ def describe_report(doc, report: dict | None) -> str:
 		return "The code is the same as the version already running in the editor, so nothing changed."
 	if report.get("error"):
 		return (
-			"FAILED: saved as a draft, but it did not load in the editor. Fix the code and call "
+			"FAILED: installed, but it did not load in the editor. Fix the code and call "
 			f"write_plugin again with the whole file.\n{report['error']}"
 		)
 	registered = report.get("registered") or []
@@ -123,9 +123,9 @@ def describe_report(doc, report: dict | None) -> str:
 		f'{SURFACES.get(item["surface"], item["surface"])} "{item["label"]}"' for item in registered
 	)
 	return (
-		f"Running in this user's editor (version {doc.version}), as a draft only they see. "
+		f"Running in this user's editor (version {doc.version}); everyone else who edits the site gets it on their next editor load. "
 		f"It added: {added}. Its components rendered without errors. The chat shows a card with "
-		"Open and Share. Tell the user where to find it in a sentence; do not walk through the code."
+		"Open. Tell the user where to find it in a sentence; do not walk through the code."
 	)
 
 
@@ -133,39 +133,35 @@ def run_read_plugin(ctx, args: dict) -> str:
 	name = (args.get("name") or "").strip()
 	if not name:
 		return list_plugins()
-	plugin = name if "/" in name else f"{drafts.PUBLISHER}/{name}"
+	plugin = name if "/" in name else f"{bob.PUBLISHER}/{name}"
 	installation = find_installation(plugin)
 	if not installation:
 		return f"FAILED: no plugin '{plugin}' on this site. Call read_plugin with no name to list them."
 	doc = frappe.get_doc(INSTALLATION_DOCTYPE, installation)
 	if doc.source != "Bob":
 		return f"{plugin} came from {doc.source}. It is a built package, so you cannot change it."
-	code = drafts.read_code(doc, frappe.session.user)
+	code = bob.read_code(doc)
 	return f"{plugin} ({doc.label}, version {doc.version})\n--- main.js ---\n{code or ''}"
 
 
 def list_plugins() -> str:
 	rows = frappe.get_all(
 		INSTALLATION_DOCTYPE,
-		fields=["plugin", "label", "source", "enabled", "checksum", "draft_owner"],
+		fields=["plugin", "label", "source", "enabled"],
 		order_by="modified desc",
 	)
-	lines = [plugin_line(row) for row in rows if row.checksum or row.draft_owner == frappe.session.user]
+	lines = [plugin_line(row) for row in rows]
 	return "\n".join(lines) or "No plugins on this site yet."
 
 
 def plugin_line(row) -> str:
-	if row.draft_owner == frappe.session.user:
-		state = "draft only this user runs" if not row.checksum else "shared, with this user's unshared draft"
-	else:
-		state = "shared"
 	off = ", turned off" if not row.enabled else ""
-	return f"- {row.plugin}: {row.label} ({row.source}, {state}{off})"
+	return f"- {row.plugin}: {row.label} ({row.source}{off})"
 
 
-WRITE_PLUGIN_DESCRIPTION = """Add a tool to the Builder EDITOR itself for this user: a left bar panel, a toolbar button, a block right-click action, a property panel section, a settings page. Use it when the user asks for something in the editor (\"a panel that lists images without alt text\"), never for content on their page. Call it again with the same name and the WHOLE file to change a plugin; read_plugin shows the current code.
+WRITE_PLUGIN_DESCRIPTION = """Add a tool to the Builder EDITOR itself: a left bar panel, a toolbar button, a block right-click action, a property panel section, a settings page. Use it when the user asks for something in the editor (\"a panel that lists images without alt text\"), never for content on their page. Call it again with the same name and the WHOLE file to change a plugin; read_plugin shows the current code.
 
-It saves a draft that runs only for this user and loads it into their open editor at once. The result says whether it loaded, what it added, or the error to fix. Sharing it with the team is the user's choice (the Share button); you cannot share.
+It installs the plugin for everyone who edits this site and loads it into this user's open editor at once; the others get it on their next editor load. The result says whether it loaded, what it added, or the error to fix.
 
 The code is ONE plain JavaScript ES module with no build step:
 - `export default { install(app, context) { ...register items... } }`

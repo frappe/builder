@@ -11,7 +11,7 @@ import { createVNode, isVNode, nextTick, render, type Component, type VNode } fr
 import type { RunnablePlugin } from "./context";
 import { getEditorApp, getRunningEntry, loadPlugin, replacePlugin, runningPlugins } from "./loader";
 
-/** What Bob's write_plugin tool sent: the draft to load and the token to answer with. */
+/** What Bob's write_plugin tool sent: the release to load and the token to answer with. */
 export type PluginLoadRequest = {
 	plugin: string;
 	label: string;
@@ -65,12 +65,12 @@ const lastRegistered = new Map<string, RegisteredItem[]>();
 // the chat can hear one realtime event twice, and two loads at once would install the plugin twice
 const handledTokens = new Set<string>();
 
-/** Loads Bob's draft into this editor, checks it, and tells Bob how it went. */
+/** Loads Bob's plugin into this editor, checks it, and tells Bob how it went. */
 export async function tryPlugin(request: PluginLoadRequest) {
 	if (handledTokens.has(request.token)) return;
 	handledTokens.add(request.token);
 	const report = await loadAndCheck(request);
-	await call("builder.plugins.drafts.report_load", { token: request.token, report }).catch((error: Error) =>
+	await call("builder.plugins.bob.report_load", { token: request.token, report }).catch((error: Error) =>
 		console.error("[builder] could not report the plugin load", error),
 	);
 	await reloadInstallations();

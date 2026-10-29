@@ -37,21 +37,12 @@ def get_installations() -> list[dict]:
 	"""
 	rows = frappe.get_all(
 		INSTALLATION_DOCTYPE,
-		fields=["name", "enabled", "install_state", "checksum", "draft_owner"],
+		fields=["name", "enabled", "install_state"],
 		order_by="modified desc",
 	)
 	# a stable sort, so each group keeps the modified order
 	rows.sort(key=is_turned_off)
-	return [
-		describe_installation(row.name) | {"install_state": get_install_state(row)}
-		for row in rows
-		if not is_others_draft(row)
-	]
-
-
-def is_others_draft(row: dict) -> bool:
-	"""A plugin that was never shared exists only for the user who asked Bob for it."""
-	return row.draft_owner not in (None, "", frappe.session.user) and not row.checksum
+	return [describe_installation(row.name) | {"install_state": get_install_state(row)} for row in rows]
 
 
 def get_install_state(row: dict) -> str | None:
@@ -126,15 +117,13 @@ def describe_installation(installation: str) -> dict:
 		"description": row.description,
 		"icon": row.icon_data_uri,
 		"version": row.version,
-		"entry_url": row.entry_url_for(frappe.session.user),
+		"entry_url": row.entry_url,
 		"source": row.source,
 		"hub_url": row.hub_url,
 		"enabled": bool(row.enabled),
 		"install_state": row.install_state,
 		"install_error": row.install_error,
 		"is_development": row.version == DEV_PLUGIN_VERSION,
-		"has_draft": bool(row.draft_checksum) and row.draft_owner == frappe.session.user,
-		"is_shared": bool(row.checksum),
 	}
 
 
