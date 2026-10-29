@@ -343,8 +343,7 @@
 					:disabled="isSubmitting || !isEditingPage"
 					:placeholder="composerPlaceholder"
 					@keydown="menu.onKeydown"
-					@keydown.meta.enter="submitPrompt"
-					@keydown.ctrl.enter="submitPrompt" />
+					@keydown.enter.exact="onEnter" />
 				<div class="flex items-center gap-0.5 p-1.5">
 					<Button
 						variant="ghost"
@@ -373,7 +372,7 @@
 						<template #content>
 							<span class="flex items-center gap-1.5">
 								Send
-								<KeyboardShortcut combo="Mod+Enter" class="!text-xs !text-ink-gray-4" />
+								<KeyboardShortcut combo="Enter" class="!text-xs !text-ink-gray-4" />
 							</span>
 						</template>
 						<Button
@@ -771,9 +770,16 @@ watch(menuLevel, (level) => {
 });
 
 const submitPrompt = () => {
-	// the menu took this Enter already
+	// while the menu is open, the prompt is a "/" command or a filter, not a message
 	if (menuOpen.value) return;
 	chat.submitPrompt();
+};
+
+// Enter sends. Shift+Enter is the textarea default (newline), .exact skips it.
+const onEnter = (event: KeyboardEvent) => {
+	if (event.isComposing) return;
+	event.preventDefault();
+	submitPrompt();
 };
 
 const messageContainer = ref<HTMLElement | null>(null);
