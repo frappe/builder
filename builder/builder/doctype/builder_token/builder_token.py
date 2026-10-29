@@ -8,7 +8,7 @@ import frappe
 from frappe.model.document import Document
 from frappe.modules.export_file import delete_folder, export_to_files
 from frappe.utils.caching import redis_cache
-from frappe.website.utils import clear_cache, delete_page_cache
+from frappe.website.utils import delete_page_cache
 
 from builder.export_import_standard_page import StandardFileSync
 from builder.utils import is_bulk_import
@@ -41,10 +41,6 @@ class BuilderToken(StandardFileSync, Document):
 
 	def on_update(self):
 		clear_builder_token_cache()
-		before = self.get_doc_before_save()
-		# cached pages only render dark mode if some token had a dark value when cached
-		if bool(self.dark_value) != bool(before and before.dark_value):
-			clear_cache()
 		if self.is_standard and frappe.conf.developer_mode:
 			export_to_files(
 				record_list=[["Builder Token", self.name, "builder_token"]], record_module="builder"
@@ -57,8 +53,6 @@ class BuilderToken(StandardFileSync, Document):
 
 	def on_trash(self):
 		clear_builder_token_cache()
-		if self.dark_value:
-			clear_cache()
 		if self.is_standard:
 			delete_folder("builder", "builder_token", self.name)
 		self.delete_standard_exported_files()
@@ -102,12 +96,6 @@ def get_css_variables():
 			dark_mode_css_variables[key] = builder_token.dark_value
 
 	return css_variables, dark_mode_css_variables
-
-
-def has_dark_tokens() -> bool:
-	"""Pages render dark mode only when some token has a dark value, so a site
-	without one is never darkened by the visitor's OS setting."""
-	return bool(get_css_variables()[1])
 
 
 def get_variables_css() -> str:

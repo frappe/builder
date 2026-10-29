@@ -5,26 +5,14 @@ import { builderSettings } from "@/data/builderSettings";
 import { BuilderSettings } from "@/types/doctypes";
 import { editorDemo } from "@/utils/editorDemo";
 import RealTimeHandler from "@/utils/realtimeHandler";
-import { useBuilderToken } from "@/utils/useBuilderToken";
 import { breakpointsTailwind, useBreakpoints, useDark, useStorage } from "@vueuse/core";
 import { createResource, toast } from "frappe-ui";
 import { useTelemetry } from "@framework/ui/telemetry";
 import { defineStore } from "pinia";
-import { computed } from "vue";
 import BlockLayers from "./components/BlockLayers.vue";
 
 const { capture } = useTelemetry();
 const belowLgBreakpoint = useBreakpoints(breakpointsTailwind).smaller("lg");
-
-// published pages only render dark when a token has a dark value, so the canvas follows suit
-const { hasDarkTokens } = useBuilderToken();
-const canvasDarkToggle = useStorage("canvasDarkMode", false);
-const canvasDarkMode = computed({
-	get: () => canvasDarkToggle.value && hasDarkTokens.value,
-	set: (dark: boolean) => {
-		canvasDarkToggle.value = dark && hasDarkTokens.value;
-	},
-});
 
 declare global {
 	interface Window {
@@ -73,7 +61,7 @@ const useBuilderStore = defineStore("builderStore", {
 		isDark: useDark({
 			attribute: "data-theme",
 		}),
-		canvasDarkMode,
+		canvasDarkMode: useStorage("canvasDarkMode", false),
 		showSettingsDialog: false,
 		settingsActiveTab: useStorage("settingsActiveTab", "page_general"),
 		openImageUpload: false,

@@ -1,19 +1,15 @@
 # Copyright (c) 2023, asdf and Contributors
 # See license.txt
 
-from unittest.mock import patch
 
 import frappe
 from frappe.desk.form.load import getdoc
 from frappe.tests.utils import FrappeTestCase
 from frappe.utils import set_request
 from frappe.website.serve import get_response, get_response_content
-from frappe.website.utils import delete_page_cache
 
 from builder.builder.component_versions import ensure_component_version
 from builder.utils import Block
-
-TOKEN_MODULE = "builder.builder.doctype.builder_token.builder_token"
 
 repeater_page_data_script = """
 data.update({
@@ -145,32 +141,12 @@ class TestBuilderPage(FrappeTestCase):
 	def test_get_preview_html_can_force_dark_mode(self):
 		form_dict = frappe.local.form_dict
 
-		with patch(f"{TOKEN_MODULE}.has_dark_tokens", return_value=True):
-			html = self.page.get_preview_html(color_scheme="dark")
+		html = self.page.get_preview_html(color_scheme="dark")
 
 		html_tag = html[html.index("<html") :].split(">", 1)[0]
 		self.assertIn('data-prefers-color-scheme="dark"', html_tag)
 		self.assertIs(frappe.local.form_dict, form_dict)
 		self.assertNotIn("prefers_color_scheme", frappe.form_dict)
-
-	def test_preview_stays_light_without_dark_tokens(self):
-		with patch(f"{TOKEN_MODULE}.has_dark_tokens", return_value=False):
-			html = self.page.get_preview_html(color_scheme="dark")
-
-		html_tag = html[html.index("<html") :].split(">", 1)[0]
-		self.assertIn('data-prefers-color-scheme="light"', html_tag)
-
-	def test_page_renders_light_without_dark_tokens(self):
-		self.assertEqual(self.get_color_scheme_meta(has_dark_tokens=False), "light")
-
-	def test_page_follows_the_os_scheme_with_dark_tokens(self):
-		self.assertEqual(self.get_color_scheme_meta(has_dark_tokens=True), "light dark")
-
-	def get_color_scheme_meta(self, has_dark_tokens):
-		delete_page_cache(self.page.route)
-		with patch(f"{TOKEN_MODULE}.has_dark_tokens", return_value=has_dark_tokens):
-			content = get_response_content(self.page.route)
-		return content.split('<meta name="color-scheme" content="', 1)[1].split('"', 1)[0]
 
 	def test_onload(self):
 		getdoc("Builder Page", self.page.name)

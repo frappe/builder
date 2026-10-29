@@ -36,7 +36,6 @@
 			</div>
 			<div class="flex items-center justify-end gap-4">
 				<Button
-					v-if="hasDarkTokens"
 					variant="ghost"
 					class="text-ink-gray-8"
 					:icon="actions.darkMode.icon"
@@ -89,7 +88,6 @@ import router from "@/router";
 import useBuilderStore from "@/stores/builderStore";
 import usePageStore, { DETACHED_PREVIEW_CHANNEL } from "@/stores/pageStore";
 import { BuilderPage } from "@/types/doctypes";
-import { useBuilderToken } from "@/utils/useBuilderToken";
 import { Button, useKeyboardShortcut } from "frappe-ui";
 import { useTelemetry } from "@framework/ui/telemetry";
 import { useDebounceFn, useEventListener, useStorage } from "@vueuse/core";
@@ -202,7 +200,6 @@ const activeBreakpoint = computed(() => {
 // Toggle the previewed PAGE's dark mode (shared with the canvas via
 // canvasDarkMode), not the Builder editor's UI theme.
 const isDark = computed(() => builderStore.canvasDarkMode);
-const { hasDarkTokens } = useBuilderToken();
 
 const toggleDarkMode = () => {
 	builderStore.canvasDarkMode = !builderStore.canvasDarkMode;
@@ -327,7 +324,7 @@ const toolbarActions = computed(() => [
 	actions.value.back,
 	actions.value.reload,
 	actions.value.exitFullscreen,
-	...(hasDarkTokens.value ? [actions.value.darkMode] : []),
+	actions.value.darkMode,
 ]);
 
 const reloadOnPageSave = (event: { doctype: string; name: string; modified: string }) => {
