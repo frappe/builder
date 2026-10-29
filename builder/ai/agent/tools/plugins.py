@@ -16,10 +16,16 @@ import frappe
 from builder.ai.agent.registry import Tool
 from builder.plugins import bob
 from builder.plugins.access import INSTALLATION_DOCTYPE, find_installation, is_plugin_manager
+from builder.plugins.constants import ENTRY_FILE, SITE_SCRIPT, SITE_STYLE
 
 # long enough for a cold editor to fetch and import the module, short enough to give up
 # on a closed tab before the user wonders what Bob is doing
 LOAD_REPORT_TIMEOUT = 15
+
+SITE_NOTE = (
+	" Its site code loads on every published page from now on; the editor never runs it, so check it "
+	"in the page preview."
+)
 
 # what hostModules.mjs leaves out of the import map: tests, type files and the app's own entry
 NOT_A_MODULE = re.compile(r"(\.test\.ts|\.d\.ts)$")
@@ -41,8 +47,14 @@ def run_write_plugin(ctx, args: dict) -> str:
 			"saved. Tell the user in one plain sentence."
 		)
 	code = args.get("code") or ""
-	if error := bob.syntax_error(code):
-		return f"FAILED: main.js does not parse, so nothing was saved. Fix it and call write_plugin again.\n{error}"
+	site_files = {
+		file: args[key]
+		for key, file in (("site_code", SITE_SCRIPT), ("site_css", SITE_STYLE))
+		if args.get(key)
+	}
+	for file, source in ((ENTRY_FILE, code), (SITE_SCRIPT, site_files.get(SITE_SCRIPT))):
+		if source and (error := bob.syntax_error(source, file)):
+			return f"FAILED: {file} does not parse, so nothing was saved. Fix it and call write_plugin again.\n{error}"
 
 	doc = bob.save_plugin(
 		# read_plugin lists the full id, and models pass it back as the name
@@ -51,14 +63,16 @@ def run_write_plugin(ctx, args: dict) -> str:
 		(args.get("description") or "").strip(),
 		code,
 		args.get("icon"),
+		site_files,
 	)
 	if doc.plugin not in ctx.plugins_written:
 		ctx.plugins_written.append(doc.plugin)
+	site_note = SITE_NOTE if site_files else ""
 	if not ctx.page_id:
-		return "Installed. It loads the next time each user opens the editor."
+		return "Installed. It loads the next time each user opens the editor." + site_note
 	if not doc.enabled:
 		return "Saved, but the plugin is turned off on this site. Tell the user to turn it on in the Plugins panel."
-	return load_in_editor(ctx, doc)
+	return load_in_editor(ctx, doc) + site_note
 
 
 def load_in_editor(ctx, doc) -> str:
@@ -148,8 +162,9 @@ def run_read_plugin(ctx, args: dict) -> str:
 	doc = frappe.get_doc(INSTALLATION_DOCTYPE, installation)
 	if doc.source != "Bob":
 		return f"{plugin} came from {doc.source}. It is a built package, so you cannot change it."
-	code = bob.read_code(doc)
-	return f"{plugin} ({doc.label}, version {doc.version})\n--- main.js ---\n{code or ''}"
+	files = [(file, bob.read_code(doc, file)) for file in (ENTRY_FILE, SITE_SCRIPT, SITE_STYLE)]
+	sources = "".join(f"\n--- {file} ---\n{source}" for file, source in files if source)
+	return f"{plugin} ({doc.label}, version {doc.version}){sources}"
 
 
 def list_plugins() -> str:
@@ -184,6 +199,11 @@ Make it look like the rest of the editor, in light and in dark mode:
 - Lay out with flex, flex-col, items-center, justify-between, gap-1/2/3, p-3, px-3, py-2, w-full, truncate, rounded-4, and type with text-base (panel title), text-sm, text-p-sm (sentences), text-xs, font-medium. Other Tailwind classes may not exist at runtime.
 - A panel looks like: h("div", {class: "flex flex-col gap-3 p-3"}, [h("div", {class: "text-base font-medium text-ink-gray-9"}, "Title"), h("p", {class: "text-p-sm text-ink-gray-7"}, "What it does."), h(FormControl, {label: "Name", modelValue: name.value, "onUpdate:modelValue": (value) => (name.value = value)}), h(Button, {variant: "solid", label: "Save", onClick: save})])
 - The editor test-renders your components in dark mode and sends back inline colors, unreadable text and hand-drawn controls for you to fix.
+
+Code for published pages: what visitors see (a scroll reveal, a counter, a parallax, a hover effect) cannot run in the editor, so send it as site_code and site_css. Every published page of the site loads them; the editor never runs them.
+- site_code is a plain browser script, not a module: no import or export. It runs after the page's blocks are in the document. Find your blocks by a data attribute the editor part sets with block.setAttribute, e.g. data-reveal="fade-up", and do nothing on a page without one.
+- Scope site_css to that attribute. Respect prefers-reduced-motion in both.
+- Send site_code and site_css again on every write_plugin call; leaving one out removes it. read_plugin shows them.
 
 When the plugin changes the page, the change must look the same once published:
 - Change blocks through the Block API (setStyle, setAttribute), so it saves with the page. CSS a block needs beyond its own styles (@keyframes, media queries) goes into a Builder Client Script of script_type "CSS" attached to the page, never a <style> in the editor.
@@ -228,6 +248,11 @@ write_plugin_tool = Tool(
 				"description": 'A lucide icon name for the Plugins list, e.g. "image-off".',
 			},
 			"code": {"type": "string", "description": "The whole main.js module."},
+			"site_code": {
+				"type": "string",
+				"description": "A plain script that every published page loads, for what visitors see. Leave it out when the plugin only changes the editor.",
+			},
+			"site_css": {"type": "string", "description": "CSS that every published page loads."},
 		},
 		"required": ["name", "label", "description", "code"],
 	},
