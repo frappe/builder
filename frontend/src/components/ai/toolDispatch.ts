@@ -369,9 +369,9 @@ export class ToolDispatcher {
 			}
 			case "load_plugin": {
 				// Bob's write_plugin waits on this load's report, so it runs now, outside the page edit
-				const { plugin, label, version, entry_url, token } = args;
+				const { plugin, label, version, entry_url, site_script, site_style, token } = args;
 				void import("@/plugins/tryPlugin").then(({ tryPlugin }) =>
-					tryPlugin({ plugin, label, version, entry_url, token }),
+					tryPlugin({ plugin, label, version, entry_url, site_script, site_style, token }),
 				);
 				return;
 			}

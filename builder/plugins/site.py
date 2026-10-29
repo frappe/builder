@@ -6,7 +6,7 @@
 A release may hold a `site.js` and a `site.css` next to its editor entry. Every
 published page of the site loads them for each enabled plugin, so a plugin can
 give visitors what the editor cannot: a scroll reveal, a counter, a parallax.
-The editor never runs them.
+The editor runs them on the canvas too.
 """
 
 import frappe
@@ -16,6 +16,8 @@ from builder.plugins.access import INSTALLATION_DOCTYPE
 from builder.plugins.constants import SITE_SCRIPT, SITE_STYLE
 
 CACHE_KEY = "builder_plugin_site_assets"
+# defines builderSite.onBlock, which every plugin's site code registers its effects with
+SITE_RUNTIME = "/assets/builder/js/plugin_site.js?v=1"
 
 
 def get_site_assets() -> dict[str, list[str]]:

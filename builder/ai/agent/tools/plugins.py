@@ -22,10 +22,7 @@ from builder.plugins.constants import ENTRY_FILE, SITE_SCRIPT, SITE_STYLE
 # on a closed tab before the user wonders what Bob is doing
 LOAD_REPORT_TIMEOUT = 15
 
-SITE_NOTE = (
-	" Its site code loads on every published page from now on; the editor never runs it, so check it "
-	"in the page preview."
-)
+SITE_NOTE = " Its site code runs on every published page and on the canvas, so the user sees the effect while editing."
 
 # what hostModules.mjs leaves out of the import map: tests, type files and the app's own entry
 NOT_A_MODULE = re.compile(r"(\.test\.ts|\.d\.ts)$")
@@ -100,6 +97,12 @@ def load_op(doc, token: str) -> dict:
 			"label": doc.label,
 			"version": doc.version,
 			"entry_url": doc.entry_url,
+			"site_script": doc.release_file_url(SITE_SCRIPT)
+			if (doc.release_path / SITE_SCRIPT).is_file()
+			else None,
+			"site_style": doc.release_file_url(SITE_STYLE)
+			if (doc.release_path / SITE_STYLE).is_file()
+			else None,
 			"token": token,
 		},
 	}
@@ -192,16 +195,19 @@ The code is ONE plain JavaScript ES module with no build step:
 - Vue is the runtime-only build: write components as objects with `setup()` returning a render function built with `h()`. No template strings, no JSX, no TypeScript, no .vue files.
 
 Make it look like the rest of the editor, in light and in dark mode:
-- Draw every control with an existing component, never your own h("input"), h("button"), h("select") or h("textarea").
+- Design the controls for what the plugin does, the way a creative tool would, not as a form: a live preview the user drags to orbit or position, presets shown as clickable thumbnails or swatches, a pad that sets two values at once, a timeline, a curve editor. Draw those yourself with div, svg or canvas elements and pointer events, in theme classes.
+- Plain fields and buttons come from existing components, never your own h("input"), h("button"), h("select") or h("textarea").
 - The editor's own components come first, so the plugin feels like the editor: the controls its property panel uses (builder/internal/components/Controls/ColorInput.vue, Input.vue, FontInput.vue, OptionToggle.vue, RangeInput.vue, Autocomplete.vue, GradientEditor.vue, ImageUploader.vue and more), and any other component, store or helper. Call read_editor_source to find one and read its props before you import it as "builder/internal/<path>". These are the editor's internals, so read before you guess.
 - frappe-ui covers the rest: Button {label, variant: "solid"|"subtle"|"ghost", iconLeft: "lucide-<name>", loading, disabled, onClick}; FormControl {type: "text"|"password"|"number"|"textarea"|"select"|"checkbox", label, description, placeholder, options (for select), modelValue, "onUpdate:modelValue"}; Alert {title, description}; ErrorMessage {message}; Badge {label, theme}; LoadingIndicator; Tooltip {text}.
 - Color only with the editor's theme classes, which switch with dark mode, and give every text element one: text-ink-gray-9 for titles, text-ink-gray-7 for text, text-ink-gray-5 for hints; bg-surface-gray-1/2 and border-outline-gray-2 for boxes. Never a hex or rgb color, an inline color or background, or plain Tailwind colors (text-gray-900, bg-white, text-black): they stay the same in dark mode, and inherited text is dark there.
 - Lay out with flex, flex-col, items-center, justify-between, gap-1/2/3, p-3, px-3, py-2, w-full, truncate, rounded-4, and type with text-base (panel title), text-sm, text-p-sm (sentences), text-xs, font-medium. Other Tailwind classes may not exist at runtime.
 - A panel looks like: h("div", {class: "flex flex-col gap-3 p-3"}, [h("div", {class: "text-base font-medium text-ink-gray-9"}, "Title"), h("p", {class: "text-p-sm text-ink-gray-7"}, "What it does."), h(FormControl, {label: "Name", modelValue: name.value, "onUpdate:modelValue": (value) => (name.value = value)}), h(Button, {variant: "solid", label: "Save", onClick: save})])
-- The editor test-renders your components in dark mode and sends back inline colors, unreadable text and hand-drawn controls for you to fix.
+- The editor test-renders your components in dark mode and sends back inline colors, unreadable text and hand-made inputs, selects or buttons for you to fix.
 
-Code for published pages: what visitors see (a scroll reveal, a counter, a parallax, a hover effect) cannot run in the editor, so send it as site_code and site_css. Every published page of the site loads them; the editor never runs them.
-- site_code is a plain browser script, not a module: no import or export. It runs after the page's blocks are in the document. Find your blocks by a data attribute the editor part sets with block.setAttribute, e.g. data-reveal="fade-up", and do nothing on a page without one.
+Code for published pages: what visitors see (a scroll reveal, a counter, a parallax, a 3D scene) goes in site_code and site_css. Every published page loads them, and so does the editor, so the effect shows on the canvas while the user edits.
+- site_code is a plain browser script, not a module: no import or export (load a library with `await import(url)` inside the effect). Register each effect at the top level with `builderSite.onBlock("[data-reveal]", (element, { editor }) => { ...; return () => { /* undo everything */ }; })`, and read its settings from the element's data attributes, which the editor part sets with block.setAttribute. Never query the document yourself: on the canvas the blocks change while the user edits, and builderSite mounts the effect again whenever a block's data attributes change.
+- The cleanup must undo everything the effect did: remove the nodes it added, stop animation loops, disconnect observers and listeners.
+- When `editor` is true the effect runs inside the canvas: make the nodes you add pointer-events: none so the block stays selectable, and play an entrance at once instead of waiting for a scroll.
 - Scope site_css to that attribute. Respect prefers-reduced-motion in both.
 - Send site_code and site_css again on every write_plugin call; leaving one out removes it. read_plugin shows them.
 
