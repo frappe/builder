@@ -21,7 +21,13 @@ from builder import builder_analytics
 from builder.builder.doctype.builder_page.builder_page import BuilderPageRenderer
 from builder.builder.doctype.builder_snapshot import builder_snapshot
 from builder.public_fetch import public_session
-from builder.utils import compact_json, has_page_read, has_page_write, normalize_renamed_doc
+from builder.utils import (
+	compact_json,
+	get_builder_path,
+	has_page_read,
+	has_page_write,
+	normalize_renamed_doc,
+)
 
 
 @frappe.whitelist()
@@ -322,6 +328,12 @@ def check_app_permission():
 		return True
 
 	return False
+
+
+@frappe.whitelist()
+def open_editor() -> None:
+	frappe.local.response["type"] = "redirect"
+	frappe.local.response["location"] = f"/{get_builder_path()}"
 
 
 @frappe.whitelist()

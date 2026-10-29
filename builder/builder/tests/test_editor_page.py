@@ -18,3 +18,7 @@ class TestEditorPage(FrappeTestCase):
 			self.assertEqual(self.editor_context(dev_server=1).socketio_port, 9123)
 			# behind a proxy socket.io shares the page's origin, so a port would bypass the proxy
 			self.assertNotIn("socketio_port", self.editor_context(dev_server=0))
+
+	def test_builder_path_comes_from_the_current_site(self):
+		with patch.dict(frappe.local.conf, builder_path="studio"):
+			self.assertEqual(self.editor_context(dev_server=0).builder_path, "studio")

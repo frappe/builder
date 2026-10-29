@@ -5,13 +5,13 @@ from frappe.translate import get_translations_from_apps, get_user_translations
 from frappe.utils.telemetry import capture
 
 from builder.editor_demo import EditorDemo
-from builder.hooks import builder_path
+from builder.utils import get_builder_path
 
 no_cache = 1
 
 
 def get_context(context):
-	context.builder_path = builder_path
+	context.builder_path = get_builder_path()
 	context.boot = get_boot()
 	if demo := EditorDemo.from_app_path(frappe.form_dict.app_path):
 		# no csrf token or session details: the demo must stay inert for signed-in visitors too
