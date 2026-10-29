@@ -92,8 +92,9 @@ p:not(:where(.prose,.ProseMirror) *) {
 }
 /* Clipped/gradient text (background-clip: text) is set on the text block element,
    but the text lives in a child (<p>/<div>). background-image and background-clip
-   don't inherit, so without this the clipped text renders invisible. */
-.__text_block__ > * {
+   don't inherit, so without this the clipped text renders invisible. Form controls in a
+   label keep their own backgrounds, since a select draws its arrow as a background image. */
+.__text_block__ > :not(input, select, textarea) {
 	background-image: inherit;
 	-webkit-background-clip: inherit;
 	background-clip: inherit;
@@ -102,4 +103,12 @@ p:not(:where(.prose,.ProseMirror) *) {
 	color: var(--link-color);
 	text-decoration: underline;
 	background-color: transparent;
+}
+/* A select still showing its placeholder (the empty-value option) reads like an input's
+   placeholder, in the same gray @tailwindcss/forms gives those; its list keeps normal text. */
+select:has(> option[value=""]:checked) {
+	color: theme("colors.gray.500");
+}
+select:has(> option[value=""]:checked) > option:not([value=""]) {
+	color: CanvasText;
 }
