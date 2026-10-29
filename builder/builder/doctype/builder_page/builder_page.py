@@ -19,7 +19,7 @@ from frappe.website.path_resolver import evaluate_dynamic_routes
 from frappe.website.path_resolver import resolve_path as original_resolve_path
 from frappe.website.utils import clear_cache
 from frappe.website.website_generator import WebsiteGenerator
-from werkzeug.routing import Map
+from werkzeug.routing import Map, Rule
 
 from builder.builder.component_versions import (
 	collect_restore_warnings,
@@ -36,7 +36,6 @@ from builder.builder.doctype.builder_snapshot.builder_snapshot import (
 from builder.builder.doctype.user_font.user_font import get_all_user_fonts
 from builder.editor_demo import is_demo_page
 from builder.export_import_standard_page import export_page_as_standard
-from builder.hooks import builder_path
 from builder.html_preview_image import generate_preview
 from builder.template_sync import delete_template_page_fixture, export_template_group
 from builder.utils import (
@@ -48,6 +47,7 @@ from builder.utils import (
 	escape_single_quotes,
 	execute_script,
 	get_builder_page_preview_file_paths,
+	get_builder_path,
 	is_bulk_import,
 	is_component_used,
 	merge_raw_styles_into_base_styles,
@@ -151,7 +151,7 @@ class BuilderPage(WebsiteGenerator):
 	# end: auto-generated types
 
 	def onload(self):
-		self.set_onload("builder_path", builder_path)
+		self.set_onload("builder_path", get_builder_path())
 
 	website = frappe._dict(
 		template="templates/generators/webpage.html",
@@ -588,7 +588,7 @@ class BuilderPage(WebsiteGenerator):
 		context.font_urls = get_google_font_urls(fonts)
 		context.__content = content
 		context.style = render_template(style, page_data)
-		context.editor_link = f"/{builder_path}/page/{self.name}"
+		context.editor_link = f"/{get_builder_path()}/page/{self.name}"
 		if frappe.form_dict and self.dynamic_route:
 			query_string = "&".join(
 				[
@@ -600,7 +600,7 @@ class BuilderPage(WebsiteGenerator):
 
 		context.page_name = self.name
 		if is_demo_page(self.name) and not context.preview:
-			context.editor_demo_url = f"/{builder_path}/demo/{self.name}"
+			context.editor_demo_url = f"/{get_builder_path()}/demo/{self.name}"
 			# the file is served immutable for a year, so a build has to change its URL
 			version = frappe.utils.get_build_version()
 			context.editor_demo_script = f"/assets/builder/js/editor_demo.js?v={version}"
@@ -1874,7 +1874,16 @@ def resolve_path(path):
 	except Exception:
 		pass
 
-	return original_resolve_path(path)
+	return resolve_editor_path(path) or original_resolve_path(path)
+
+
+def resolve_editor_path(path):
+	builder_path = get_builder_path()
+	rules = [
+		Rule(f"/{builder_path}", endpoint="_builder"),
+		Rule(f"/{builder_path}/<path:app_path>", endpoint="_builder"),
+	]
+	return evaluate_dynamic_routes(rules, path)
 
 
 def reset_with_component(block, extended_with_component, component_children):

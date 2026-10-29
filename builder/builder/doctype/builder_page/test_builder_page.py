@@ -2,6 +2,8 @@
 # See license.txt
 
 
+from unittest.mock import patch
+
 import frappe
 from frappe.desk.form.load import getdoc
 from frappe.tests.utils import FrappeTestCase
@@ -9,6 +11,7 @@ from frappe.utils import set_request
 from frappe.website.serve import get_response, get_response_content
 
 from builder.builder.component_versions import ensure_component_version
+from builder.builder.doctype.builder_page.builder_page import resolve_editor_path, resolve_path
 from builder.utils import Block
 
 repeater_page_data_script = """
@@ -151,6 +154,17 @@ class TestBuilderPage(FrappeTestCase):
 	def test_onload(self):
 		getdoc("Builder Page", self.page.name)
 		self.assertEqual(frappe.response.docs[0].get("__onload").get("builder_path"), "builder")
+
+	def test_editor_route_follows_the_current_site_builder_path(self):
+		set_request(method="GET", path="/")
+		for builder_path in ("builder", "studio"):
+			with patch.dict(frappe.local.conf, builder_path=builder_path):
+				self.assertEqual(resolve_path(builder_path), "_builder")
+				self.assertEqual(resolve_path(f"{builder_path}/page/abc"), "_builder")
+				self.assertEqual(frappe.form_dict.app_path, "page/abc")
+
+		with patch.dict(frappe.local.conf, builder_path="studio"):
+			self.assertIsNone(resolve_editor_path("builder/page/abc"))
 
 	def test_blocks_can_be_saved_as_a_list(self):
 		"""Callers that hand over a block tree (paste, AI writes, the API) pass a list.
