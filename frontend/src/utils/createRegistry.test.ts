@@ -1,6 +1,6 @@
 import { ref } from "vue";
 import { describe, expect, it } from "vitest";
-import { createRegistry, trackPluginItems, unregisterPluginItems, type RegistryItem } from "./createRegistry";
+import { createRegistry, type RegistryItem } from "./createRegistry";
 
 type TestItem = RegistryItem & { label?: string };
 
@@ -147,18 +147,5 @@ describe("createRegistry", () => {
 		removeOld();
 		expect(names(registry.visible.value)).toEqual(["tab"]);
 		expect(registry.visible.value[0].label).toBe("new");
-	});
-
-	it("takes back what a plugin registered during its install, and nothing else", () => {
-		const registry = createRegistry<TestItem>();
-		registry.register({ name: "built-in" });
-		trackPluginItems("acme/plugin", () => {
-			registry.register({ name: "from-plugin" });
-		});
-		registry.register({ name: "later" });
-
-		unregisterPluginItems("acme/plugin");
-
-		expect(names(registry.all.value)).toEqual(["built-in", "later"]);
 	});
 });

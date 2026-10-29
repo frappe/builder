@@ -9,17 +9,6 @@
 		</div>
 
 		<div class="flex flex-col px-3 pb-3">
-			<button
-				v-if="canManagePlugins && builderStore.isAIEnabled"
-				class="rounded-lg mb-3 flex items-center gap-2.5 border border-dashed border-outline-gray-2 px-3 py-2.5 text-left transition-colors hover:border-outline-gray-3 hover:bg-surface-gray-1"
-				@click="buildWithBob">
-				<span class="lucide-sparkle size-4 shrink-0 text-ink-gray-7" aria-hidden="true" />
-				<span class="flex min-w-0 flex-col gap-0.5">
-					<span class="text-sm text-ink-gray-9">Build one with Bob</span>
-					<span class="text-xs text-ink-gray-5">Describe a tool, and Bob adds it to your editor.</span>
-				</span>
-			</button>
-
 			<CollapsibleSection section-name="Installed">
 				<p v-if="!installed.length" class="text-p-sm italic text-ink-gray-5">
 					{{ filter ? "Nothing here matches that." : "No plugins installed." }}
@@ -75,6 +64,20 @@
 						</template>
 					</ItemListRow>
 				</div>
+
+				<ItemListRow
+					v-if="canManagePlugins && builderStore.isAIEnabled && !filter"
+					class="cursor-pointer transition-none hover:bg-surface-gray-2"
+					role="button"
+					tabindex="0"
+					size="md"
+					@click="buildWithBob"
+					@keydown.enter.self="buildWithBob">
+					<template #prefix>
+						<span class="lucide-sparkle size-4 shrink-0 text-ink-gray-6" aria-hidden="true" />
+					</template>
+					<span class="truncate text-ink-gray-6">Build one with Bob</span>
+				</ItemListRow>
 			</CollapsibleSection>
 
 			<CollapsibleSection section-name="Marketplace">

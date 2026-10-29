@@ -1,7 +1,7 @@
 <template>
 	<div
 		v-if="installation"
-		class="rounded-lg flex flex-col gap-2.5 border border-outline-gray-2 bg-surface-base p-3">
+		class="flex flex-col gap-2.5 rounded-6 border border-outline-gray-2 bg-surface-base p-3">
 		<div class="flex items-start gap-2.5">
 			<img
 				v-if="installation.icon"

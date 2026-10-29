@@ -120,7 +120,7 @@
 						@click="changeWithBob" />
 					<CollapsibleSection section-name="Code" :section-collapsed="true">
 						<pre
-							class="rounded max-h-96 overflow-auto bg-surface-gray-1 p-3 font-mono text-xs leading-5 text-ink-gray-7"
+							class="max-h-96 overflow-auto rounded-4 bg-surface-gray-1 p-3 font-mono text-xs leading-5 text-ink-gray-7"
 							>{{ code ?? "Loading…" }}</pre
 						>
 					</CollapsibleSection>

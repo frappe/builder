@@ -16,12 +16,12 @@
 
 			<div class="flex flex-col gap-1">
 				<span class="text-xs text-ink-gray-5">main.js</span>
-				<div v-if="code === null" class="rounded flex h-24 items-center justify-center bg-surface-gray-1">
+				<div v-if="code === null" class="flex h-24 items-center justify-center rounded-4 bg-surface-gray-1">
 					<LoadingIndicator class="size-4 text-ink-gray-5" />
 				</div>
 				<pre
 					v-else
-					class="rounded max-h-72 overflow-auto bg-surface-gray-1 p-3 font-mono text-xs leading-5 text-ink-gray-7"
+					class="max-h-72 overflow-auto rounded-4 bg-surface-gray-1 p-3 font-mono text-xs leading-5 text-ink-gray-7"
 					>{{ code }}</pre
 				>
 			</div>
