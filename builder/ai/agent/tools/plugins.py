@@ -185,6 +185,11 @@ Make it look like the rest of the editor, in light and in dark mode:
 - A panel looks like: h("div", {class: "flex flex-col gap-3 p-3"}, [h("div", {class: "text-base font-medium text-ink-gray-9"}, "Title"), h("p", {class: "text-p-sm text-ink-gray-7"}, "What it does."), h(FormControl, {label: "Name", modelValue: name.value, "onUpdate:modelValue": (value) => (name.value = value)}), h(Button, {variant: "solid", label: "Save", onClick: save})])
 - The editor test-renders your components in dark mode and sends back inline colors, unreadable text and hand-drawn controls for you to fix.
 
+When the plugin changes the page, the change must look the same once published:
+- Change blocks through the Block API (setStyle, setAttribute), so it saves with the page. CSS a block needs beyond its own styles (@keyframes, media queries) goes into a Builder Client Script of script_type "CSS" attached to the page, never a <style> in the editor.
+- The page publishes its root block as <body>, sized by its content, while the canvas draws it at the frame's height. A background meant to fill the screen needs minHeight "100vh" on the root block (block.isRoot()).
+- Page CSS already on the page loads after block styles and wins a tie, so check pageStore.activePageScripts for rules on the same block or property before you rely on yours.
+
 "builder" exports:
 - Registries, each `register(item)` returning its unregister. Prefix item names with the plugin name and keep them stable across edits.
   leftPanelTabs: {name, label, icon, component}. A tab in the left bar.
