@@ -55,6 +55,7 @@ from builder.ai.block_codec import BlockCodec
 from builder.ai.models import ModelRegistry
 from builder.ai.prompts import Prompts
 from builder.ai.session import AISession
+from builder.ai.skills import Skills
 from builder.ai.snapshots import capture_page_state, save_revert_snapshot
 from builder.utils import to_compact_yaml
 
@@ -346,6 +347,8 @@ class AgentRunner:
 		self.image_file_url = image_file_url
 		self.canvas_theme = canvas_theme
 		self.registry = registry or build_default_registry()
+		# skills the loop put in this turn's context (build_skill_context)
+		self.attached_skills: set[str] = set()
 		# The editor-URL prefix is site-configurable; resolve it so the links the
 		# agent writes (e.g. to a page it built off-canvas) actually work here.
 		self.system_prompt = (system_prompt or Prompts.AGENT_SYSTEM).replace(
@@ -572,6 +575,18 @@ class AgentRunner:
 			)
 		return context
 
+	def build_skill_context(self) -> str:
+		"""An empty page means a new-page build whatever the user typed, so its skill
+		rides in with the page instead of waiting on the model to read it."""
+		root = self.page_root()
+		if not self.page_id or (root and root.get("children")):
+			return ""
+		self.attached_skills.add("new-page")
+		return (
+			"The open page is empty, so the new-page skill applies. Here it is in full; "
+			f"no read_skill needed this turn:\n\n{Skills.read('new-page')}"
+		)
+
 	def build_memory_context(self) -> str:
 		"""Facts the agent saved in past conversations (see tools/memory.py) — part of
 		the cached context block, so remembering costs nothing per-round."""
@@ -596,7 +611,12 @@ class AgentRunner:
 		# The page structure. It's resent on every round of a multi-round turn, so a
 		# cache marker on the prompt right after it cuts both latency and input cost
 		# across the loop.
-		blocks = [self.build_open_page_context(), self.build_page_context(), self.build_memory_context()]
+		blocks = [
+			self.build_open_page_context(),
+			self.build_page_context(),
+			self.build_skill_context(),
+			self.build_memory_context(),
+		]
 		context = "\n\n".join(block for block in blocks if block)
 		if context:
 			messages.append({"role": "user", "content": context})
