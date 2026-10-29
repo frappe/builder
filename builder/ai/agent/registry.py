@@ -100,6 +100,7 @@ def build_default_registry() -> ToolRegistry:
 		query,
 		scripts,
 		settings,
+		skills,
 		web,
 	)
 
@@ -119,4 +120,5 @@ def build_default_registry() -> ToolRegistry:
 	registry.extend(preview.TOOLS)
 	registry.extend(components.TOOLS)
 	registry.extend(plugins.TOOLS)
+	registry.extend(skills.TOOLS)
 	return registry
