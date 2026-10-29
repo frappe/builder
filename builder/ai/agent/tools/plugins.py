@@ -7,6 +7,10 @@ error, or what the plugin put on screen. So Bob fixes its own plugin in the same
 turn, the way it re-reads a page after editing it.
 """
 
+import re
+from collections import defaultdict
+from pathlib import Path
+
 import frappe
 
 from builder.ai.agent.registry import Tool
@@ -16,6 +20,10 @@ from builder.plugins.access import INSTALLATION_DOCTYPE, find_installation, is_p
 # long enough for a cold editor to fetch and import the module, short enough to give up
 # on a closed tab before the user wonders what Bob is doing
 LOAD_REPORT_TIMEOUT = 15
+
+# what hostModules.mjs leaves out of the import map: tests, type files and the app's own entry
+NOT_A_MODULE = re.compile(r"(\.test\.ts|\.d\.ts)$")
+MAX_SOURCE_CHARS = 15_000
 
 SURFACES = {
 	"leftPanelTabs": "left bar tab",
@@ -77,7 +85,7 @@ def load_op(doc, token: str) -> dict:
 			"plugin": doc.plugin,
 			"label": doc.label,
 			"version": doc.version,
-			"entry_url": doc.entry_url_for(frappe.session.user),
+			"entry_url": doc.entry_url,
 			"token": token,
 		},
 	}
@@ -165,11 +173,13 @@ It installs the plugin for everyone who edits this site and loads it into this u
 
 The code is ONE plain JavaScript ES module with no build step:
 - `export default { install(app, context) { ...register items... } }`
-- Import only by these bare names: "vue", "builder", "frappe-ui". No other packages, no relative paths, no URLs.
+- Import only by these bare names: "vue", "builder", "frappe-ui", and "builder/internal/<path>" for any other editor module. No other packages, no relative paths, no URLs.
 - Vue is the runtime-only build: write components as objects with `setup()` returning a render function built with `h()`. No template strings, no JSX, no TypeScript, no .vue files.
 
 Make it look like the rest of the editor, in light and in dark mode:
-- Draw every control with a frappe-ui component, never your own h("input"), h("button"), h("select") or h("textarea"): Button {label, variant: "solid"|"subtle"|"ghost", iconLeft: "lucide-<name>", loading, disabled, onClick}; FormControl {type: "text"|"password"|"number"|"textarea"|"select"|"checkbox", label, description, placeholder, options (for select), modelValue, "onUpdate:modelValue"}; Alert {title, description}; ErrorMessage {message}; Badge {label, theme}; LoadingIndicator; Tooltip {text}.
+- Draw every control with an existing component, never your own h("input"), h("button"), h("select") or h("textarea").
+- The editor's own components come first, so the plugin feels like the editor: the controls its property panel uses (builder/internal/components/Controls/ColorInput.vue, Input.vue, FontInput.vue, OptionToggle.vue, RangeInput.vue, Autocomplete.vue, GradientEditor.vue, ImageUploader.vue and more), and any other component, store or helper. Call read_editor_source to find one and read its props before you import it as "builder/internal/<path>". These are the editor's internals, so read before you guess.
+- frappe-ui covers the rest: Button {label, variant: "solid"|"subtle"|"ghost", iconLeft: "lucide-<name>", loading, disabled, onClick}; FormControl {type: "text"|"password"|"number"|"textarea"|"select"|"checkbox", label, description, placeholder, options (for select), modelValue, "onUpdate:modelValue"}; Alert {title, description}; ErrorMessage {message}; Badge {label, theme}; LoadingIndicator; Tooltip {text}.
 - Color only with the editor's theme classes, which switch with dark mode, and give every text element one: text-ink-gray-9 for titles, text-ink-gray-7 for text, text-ink-gray-5 for hints; bg-surface-gray-1/2 and border-outline-gray-2 for boxes. Never a hex or rgb color, an inline color or background, or plain Tailwind colors (text-gray-900, bg-white, text-black): they stay the same in dark mode, and inherited text is dark there.
 - Lay out with flex, flex-col, items-center, justify-between, gap-1/2/3, p-3, px-3, py-2, w-full, truncate, rounded-4, and type with text-base (panel title), text-sm, text-p-sm (sentences), text-xs, font-medium. Other Tailwind classes may not exist at runtime.
 - A panel looks like: h("div", {class: "flex flex-col gap-3 p-3"}, [h("div", {class: "text-base font-medium text-ink-gray-9"}, "Title"), h("p", {class: "text-p-sm text-ink-gray-7"}, "What it does."), h(FormControl, {label: "Name", modelValue: name.value, "onUpdate:modelValue": (value) => (name.value = value)}), h(Button, {variant: "solid", label: "Save", onClick: save})])
@@ -238,4 +248,78 @@ read_plugin_tool = Tool(
 	handler=run_read_plugin,
 )
 
-TOOLS = [write_plugin_tool, read_plugin_tool]
+
+def run_read_editor_source(ctx, args: dict) -> str:
+	root = editor_source_root()
+	if not root.is_dir():
+		return "FAILED: the editor's source is not on this server. Use the documented imports only."
+	if path := (args.get("path") or "").strip():
+		return read_module(root, path)
+	return list_modules(root, (args.get("search") or "").strip().lower())
+
+
+def editor_source_root() -> Path:
+	return Path(frappe.get_app_path("builder")).parent / "frontend" / "src"
+
+
+def editor_modules(root: Path) -> list[Path]:
+	main = root / "main.ts"
+	return sorted(
+		path
+		for path in root.rglob("*")
+		if path.suffix in (".ts", ".vue") and not NOT_A_MODULE.search(path.name) and path != main
+	)
+
+
+def import_name(path: Path, root: Path) -> str:
+	"""How a plugin imports it: a .ts module drops its suffix, a .vue module keeps it."""
+	return "builder/internal/" + path.relative_to(root).as_posix().removesuffix(".ts")
+
+
+def list_modules(root: Path, search: str) -> str:
+	"""Grouped by folder, so the whole editor fits in one answer."""
+	folders = defaultdict(list)
+	for path in editor_modules(root):
+		if search and search not in import_name(path, root).lower():
+			continue
+		folders[path.parent.relative_to(root).as_posix()].append(path.name.removesuffix(".ts"))
+	if not folders:
+		return f"No editor module matches '{search}'."
+	lines = [f"builder/internal/{folder}/: {', '.join(names)}" for folder, names in sorted(folders.items())]
+	return "\n".join(lines)
+
+
+def read_module(root: Path, name: str) -> str:
+	relative = name.removeprefix("builder/internal/").lstrip("/")
+	for candidate in (relative, f"{relative}.ts"):
+		path = (root / candidate).resolve()
+		if path.is_relative_to(root.resolve()) and path.is_file():
+			source = path.read_text()
+			cut = "\n... (truncated)" if len(source) > MAX_SOURCE_CHARS else ""
+			return f"{import_name(path, root.resolve())}\n{source[:MAX_SOURCE_CHARS]}{cut}"
+	return f"FAILED: no editor module '{name}'. Call read_editor_source with a search to find one."
+
+
+read_editor_source_tool = Tool(
+	name="read_editor_source",
+	side="server",
+	description=(
+		"Find and read the editor's own modules, to build a plugin from them: the controls its panels use "
+		"(color, font, number, toggle, autocomplete inputs), its stores, helpers and components. With no "
+		"path it lists every module by folder, narrowed by `search`; with a path it returns that module's "
+		"source, so you can see a component's props before you import it in a plugin."
+	),
+	parameters={
+		"type": "object",
+		"properties": {
+			"search": {"type": "string", "description": 'Part of a module path, e.g. "color" or "Controls".'},
+			"path": {
+				"type": "string",
+				"description": 'A module to read, e.g. "builder/internal/components/Controls/ColorInput.vue".',
+			},
+		},
+	},
+	handler=run_read_editor_source,
+)
+
+TOOLS = [write_plugin_tool, read_plugin_tool, read_editor_source_tool]

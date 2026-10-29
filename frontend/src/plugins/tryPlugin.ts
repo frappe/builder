@@ -60,6 +60,10 @@ const COLOR_PROPERTIES = ["color", "background-color", "border-color"];
 // a control inside one of these was drawn by frappe-ui or Builder, so it already looks like the editor
 const hostComponents = new Set<unknown>([...Object.values(frappeUI), ...Object.values(builderAPI)]);
 
+/** Every .vue file the editor ships is compiled with a `__name`; a plugin's h() objects have none. */
+const isHostComponent = (type: unknown) =>
+	hostComponents.has(type) || (typeof type === "object" && type !== null && "__name" in type);
+
 const lastRegistered = new Map<string, RegisteredItem[]>();
 
 // the chat can hear one realtime event twice, and two loads at once would install the plugin twice
@@ -196,7 +200,7 @@ async function collectErrors(entryUrl: string, run: () => Promise<void>): Promis
 function authoredElements(root: VNode): HTMLElement[] {
 	const elements: HTMLElement[] = [];
 	const walk = (vnode: VNode, insideHost: boolean) => {
-		if (vnode.component) return walk(vnode.component.subTree, insideHost || hostComponents.has(vnode.type));
+		if (vnode.component) return walk(vnode.component.subTree, insideHost || isHostComponent(vnode.type));
 		if (!insideHost && vnode.el instanceof HTMLElement) elements.push(vnode.el);
 		if (Array.isArray(vnode.children)) {
 			vnode.children.forEach((child) => isVNode(child) && walk(child, insideHost));

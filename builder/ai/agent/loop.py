@@ -135,6 +135,7 @@ READ_ONLY_SERVER_TOOLS = frozenset(
 		"get_page_scripts",
 		"preview_page",
 		"read_plugin",
+		"read_editor_source",
 	}
 )
 
@@ -258,6 +259,7 @@ TOOL_LABELS = {
 	"edit_global_settings": ("Updating site settings", "Updated site settings"),
 	"set_home_page": ("Setting the home page", "Set the home page"),
 	"read_plugin": ("Reading the editor plugins", "Read the editor plugins"),
+	"read_editor_source": ("Reading the editor's code", "Read the editor's code"),
 }
 
 
