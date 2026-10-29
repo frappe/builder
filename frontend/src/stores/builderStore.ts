@@ -5,14 +5,36 @@ import { builderSettings } from "@/data/builderSettings";
 import { BuilderSettings } from "@/types/doctypes";
 import { editorDemo } from "@/utils/editorDemo";
 import RealTimeHandler from "@/utils/realtimeHandler";
-import { breakpointsTailwind, useBreakpoints, useDark, useStorage } from "@vueuse/core";
+import {
+	StorageSerializers,
+	breakpointsTailwind,
+	useBreakpoints,
+	useDark,
+	usePreferredDark,
+	useSessionStorage,
+	useStorage,
+} from "@vueuse/core";
 import { createResource, toast } from "frappe-ui";
 import { useTelemetry } from "@framework/ui/telemetry";
 import { defineStore } from "pinia";
+import { computed } from "vue";
 import BlockLayers from "./components/BlockLayers.vue";
 
 const { capture } = useTelemetry();
 const belowLgBreakpoint = useBreakpoints(breakpointsTailwind).smaller("lg");
+
+// the canvas opens on the scheme the published page shows this viewer; a toggle overrides it for the tab
+const prefersDark = usePreferredDark();
+const canvasDarkOverride = useSessionStorage<boolean | null>("canvasDarkMode", null, {
+	serializer: StorageSerializers.object,
+});
+const livePageDark = computed(() => prefersDark.value && !builderSettings.doc?.disable_auto_dark_mode);
+const canvasDarkMode = computed({
+	get: () => canvasDarkOverride.value ?? livePageDark.value,
+	set: (dark: boolean) => {
+		canvasDarkOverride.value = dark === livePageDark.value ? null : dark;
+	},
+});
 
 declare global {
 	interface Window {
@@ -61,7 +83,7 @@ const useBuilderStore = defineStore("builderStore", {
 		isDark: useDark({
 			attribute: "data-theme",
 		}),
-		canvasDarkMode: useStorage("canvasDarkMode", false),
+		canvasDarkMode,
 		showSettingsDialog: false,
 		settingsActiveTab: useStorage("settingsActiveTab", "page_general"),
 		openImageUpload: false,

@@ -60,6 +60,7 @@
 				:style="{
 					...canvasStyles,
 					background: canvasProps.background,
+					color: 'CanvasText',
 					width: `${breakpoint.width}px`,
 				}"
 				v-for="breakpoint in renderedBreakpoints"
@@ -222,7 +223,7 @@ const {
 
 const canvasProps = reactive({
 	overlayElement: null,
-	background: "#fff",
+	background: "Canvas",
 	scale: 1,
 	translateX: 0,
 	translateY: 0,
