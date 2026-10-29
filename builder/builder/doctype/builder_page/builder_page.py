@@ -38,6 +38,7 @@ from builder.editor_demo import is_demo_page
 from builder.export_import_standard_page import export_page_as_standard
 from builder.hooks import builder_path
 from builder.html_preview_image import generate_preview
+from builder.plugins.site import get_site_assets
 from builder.template_sync import delete_template_page_fixture, export_template_group
 from builder.utils import (
 	ColonRule,
@@ -658,6 +659,11 @@ class BuilderPage(WebsiteGenerator):
 			context.setdefault("scripts", []).append(builder_settings.script_public_url)
 		if builder_settings.style:
 			context.setdefault("styles", []).append(builder_settings.style_public_url)
+
+		# after the site-wide code and before the page's own, so a page can still override a plugin
+		plugin_assets = get_site_assets()
+		context.setdefault("scripts", []).extend(plugin_assets["scripts"])
+		context.setdefault("styles", []).extend(plugin_assets["styles"])
 
 		client_scripts = self.get("client_scripts") or []
 		for script in client_scripts:

@@ -40,8 +40,18 @@ ICON_COLOR = "#7c7c7c"
 MAX_REPORT_BYTES = 20_000
 
 
-def save_plugin(slug: str, label: str, description: str, code: str, icon: str | None = None):
-	"""Build, check and install a new release. Answers with the installation."""
+def save_plugin(
+	slug: str,
+	label: str,
+	description: str,
+	code: str,
+	icon: str | None = None,
+	site_files: dict[str, str] | None = None,
+):
+	"""Build, check and install a new release. Answers with the installation.
+
+	`site_files` holds what published pages load (site.js, site.css). A release without them has none.
+	"""
 	assert_plugin_manager()
 	if not SLUG_PATTERN.fullmatch(slug or ""):
 		frappe.throw(_("A plugin name holds lowercase letters, digits and hyphens."))
@@ -50,7 +60,7 @@ def save_plugin(slug: str, label: str, description: str, code: str, icon: str | 
 	doc = get_or_new_installation(plugin)
 	version = next_version(doc.version)
 	icon_svg = lucide_icon_svg(icon)
-	package = build_package(plugin, label, description, version, code, icon_svg)
+	package = build_package(plugin, label, description, version, code, icon_svg, site_files or {})
 	validated = validate_package(package, plugin, version)
 
 	doc.update(
@@ -94,7 +104,13 @@ def lucide_icon_svg(name: str | None) -> str | None:
 
 
 def build_package(
-	plugin: str, label: str, description: str, version: str, code: str, icon_svg: str | None
+	plugin: str,
+	label: str,
+	description: str,
+	version: str,
+	code: str,
+	icon_svg: str | None,
+	site_files: dict[str, str],
 ) -> bytes:
 	manifest = {
 		"v": PROTOCOL_VERSION,
@@ -113,20 +129,23 @@ def build_package(
 		archive.writestr(ENTRY_FILE, code)
 		if icon_svg:
 			archive.writestr(ICON_FILE, icon_svg)
+		for file, content in site_files.items():
+			archive.writestr(file, content)
 	return buffer.getvalue()
 
 
-def syntax_error(code: str) -> str | None:
+def syntax_error(code: str, file: str = ENTRY_FILE) -> str | None:
 	"""Node names the line of a syntax error, and the browser does not. Skipped where no node is installed.
 
-	`--check` only parses, so none of the code runs here.
+	`--check` only parses, so none of the code runs here. The editor entry is a module, and
+	site code a plain script, so each is parsed as what the browser loads it as.
 	"""
 	node = shutil.which("node")
 	if not node:
 		return None
 	with tempfile.TemporaryDirectory() as folder:
 		# resolved, because node reports the real path and macOS keeps temp files behind a symlink
-		path = (Path(folder) / "main.mjs").resolve()
+		path = (Path(folder) / ("main.mjs" if file == ENTRY_FILE else "site.cjs")).resolve()
 		path.write_text(code)
 		try:
 			result = subprocess.run([node, "--check", str(path)], capture_output=True, text=True, timeout=10)
@@ -135,16 +154,16 @@ def syntax_error(code: str) -> str | None:
 	if result.returncode == 0:
 		return None
 	# the source line, the caret and the message. The node frames below them name node's own code
-	lines = result.stderr.replace(str(path), ENTRY_FILE).splitlines()
+	lines = result.stderr.replace(str(path), file).splitlines()
 	return "\n".join(
 		line for line in lines if not line.lstrip().startswith("at ") and not line.startswith("Node.js")
 	)[:2000].strip()
 
 
-def read_code(doc) -> str | None:
-	"""The entry module of the installed release."""
-	entry = doc.release_path and doc.release_path / ENTRY_FILE
-	return entry.read_text() if entry and entry.is_file() else None
+def read_code(doc, file: str = ENTRY_FILE) -> str | None:
+	"""A file of the installed release, the editor entry unless asked for another."""
+	path = doc.release_path and doc.release_path / file
+	return path.read_text() if path and path.is_file() else None
 
 
 def load_report_key(user: str, token: str) -> str:

@@ -20,6 +20,7 @@ from builder.plugins.constants import (
 	PLUGINS_FOLDER,
 	VERSION_PATTERN,
 )
+from builder.plugins.site import refresh_site_assets
 
 STATE_DOCTYPE = "Builder Plugin State"
 KEPT_PREVIOUS_RELEASES = 1
@@ -69,11 +70,14 @@ class BuilderPlugin(Document):
 	def on_update(self):
 		# after the commit, so a rolled back update still finds the release it runs
 		frappe.db.after_commit.add(self.delete_old_releases)
+		# after the commit, when the release's files are on disk
+		frappe.db.after_commit.add(refresh_site_assets)
 
 	def on_trash(self):
 		self.delete_plugin_state()
 		# the rows roll back with a failed delete, and files would not
 		frappe.db.after_commit.add(self.delete_plugin_files)
+		frappe.db.after_commit.add(refresh_site_assets)
 
 	@property
 	def install_path(self) -> Path:
@@ -87,9 +91,12 @@ class BuilderPlugin(Document):
 	@property
 	def entry_url(self) -> str | None:
 		"""Where the editor imports the entry. The checksum names the build, so a new release gets a new URL."""
+		return self.release_file_url(ENTRY_FILE)
+
+	def release_file_url(self, file: str) -> str | None:
 		if not self.checksum:
 			return None
-		return f"/files/{PLUGINS_FOLDER}/{self.name}/{self.checksum}/{ENTRY_FILE}"
+		return f"/files/{PLUGINS_FOLDER}/{self.name}/{self.checksum}/{file}"
 
 	@property
 	def icon_data_uri(self) -> str | None:

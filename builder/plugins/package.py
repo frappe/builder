@@ -42,6 +42,8 @@ from builder.plugins.constants import (
 	PACKAGE_FOLDERS,
 	PLUGIN_NAME_PATTERN,
 	PROTOCOL_VERSION,
+	SITE_SCRIPT,
+	SITE_STYLE,
 	VERSION_PATTERN,
 )
 
@@ -149,7 +151,7 @@ def assert_file_set(entries: dict, icon_name: str | None) -> None:
 	if icon_name and icon_name not in entries:
 		frappe.throw(_("The manifest names {0}, which the package does not hold.").format(icon_name))
 
-	root_files = {MANIFEST_FILE, ENTRY_FILE} | ({icon_name} if icon_name else set())
+	root_files = {MANIFEST_FILE, ENTRY_FILE, SITE_SCRIPT, SITE_STYLE} | ({icon_name} if icon_name else set())
 	for path in sorted(entries):
 		parts = PurePosixPath(path).parts
 		if path not in root_files and not (len(parts) > 1 and parts[0] in PACKAGE_FOLDERS):

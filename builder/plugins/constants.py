@@ -13,6 +13,9 @@ import re
 PLUGINS_FOLDER = "builder_plugins"
 MANIFEST_FILE = "manifest.json"
 ENTRY_FILE = "main.js"
+# what every published page loads from an enabled plugin's release, next to the editor entry
+SITE_SCRIPT = "site.js"
+SITE_STYLE = "site.css"
 
 # The files a package may hold, by suffix. The editor imports the scripts as
 # modules, and the rest are what those scripts load
