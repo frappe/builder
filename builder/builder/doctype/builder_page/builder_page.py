@@ -1107,6 +1107,8 @@ def create_html_tag(block: dict, state: dict, ancestor_font: str | None = None) 
 
 	for key, value in block.get("customAttributes", {}).items():
 		tag[key] = value
+	# null is an attribute a component instance removed; bs4 would print it as a bare attribute
+	tag.attrs = {key: value for key, value in tag.attrs.items() if value is not None}
 
 	# Stamp the live blockId so duplicated blocks each get their own tracking id.
 	if tag.get("data-track") and block.get("blockId"):

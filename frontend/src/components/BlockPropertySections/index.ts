@@ -12,6 +12,7 @@ import linkSection from "@/components/BlockPropertySections/LinkSection";
 import moreStylesSection from "@/components/BlockPropertySections/MoreStylesSection";
 import optionsSection from "@/components/BlockPropertySections/OptionsSection";
 import positionSection from "@/components/BlockPropertySections/PositionSection";
+import radioGroupOptionsSection from "@/components/BlockPropertySections/RadioGroupOptionsSection";
 import spacingSection from "@/components/BlockPropertySections/SpacingSection";
 import standardPropsInputSection from "@/components/BlockPropertySections/StandardPropsInputSection";
 import styleSection from "@/components/BlockPropertySections/StyleSection";
@@ -47,6 +48,7 @@ const sections = [
 	HTMLOptionsSection,
 	videoOptionsSection,
 	inputOptionsSection,
+	radioGroupOptionsSection,
 	typographySection,
 	styleSection,
 	dimensionSection,
