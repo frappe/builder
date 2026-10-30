@@ -94,6 +94,7 @@ def build_default_registry() -> ToolRegistry:
 		generate,
 		images,
 		memory,
+		plugins,
 		preview,
 		python,
 		query,
@@ -117,4 +118,5 @@ def build_default_registry() -> ToolRegistry:
 	registry.extend(web.TOOLS)
 	registry.extend(preview.TOOLS)
 	registry.extend(components.TOOLS)
+	registry.extend(plugins.TOOLS)
 	return registry

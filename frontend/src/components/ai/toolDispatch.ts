@@ -313,8 +313,7 @@ export class ToolDispatcher {
 				// block_json is the server-expanded block, refs (whole subtree) included —
 				// the canvas must use the same ids the agent chains follow-up edits onto.
 				const newBlock = getBlockInstance(
-					(args.block_json as Record<string, any>) ??
-						convertYAMLtoBlock(args.block as Record<string, any>),
+					(args.block_json as Record<string, any>) ?? convertYAMLtoBlock(args.block as Record<string, any>),
 				);
 				if (args.after_block_id) {
 					const sibling = this.findBlock(args.after_block_id, parent);
@@ -366,6 +365,14 @@ export class ToolDispatcher {
 				if (!name || this.pageStore.activePageScripts.some((s) => s.name === name)) return;
 				this.pageStore.activePageScripts.push(scriptDoc(name, args.script_type, args.script));
 				this.pageStore.scriptsVersion++;
+				return;
+			}
+			case "load_plugin": {
+				// Bob's write_plugin waits on this load's report, so it runs now, outside the page edit
+				const { plugin, label, version, entry_url, token } = args;
+				void import("@/plugins/tryPlugin").then(({ tryPlugin }) =>
+					tryPlugin({ plugin, label, version, entry_url, token }),
+				);
 				return;
 			}
 		}

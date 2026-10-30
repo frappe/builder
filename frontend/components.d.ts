@@ -14,6 +14,7 @@ declare module 'vue' {
     AIAffectedItems: typeof import('./src/components/AIAffectedItems.vue')['default']
     AICommandMenu: typeof import('./src/components/ai/AICommandMenu.vue')['default']
     AIDebugPanel: typeof import('./src/components/AIDebugPanel.vue')['default']
+    AIPluginCard: typeof import('./src/components/ai/AIPluginCard.vue')['default']
     AITurnTimeline: typeof import('./src/components/ai/AITurnTimeline.vue')['default']
     AIUISpec: typeof import('./src/components/ai/AIUISpec.vue')['default']
     AnalyticsEmptyState: typeof import('./src/components/Settings/AnalyticsEmptyState.vue')['default']

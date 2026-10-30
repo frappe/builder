@@ -47,7 +47,7 @@ class BuilderPlugin(Document):
 		installed_on: DF.Datetime | None
 		label: DF.Data | None
 		readme: DF.LongText | None
-		source: DF.Literal["Hub", "App", "Development"]
+		source: DF.Literal["Hub", "App", "Development", "Bob"]
 		version: DF.Data
 	# end: auto-generated types
 

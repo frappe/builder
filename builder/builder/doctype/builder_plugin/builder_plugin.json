@@ -32,13 +32,13 @@
    "unique": 1
   },
   {
-   "description": "Where the plugin files come from: a Builder Hub, a Frappe app or a development server.",
+   "description": "Where the plugin files come from: a Builder Hub, a Frappe app, a development server or Bob.",
    "fieldname": "source",
    "fieldtype": "Select",
    "in_list_view": 1,
    "in_standard_filter": 1,
    "label": "Source",
-   "options": "Hub\nApp\nDevelopment",
+   "options": "Hub\nApp\nDevelopment\nBob",
    "read_only": 1,
    "reqd": 1
   },
@@ -127,7 +127,7 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 0,
  "links": [],
- "modified": "2026-10-25 12:00:00.000000",
+ "modified": "2026-10-29 12:00:00.000000",
  "modified_by": "Administrator",
  "module": "Builder",
  "name": "Builder Plugin",
