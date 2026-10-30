@@ -9,7 +9,6 @@ import useCanvasStore from "@/stores/canvasStore.js";
 import { __ } from "@/translation";
 
 const componentMap = {
-	array: ArrayInput,
 	object: ObjectInput,
 };
 
@@ -43,6 +42,16 @@ const getPropsMap = (propName: string, propDetails: BlockProps[string]) => {
 				imageFit:
 					propDetails.propOptions?.options?.imageFit ||
 					(propDetails.propOptions?.options?.defaultImageFit as StyleValue),
+			};
+			break;
+		case "array":
+			map = {
+				component: ArrayInput,
+				itemType: propDetails.propOptions?.options?.itemType || "string",
+				targetRatio: blockController.getSelectedBlockAspectRatio(),
+				listLabel: propDetails.label || propName,
+				// array values are stored as JSON strings, and the control only takes primitives
+				defaultValue: JSON.stringify(propDetails.propOptions?.options?.defaultValue ?? []),
 			};
 			break;
 		case "color":
@@ -83,8 +92,9 @@ const getPropsMap = (propName: string, propDetails: BlockProps[string]) => {
 			return value;
 		},
 		getPlaceholder: () => {
-			const defaultValue = propDetails.propOptions?.options?.defaultValue;
-			return defaultValue == null || defaultValue === "" ? null : String(defaultValue);
+			const { defaultValue, unit } = propDetails.propOptions?.options || {};
+			if (defaultValue == null || defaultValue === "") return null;
+			return unit ? `${defaultValue} ${unit}` : String(defaultValue);
 		},
 		defaultValue:
 			type == "boolean"
@@ -104,7 +114,10 @@ const getEventsMap = (propName: string, propDetails: BlockProps[string]) => {
 				"update:imageURL": (val: string) => blockController.setBlockProp(propName, { value: val }),
 				"update:imageFit": (val: StyleValue) =>
 					blockController.setBlockProp(propName, {
-						propOptions: { options: { ...propDetails.propOptions?.options, imageFit: val } },
+						propOptions: {
+							...propDetails.propOptions,
+							options: { ...propDetails.propOptions?.options, imageFit: val },
+						},
 					}),
 			};
 			break;
@@ -127,9 +140,7 @@ const getStandardPropsInputSection = () => {
 	const sections = [];
 	for (const [propKey, propDetails] of Object.entries(standardProps)) {
 		const propType = propDetails.propOptions?.type;
-		const component =
-			(propType === "array" || propType === "object" ? componentMap[propType] : undefined) ||
-			BasePropertyControl;
+		const component = (propType === "object" ? componentMap[propType] : undefined) || BasePropertyControl;
 		const getProps = () => {
 			const props = getPropsMap(propKey, propDetails);
 			return props;
