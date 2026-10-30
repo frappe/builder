@@ -16,10 +16,10 @@ The user then reads submissions in Desk at /app/<doctype>.
 import re
 
 import frappe
+from frappe.model import child_table_fields, default_fields
 
 from builder.ai.agent import pending
 from builder.ai.agent.registry import Tool
-from builder.form_doctype import safe_fieldname
 
 # Fieldtypes a public form can safely write. Anything else (Link, Table, Attach…)
 # is coerced to Data. Select is deliberately EXCLUDED: an HTML <select> submits its
@@ -27,6 +27,27 @@ from builder.form_doctype import safe_fieldname
 # Select option labels ("Breathwork & Stillness") — Frappe then rejects the insert
 # with a validation error. Storing dropdowns as Data accepts whatever was chosen.
 SAFE_FIELDTYPES = {"Data", "Small Text", "Text", "Int", "Float", "Check", "Date", "Datetime"}
+
+# Fieldnames Frappe reserves (every doc has `name`, `owner`, `parent`, …). A form
+# input called "name" would otherwise crash DocType creation ("Fieldname name is
+# restricted"), so the DocType field is renamed (`name` → `name_field`) while the
+# input keeps its own name attribute — the wiring script maps between them.
+RESERVED_FIELDNAMES = (
+	set(default_fields)
+	| set(child_table_fields)
+	| {
+		"name",
+		"parent",
+		"idx",
+		"naming_series",
+		"amended_from",
+		"workflow_state",
+	}
+)
+
+
+def safe_fieldname(fieldname: str) -> str:
+	return f"{fieldname}_field" if fieldname in RESERVED_FIELDNAMES else fieldname
 
 
 def connected_submission_doctype(page_id: str) -> str | None:

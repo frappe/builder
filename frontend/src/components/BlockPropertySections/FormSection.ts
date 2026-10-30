@@ -57,23 +57,6 @@ const formSectionProperties = [
 		component: InlineInput,
 		getProps: () => {
 			return {
-				label: __("Tracking"),
-				placeholder: __("ID"),
-				modelValue: blockController.getEffectiveAttribute("data-tracking-id") || "",
-				description: __("Counts each submission under this ID in Analytics, when view tracking is on."),
-			};
-		},
-		searchKeyWords: "Tracking, Tracking ID, Analytics, Conversion, Submissions, form",
-		events: {
-			"update:modelValue": (val: string) =>
-				blockController.setEffectiveAttribute("data-tracking-id", val || undefined),
-		},
-		condition: () => blockController.isForm(),
-	},
-	{
-		component: InlineInput,
-		getProps: () => {
-			return {
 				label: __("Preview"),
 				type: "select",
 				options: formStates,
