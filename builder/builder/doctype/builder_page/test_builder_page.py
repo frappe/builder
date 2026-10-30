@@ -2225,6 +2225,62 @@ component.update({
 		finally:
 			component.delete()
 
+	def test_instance_removes_component_attribute_with_none(self):
+		import bs4 as bs
+
+		from builder.builder.doctype.builder_page.builder_page import get_block_html
+
+		component_root = {
+			"blockId": "comp-root",
+			"element": "form",
+			"children": [
+				{
+					"blockId": "comp-email",
+					"element": "input",
+					"attributes": {"name": "email", "required": "required"},
+					"customAttributes": {"required": "required"},
+				},
+				{
+					"blockId": "comp-phone",
+					"element": "input",
+					"attributes": {"name": "phone"},
+					"customAttributes": {"required": "required"},
+				},
+			],
+		}
+		component = frappe.get_doc(
+			{"doctype": "Builder Component", "block": frappe.as_json(component_root)}
+		).insert()
+
+		blocks = [
+			{
+				"blockId": "instance",
+				"extendedFromComponent": component.name,
+				"children": [
+					{
+						"blockId": "email",
+						"referenceBlockId": "comp-email",
+						"isChildOfComponent": component.name,
+						"attributes": {"required": None},
+						"customAttributes": {"required": None},
+					},
+					{
+						"blockId": "phone",
+						"referenceBlockId": "comp-phone",
+						"isChildOfComponent": component.name,
+					},
+				],
+			}
+		]
+
+		try:
+			html, _, _, _ = get_block_html(blocks)
+			inputs = {tag["name"]: tag for tag in bs.BeautifulSoup(html, "html.parser").find_all("input")}
+			self.assertNotIn("required", inputs["email"].attrs)
+			self.assertIn("required", inputs["phone"].attrs)
+		finally:
+			component.delete()
+
 	def test_renders_blocks_with_only_responsive_styles(self):
 		from builder.builder.doctype.builder_page.builder_page import get_block_html
 
