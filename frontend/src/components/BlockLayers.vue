@@ -21,21 +21,18 @@
 					:data-block-layer-id="element.blockId"
 					:data-indent="indent"
 					:title="element.blockId"
-					class="block-layer-item relative min-w-24 cursor-pointer select-none rounded-4 border border-transparent bg-surface-base bg-opacity-50 text-base text-ink-gray-7"
-					:class="{
-						'border-blue-500 !bg-blue-100 dark:!bg-blue-900':
-							canvasStore.layerDraggingOverBlock === element.blockId,
-					}"
+					class="block-layer-item relative min-w-24 cursor-pointer select-none rounded-4 bg-surface-base bg-opacity-50 text-base text-ink-gray-7"
 					@click.stop="selectBlock(element, $event)"
 					@mouseover.stop="
 						!canvasStore.isDragging && canvasStore.activeCanvas?.setHoveredBlock(element.blockId)
 					"
 					@mouseleave.stop="!canvasStore.isDragging && canvasStore.activeCanvas?.setHoveredBlock(null)">
 					<span
-						class="group my-[7px] flex items-center gap-1.5 pr-[2px] font-medium"
+						class="group flex py-[7px] items-center gap-1.5 pr-[2px] font-medium"
 						:style="{ paddingLeft: `${indent}px` }"
 						:class="{
 							'!opacity-50': !element.isVisible() || isParentHidden,
+							'rounded-4 !bg-surface-blue-4': canvasStore.layerDraggingOverBlock === element.blockId,
 						}">
 						<div>
 							<div class="scroll-into-view-anchor absolute ml-20"></div>
@@ -121,19 +118,19 @@
 		</draggable>
 		<!-- Drop indicator line -->
 		<div
-			v-if="showDropIndicator"
+			v-if="!parentDropIndicator && dropIndicator.show"
 			class="pointer-events-none absolute h-0.5 bg-blue-500 transition-none"
 			:style="{
-				top: dropIndicatorTop + 'px',
-				left: dropIndicatorLeft + 'px',
-				width: 'calc(100% - ' + dropIndicatorLeft + 'px)',
+				top: dropIndicator.top + 'px',
+				left: dropIndicator.left + 'px',
+				right: dropIndicator.right + 'px',
 			}"></div>
 	</div>
 </template>
 <script setup lang="ts">
 import type Block from "@/block";
 import useCanvasStore from "@/stores/canvasStore";
-import { nextTick, ref, watch } from "vue";
+import { inject, nextTick, provide, Ref, ref, shallowReactive, watch } from "vue";
 import draggable from "vuedraggable";
 import BlockLayers from "./BlockLayers.vue";
 
@@ -281,13 +278,23 @@ interface DragState {
 	hoverPosition: "before" | "after" | "inside" | null;
 }
 
-const showDropIndicator = ref(false);
-const dropIndicatorTop = ref(0);
-const dropIndicatorLeft = ref(0);
+interface DropIndicator {
+	show: boolean;
+	top: number;
+	left: number;
+	right: number;
+	treeRoot: Ref<HTMLElement | null>;
+}
+
+// The top-level tree draws the line, so a selected group's overflow-hidden cannot clip it.
+const parentDropIndicator = inject<DropIndicator | null>("dropIndicator", null);
+const dropIndicator =
+	parentDropIndicator ?? shallowReactive({ show: false, top: 0, left: 0, right: 0, treeRoot: rootContainer });
+if (!parentDropIndicator) provide("dropIndicator", dropIndicator);
 const dragState: DragState = { draggedElement: null, hoverTarget: null, hoverPosition: null };
 
 const resetDropIndicators = () => {
-	showDropIndicator.value = false;
+	dropIndicator.show = false;
 	canvasStore.layerDraggingOverBlock = null;
 };
 
@@ -301,18 +308,20 @@ const onDragStart = (event: any) => {
 };
 
 const updateDropIndicator = (blockLayerItem: HTMLElement, relativeY: number, elementHeight: number) => {
-	if (!rootContainer.value) return;
+	const treeRoot = dropIndicator.treeRoot.value;
+	if (!treeRoot) return;
 
 	const rect = blockLayerItem.getBoundingClientRect();
-	const containerRect = rootContainer.value.getBoundingClientRect();
+	const containerRect = treeRoot.getBoundingClientRect();
 	const indent = parseInt(blockLayerItem.dataset.indent || "0", 10);
 	const showAbove = relativeY < elementHeight / 2;
 
-	dropIndicatorTop.value = showAbove ? rect.top - containerRect.top : rect.bottom - containerRect.top;
-	dropIndicatorLeft.value = indent;
+	dropIndicator.top = (showAbove ? rect.top : rect.bottom) - containerRect.top;
+	dropIndicator.left = indent;
+	dropIndicator.right = containerRect.right - rect.right;
 	dragState.hoverPosition = showAbove ? "before" : "after";
 
-	showDropIndicator.value = indent === 0 && showAbove ? false : true;
+	dropIndicator.show = indent === 0 && showAbove ? false : true;
 };
 
 const onMouseMove = (event: MouseEvent) => {
@@ -345,7 +354,7 @@ const onMouseMove = (event: MouseEvent) => {
 	if (block.canHaveChildren() && isInCenterZone) {
 		// Highlight parent block for nested drop
 		canvasStore.layerDraggingOverBlock = blockId!;
-		showDropIndicator.value = false;
+		dropIndicator.show = false;
 		dragState.hoverPosition = "inside";
 	} else {
 		// Show line indicator for sibling drop
@@ -442,14 +451,23 @@ defineExpose({
 });
 </script>
 <style>
-.hovered-block {
-	@apply border-blue-300 text-gray-700 dark:border-blue-900 dark:text-gray-500;
-}
-.block-selected {
-	@apply overflow-hidden border-blue-400 text-gray-900 dark:border-blue-700 dark:text-gray-200;
+.hovered-block > span {
+	@apply rounded-4 bg-surface-blue-2;
 }
 
-.block-selected .block-selected {
-	@apply rounded-none border-transparent bg-blue-300/25 dark:bg-blue-900/25;
+.block-selected {
+	@apply overflow-hidden !bg-surface-blue-1 text-ink-gray-9;
+}
+
+.block-selected > span {
+	@apply rounded-none bg-surface-blue-3;
+}
+
+.block-selected .block-layer-item {
+	@apply bg-transparent;
+}
+
+.block-selected .block-layer-item > span {
+	@apply rounded-none;
 }
 </style>
