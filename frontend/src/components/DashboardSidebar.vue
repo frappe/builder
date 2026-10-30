@@ -87,6 +87,7 @@
 		</ScrollArea>
 
 		<div class="mt-auto">
+			<DashboardTrialCard />
 			<p class="p-2 text-center text-sm text-ink-gray-4">{{ __("Version") }}: {{ builderVersion }}</p>
 			<TrialBanner v-if="builderStore.isFCSite" />
 		</div>
@@ -104,6 +105,7 @@
 <script lang="ts" setup>
 import { __ } from "@/translation";
 import builderLogo from "/builder_logo.png";
+import DashboardTrialCard from "@/components/DashboardTrialCard.vue";
 import EditableSpan from "@/components/EditableSpan.vue";
 import FilesIcon from "@/components/Icons/Files.vue";
 import SettingsIcon from "@/components/Icons/SettingsGear.vue";

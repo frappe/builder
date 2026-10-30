@@ -1,4 +1,5 @@
 import frappe
+from frappe.integrations.frappe_providers.cloud_settings import get_boot_context as get_cloud_settings
 from frappe.integrations.frappe_providers.frappecloud_billing import is_fc_site
 from frappe.pulse.utils import get_app_version
 from frappe.translate import get_translations_from_apps, get_user_translations
@@ -39,4 +40,5 @@ def get_boot() -> dict:
 	lang = frappe.local.lang
 	messages = get_translations_from_apps(lang, ["builder"])
 	messages.update(get_user_translations(lang) or {})
-	return {"translated_messages": messages}
+	# the trial card opens Cloud Settings with this context, so the SDK skips its own lookup
+	return {"translated_messages": messages, "cloud_settings": get_cloud_settings()}
