@@ -69,7 +69,7 @@ const props = defineProps<{
 
 const emit = defineEmits(["update:modelValue", "success"]);
 
-const { createVariable, updateVariable } = useBuilderToken();
+const { createVariable, updateVariable, forgetTokenHistory } = useBuilderToken();
 
 const dialogMode = computed(() => (props.variable?.name ? "edit" : "add"));
 const activeBuilderToken = ref<Partial<BuilderToken>>({ ...defaultBuilderToken });
@@ -95,6 +95,7 @@ const handleSave = async () => {
 		let savedVariable;
 		if (dialogMode.value === "edit") {
 			savedVariable = await updateVariable(activeBuilderToken.value);
+			forgetTokenHistory([activeBuilderToken.value.name!]);
 			toast.success(__("Token updated"));
 		} else {
 			savedVariable = await createVariable(activeBuilderToken.value);
