@@ -4,6 +4,7 @@ prompt carries just each skill's frontmatter `description` (see Skills.index), a
 read_skill, or the loop for a state it can see, puts the body in front of the model."""
 
 import os
+import random
 
 
 class Skills:
@@ -20,7 +21,14 @@ class Skills:
 
 	@classmethod
 	def read(cls, name: str) -> str | None:
-		return cls.parse(name)[1] if name in cls.names() else None
+		if name not in cls.names():
+			return None
+		# a fresh deal on every read: models asked to pick at random pick their favourite
+		lead, *alternates = random.sample(range(1, 8), 3)
+		roll = (
+			f"lead with candidate {lead}; candidates {alternates[0]} and {alternates[1]} are its alternates"
+		)
+		return cls.parse(name)[1].replace("{roll}", roll)
 
 	@classmethod
 	def names(cls) -> list[str]:
