@@ -49,12 +49,14 @@ import time
 import frappe
 
 from builder.ai import llm, locks
+from builder.ai.agent import uploads
 from builder.ai.agent.registry import ToolRegistry, build_default_registry
 from builder.ai.agent.tree import WorkingTree
 from builder.ai.block_codec import BlockCodec
 from builder.ai.models import ModelRegistry
 from builder.ai.prompts import Prompts
 from builder.ai.session import AISession
+from builder.ai.skills import Skills
 from builder.ai.snapshots import capture_page_state, save_revert_snapshot
 from builder.utils import to_compact_yaml
 
@@ -164,6 +166,20 @@ def marker_position(messages: list[dict], pos: int) -> int:
 	while pos > 0 and not messages[pos].get("content"):
 		pos -= 1
 	return pos
+
+
+def user_texts(messages: list[dict]) -> list[str]:
+	"""The text of every user message, whether it was sent as a string or as parts."""
+	texts = []
+	for message in messages:
+		if message.get("role") != "user":
+			continue
+		content = message.get("content")
+		if isinstance(content, str):
+			texts.append(content)
+		elif isinstance(content, list):
+			texts += [part.get("text") or "" for part in content if isinstance(part, dict)]
+	return texts
 
 
 def render_page_context(root: dict | None, selected_block_ids: tuple | list = ()) -> str:
@@ -357,6 +373,12 @@ class AgentRunner:
 		self.image_file_url = image_file_url
 		self.canvas_theme = canvas_theme
 		self.registry = registry or build_default_registry()
+		# skills the loop put in this turn's context (build_skill_context)
+		self.attached_skills: set[str] = set()
+		# fresh reviewers' verdicts this turn (tools/review.py); tool results aren't saved
+		self.reviews: list[str] = []
+		# the prompt a studio intake hands to Bob (studio.start_build)
+		self.handoff: str | None = None
 		# The editor-URL prefix is site-configurable; resolve it so the links the
 		# agent writes (e.g. to a page it built off-canvas) actually work here.
 		self.system_prompt = (system_prompt or Prompts.AGENT_SYSTEM).replace(
@@ -585,6 +607,18 @@ class AgentRunner:
 			)
 		return context
 
+	def build_skill_context(self) -> str:
+		"""An empty page means a new-page build whatever the user typed, so its skill
+		rides in with the page instead of waiting on the model to read it."""
+		root = self.page_root()
+		if not self.page_id or (root and root.get("children")) or "read_skill" not in self.registry.names():
+			return ""
+		self.attached_skills.add("new-page")
+		return (
+			"The open page is empty, so the new-page skill applies. Here it is in full; "
+			f"no read_skill needed this turn:\n\n{Skills.read('new-page')}"
+		)
+
 	def build_memory_context(self) -> str:
 		"""Facts the agent saved in past conversations (see tools/memory.py) — part of
 		the cached context block, so remembering costs nothing per-round."""
@@ -609,7 +643,12 @@ class AgentRunner:
 		# The page structure. It's resent on every round of a multi-round turn, so a
 		# cache marker on the prompt right after it cuts both latency and input cost
 		# across the loop.
-		blocks = [self.build_open_page_context(), self.build_page_context(), self.build_memory_context()]
+		blocks = [
+			self.build_open_page_context(),
+			self.build_page_context(),
+			self.build_skill_context(),
+			self.build_memory_context(),
+		]
 		context = "\n\n".join(block for block in blocks if block)
 		if context:
 			messages.append({"role": "user", "content": context})
@@ -625,16 +664,15 @@ class AgentRunner:
 				f"\n\n(Attached image, saved at {self.image_file_url} — when it should guide a build, "
 				f"carry that exact url in the brief on its own line: REFERENCE IMAGE: {self.image_file_url})"
 			)
-		if self.image_url:
-			messages.append(
-				{
-					"role": "user",
-					"content": [
-						{"type": "text", "text": user_text},
-						{"type": "image_url", "image_url": {"url": self.image_url}},
-					],
-				}
-			)
+		parts = [{"type": "image_url", "image_url": {"url": self.image_url}}] if self.image_url else []
+		if ModelRegistry.supports_vision(self.loop_model):
+			# card uploads come back as urls in reply text, maybe turns ago: show them every turn
+			note, upload_parts = uploads.attach(uploads.find([*user_texts(messages), user_text]))
+			if note:
+				user_text += "\n\n" + note
+				parts += upload_parts
+		if parts:
+			messages.append({"role": "user", "content": [{"type": "text", "text": user_text}, *parts]})
 		else:
 			messages.append({"role": "user", "content": user_text})
 		self.prompt_index = len(messages) - 1
@@ -1360,6 +1398,7 @@ class AgentRunner:
 				"contextWindow": ModelRegistry.context_window(self.loop_model),
 				"elapsedMs": elapsed_ms,
 				"trace": self.trace,
+				"reviews": self.reviews,
 			},
 		}
 		if self.revert_snapshot:
@@ -1504,6 +1543,27 @@ class AgentRunner:
 
 
 def run_agent_job(prompt: str, model: str, **kwargs):
+	from builder.ai.studio import Studio, interaction_pass
+
 	# Resolved here so the key never sits in Redis; jobs queued by older code still pass one.
 	kwargs.pop("api_key", None)
-	AgentRunner(prompt, model, llm.resolve_api_key(model), **kwargs).run()
+	api_key = llm.resolve_api_key(model)
+	if Studio.wanted(kwargs.get("page_id")):
+		studio = AgentRunner(
+			prompt, model, api_key, system_prompt=Studio.system_prompt(), registry=Studio.registry(), **kwargs
+		)
+		studio.run()
+		if not studio.handoff:
+			return
+		prompt = studio.handoff
+	AgentRunner(prompt, model, api_key, **kwargs).run()
+	if follow_up := interaction_pass(prompt, kwargs.get("page_id")):
+		AISession.try_append_message(
+			kwargs.get("session_id"),
+			"user",
+			follow_up,
+			message_type="chat",
+			task_type="agent",
+			metadata={"displayText": "Studio: building the interactions"},
+		)
+		AgentRunner(follow_up, model, api_key, **kwargs).run()

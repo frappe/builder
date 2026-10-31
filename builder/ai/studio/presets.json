@@ -1,0 +1,152 @@
+[
+	{
+		"name": "Gallery White",
+		"feel": "stark white walls, the work hung large, one cobalt accent",
+		"palette": {
+			"ground": "#FFFFFF",
+			"ink": "#111111",
+			"muted": "#6E6E6E",
+			"accent": "#2347D4"
+		},
+		"faces": "Archivo + Archivo",
+		"layout": "editorial-grid",
+		"image_query": "white gallery wall single framed photograph",
+		"suits": "portfolios, photographers, architects, studios",
+		"interaction": "the cursor is a gallery spotlight: work sits dim until the pointer (or a tap) lights it, and the lit piece shows its caption"
+	},
+	{
+		"name": "Night Market",
+		"feel": "after dark, plum shadows, amber lamplight, crowded and warm",
+		"palette": {
+			"ground": "#2A1433",
+			"ink": "#F6EBDD",
+			"muted": "#B9A3C2",
+			"accent": "#F2A541"
+		},
+		"faces": "Darker Grotesque + Work Sans",
+		"layout": "bento",
+		"image_query": "night market stalls lanterns",
+		"suits": "food, bars, events, pop-ups",
+		"interaction": "lanterns sway on scroll and each stall card flips to show today's price when hovered or tapped"
+	},
+	{
+		"name": "Field Guide",
+		"feel": "pale sage pages, forest ink, rust annotations, made by someone who knows the trail",
+		"palette": {
+			"ground": "#E3E8D9",
+			"ink": "#1F3B2C",
+			"muted": "#5E6F5F",
+			"accent": "#B5542A"
+		},
+		"faces": "Libre Caslon Text + Source Sans 3",
+		"layout": "editorial-grid",
+		"image_query": "botanical field guide illustration plate",
+		"suits": "nature, wellness, outdoor, education",
+		"interaction": "specimen plates: hover a feature and a hand-drawn callout line draws out to its label, like an annotated field sketch"
+	},
+	{
+		"name": "Concrete & Steel",
+		"feel": "raw concrete grey, graphite, one safety-orange mark",
+		"palette": {
+			"ground": "#D9DBDC",
+			"ink": "#1E2124",
+			"muted": "#5C6166",
+			"accent": "#FF5A1F"
+		},
+		"faces": "Chivo + Chivo Mono",
+		"layout": "dense-utility",
+		"image_query": "brutalist concrete building facade",
+		"suits": "engineering, developer tools, architecture, hardware",
+		"interaction": "a draggable timeline ruler scrubs through the work, each notch snapping a project into the frame"
+	},
+	{
+		"name": "Poster Loud",
+		"feel": "a wall of gig posters: flat red, black and white, type the size of a door",
+		"palette": {
+			"ground": "#E4002B",
+			"ink": "#0D0D0D",
+			"muted": "#3B0A12",
+			"accent": "#FFFFFF"
+		},
+		"faces": "Anton + Rubik",
+		"layout": "poster-brutalist",
+		"image_query": "bold typographic gig posters wall",
+		"suits": "festivals, sports, launches, music",
+		"interaction": "headline type stretches and squashes with scroll velocity, and posters peel up at the corner on hover"
+	},
+	{
+		"name": "Quiet Clinic",
+		"feel": "cool daylight, slate and teal, nothing loud, everything findable",
+		"palette": {
+			"ground": "#F4F7F8",
+			"ink": "#24323A",
+			"muted": "#5F7079",
+			"accent": "#1D7A74"
+		},
+		"faces": "Sora + Nunito Sans",
+		"layout": "classic-centered",
+		"image_query": "calm minimal clinic interior daylight",
+		"suits": "health, law, finance, consulting",
+		"interaction": "one calm interaction that helps: a step-by-step 'what happens at your first visit' that advances with a tap"
+	},
+	{
+		"name": "Sun Print",
+		"feel": "cyanotype blue, white silhouettes, slow and hand-made",
+		"palette": {
+			"ground": "#1F3FA6",
+			"ink": "#F5F8FF",
+			"muted": "#AFC0F0",
+			"accent": "#FFD23F"
+		},
+		"faces": "Gloock + Karla",
+		"layout": "zine-collage",
+		"image_query": "cyanotype print botanical",
+		"suits": "artists, photographers, craft, makers",
+		"interaction": "hover develops the image: a cyanotype exposure that blooms from white silhouette to full photograph under the pointer"
+	},
+	{
+		"name": "Spice Route",
+		"feel": "deep teal shade, turmeric and chilli, a busy market in good light",
+		"palette": {
+			"ground": "#10393B",
+			"ink": "#FBF3E4",
+			"muted": "#9DB9B3",
+			"accent": "#E2A12B"
+		},
+		"faces": "Yeseva One + Mukta",
+		"layout": "split-screen",
+		"image_query": "spice market colourful sacks",
+		"suits": "Indian food, textiles, travel, family businesses",
+		"interaction": "a spice wheel the visitor spins to change the featured dish and its colour wash"
+	},
+	{
+		"name": "Studio Pastel",
+		"feel": "lilac and coral, rounded and friendly, a counter you want to lean on",
+		"palette": {
+			"ground": "#E6DDF5",
+			"ink": "#241B3A",
+			"muted": "#6B5E85",
+			"accent": "#FF6F59"
+		},
+		"faces": "Baloo 2 + Nunito",
+		"layout": "bento",
+		"image_query": "pastel bakery counter",
+		"suits": "bakeries, kids, creators, gifts",
+		"interaction": "items bounce gently into place when tapped, and a sprinkle of shapes follows the cursor over the hero only"
+	},
+	{
+		"name": "Ledger",
+		"feel": "ruled paper, black ink, one green figure that matters",
+		"palette": {
+			"ground": "#FAFAF7",
+			"ink": "#1A1A1A",
+			"muted": "#6B6B66",
+			"accent": "#0F7B4D"
+		},
+		"faces": "Inter Tight + JetBrains Mono",
+		"layout": "dense-utility",
+		"image_query": "accounting ledger pages pen",
+		"suits": "finance, SaaS, data, B2B",
+		"interaction": "numbers in the hero tick up to their real values once, and table rows expand inline to show the detail"
+	}
+]

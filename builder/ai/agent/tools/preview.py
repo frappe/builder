@@ -177,6 +177,10 @@ def run_preview_page(ctx, args: dict) -> str:
 			"on the open page (read_page gives you the precise fonts/hexes/handles). Its "
 			"blocks are not editable from here."
 		)
+	if contract := (args.get("contract") or "").strip():
+		from builder.ai.agent.tools.review import fresh_review
+
+		return f"{extent} For your eyes only.\n\n" + fresh_review(ctx, page, image, color_scheme, contract)
 	return (
 		f"{extent} For your eyes only (the user doesn't see it). Review in two passes, then act:\n"
 		"1. Breakage: unreadable contrast, accidental overlap, empty sections, a layout that "
@@ -228,6 +232,14 @@ preview_page = Tool(
 			"page_id": {
 				"type": "string",
 				"description": "The page to screenshot. Defaults to the page you have open.",
+			},
+			"contract": {
+				"type": "string",
+				"description": (
+					"Your direction contract, right after a generate_page build: the open page is "
+					"then also rendered at mobile and judged by a fresh reviewer that sees only the "
+					"request, this contract and the screenshots, and its verdict comes back to you."
+				),
 			},
 			"viewport": {
 				"type": "string",
