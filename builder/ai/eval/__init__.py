@@ -13,7 +13,6 @@ other. One run per scenario is a smoke test: pass repeat=3 before calling a clos
 import json
 import os
 from collections import Counter
-from dataclasses import dataclass
 from statistics import median
 
 import frappe
@@ -28,64 +27,11 @@ from .measures import (
 	summary_line,
 	write_json,
 )
+from .scenarios import EDITS, SCENARIOS, Scenario
 
-
-@dataclass
-class Scenario:
-	name: str
-	prompt: str
-	on_fixture: bool = False
-	# at least one of these tools must run, and none of `forbid`
-	expect_any: tuple = ()
-	forbid: tuple = ()
-
-
-EDITS = ("update_block", "update_blocks", "add_block", "remove_block", "move_block")
-
-SCENARIOS = (
-	Scenario(
-		"bare-build", "Make a page for my yoga studio.", expect_any=("present_ui",), forbid=("generate_page",)
-	),
-	Scenario(
-		"brief-build",
-		"Build the landing page for Kiln & Clay, a pottery studio in Bandra, Mumbai, run by Meera Iyer "
-		"since 2019. Sections: a hero; the classes (Wheel throwing, four Saturdays, ₹2,800; Hand building, "
-		"₹2,200; Kids clay club, ₹1,500); open studio hours (Tuesday to Sunday, 10am to 8pm); the glaze "
-		"wall where students pick their finishes; and a visit section with the address, 14 Chapel Road, "
-		"Bandra West. Earthy terracotta and cream palette, editorial feel. Give it a look of its own, "
-		"don't copy the site's other pages. Pick the photos yourself and build it now.",
-		expect_any=("generate_page",),
-	),
-	Scenario(
-		"edit",
-		"Make the hero headline shorter and punchier, and give the main hero button our accent colour.",
-		on_fixture=True,
-		expect_any=EDITS,
-		forbid=("generate_page",),
-	),
-	Scenario(
-		"translate",
-		"Translate all the text on this page into Hindi.",
-		on_fixture=True,
-		expect_any=("update_blocks",),
-		forbid=("generate_page",),
-	),
-	Scenario(
-		"redesign",
-		"Redesign this whole page with a completely new look.",
-		on_fixture=True,
-		expect_any=("present_ui", "generate_page"),
-	),
-	Scenario(
-		"opinion",
-		"Should I use Comic Sans for the headings?",
-		on_fixture=True,
-		forbid=("generate_page", *EDITS),
-	),
-)
-
-# What a turn can mint site-wide; anything created during a scenario is deleted after it.
-MINTED = ("Builder Page", "Builder Component", "Builder Client Script", "Builder Token", "Builder AI Memory")
+# What a turn can mint site-wide; anything created during a scenario is deleted after it,
+# with its scratch page (only that page: a person may be editing others meanwhile).
+MINTED = ("Builder Component", "Builder Client Script", "Builder Token", "Builder AI Memory")
 
 
 def run(model: str, fixture: str | None = None, label: str = "run", only=None, repeat: int = 1, out_dir=None):
@@ -166,7 +112,7 @@ class ScenarioRun:
 				"error": repr(e)[:500],
 			}
 		finally:
-			self.clean_up(started)
+			self.clean_up(page.name, started)
 
 	def make_page(self):
 		blocks = None
@@ -205,11 +151,17 @@ class ScenarioRun:
 		return runner
 
 	def score(self, runner, page) -> dict:
+		reply = self.final_reply(runner.session_id)
+		if not runner.trace:
+			# the provider refused before the first round (a rate limit, a dead key): Bob wasn't measured
+			raise RuntimeError(reply.get("content") or "the turn made no model call")
+		if not runner.stop_reason and reply.get("message_type") != "clarification":
+			# a turn that ends on a card has no stop reason either; anything else without one crashed
+			raise RuntimeError(reply.get("content") or "the turn crashed")
 		tools = [tool["name"] for step in runner.trace for tool in step.get("tools") or []]
 		ran = set(tools)
 		expected = not self.scenario.expect_any or bool(ran & set(self.scenario.expect_any))
 		forbidden = sorted(ran & set(self.scenario.forbid))
-		reply = self.final_reply(runner.session_id)
 		result = {
 			"scenario": self.scenario.name,
 			"attempt": self.attempt,
@@ -230,9 +182,24 @@ class ScenarioRun:
 		}
 		if ran & {"generate_page", *EDITS}:
 			root = json.loads(frappe.db.get_value("Builder Page", page.name, "draft_blocks") or "[{}]")[0]
-			result["page"] = PageMeasure(root).measures()
+			tokens = dict(frappe.get_all("Builder Token", fields=["name", "value"], as_list=True))
+			measure = PageMeasure(root, tokens)
+			result["page"] = measure.measures()
+			result["look"] = measure.look()
 			result["screenshot"] = self.screenshot(page.name)
+		if self.scenario.runtime and "generate_page" in ran:
+			result["runtime"] = self.check_runtime(page.name)
+		result["reviews"] = getattr(runner, "reviews", [])
 		return result
+
+	def check_runtime(self, page_id: str) -> dict:
+		from .runtime import RuntimeCheck
+
+		prefix = os.path.join(self.out_dir, f"{self.scenario.name}-{self.attempt}")
+		try:
+			return RuntimeCheck(page_id, prefix).run()
+		except Exception as e:
+			return {"error": repr(e)[:300]}
 
 	def final_reply(self, session_id: str) -> dict:
 		rows = frappe.get_all(
@@ -256,8 +223,9 @@ class ScenarioRun:
 			f.write(image)
 		return path
 
-	def clean_up(self, since):
+	def clean_up(self, page_id: str, since):
 		frappe.db.rollback()
+		frappe.delete_doc("Builder Page", page_id, force=True, ignore_permissions=True)
 		for doctype in MINTED:
 			for name in frappe.get_all(doctype, {"creation": [">=", since]}, pluck="name"):
 				frappe.delete_doc(doctype, name, force=True, ignore_permissions=True)

@@ -1,6 +1,7 @@
 """What the eval reads off a finished turn: the run, the reply, a card, and the
 built page's design fingerprint. No judge model, so two runs compare exactly."""
 
+import colorsys
 import json
 import re
 from itertools import pairwise
@@ -19,9 +20,36 @@ class PageMeasure:
 		re.I,
 	)
 
-	def __init__(self, root: dict):
+	# the faces models reach for when they stop looking (Impeccable's reflex list)
+	REFLEX_FACES = frozenset(
+		{
+			"fraunces",
+			"playfair display",
+			"cormorant",
+			"cormorant garamond",
+			"lora",
+			"crimson",
+			"crimson pro",
+			"newsreader",
+			"syne",
+			"space grotesk",
+			"space mono",
+			"ibm plex sans",
+			"ibm plex serif",
+			"ibm plex mono",
+			"dm sans",
+			"dm serif display",
+			"dm serif text",
+			"outfit",
+			"plus jakarta sans",
+			"instrument sans",
+		}
+	)
+
+	def __init__(self, root: dict, tokens: dict | None = None):
 		self.root = root
 		self.blocks = list(walk(root))
+		self.tokens = tokens or {}
 
 	def measures(self) -> dict:
 		text = " ".join(block_text(b) for b in self.blocks)
@@ -36,7 +64,23 @@ class PageMeasure:
 			"dashes": len(re.findall(DASHES, text)),
 			"stock_phrases": len(self.STOCK.findall(text)),
 			"no_mobile_fallback": sum(lacks_mobile_fallback(b) for b in self.blocks),
+			"reflex_faces": sum(face.lower() in self.REFLEX_FACES for face in self.fonts()),
+			"cream_ground": int(is_cream(self.ground())),
 		}
+
+	def look(self) -> dict:
+		return {"fonts": sorted(self.fonts()), "ground": self.ground()}
+
+	def fonts(self) -> set[str]:
+		return {self.resolve(font) for b in self.blocks if (font := styles(b).get("fontFamily"))}
+
+	def ground(self) -> str:
+		return self.resolve(styles(self.root).get("backgroundColor"))
+
+	def resolve(self, value) -> str:
+		"""A token handle, var(--<id>), as the value it stands for."""
+		handle = re.fullmatch(r"var\(--([\w-]+)\)", str(value or "").strip())
+		return str(self.tokens.get(handle.group(1), value) if handle else value or "")
 
 	def eyebrow_headings(self) -> int:
 		count = 0
@@ -106,6 +150,16 @@ def summary_line(result: dict) -> str:
 	if page:
 		line += " | " + " ".join(f"{k}={v}" for k, v in page.items())
 	return line + f" | reply dashes={result['reply']['dashes']} hype={result['reply']['hype']}"
+
+
+def is_cream(colour: str) -> bool:
+	"""A warm, pale, muted ground: the cream of the most common generated look."""
+	match = re.fullmatch(r"#([0-9a-fA-F]{6})", colour.strip())
+	if not match:
+		return False
+	r, g, b = (int(match.group(1)[i : i + 2], 16) / 255 for i in (0, 2, 4))
+	hue, lightness, saturation = colorsys.rgb_to_hls(r, g, b)
+	return 20 <= hue * 360 <= 60 and lightness >= 0.85 and 0.15 <= saturation <= 0.8
 
 
 def walk(block: dict):
