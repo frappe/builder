@@ -34,7 +34,12 @@ function getEndsInTitle(daysLeft: number) {
 
 function getDeletionNotice(deletesOn: string | null) {
 	if (!deletesOn) return __("Choose a plan to keep using your site.");
-	const date = new Date(deletesOn).toLocaleDateString(undefined, { day: "numeric", month: "short" });
+	// a date-only string parses as UTC midnight, so format in UTC to keep the same day
+	const date = new Date(deletesOn).toLocaleDateString(undefined, {
+		day: "numeric",
+		month: "short",
+		timeZone: "UTC",
+	});
 	return __("Your site will be deleted on {0}. Choose a plan to keep it.", [date]);
 }
 

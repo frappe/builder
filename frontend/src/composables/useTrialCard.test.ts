@@ -40,6 +40,15 @@ describe("trial card content", () => {
 		expect(content.description).toContain("Your site will be deleted on");
 	});
 
+	it("shows the deletion day from Central in a timezone west of UTC", () => {
+		vi.stubEnv("TZ", "America/New_York");
+		const content = getTrialCardContent(activeTrial({ state: "Ended", deletes_on: "2026-11-17" }));
+		vi.unstubAllEnvs();
+
+		expect(content.description).toContain("17");
+		expect(content.description).not.toContain("16");
+	});
+
 	it("leaves out the date when Central has not set one", () => {
 		const content = getTrialCardContent(activeTrial({ state: "Ended", deletes_on: null }));
 
