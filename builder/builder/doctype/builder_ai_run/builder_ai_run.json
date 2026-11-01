@@ -1,0 +1,100 @@
+{
+ "doctype": "DocType",
+ "name": "Builder AI Run",
+ "module": "Builder",
+ "engine": "InnoDB",
+ "autoname": "prompt",
+ "field_order": [
+  "session",
+  "page",
+  "run_user",
+  "status",
+  "model",
+  "user_message",
+  "heartbeat_on",
+  "finished_on",
+  "metadata_json",
+  "payload_json",
+  "cancel_requested"
+ ],
+ "fields": [
+  {
+   "fieldname": "session",
+   "fieldtype": "Link",
+   "label": "Session",
+   "options": "Builder AI Session",
+   "search_index": 1
+  },
+  {
+   "fieldname": "page",
+   "fieldtype": "Link",
+   "label": "Page",
+   "options": "Builder Page",
+   "search_index": 1
+  },
+  {
+   "fieldname": "run_user",
+   "fieldtype": "Link",
+   "label": "Run User",
+   "options": "User"
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "options": "queued\nrunning\nwaiting_input\ncomplete\ncancelled\nfailed\ninterrupted",
+   "search_index": 1
+  },
+  {
+   "fieldname": "model",
+   "fieldtype": "Data",
+   "label": "Model"
+  },
+  {
+   "fieldname": "user_message",
+   "fieldtype": "Data",
+   "label": "User Message"
+  },
+  {
+   "fieldname": "heartbeat_on",
+   "fieldtype": "Datetime",
+   "label": "Heartbeat On"
+  },
+  {
+   "fieldname": "finished_on",
+   "fieldtype": "Datetime",
+   "label": "Finished On"
+  },
+  {
+   "fieldname": "metadata_json",
+   "fieldtype": "Long Text",
+   "label": "Metadata Json"
+  },
+  {
+   "fieldname": "payload_json",
+   "fieldtype": "Long Text",
+   "label": "Queued request",
+   "hidden": 1
+  },
+  {
+   "fieldname": "cancel_requested",
+   "fieldtype": "Check",
+   "label": "Cancel Requested",
+   "read_only": 1
+  }
+ ],
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1
+  },
+  {
+   "role": "Website Manager",
+   "if_owner": 1,
+   "read": 1
+  }
+ ],
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "track_changes": 0
+}

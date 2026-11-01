@@ -1,6 +1,6 @@
 import * as yaml from "js-yaml";
 import { lucideSVG } from "./lucideIcon";
-import { normalizeStyles } from "./normalizeStyles";
+import { applyStylePatch } from "./normalizeStyles";
 import type { ChatMessage } from "./types";
 
 /** HTML attributes that map to first-class Block attributes (vs. customAttributes). */
@@ -97,7 +97,7 @@ export function bindingEntry(property: string, field: string | null | undefined)
 /** Convert the agent's compact block YAML into the editor's BlockOptions shape.
  * `isRoot` marks the top-level block of a generated page as the <body>; the editor
  * then derives blockId="root" from that (Block.isRoot() === originalElement "body").
- * Block ids are NOT carried in the YAML — the editor assigns them. */
+ * Compact references are kept when supplied; otherwise preview IDs are temporary. */
 export function convertYAMLtoBlock(yamlBlock: Record<string, any>, isRoot = false): BlockOptions {
 	if (!yamlBlock || typeof yamlBlock !== "object" || Array.isArray(yamlBlock)) return yamlBlock;
 	const ensureObject = (value: any) =>
@@ -108,12 +108,13 @@ export function convertYAMLtoBlock(yamlBlock: Record<string, any>, isRoot = fals
 	// keep the name in data-lucide so the server can re-collapse it for cheap edit context.
 	if (yamlBlock.icon) return convertIconBlock(yamlBlock, ensureObject, ensureArray);
 	const block: BlockOptions = {
+		...(yamlBlock.ref ? { blockId: yamlBlock.ref } : {}),
 		element: yamlBlock.el || "div",
 		blockName: yamlBlock.name || "",
-		baseStyles: normalizeStyles(yamlBlock.style),
-		attributes: ensureObject(yamlBlock.attrs),
-		mobileStyles: normalizeStyles(yamlBlock.m_style),
-		tabletStyles: normalizeStyles(yamlBlock.t_style),
+		baseStyles: applyStylePatch({}, yamlBlock.style),
+		...attributeMaps(ensureObject(yamlBlock.attrs)),
+		mobileStyles: applyStylePatch({}, yamlBlock.m_style),
+		tabletStyles: applyStylePatch({}, yamlBlock.t_style),
 		classes: ensureArray(yamlBlock.classes),
 	};
 	if (isRoot) block.originalElement = "body";
@@ -154,8 +155,8 @@ export function convertYAMLtoBlock(yamlBlock: Record<string, any>, isRoot = fals
 	// NB: pass each child explicitly — Array.map would feed the index as `isRoot`.
 	block.children = Array.isArray(yamlBlock.c) ? yamlBlock.c.map((c: any) => convertYAMLtoBlock(c)) : [];
 	// `repeat` = a static repeater: ONE template + JSON data. The data array is NOT
-	// stored on the block — it's collected into the page_data_script shim (see
-	// buildRepeaterDataScript); the block keeps only the loop wiring + template child.
+	// stored on the block — the server compiles page data; this preview keeps only
+	// the loop wiring and template child.
 	if (yamlBlock.repeat && typeof yamlBlock.repeat === "object" && yamlBlock.repeat.item) {
 		block.isRepeaterBlock = true;
 		block.dataKey = { key: stripBindingPrefix(yamlBlock.repeat.data), property: "innerHTML", type: "key" };
@@ -164,33 +165,13 @@ export function convertYAMLtoBlock(yamlBlock: Record<string, any>, isRoot = fals
 	return block;
 }
 
-/** Walk the raw generation YAML and collect each repeater's static data array,
- * keyed by its `repeat.data` key. */
-function collectRepeaterData(node: any, out: Record<string, unknown[]>): void {
-	if (!node || typeof node !== "object") return;
-	if (Array.isArray(node)) {
-		node.forEach((n) => collectRepeaterData(n, out));
-		return;
+function attributeMaps(attrs: Record<string, any>, custom: Record<string, any> = {}) {
+	const attributes: Record<string, any> = {};
+	const customAttributes = { ...custom };
+	for (const [key, value] of Object.entries(attrs)) {
+		if (value != null) (STANDARD_ATTRS.has(key) ? attributes : customAttributes)[key] = value;
 	}
-	const rep = node.repeat;
-	if (rep && typeof rep === "object" && rep.data && Array.isArray(rep.items)) {
-		out[String(rep.data)] = rep.items;
-		collectRepeaterData(rep.item, out); // a template may itself nest a repeater
-	}
-	if (Array.isArray(node.c)) node.c.forEach((n: any) => collectRepeaterData(n, out));
-}
-
-/** Build the page_data_script shim for a generated page: `data.<key> = <json>` per
- * repeater. The AI supplies only JSON data — this fixed assignment is the ONLY code,
- * so there is no AI-authored Python. Returns "" when the page has no repeaters. */
-export function buildRepeaterDataScript(yamlString: string): string {
-	const parsed = getValidPartialYAML(yamlString);
-	if (!parsed) return "";
-	const out: Record<string, unknown[]> = {};
-	collectRepeaterData(parsed, out);
-	return Object.entries(out)
-		.map(([key, items]) => `data.${key} = ${JSON.stringify(items)}`)
-		.join("\n");
+	return { attributes, customAttributes };
 }
 
 /** Expand a `{ icon: <lucide-name> }` node into an inline-SVG span block. */
@@ -200,29 +181,30 @@ function convertIconBlock(
 	ensureArray: (v: any) => any[],
 ): BlockOptions {
 	const name = String(node.icon).trim();
-	const style = normalizeStyles(node.style);
 	// Size lives on the WRAPPER (the inner svg fills it at 100%), so it stays
 	// editable — resizing the block or setting style.width/height resizes the icon.
 	const rawSize = node.size ?? "24px";
 	const size = /^\d+$/.test(String(rawSize)) ? `${parseInt(String(rawSize), 10)}px` : String(rawSize);
 	const svg = lucideSVG(name, Number(node.stroke) || 2);
 	const block: BlockOptions = {
+		...(node.ref ? { blockId: node.ref } : {}),
 		element: "svg",
 		blockName: node.name || `Icon: ${name}`,
-		baseStyles: {
-			display: "inline-flex",
-			alignItems: "center",
-			justifyContent: "center",
-			lineHeight: "0",
-			flexShrink: 0,
-			width: size,
-			height: size,
-			...style, // explicit style.width/height/color override these defaults
-		},
-		attributes: ensureObject(node.attrs),
-		customAttributes: { "data-lucide": name },
-		mobileStyles: normalizeStyles(node.m_style),
-		tabletStyles: normalizeStyles(node.t_style),
+		baseStyles: applyStylePatch(
+			{
+				display: "inline-flex",
+				alignItems: "center",
+				justifyContent: "center",
+				lineHeight: "0",
+				flexShrink: 0,
+				width: size,
+				height: size,
+			},
+			node.style,
+		),
+		...attributeMaps(ensureObject(node.attrs), { "data-lucide": name }),
+		mobileStyles: applyStylePatch({}, node.m_style),
+		tabletStyles: applyStylePatch({}, node.t_style),
 		classes: ensureArray(node.classes),
 		children: [],
 	};

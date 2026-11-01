@@ -54,6 +54,7 @@ from builder.ai.agent.tree import WorkingTree
 from builder.ai.block_codec import BlockCodec
 from builder.ai.models import ModelRegistry
 from builder.ai.prompts import Prompts
+from builder.ai.runs import AIRun
 from builder.ai.session import AISession
 from builder.ai.snapshots import capture_page_state, save_revert_snapshot
 from builder.utils import to_compact_yaml
@@ -88,6 +89,8 @@ SNAPSHOT_TOOLS = frozenset(
 		"generate_page",
 		"set_page_script",
 		"update_script",
+		"write_page_data_script",
+		"attach_page_script",
 	}
 )
 
@@ -123,6 +126,7 @@ ACTIVITY_SILENT = frozenset({"present_ui"})
 READ_ONLY_SERVER_TOOLS = frozenset(
 	{
 		"query_blocks",
+		"load_tools",
 		"read_block",
 		"read_page",
 		"run_python",
@@ -337,6 +341,7 @@ class AgentRunner:
 		user: str | None = None,
 		page_id: str | None = None,
 		session_id: str | None = None,
+		run_id: str | None = None,
 		selected_block_ids: list[str] | None = None,
 		image_url: str | None = None,
 		image_file_url: str | None = None,
@@ -350,6 +355,12 @@ class AgentRunner:
 		self.user = user or frappe.session.user
 		self.page_id = page_id
 		self.session_id = session_id
+		self.run_id = run_id
+		self.event_seq = 0
+		self.terminal_status = "failed"
+		self.started = time.monotonic()
+		self.last_cancel_check = 0.0
+		self.durable_cancelled = False
 		# The realtime channel: the page the chat is attached to.
 		self.channel = page_id or session_id
 		self.selected_block_ids = selected_block_ids or []
@@ -442,6 +453,7 @@ class AgentRunner:
 		# `cached_tokens` is the cache-read slice of prompt_tokens; `per_call` keeps
 		# each call's split so a turn can be read round by round.
 		self.usage = {
+			"attempts": 0,
 			"prompt_tokens": 0,
 			"completion_tokens": 0,
 			"total_tokens": 0,
@@ -453,14 +465,21 @@ class AgentRunner:
 	# --- cancellation -----------------------------------------------------
 
 	def cancel_key(self) -> str | None:
+		if self.run_id:
+			return AIRun.cancel_key(self.run_id)
 		return f"builder_ai_cancel:{self.session_id}" if self.session_id else None
 
 	def is_cancelled(self) -> bool:
 		key = self.cancel_key()
+		if self.run_id and time.monotonic() - self.last_cancel_check >= 1:
+			self.last_cancel_check = time.monotonic()
+			self.durable_cancelled = bool(frappe.db.get_value(AIRun.DOCTYPE, self.run_id, "cancel_requested"))
 		# use_local_cache=False is critical: the cancel is set by a DIFFERENT
 		# web worker, and Frappe's per-request local cache would otherwise
 		# pin the first (miss) result and never re-read Redis.
-		return bool(frappe.cache.get_value(key, use_local_cache=False)) if key else False
+		return self.durable_cancelled or (
+			bool(frappe.cache.get_value(key, use_local_cache=False)) if key else False
+		)
 
 	def clear_cancel_flag(self) -> None:
 		if key := self.cancel_key():
@@ -480,6 +499,11 @@ class AgentRunner:
 	# --- realtime ---------------------------------------------------------
 
 	def emit(self, suffix: str, *, after_commit: bool = False, **kwargs):
+		self.event_seq += 1
+		if suffix in ("complete", "error", "clarify"):
+			self.terminal_status = {"complete": "complete", "error": "failed", "clarify": "waiting_input"}[
+				suffix
+			]
 		# The channel is the page (in-editor chat) or, page-less, the session (dashboard
 		# chat + sub-agent progress). Fixed at construction — see self.channel.
 		#
@@ -492,7 +516,13 @@ class AgentRunner:
 			event = f"{event}_{self.channel}"
 		frappe.publish_realtime(
 			event,
-			{"page_id": self.page_id, "session_id": self.session_id, **kwargs},
+			{
+				"page_id": self.page_id,
+				"session_id": self.session_id,
+				"run_id": self.run_id,
+				"seq": self.event_seq,
+				**kwargs,
+			},
 			user=self.user,
 			after_commit=after_commit,
 		)
@@ -506,6 +536,9 @@ class AgentRunner:
 		state, self.pending_state = self.pending_state, None
 		if snapshot := save_revert_snapshot(self.page_id, state):
 			self.revert_snapshot = snapshot
+		else:
+			self.pending_state = state
+			raise ValueError("Could not create a restore point. The page was not changed.")
 
 	@staticmethod
 	def cached_prompt_tokens(usage) -> int:
@@ -610,6 +643,12 @@ class AgentRunner:
 		# cache marker on the prompt right after it cuts both latency and input cost
 		# across the loop.
 		blocks = [self.build_open_page_context(), self.build_page_context(), self.build_memory_context()]
+		if self.page_id:
+			from builder.ai.brief import DesignBrief
+
+			brief = DesignBrief(self.page_id)
+			blocks.append(brief.context())
+			self.found_images = brief.read().get("assets", [])
 		context = "\n\n".join(block for block in blocks if block)
 		if context:
 			messages.append({"role": "user", "content": context})
@@ -709,6 +748,7 @@ class AgentRunner:
 		calls an artifact tool with a short brief, and the loop hands generation
 		to that tool's generator, which streams the artifact as content.
 		"""
+		self.usage["attempts"] += 1
 		stream = llm.complete_with_tools(
 			self.loop_model,
 			messages,
@@ -780,37 +820,27 @@ class AgentRunner:
 
 		tool_operations: list[dict] = []
 		raw_tool_calls: list[dict] = []
+		self.finish_reasons.append(finish_reason)
+		if acc and finish_reason not in ("tool_calls", "stop"):
+			raise ValueError(
+				"The model did not finish its tool calls. No edits from this response were applied."
+			)
 		for idx in sorted(acc):
 			entry = acc[idx]
 			if not entry["name"]:
 				continue
 			raw_arguments = entry["args"] or ""
-			parsed, repaired = llm.loads_tolerant(raw_arguments)
-			truncated_args = BlockCodec.truncate_for_log(raw_arguments, 2000)
-			if parsed is None:
-				# Even tolerant parsing failed — don't silently drop to {} with no trace
-				# (that surfaces as an empty plan/edit). Log it loudly.
-				args = {}
-				logger.warning(
-					"AI tool args UNPARSEABLE (tool=%s): %s",
-					entry["name"],
-					truncated_args,
-				)
-			else:
-				args = parsed if isinstance(parsed, dict) else {}
-				if repaired:
-					self.args_repaired += 1
-					logger.warning(
-						"AI tool args recovered via json_repair (tool=%s): %s",
-						entry["name"],
-						truncated_args,
-					)
-			logger.info(
-				"AI tool response: tool=%s, repaired=%s, raw_arguments=%s",
-				entry["name"],
-				repaired,
-				truncated_args,
-			)
+			try:
+				parsed = json.loads(raw_arguments)
+			except (ValueError, TypeError):
+				raise ValueError(
+					"The model returned incomplete tool arguments. No edits were applied."
+				) from None
+			if not isinstance(parsed, dict):
+				raise ValueError("Tool arguments must be an object.")
+			args = parsed
+			logger.info("AI tool response: tool=%s", entry["name"])
+
 			tool_operations.append({"tool_name": entry["name"], "args": args})
 			raw_tool_calls.append(
 				{
@@ -821,7 +851,6 @@ class AgentRunner:
 			)
 
 		content = "".join(content_parts)
-		self.finish_reasons.append(finish_reason)
 		# finish_reason="length" means the model hit max_tokens mid-output — the usual
 		# cause of truncated/unparseable tool args. Surface it as the prime suspect.
 		if finish_reason == "length":
@@ -857,7 +886,7 @@ class AgentRunner:
 				op["args"]["blocks"] = page_writer.normalize_component_instances(op["args"]["blocks"])
 				self.tree.root = op["args"]["blocks"]
 		self.applied_operations.extend(ops)
-		self.emit("tool_batch", operations=ops)
+		self.emit("tool_batch", operations=ops, after_commit=True)
 		if self.page_id and self.tree and self.tree.root:
 			page_writer.save_draft_blocks(self.page_id, self.tree.root)
 		return ops
@@ -1030,17 +1059,25 @@ class AgentRunner:
 		results: dict[int, str] = {}
 		applied: list[dict] = []
 		for op in ops:
+			if self.is_cancelled():
+				raise CancelledError
+			from builder.ai.brief import validate_asset_usage
+
+			try:
+				validate_asset_usage(self.found_images, op["args"])
+			except ValueError as error:
+				results[id(op)] = f"FAILED: {error}"
+				continue
 			if op["tool_name"] in SNAPSHOT_TOOLS:
 				self.ensure_revert_snapshot()
 			content = self.tree.apply(op["tool_name"], op["args"])
 			results[id(op)] = content
 			# "FAILED" (hard miss) or "NOT FOUND" (partial bulk miss) — a correction
 			# the model is now being asked to make. Record + log so it's not invisible.
-			if "FAILED" in content or "NOT FOUND" in content:
+			if any(marker in content for marker in ("FAILED", "NOT FOUND", "REJECTED")):
 				self.tool_failures.append(f"{op['tool_name']}: {content}")
 				logger.warning("Client op rejected — %s: %s", op["tool_name"], content)
-			if not content.startswith("FAILED"):
-				applied.append(op)
+			applied.extend(self.tree.accepted_operations)
 		if applied:
 			self.applied_operations.extend(applied)
 			# after_commit: an op can reference a doc this round created (a component
@@ -1064,21 +1101,41 @@ class AgentRunner:
 		provider could not fetch. Reported as FAILED instead, which the tools already
 		use for expected failures, so the model can adjust and carry on. The savepoint
 		keeps a half-applied write from riding along."""
-		savepoint = f"tool_{self.server_mutations}"
-		frappe.db.savepoint(savepoint)
+		from builder.ai.transactions import ToolSavepoint
+
+		savepoint = ToolSavepoint(f"tool_{self.server_mutations}")
+		pending_count = len(self.pending_client_ops)
 		try:
-			return tool.handler(self, op["args"])
+			if op["tool_name"] in {
+				"set_page_settings",
+				"set_page_script",
+				"update_script",
+				"write_page_data_script",
+			}:
+				from builder.ai.brief import validate_asset_usage
+
+				validate_asset_usage(self.found_images, op["args"])
+			result = tool.handler(self, op["args"])
 		except CancelledError:
+			savepoint.rollback()
+			del self.pending_client_ops[pending_count:]
 			raise
 		except Exception as e:
-			frappe.db.rollback(save_point=savepoint)
+			savepoint.rollback()
+			del self.pending_client_ops[pending_count:]
 			logger.warning(f"tool {op['tool_name']} raised: {e}", exc_info=True)
 			return f"FAILED: {op['tool_name']} errored ({type(e).__name__}: {e}). Adjust and try again."
+		if str(result).startswith("FAILED"):
+			savepoint.rollback()
+			del self.pending_client_ops[pending_count:]
+		return result
 
 	def run_op(self, op: dict, client_results: dict[int, str]) -> str | None:
 		"""Produce one tool call's result string. Client ops were already applied by
 		apply_client_ops; server ops run their handler here. Returns None when a
 		terminal tool ended the turn (its handler emitted the card and persisted it)."""
+		if self.is_cancelled():
+			raise CancelledError
 		kind = self.op_kind(op)
 		if kind == "client":
 			return client_results[id(op)]
@@ -1097,7 +1154,7 @@ class AgentRunner:
 			if ops:
 				# The authoritative op replaces the throwaway streamed preview with
 				# the server's block tree (shared ids).
-				self.emit("tool_batch", operations=ops)
+				self.emit("tool_batch", operations=ops, after_commit=True)
 			return content
 		entry = self.begin_activity(op["tool_name"], op["args"])
 		if op["tool_name"] in SNAPSHOT_TOOLS:
@@ -1112,7 +1169,7 @@ class AgentRunner:
 				# script list / undo tracking — flagged so the canvas does NO DB work.
 				op["args"]["server_applied"] = True
 				self.applied_operations.append(op)
-				self.emit("tool_batch", operations=[op])
+				self.emit("tool_batch", operations=[op], after_commit=True)
 		return content
 
 	def commit_round_text(self, text: str, applied: list[dict]) -> None:
@@ -1150,6 +1207,7 @@ class AgentRunner:
 			self.session_id, "assistant", msg, message_type="status", metadata={"status": "cancelled"}
 		)
 		self.emit("complete", message=msg, after_commit=True)
+		self.terminal_status = "cancelled"
 
 	def fail_turn(self, message: str) -> None:
 		"""End the turn with a persisted error message + error event."""
@@ -1159,8 +1217,6 @@ class AgentRunner:
 		self.emit("error", message=message, after_commit=True)
 
 	def run(self):
-		# Clear any stale cancel flag from a previous turn before starting.
-		self.clear_cancel_flag()
 		started = time.monotonic()
 		logger.info(
 			f"AgentRunner.run: page_id={self.page_id}, model={self.model}, "
@@ -1173,20 +1229,36 @@ class AgentRunner:
 			self.run_token = AISession.start_run(self.session_id)
 			if self.run_token is None:
 				logger.warning(f"AgentRunner.run: session {self.session_id} already running, rejecting")
+				if self.run_id:
+					AIRun.finish(self.run_id, "failed", {"reason": "Another worker owns this session."})
 				self.emit(
 					"error", message="Another AI request is still processing. Please wait for it to finish."
 				)
 				return
 
 		try:
+			if self.is_cancelled():
+				self.emit_cancelled()
+				return
 			self.run_turn(started)
+		except Exception as exc:
+			logger.exception("AI run failed")
+			self.fail_turn(llm.user_facing_error(exc))
 		finally:
-			self.clear_cancel_flag()
-			for key, token in self.held_locks:
-				locks.release(key, token)
-			self.held_locks = []
-			if self.session_id:
-				AISession.end_run(self.session_id, self.run_token)
+			try:
+				metadata = self.turn_metadata()
+				if self.session_id:
+					AISession.get(self.session_id, user=self.user).update_last_assistant_metadata(metadata)
+				if self.run_id:
+					AIRun.finish(self.run_id, self.terminal_status, metadata)
+				frappe.db.commit()
+			finally:
+				self.clear_cancel_flag()
+				for key, token in self.held_locks:
+					locks.release(key, token)
+				self.held_locks = []
+				if self.session_id:
+					AISession.end_run(self.session_id, self.run_token)
 
 	def run_turn(self, started: float):
 		# Load the page into the authoritative working tree, under the page lock.
@@ -1212,7 +1284,7 @@ class AgentRunner:
 			for round_index in range(MAX_ROUNDS):
 				# A cancel that landed mid-round (e.g. during a generation stream that
 				# kept its partial page) ends the turn HERE, before another paid call.
-				if round_index and self.is_cancelled():
+				if self.is_cancelled():
 					raise CancelledError
 				self.refresh_cache_markers(messages)
 				tool_operations, summary_text, raw_tool_calls = self.call_tool_llm(messages)
@@ -1241,10 +1313,13 @@ class AgentRunner:
 					if content is None:
 						turn_over = True  # terminal card emitted + persisted
 						break
-					messages.append({"role": "tool", "tool_call_id": tc["id"], "content": content})
+					messages.append(
+						{"role": "tool", "tool_call_id": tc["id"], "content": self.bounded_result(content)}
+					)
 				if turn_over:
 					return
 				self.flush_pending_images(messages)
+				self.compact_tool_history(messages)
 				self.checkpoint()
 			else:
 				# Loop ran the full MAX_ROUNDS without the model finishing — a very large
@@ -1271,7 +1346,67 @@ class AgentRunner:
 		and messages written in rounds 1-6. It is also what lets the editor and the
 		chat, both separate requests, see a long turn progress instead of nothing
 		until it ends. One commit per round: individual tools never commit."""
+		if self.run_id:
+			frappe.db.set_value(
+				AIRun.DOCTYPE,
+				self.run_id,
+				{
+					"heartbeat_on": frappe.utils.now_datetime(),
+					"metadata_json": json.dumps(self.turn_metadata(), separators=(",", ":")),
+				},
+			)
 		frappe.db.commit()  # nosemgrep
+
+	@staticmethod
+	def bounded_result(content: str) -> str:
+		limit = 16000
+		return (
+			content
+			if len(content) <= limit
+			else content[:limit] + "\n[Result truncated. Query fewer records or fields.]"
+		)
+
+	def compact_tool_history(self, messages: list[dict]):
+		start = self.prompt_index + 1
+		rounds = [i for i in range(start, len(messages)) if messages[i].get("tool_calls")]
+		if len(rounds) <= 3:
+			return
+		cutoff = rounds[-3]
+		notes = [str(m.get("content") or "")[:400] for m in messages[start:cutoff] if m.get("role") == "tool"]
+		self.tool_history_note = (getattr(self, "tool_history_note", "") + "\n" + "\n".join(notes))[-4000:]
+		messages[start:cutoff] = [
+			{
+				"role": "user",
+				"content": "Earlier tool results (abbreviated; read current blocks to inspect exact state):\n"
+				+ self.tool_history_note,
+			}
+		]
+
+	def turn_metadata(self) -> dict:
+		self.usage["incomplete"] = self.usage["attempts"] > self.usage["calls"]
+		metadata = {
+			"runId": self.run_id,
+			"model": self.model,
+			"operations": len(self.applied_operations),
+			"debug": {
+				"stopReason": self.stop_reason or self.terminal_status,
+				"loopModel": self.loop_model,
+				"rounds": len(self.trace),
+				"argsRepaired": self.args_repaired,
+				"finishReasons": self.finish_reasons,
+				"toolFailures": self.tool_failures,
+				"streamRetries": self.stream_retries,
+				"tokens": self.usage,
+				"contextWindow": ModelRegistry.context_window(self.loop_model),
+				"elapsedMs": round((time.monotonic() - self.started) * 1000),
+				"trace": self.trace,
+			},
+		}
+		if self.revert_snapshot:
+			metadata["revertSnapshot"] = self.revert_snapshot
+		if steps := self.timeline():
+			metadata["steps"] = steps
+		return metadata
 
 	def finish_turn(self, summary_text: str, started: float):
 		"""Wrap up a completed loop: pick/emit the final summary and persist the turn."""
@@ -1342,6 +1477,7 @@ class AgentRunner:
 		)
 		final_metadata = {
 			"status": "complete",
+			"runId": self.run_id,
 			"model": self.model,
 			"operations": len(self.applied_operations),
 			# Trace for the agent debugger: why the turn ended + what the model did each
@@ -1395,28 +1531,9 @@ class AgentRunner:
 		)
 		if not first:
 			return
-		try:
-			title = llm.complete(
-				self.model,
-				[
-					{
-						"role": "user",
-						"content": (
-							"Name this website-builder chat in 2-5 words — what it's about, not what was "
-							"asked. Title case, no quotes, no trailing punctuation. Reply with the title "
-							f"only.\nFirst message: {first[:400]}"
-						),
-					}
-				],
-				{"max_tokens": 24, "temperature": 0.3},
-				stream=False,
-				api_key=self.api_key,
-			)
-			title = (title or "").strip().strip("\"'.").strip()
-			if 0 < len(title) <= 60 and "\n" not in title:
-				frappe.db.set_value(AISession.DOCTYPE, self.session_id, "title", title, update_modified=False)
-		except Exception as e:
-			logger.warning("session title generation skipped: %s", e)
+		title = " ".join(first.split())[:60]
+		if title:
+			frappe.db.set_value(AISession.DOCTYPE, self.session_id, "title", title, update_modified=False)
 
 	def handle_terminal(self, op: dict) -> str | None:
 		"""Run a terminal tool's handler (which emits the appropriate event and
@@ -1436,8 +1553,12 @@ class AgentRunner:
 			return ("FAILED: no page is open.", [])
 		entry = self.begin_activity(op["tool_name"], op["args"])
 		self.ensure_revert_snapshot()  # generation replaces the block tree
-		ops = tool.generator(self, op["args"])
-		self.end_activity(entry)
+		try:
+			ops = tool.generator(self, op["args"])
+		except ValueError as error:
+			return (f"FAILED: {error}", [])
+		finally:
+			self.end_activity(entry)
 		if not ops:
 			return ("FAILED: generation produced nothing. Retry generate_page with a fuller brief.", [])
 		root = ops[0]["args"]["blocks"][0]
@@ -1506,4 +1627,24 @@ class AgentRunner:
 def run_agent_job(prompt: str, model: str, **kwargs):
 	# Resolved here so the key never sits in Redis; jobs queued by older code still pass one.
 	kwargs.pop("api_key", None)
-	AgentRunner(prompt, model, llm.resolve_api_key(model), **kwargs).run()
+	run_id = kwargs.get("run_id")
+	if run_id and not AIRun.claim(run_id):
+		return
+	try:
+		if run_id:
+			doc = frappe.get_doc(AIRun.DOCTYPE, run_id)
+			frappe.set_user(doc.run_user)
+			frappe.get_doc("Builder Page", doc.page).check_permission("write")
+			AISession.get(doc.session, page_id=doc.page)
+		AgentRunner(prompt, model, llm.resolve_api_key(model), **kwargs).run()
+	except Exception:
+		if run_id:
+			message = "The run could not start. Check your page access and model connection, then retry."
+			metadata = {"status": "error", "runId": run_id, "reason": message}
+			AIRun.finish(run_id, "failed", metadata)
+			session_id = frappe.db.get_value(AIRun.DOCTYPE, run_id, "session")
+			AISession.try_append_message(
+				session_id, "assistant", message, message_type="status", metadata=metadata
+			)
+			frappe.db.commit()
+		raise

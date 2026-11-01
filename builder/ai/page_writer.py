@@ -10,6 +10,7 @@ always comes from this module.
 
 import json
 import re
+from copy import deepcopy
 
 import frappe
 import yaml
@@ -119,12 +120,12 @@ def normalize_value(prop: str, value):
 	return value
 
 
-def normalize_styles(styles) -> dict:
+def normalize_styles(styles, keep_null: bool = False) -> dict:
 	if not isinstance(styles, dict):
 		return {}
 	out = {}
 	for raw_key, value in styles.items():
-		if value is None:
+		if value is None and not keep_null:
 			continue
 		# Custom properties (--brand) are arbitrary — pass through untouched.
 		if raw_key.startswith("--"):
@@ -162,10 +163,11 @@ def new_block_id() -> str:
 
 def convert_icon_block(node: dict) -> dict:
 	name = str(node.get("icon")).strip()
-	style = normalize_styles(node.get("style"))
+	style = normalize_styles(node.get("style"), keep_null=True)
 	raw_size = node.get("size") or "24px"
 	size = f"{int(raw_size)}px" if re.match(r"^\d+$", str(raw_size)) else str(raw_size)
 	base = {**ICON_WRAPPER_DEFAULTS, "width": size, "height": size, **style}
+	base = {key: value for key, value in base.items() if value is not None}
 	block = {
 		"blockId": new_block_id(),
 		"element": "svg",
@@ -178,7 +180,13 @@ def convert_icon_block(node: dict) -> dict:
 		"children": [],
 	}
 	if isinstance(node.get("attrs"), dict):
-		block["attributes"] = node["attrs"]
+		from builder.ai.block_codec import STANDARD_ATTRS
+
+		attrs = {key: value for key, value in node["attrs"].items() if value is not None}
+		block["attributes"] = {key: value for key, value in attrs.items() if key in STANDARD_ATTRS}
+		block["customAttributes"].update(
+			{key: value for key, value in attrs.items() if key not in STANDARD_ATTRS}
+		)
 	mob = normalize_styles(node.get("m_style"))
 	if mob:
 		block["mobileStyles"] = mob
@@ -325,16 +333,17 @@ def convert_yaml_block(node, is_root: bool = False) -> dict | None:
 	# NOT stored on the block — it lands in the page_data_script shim (build_repeater_
 	# data_script); the block keeps only the loop wiring + template child.
 	repeat = node.get("repeat")
-	if isinstance(repeat, dict) and repeat.get("item"):
-		item = convert_yaml_block(repeat["item"])
-		if item:
-			block["isRepeaterBlock"] = True
-			block["dataKey"] = {
-				"key": strip_binding_prefix(repeat.get("data")),
-				"property": "innerHTML",
-				"type": "key",
-			}
-			child_blocks = [item]
+	if isinstance(repeat, dict):
+		key = repeater_data_key(repeat.get("data"))
+		if "item" in repeat:
+			if not isinstance(repeat["item"], dict):
+				raise ValueError("repeat.item must be a template block.")
+			item = convert_yaml_block(repeat["item"])
+			child_blocks = [item] if item else []
+		if not child_blocks:
+			raise ValueError("A repeater needs a template block in repeat.item or c.")
+		block["isRepeaterBlock"] = True
+		block["dataKey"] = {"key": key, "property": "innerHTML", "type": "key"}
 
 	if child_blocks:
 		block["children"] = child_blocks
@@ -404,6 +413,19 @@ def component_instance_children(component_id: str) -> list:
 # --- repeater data shim — port of collectRepeaterData + buildRepeaterDataScript ---
 
 
+def repeater_data_key(value) -> str:
+	key = strip_binding_prefix(value)
+	if not re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*(?:\.[A-Za-z_][A-Za-z0-9_]*)*", key):
+		raise ValueError("repeat.data must be a plain data key (e.g. cards or catalog.cards).")
+	if any(part.startswith("_") for part in key.split(".")) or key.split(".")[0].lower() in {
+		"true",
+		"false",
+		"none",
+	}:
+		raise ValueError("repeat.data cannot use private keys or a reserved template literal.")
+	return key
+
+
 def collect_repeater_data(node, out: dict) -> None:
 	if isinstance(node, list):
 		for n in node:
@@ -412,24 +434,62 @@ def collect_repeater_data(node, out: dict) -> None:
 	if not isinstance(node, dict):
 		return
 	rep = node.get("repeat")
-	if isinstance(rep, dict) and rep.get("data") and isinstance(rep.get("items"), list):
-		out[str(rep["data"])] = rep["items"]
-		collect_repeater_data(rep.get("item"), out)  # a template may nest a repeater
+	if isinstance(rep, dict):
+		key = repeater_data_key(rep.get("data"))
+		nested = {}
+		collect_repeater_data(rep.get("item", node.get("c")), nested)
+		if "items" in rep:
+			if not isinstance(rep["items"], list):
+				raise ValueError("repeat.items must be a list.")
+			if any(key == old or key.startswith(old + ".") or old.startswith(key + ".") for old in out):
+				raise ValueError(f"Conflicting repeater data key: {key}")
+			items = deepcopy(rep["items"])
+			for item in items:
+				for nested_key, nested_items in nested.items():
+					set_repeater_items(item, nested_key, nested_items)
+			out[key] = items
+		elif nested:
+			raise ValueError(
+				"Nested repeat.items needs parent repeat.items; otherwise supply nested data in the data script."
+			)
+		return
 	if isinstance(node.get("c"), list):
 		for n in node["c"]:
 			collect_repeater_data(n, out)
 
 
+def set_repeater_items(item, key: str, items: list) -> None:
+	parts = key.split(".")
+	for part in parts[:-1]:
+		if not isinstance(item, dict):
+			raise ValueError(f"Nested repeater data needs an object at {key}.")
+		item = item.setdefault(part, {})
+	if not isinstance(item, dict) or parts[-1] in item:
+		raise ValueError(f"Conflicting nested repeater data key: {key}")
+	item[parts[-1]] = deepcopy(items)
+
+
 def build_repeater_data_script(parsed) -> str:
 	out: dict = {}
-	collect_repeater_data(parsed, out)
-	return "\n".join(f"data.{key} = {json.dumps(items, separators=(',', ':'))}" for key, items in out.items())
+	collect_repeater_data(unwrap_root(parsed), out)
+	lines = []
+	for key, items in out.items():
+		parent = "data"
+		parts = key.split(".")
+		for part in parts[:-1]:
+			child = f"{parent}[{part!r}]"
+			lines.append(f"{child} = {parent}.get({part!r}) or {{}}")
+			parent = child
+		# JSON validates the supported data types; repr emits Python True/False/None.
+		literal = repr(json.loads(json.dumps(items, allow_nan=False)))
+		lines.append(f"{parent}[{parts[-1]!r}] = {literal}")
+	return "\n".join(lines)
 
 
 # --- top level ---
 
 
-def parse_generation_yaml(yaml_text: str):
+def parse_generation_yaml(yaml_text: str, *, strict: bool = False):
 	"""Parse a generation YAML document, tolerating fences and model slips —
 	one bad line in a 30k-char page must not discard the whole (paid) generation.
 	Salvage order: drop the offending line the parser points at (up to 8 times,
@@ -439,6 +499,8 @@ def parse_generation_yaml(yaml_text: str):
 	try:
 		return yaml.safe_load(text)
 	except yaml.YAMLError as exc:
+		if strict:
+			raise ValueError("Generated YAML is malformed; the previous draft was preserved.") from exc
 		first_error = exc
 		lines = text.split("\n")
 		for attempt in range(8):
@@ -487,12 +549,12 @@ def unwrap_root(parsed) -> dict | None:
 	return root
 
 
-def expand_page_yaml(yaml_text: str, is_root: bool = True) -> tuple[list, str]:
+def expand_page_yaml(yaml_text: str, is_root: bool = True, *, strict: bool = False) -> tuple[list, str]:
 	"""Return ([root_block_dict], page_data_script). Empty ([], "") if unparseable.
 
 	`is_root=True` marks the block as the page <body> (root); pass False when
 	expanding a reusable component's block tree (it is not a page body)."""
-	parsed = parse_generation_yaml(yaml_text)
+	parsed = parse_generation_yaml(yaml_text, strict=strict)
 	if parsed is None:
 		return [], ""
 	root = unwrap_root(parsed)
@@ -501,7 +563,7 @@ def expand_page_yaml(yaml_text: str, is_root: bool = True) -> tuple[list, str]:
 	block = convert_yaml_block(root, is_root=is_root)
 	if not block:
 		return [], ""
-	data_script = build_repeater_data_script(parsed)
+	data_script = build_repeater_data_script(root)
 	return [block], data_script
 
 
@@ -531,11 +593,17 @@ def persist_page(page_id: str, yaml_text: str) -> tuple[dict | None, str]:
 	"""Expand generation YAML and write it to a Builder Page's draft_blocks (+ the
 	repeater data shim). The page stays a DRAFT (published=0). Returns the expanded
 	root block and data script — (None, "") if the YAML produced no blocks."""
-	blocks, data_script = expand_page_yaml(yaml_text)
+	blocks, data_script = expand_page_yaml(yaml_text, strict=True)
 	if not blocks:
 		return None, ""
 	updates = {"draft_blocks": compact_json(blocks)}
 	if data_script:
+		existing = frappe.db.get_value("Builder Page", page_id, "page_data_script") or ""
+		if existing.strip() and existing.strip() != data_script.strip():
+			raise ValueError(
+				"Generation would replace the existing page_data_script. Preserve it and merge the "
+				"repeater data explicitly with write_page_data_script; then generate without repeat.items."
+			)
 		updates["page_data_script"] = data_script
 	# set_value, NOT doc.save: the canvas autosaves the throwaway streamed preview
 	# repeatedly throughout a generation, so a timestamp-checked save loses the race

@@ -12,6 +12,7 @@ applyToolOperation), which replays the same accepted ops on the canvas.
 """
 
 import re
+from copy import deepcopy
 
 from builder.ai.agent.selectors import find_block, walk_blocks
 from builder.ai.block_codec import STANDARD_ATTRS
@@ -96,20 +97,22 @@ def merge_styles(block: dict, args: dict) -> None:
 		("mobile_styles", "mobileStyles"),
 		("tablet_styles", "tabletStyles"),
 	):
-		if styles := normalize_styles(args.get(arg_key)):
-			block.setdefault(block_key, {}).update(styles)
+		for key, value in normalize_styles(args.get(arg_key), keep_null=True).items():
+			if value is None:
+				block.get(block_key, {}).pop(key, None)
+			else:
+				block.setdefault(block_key, {})[key] = value
 
 
 def merge_attributes(block: dict, attrs: dict) -> None:
 	# Same standard/custom split the editor applies (toolDispatch.applyBlockUpdate).
 	for key, value in attrs.items():
 		target = "attributes" if key in STANDARD_ATTRS else "customAttributes"
-		if target == "attributes":
-			# An older write may have filed it as custom, where it would shadow this one.
-			block.get("customAttributes", {}).pop(key, None)
-		if value is None:
-			block.get(target, {}).pop(key, None)
-		else:
+		# Generated and older blocks can have either classification. Clear both so
+		# an unset cannot uncover a stale value in the other map.
+		block.get("attributes", {}).pop(key, None)
+		block.get("customAttributes", {}).pop(key, None)
+		if value is not None:
 			block.setdefault(target, {})[key] = value
 
 
@@ -301,12 +304,7 @@ def merge_block_update(block: dict, args: dict) -> None:
 	if args.get("inner_html") is not None:  # html wins when both are given
 		block["innerHTML"] = args["inner_html"]
 	if args.get("element") is not None:
-		from builder.ai.page_writer import FORBIDDEN_ELEMENTS
-
-		# Silently keep the old element rather than fail the whole (multi-field)
-		# update; code belongs in the script tools, not the block tree.
-		if str(args["element"]).strip().lower() not in FORBIDDEN_ELEMENTS:
-			block["element"] = args["element"]
+		block["element"] = args["element"]
 	if args.get("classes") is not None:
 		block["classes"] = args["classes"]
 	if isinstance(args.get("bind"), dict):
@@ -331,9 +329,40 @@ def insert_child(parent: dict, block: dict, after_block_id: str | None, index) -
 	children.append(block)
 
 
+def canonical_patch(block_id: str, args: dict) -> dict:
+	from builder.ai.page_writer import normalize_styles, strip_binding_prefix
+
+	patch = {"block_id": block_id}
+	for key in ("base_styles", "mobile_styles", "tablet_styles"):
+		if isinstance(args.get(key), dict):
+			patch[key] = normalize_styles(args[key], keep_null=True)
+	for key in ("attributes", "bind", "props", "client_script"):
+		if isinstance(args.get(key), dict):
+			patch[key] = deepcopy(args[key])
+	for key in ("inner_text", "inner_html", "element", "classes"):
+		if args.get(key) is not None:
+			patch[key] = deepcopy(args[key])
+	if "element" in patch:
+		patch["element"] = str(patch["element"]).strip().lower()
+	if "inner_html" in patch:
+		patch.pop("inner_text", None)
+	if "bind" in patch:
+		patch["bind"] = {
+			"innerHTML" if prop == "text" else prop: strip_binding_prefix(value)
+			if value is not None
+			else None
+			for prop, value in patch["bind"].items()
+		}
+	return patch
+
+
 class WorkingTree:
 	def __init__(self, root: dict | None):
 		self.root = root
+		self.accepted_operations: list[dict] = []
+
+	def accept(self, tool_name: str, args: dict) -> None:
+		self.accepted_operations.append({"tool_name": tool_name, "args": deepcopy(args)})
 
 	def resolve(self, block_id: str | None) -> dict | None:
 		return find_block(self.root, block_id) if (self.root and block_id) else None
@@ -359,6 +388,13 @@ class WorkingTree:
 		return " — not a valid ref. Call query_blocks or re-read the page outline for real refs."
 
 	def apply(self, tool_name: str, args: dict) -> str:
+		"""Return the human verdict; reset accepted_operations to canonical replay ops.
+
+		Each entry is {tool_name, args}, detached from the tree and input. Batches
+		produce one update_block per accepted patch, in order. Rejections produce
+		no entry. Consumers must forward this list, never the original request.
+		"""
+		self.accepted_operations = []
 		args = args or {}
 		if tool_name == "update_block":
 			return self.apply_update(args.get("block_id"), args)
@@ -371,23 +407,32 @@ class WorkingTree:
 		if tool_name == "add_block":
 			return self.apply_add(args)
 		if tool_name in ("set_page_script", "update_script"):
-			return validate_script(args)
+			result = validate_script(args)
+			if result.startswith("FAILED"):
+				return result
 		# Non-block client tools carry no ref to validate.
+		self.accept(tool_name, args)
 		return "Applied."
 
 	def apply_update(self, block_id: str | None, args: dict) -> str:
 		block = self.resolve(block_id)
 		if block is None:
 			return f"FAILED: block_id '{block_id}' not found{self.id_hint(block_id)}"
-		args, failure = self.screen_patch(block, args)
+		accepted = canonical_patch(block_id, args)
+		args, failure = self.screen_patch(block, accepted)
 		if failure:
 			return failure
 		merge_block_update(block, args)
+		self.accept("update_block", accepted)
 		return f"Applied to block {block_id} (<{block.get('element') or 'div'}>)."
 
 	def screen_patch(self, block: dict, args: dict) -> tuple[dict, str]:
 		"""Every per-field guard, in one seam shared by the single and batch update
 		paths. Returns (args ready to merge, "") or (args, "FAILED: …")."""
+		from builder.ai.page_writer import FORBIDDEN_ELEMENTS
+
+		if args.get("element") in FORBIDDEN_ELEMENTS:
+			return args, "FAILED: script/style/document elements are not blocks; use set_page_script."
 		if props := repeater_bind_props(args):
 			return args, f"FAILED: bind {props} — {REPEATER_BIND_HINT}"
 		if bad := bad_bind_keys(args):
@@ -455,17 +500,14 @@ class WorkingTree:
 			return "FAILED: no block_ids or patches supplied — nothing to update."
 		missing, rejected = [], []
 		for block_id, patch in targets:
-			block = self.resolve(block_id)
-			if block is None:
+			if self.resolve(block_id) is None:
 				missing.append(block_id)
 				continue
-			patch, failure = self.screen_patch(block, patch)
-			if failure:
+			result = self.apply_update(block_id, patch)
+			if result.startswith("FAILED"):
 				# Each entry keeps ITS OWN reason — a props typo must not read as a
 				# bad bind in the summary.
-				rejected.append(f"{block_id}: {failure.removeprefix('FAILED: ')[:110]}")
-			else:
-				merge_block_update(block, patch)
+				rejected.append(f"{block_id}: {result.removeprefix('FAILED: ')[:110]}")
 		applied = len(targets) - len(missing) - len(rejected)
 		problems = []
 		if missing:
@@ -473,14 +515,18 @@ class WorkingTree:
 		if rejected:
 			problems.append("REJECTED " + "; ".join(rejected))
 		if problems:
-			return f"Applied to {applied} of {len(targets)} blocks. " + " ".join(problems)
+			prefix = "FAILED: " if not applied else ""
+			return prefix + f"Applied to {applied} of {len(targets)} blocks. " + " ".join(problems)
 		return f"Applied to all {applied} block(s)."
 
 	def apply_remove(self, block_id: str | None) -> str:
 		block = self.resolve(block_id)
 		if block is None:
 			return f"FAILED: block_id '{block_id}' not found{self.id_hint(block_id)}"
+		if block is self.root:
+			return "FAILED: can't remove the page root. Remove or edit its children instead."
 		self.detach(block_id)
+		self.accept("remove_block", {"block_id": block_id})
 		return f"Removed block {block_id}."
 
 	def apply_move(self, args: dict) -> str:
@@ -498,6 +544,14 @@ class WorkingTree:
 			return f"FAILED: can't move {block_id} into itself or its own descendant ({new_parent_id})."
 		self.detach(block_id)
 		insert_child(new_parent, block, args.get("after_block_id"), args.get("index"))
+		self.accept(
+			"move_block",
+			{
+				"block_id": block_id,
+				"new_parent_block_id": new_parent_id,
+				"index": new_parent["children"].index(block),
+			},
+		)
 		return f"Moved block {block_id} under {new_parent_id}."
 
 	def apply_add(self, args: dict) -> str:
@@ -509,9 +563,16 @@ class WorkingTree:
 			return f"FAILED: {fields} — {MOUSTACHE_HINT}"
 		if not isinstance(args.get("block"), dict):
 			return "FAILED: no block definition supplied."
-		from builder.ai.page_writer import convert_yaml_block
+		from builder.ai.page_writer import build_repeater_data_script, convert_yaml_block
 
-		block = convert_yaml_block(args["block"], is_root=False)
+		try:
+			if build_repeater_data_script(args["block"]):
+				return (
+					"FAILED: add_block cannot save repeat.items; use write_page_data_script and repeat.data."
+				)
+			block = convert_yaml_block(args["block"], is_root=False)
+		except ValueError as exc:
+			return f"FAILED: {exc}"
 		if not block:
 			return (
 				"FAILED: style/script/document elements are not blocks — JS/CSS goes through "
@@ -522,6 +583,14 @@ class WorkingTree:
 		# canvas so both sides key the same ids, and name the new ref so the model can
 		# chain edits onto the block it just added.
 		args["block_json"] = block
+		self.accept(
+			"add_block",
+			{
+				"parent_block_id": parent_id,
+				"block_json": block,
+				"index": parent["children"].index(block),
+			},
+		)
 		return f"Added block {block.get('blockId')} (<{block.get('element')}>) under {parent_id}."
 
 

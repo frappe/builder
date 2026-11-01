@@ -5,15 +5,9 @@ import type { BuilderClientScript } from "@/types/doctypes";
 import { findBlockInTree } from "@/utils/block/tree";
 import { getBlockInstance } from "@/utils/helpers";
 import { ref, type Ref } from "vue";
-import { normalizeStyles } from "./normalizeStyles";
+import { applyStylePatch } from "./normalizeStyles";
 import type { AffectedBlock, AffectedScript } from "./types";
-import {
-	bindingEntry,
-	buildRepeaterDataScript,
-	convertYAMLtoBlock,
-	parseBlock,
-	STANDARD_ATTRS,
-} from "./yaml";
+import { bindingEntry, convertYAMLtoBlock, parseBlock, STANDARD_ATTRS } from "./yaml";
 
 type PageStore = ReturnType<typeof usePageStore>;
 export type PageCanvas = Ref<InstanceType<typeof BuilderCanvas> | null>;
@@ -74,20 +68,12 @@ export class ToolDispatcher {
 		this.pageCanvas.value?.setRootBlock(root, false, resetHistory);
 	}
 
-	/** Replace the entire page with a freshly generated YAML document. `final` is
-	 * true only on the authoritative apply, never while streaming (persisting per
-	 * chunk would fire a network setValue + re-parse on every token). */
-	applyPageYaml(yamlString: string, final = false) {
+	/** YAML is only a temporary preview; expanded server operations own persistence. */
+	applyPageYaml(yamlString: string) {
 		const block = parseBlock(yamlString);
 		if (!block) return;
 		try {
-			this.replaceRoot(block, final);
-			// Repeaters carry static JSON data; persist it as the page_data_script shim
-			// so the loops render. Final apply only, see note above.
-			if (final) {
-				const dataScript = buildRepeaterDataScript(yamlString);
-				if (dataScript) this.pageStore.applyRepeaterDataScript(dataScript);
-			}
+			this.replaceRoot(block, false);
 		} catch {}
 	}
 
@@ -185,17 +171,16 @@ export class ToolDispatcher {
 	private applyBlockUpdate(block: Block, args: Record<string, any>) {
 		// Fix the model's mechanical CSS slips (camelCased values, missing units, …) at the
 		// single point styles land — same pass the generation path uses (see normalizeStyles).
-		const baseStyles = normalizeStyles(args.base_styles);
-		const mobileStyles = normalizeStyles(args.mobile_styles);
-		const tabletStyles = normalizeStyles(args.tablet_styles);
-		Object.assign(block.baseStyles, baseStyles);
-		Object.assign(block.mobileStyles, mobileStyles);
-		Object.assign(block.tabletStyles, tabletStyles);
+		applyStylePatch(block.baseStyles, args.base_styles);
+		applyStylePatch(block.mobileStyles, args.mobile_styles);
+		applyStylePatch(block.tabletStyles, args.tablet_styles);
 		if (args.attributes) {
 			Object.entries(args.attributes).forEach(([key, value]) => {
+				delete block.attributes[key];
+				delete block.customAttributes[key];
+				if (value == null) return;
 				if (STANDARD_ATTRS.has(key)) {
 					block.setAttribute(key, value as string | undefined);
-					delete block.customAttributes[key];
 				} else {
 					block.customAttributes[key] = value as string | undefined;
 				}
@@ -268,14 +253,15 @@ export class ToolDispatcher {
 				// Final authoritative apply. The server persisted the page and ships the
 				// expanded block tree (server-assigned ids — the canvas must key the same
 				// refs the agent's later edits target); the YAML streamed earlier was only
-				// the live preview. args.yaml is the legacy fallback (recovered
-				// YAML-as-content turns).
+				// the live preview. A YAML-only payload cannot authoritatively save a page.
 				if (Array.isArray(args.blocks) && args.blocks.length) {
 					this.replaceRoot(args.blocks[0], true);
-					if (args.data_script) this.pageStore.applyRepeaterDataScript(args.data_script as string);
+					if (typeof args.data_script === "string" && this.pageStore.activePage) {
+						this.pageStore.activePage.page_data_script = args.data_script;
+						this.pageStore.setPageData(this.pageStore.activePage);
+					}
 					return;
 				}
-				this.applyPageYaml(args.yaml as string, true);
 				return;
 			}
 			case "set_page_blocks": {

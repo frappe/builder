@@ -45,7 +45,8 @@
   "options_tab",
   "authenticated_access",
   "disable_indexing",
-  "project_folder"
+  "project_folder",
+  "ai_design_brief"
  ],
  "fields": [
   {
@@ -268,6 +269,13 @@
    "fieldname": "published_at",
    "fieldtype": "Datetime",
    "label": "Published At"
+  },
+  {
+   "fieldname": "ai_design_brief",
+   "fieldtype": "Long Text",
+   "label": "AI Design Brief",
+   "hidden": 1,
+   "read_only": 1
   }
  ],
  "index_web_pages_for_search": 1,

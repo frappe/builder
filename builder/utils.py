@@ -632,6 +632,10 @@ def sanitize_style_value(value):
 
 
 def execute_script(script, _locals, script_filename):
+	from builder.ai.data_script import SCRIPT_PREFIX, execute_readonly_script
+
+	if script.startswith(SCRIPT_PREFIX):
+		return execute_readonly_script(script, _locals, script_filename)
 	if is_safe_exec_enabled():
 		safe_exec(script, None, _locals, script_filename=script_filename)
 	else:

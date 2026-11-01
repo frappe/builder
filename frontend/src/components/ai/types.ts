@@ -94,6 +94,27 @@ export interface ChatMessage {
 	metadata?: Record<string, any>;
 }
 
+export interface AIRun {
+	run_id: string;
+	session_id: string;
+	status: "queued" | "running";
+	model: string;
+	user_message_id: string;
+}
+
+export interface AIRunEvent {
+	run_id: string;
+	seq: number;
+	session_id: string;
+}
+
+export interface AISession {
+	session_id: string;
+	messages: ChatMessage[];
+	active_run: AIRun | null;
+	request_run?: { run_id: string; session_id: string; status: string } | null;
+}
+
 export interface AffectedBlock {
 	block_id: string;
 	blockName: string;

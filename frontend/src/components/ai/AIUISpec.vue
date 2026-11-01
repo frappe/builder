@@ -89,38 +89,55 @@
 					{{ controlLabel(i) }}
 				</p>
 				<div class="flex w-full flex-wrap gap-2">
-					<button
-						v-for="(option, j) in el.options || []"
-						:key="j"
-						:disabled="!interactive || disabled"
-						class="group flex flex-1 basis-48 flex-col items-start gap-2 rounded-6 border px-3 py-2.5 text-left transition-all disabled:cursor-not-allowed disabled:opacity-50"
-						:class="
-							isSelected(i, j)
-								? 'border-outline-gray-4 bg-surface-gray-2'
-								: 'bg-surface-white border-outline-gray-2 hover:border-outline-gray-3 hover:bg-surface-gray-2'
-						"
-						@click="onOptionClick(i, el, j, option)">
-						<!-- photo option (search_images thumb): the picture IS the choice -->
-						<img
-							v-if="option.image && safeSrc(option.image)"
-							:src="option.image"
-							class="h-24 w-full rounded-4 border border-black/10 object-cover"
-							loading="lazy"
-							alt="" />
-						<span
-							v-else-if="option.colors?.length"
-							class="flex shrink-0 overflow-hidden rounded-4 border border-black/10">
+					<div v-for="(option, j) in el.options || []" :key="j" class="flex flex-1 basis-48 flex-col gap-1.5">
+						<button
+							:disabled="!interactive || disabled"
+							class="group flex w-full flex-1 flex-col items-start gap-2 rounded-6 border px-3 py-2.5 text-left transition-all disabled:cursor-not-allowed disabled:opacity-50"
+							:class="
+								isSelected(i, j)
+									? 'border-outline-gray-4 bg-surface-gray-2'
+									: 'bg-surface-white border-outline-gray-2 hover:border-outline-gray-3 hover:bg-surface-gray-2'
+							"
+							@click="onOptionClick(i, el, j, option)">
+							<!-- photo option (search_images thumb): the picture IS the choice -->
+							<img
+								v-if="option.image && safeSrc(option.image)"
+								:src="option.image"
+								class="h-24 w-full rounded-4 border border-black/10 object-cover"
+								loading="lazy"
+								alt="" />
+							<!-- eslint-disable-next-line vue/no-v-html -- static SVG allowlist in sanitizeLayoutSVG -->
+							<div
+								v-else-if="layoutPreviews[i]?.[j]"
+								class="h-28 w-full overflow-hidden rounded-4 border border-black/10 [&>svg]:h-full [&>svg]:w-full"
+								aria-hidden="true"
+								v-html="layoutPreviews[i][j]" />
 							<span
-								v-for="color in option.colors.slice(0, 5)"
-								:key="color"
-								class="size-3.5"
-								:style="{ backgroundColor: color }" />
-						</span>
-						<span class="text-p-sm font-medium leading-snug text-ink-gray-8">{{ option.label }}</span>
-						<span v-if="option.description" class="line-clamp-3 text-p-xs leading-snug text-ink-gray-5">
-							{{ option.description }}
-						</span>
-					</button>
+								v-else-if="option.colors?.length"
+								class="flex shrink-0 overflow-hidden rounded-4 border border-black/10">
+								<span
+									v-for="color in option.colors.slice(0, 5)"
+									:key="color"
+									class="size-3.5"
+									:style="{ backgroundColor: color }" />
+							</span>
+							<span v-if="isPreviewOnly(option)" class="text-p-xs font-medium text-ink-amber-8">
+								Preview only
+							</span>
+							<span class="text-p-sm font-medium leading-snug text-ink-gray-8">{{ option.label }}</span>
+							<span v-if="option.description" class="line-clamp-3 text-p-xs leading-snug text-ink-gray-5">
+								{{ option.description }}
+							</span>
+						</button>
+						<a
+							v-if="isPreviewOnly(option) && safeSrc(option.source_url)"
+							:href="option.source_url"
+							target="_blank"
+							rel="noopener noreferrer"
+							class="px-1 text-p-xs text-ink-gray-6 underline">
+							Open original library page
+						</a>
+					</div>
 				</div>
 			</div>
 
@@ -211,7 +228,7 @@
 		</Button>
 		<!-- A waiting card with nothing tappable strands the user (e.g. a form the
 		     model forgot to put buttons on) — give it a default way forward. -->
-		<div v-if="interactive && !hasInteractiveAtoms" class="flex gap-2 pt-0.5">
+		<div v-if="interactive && needsSubmit && (!isStepped || isLastStep)" class="flex gap-2 pt-0.5">
 			<Button size="xs" variant="solid" :disabled="disabled" @click="submitCollected('Looks good, go ahead')">
 				Looks good, go ahead
 			</Button>
@@ -225,7 +242,9 @@
 <script setup lang="ts">
 import ColorInput from "@/components/Controls/ColorInput.vue";
 import { Button, FileUploader, FormControl } from "frappe-ui";
-import { computed, reactive, ref, watchEffect } from "vue";
+import { computed, watchEffect } from "vue";
+import { isPreviewOnly, optionReply, useCardDraft } from "./cardDraft";
+import { sanitizeLayoutSVG } from "./cardPreview";
 import {
 	INTERACTIVE_KINDS,
 	cardAnswers,
@@ -243,6 +262,7 @@ import {
 
 const props = defineProps<{
 	ui: UIElement[];
+	messageId?: string;
 	interactive: boolean;
 	disabled?: boolean;
 	/** The reply this card was answered with, once it has been. submitCollected
@@ -259,6 +279,13 @@ const props = defineProps<{
 const emit = defineEmits<{ submit: [reply: string, display?: string] }>();
 
 const elements = computed(() => (Array.isArray(props.ui) ? props.ui : []));
+const layoutPreviews = computed(() =>
+	elements.value.map((element) =>
+		Array.isArray(element.options)
+			? element.options.map((option: UIElement) => sanitizeLayoutSVG(option.svg))
+			: [],
+	),
+);
 const hasChoices = computed(() => elements.value.some((el) => el.kind === "choices"));
 // Option tiles are cards already, so ANY card containing choices renders flat —
 // its other atoms (heading, upload, actions) sit between the tiles unboxed.
@@ -296,7 +323,9 @@ const steps = computed<number[][]>(() => {
 	return out;
 });
 
-const stepIndex = ref(0);
+const { stepIndex, selections, inputs, uploads, colorSlots, touchedColorSlots } = useCardDraft(
+	() => props.messageId,
+);
 const isStepped = computed(() => steps.value.length > 1 && props.interactive && !props.answeredWith);
 const isLastStep = computed(() => stepIndex.value >= steps.value.length - 1);
 
@@ -328,15 +357,22 @@ const answers = computed(() => cardAnswers(elements.value, props.answeredWith, p
 // count as interactive, or it suppresses the fallback button and dead-ends the card.
 const interactiveAtoms = computed(() =>
 	elements.value.filter(
-		(el) => INTERACTIVE_KINDS.has(el.kind) && (el.kind !== "choices" || el.options?.length),
+		(el) =>
+			INTERACTIVE_KINDS.has(el.kind) &&
+			(el.kind !== "choices" || el.options?.length) &&
+			(el.kind !== "actions" || el.buttons?.some((button: UIElement) => button.label)),
 	),
 );
-const hasInteractiveAtoms = computed(() => interactiveAtoms.value.length > 0);
 // A card that is ONE question (a single choices group, nothing else to fill in):
 // tapping an option IS the answer. In a bigger form a tap is just a pick — the
 // action button submits everything together.
 const isSingleQuestion = computed(
 	() => interactiveAtoms.value.length === 1 && interactiveAtoms.value[0].kind === "choices",
+);
+const needsSubmit = computed(
+	() =>
+		!interactiveAtoms.value.some((element) => element.kind === "actions") &&
+		!(isSingleQuestion.value && !interactiveAtoms.value[0].multi),
 );
 
 const consumedAsLabel = (i: number) => isControlLabel(elements.value, i);
@@ -351,16 +387,6 @@ function safeColor(value: unknown): string | undefined {
 		? color
 		: undefined;
 }
-
-// Collected state keyed by element index: multi-select picks, typed inputs,
-// uploaded file URLs, and per-slot picked colors (colorSlots[elIndex][slotIndex]).
-const selections = reactive<Record<number, Set<number>>>({});
-const inputs = reactive<Record<number, string>>({});
-const uploads = reactive<Record<number, string>>({});
-const colorSlots = reactive<Record<number, Record<number, string>>>({});
-// Slots the user actually interacted with (picked or cleared). Untouched preset
-// slots submit as "(suggested)" so the model knows its own defaults from choices.
-const touchedColorSlots = reactive<Set<string>>(new Set());
 
 /** The role slots a color_input offers. The model sends `colors: [{label, hint?,
  * value?}]` — `value` is a curated preset hex shown as the starting point — with
@@ -402,14 +428,6 @@ function isSelected(elIndex: number, optIndex: number): boolean {
 	return selections[elIndex]?.has(optIndex) ?? false;
 }
 
-function optionReply(option: UIElement): string {
-	const label = option.label || option.value || "";
-	let reply = option.description ? `${label}: ${option.description}` : String(label);
-	// The model needs the exact URL of a picked photo to place it in the page.
-	if (option.image) reply += `\n(chosen image: ${option.image})`;
-	return reply;
-}
-
 function onOptionClick(elIndex: number, el: UIElement, optIndex: number, option: UIElement) {
 	if (!el.multi && isSingleQuestion.value) {
 		emit("submit", optionReply(option), String(option.label || option.value || ""));
@@ -439,12 +457,10 @@ function submitCollected(actionLabel?: string) {
 	const values: string[] = [];
 	elements.value.forEach((el, i) => {
 		if (el.kind === "choices" && selections[i]?.size) {
-			const picked = [...selections[i]]
-				.map((j) => (el.options?.[j] ? el.options[j].label : ""))
-				.filter(Boolean);
+			const picked = [...selections[i]].map((j) => el.options?.[j]).filter(Boolean);
 			if (picked.length) {
-				lines.push(`${atomLabel(i) || "Selected"}: ${picked.join(", ")}`);
-				values.push(picked.join(", "));
+				lines.push(`${atomLabel(i) || "Selected"}: ${picked.map(optionReply).join("\n")}`);
+				values.push(picked.map((option) => option.label || option.value || "").join(", "));
 			}
 		}
 		if (el.kind === "input" && inputs[i]?.trim()) {
@@ -490,6 +506,6 @@ function submitCollected(actionLabel?: string) {
 /** Same-origin paths and https only — the spec comes from the model. */
 function safeSrc(src: unknown): boolean {
 	if (typeof src !== "string" || !src) return false;
-	return src.startsWith("/") || src.startsWith("https://");
+	return (src.startsWith("/") && !src.startsWith("//")) || src.startsWith("https://");
 }
 </script>

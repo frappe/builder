@@ -115,6 +115,8 @@ def run_research(ctx, args: dict) -> str:
 			"pages with read_url instead."
 		)
 	ctx.research_count += 1
+	if usage := getattr(ctx, "usage", None):
+		usage["attempts"] = usage.get("attempts", 0) + 1
 	messages = [
 		{"role": "system", "content": RESEARCH_SYSTEM},
 		{"role": "user", "content": question},

@@ -13,7 +13,7 @@ RECENT_SESSION_SCAN = 20
 class AISession:
 	DOCTYPE = "Builder AI Session"
 	MESSAGE_DOCTYPE = "Builder AI Message"
-	CONTEXT_WINDOW = 10  # how many prior turns to feed back to the model
+	CONTEXT_WINDOW = 20  # message rows, bounded separately by character budget
 	IMAGE_REPLAY_LIMIT = 2  # newest attached images re-shown to a vision model
 
 	def __init__(self, doc):
@@ -190,7 +190,12 @@ class AISession:
 			limit_page_length=self.CONTEXT_WINDOW + 1,
 		)
 		# Skip the most recent row (current user msg) and reverse to chrono order.
-		history = list(reversed(rows[1:])) if rows else []
+		history = list(reversed(rows[1:] if rows and rows[0].get("role") == "user" else rows))
+		remaining = 24000
+		for row in reversed(history):
+			content = (row.get("content") or "")[: min(6000, remaining)]
+			row["content"] = content
+			remaining -= len(content)
 		replay_images = self.image_rows_to_replay(history) if include_images else set()
 		out: list[dict] = []
 		for i, r in enumerate(history):
@@ -299,15 +304,26 @@ class AISession:
 		frappe.db.set_value(self.DOCTYPE, self._doc.name, updates, update_modified=False)
 		return msg.name
 
-	def update_last_assistant_metadata(self, extra_metadata: dict):
+	def update_last_assistant_metadata(self, extra_metadata: dict, run_id: str | None = None):
 		"""Merge extra_metadata into the most recent assistant message's
 		metadata_json. One-row UPDATE — no read-modify-write of a giant blob."""
-		row = frappe.db.get_value(
+		filters = {"session": self._doc.name, "role": "assistant"}
+		if run_id:
+			filters["metadata_json"] = ["like", f"%{run_id}%"]
+		rows = frappe.get_all(
 			self.MESSAGE_DOCTYPE,
-			{"session": self._doc.name, "role": "assistant"},
-			["name", "metadata_json"],
+			filters=filters,
+			fields=["name", "metadata_json"],
 			order_by="creation desc",
-			as_dict=True,
+			limit=0 if run_id else 1,
+		)
+		row = next(
+			(
+				row
+				for row in rows
+				if not run_id or self.load_metadata(row.metadata_json).get("runId") == run_id
+			),
+			None,
 		)
 		if not row:
 			return
@@ -338,7 +354,11 @@ class AISession:
 
 	@classmethod
 	def is_session_running(cls, session_id: str) -> bool:
-		return bool(session_id) and locks.held(locks.session_key(session_id))
+		from builder.ai.runs import AIRun
+
+		return bool(session_id) and bool(
+			AIRun.active(session_id) or locks.held(locks.session_key(session_id))
+		)
 
 	# --- lifecycle --------------------------------------------------------
 

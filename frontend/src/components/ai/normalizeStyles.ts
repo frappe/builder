@@ -110,7 +110,7 @@ export function normalizeStyles(styles: Record<string, any> | null | undefined):
 	if (!styles || typeof styles !== "object") return {};
 	const out: Record<string, any> = {};
 	for (const [rawKey, value] of Object.entries(styles)) {
-		if (value === null || value === undefined) continue;
+		if (value === undefined) continue;
 		// Custom properties (--brand) are arbitrary — pass through untouched.
 		if (rawKey.startsWith("--")) {
 			out[rawKey] = value;
@@ -128,4 +128,13 @@ export function normalizeStyles(styles: Record<string, any> | null | undefined):
 		out[prefix + prop] = normalizeValue(prop, value);
 	}
 	return out;
+}
+
+/** Null is an explicit unset, including normalized responsive/state-prefixed keys. */
+export function applyStylePatch(target: Record<string, any>, styles: Record<string, any> | null | undefined) {
+	for (const [key, value] of Object.entries(normalizeStyles(styles))) {
+		if (value === null) delete target[key];
+		else target[key] = value;
+	}
+	return target;
 }

@@ -4,6 +4,7 @@ import frappe
 from frappe.tests.utils import FrappeTestCase
 
 from builder.ai.agent.tools.data import write_page_data_script
+from builder.ai.data_script import SCRIPT_PREFIX
 
 
 class Ctx:
@@ -39,7 +40,7 @@ class TestWriteDataScript(FrappeTestCase):
 		out = self.write(script, False)
 
 		self.assertFalse(out.startswith("FAILED"), out)
-		self.assertEqual(self.saved_script(), script)
+		self.assertEqual(self.saved_script(), SCRIPT_PREFIX + script)
 
 	def test_ignores_names_in_comments_and_strings(self):
 		script = (
@@ -56,7 +57,8 @@ class TestWriteDataScript(FrappeTestCase):
 		self.assertTrue(out.startswith("FAILED"))
 		self.assertFalse(self.saved_script())
 
-	def test_allows_the_full_namespace_when_server_scripts_are_on(self):
+	def test_keeps_the_readonly_namespace_when_server_scripts_are_on(self):
 		script = "data.events = frappe.get_list('Event', fields=['subject'])"
 
-		self.assertFalse(self.write(script, True).startswith("FAILED"))
+		self.assertTrue(self.write(script, True).startswith("FAILED"))
+		self.assertFalse(self.saved_script())

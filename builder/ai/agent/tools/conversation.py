@@ -45,6 +45,26 @@ MAX_UI_JSON = 24000
 def run_present_ui(ctx, args: dict) -> str | None:
 	text = (args.get("text") or "").strip()
 	ui = sanitize_ui(args.get("ui"))
+	assets = {
+		key: asset
+		for asset in getattr(ctx, "found_images", [])
+		for key in (asset.get("id"), asset.get("thumb"), asset.get("url"))
+		if key
+	}
+	for element in ui:
+		for option in element.get("options", []):
+			if asset := assets.get(option.get("asset_id")) or assets.get(option.get("image")):
+				option.update(
+					{
+						"asset_url": asset["url"],
+						"asset_id": asset.get("id"),
+						"credit": asset.get("credit"),
+						"source_url": asset.get("source_url"),
+						"license_url": asset.get("license_url"),
+						"preview_only": bool(asset.get("preview_only")),
+						"requires_acquisition": bool(asset.get("requires_acquisition")),
+					}
+				)
 	# A choices group with zero usable options renders nothing tappable — the
 	# turn would end on a dead card (seen live: 'more options' answered with an
 	# empty options array). Bounce it back instead of stranding the user.
@@ -182,8 +202,12 @@ def option_text(option) -> str:
 	label = option.get("label") or option.get("value") or ""
 	desc = option.get("description") or ""
 	line = f"* {label} — {desc}" if desc else f"* {label}"
-	if option.get("image"):
-		line += f" [image: {option['image']}]"
+	if option.get("asset_id"):
+		line += f" [asset: {option['asset_id']}]"
+	if option.get("preview_only"):
+		line += f" [preview only; license/download and upload original: {option.get('source_url', '')}]"
+	elif option.get("asset_url") or option.get("image"):
+		line += f" [image: {option.get('asset_url') or option['image']}]"
 	return line
 
 
@@ -226,11 +250,13 @@ present_ui = Tool(
 					"{kind:'swatches', colors:['#hex'], label?} — colour palette row\n"
 					"{kind:'image', src, caption?} — an image (site file or https URL)\n"
 					"{kind:'choices', label?, multi?, options:[{label, description?, colors:['#hex']?, "
-					"image:'https://…'?}]} — tappable option cards; single-select submits immediately, "
+					"image:'https://…'?, asset_id?, svg?}]} — tappable option cards; single-select submits immediately, "
 					"multi collects. An option's `colors` renders as a small palette strip. An "
 					"option's `image` is a photo thumbnail URL (use the `thumb` from search_images) — "
 					"for letting the user pick a hero/section photo; the chosen option's image URL "
-					"comes back in their reply\n"
+					"comes back in their reply. Keep asset_id from search results. svg may contain a "
+					"compact static layout sketch using geometry/text and inline fill/stroke attributes; "
+					"scripts, links, CSS and remote resources are removed.\n"
 					"{kind:'input', label?, placeholder?} — one-line text field\n"
 					"{kind:'upload', label?} — image-upload field (logo, their own photo); the "
 					"uploaded file's URL arrives in their reply. Pair with an actions button, and "

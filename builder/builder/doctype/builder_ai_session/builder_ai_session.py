@@ -31,3 +31,4 @@ class BuilderAISession(Document):
 		enough to block deleting the page itself. on_trash runs before the link
 		check, so clearing them here is what lets both deletes through."""
 		frappe.db.delete("Builder AI Message", {"session": self.name})
+		frappe.db.delete("Builder AI Run", {"session": self.name})

@@ -23,10 +23,7 @@ MAX_IMAGE_VIEWS_PER_TURN = 3
 MAX_IMAGE_BYTES = 3 * 1024 * 1024  # mirrors BlockCodec.validate_image_data's cap
 VIEWPORT_WIDTHS = {"desktop": 1280, "tablet": 768, "mobile": 390}
 COLOR_SCHEMES = ("light", "dark")
-# The viewport we capture into. Chromium screenshots the viewport, not the
-# document, so this has to clear a whole generated page — they run 2500-6000px.
-# Whatever the page doesn't fill is blank, and gets trimmed off below.
-CAPTURE_HEIGHT = 8000
+VIEWPORT_HEIGHTS = {"desktop": 900, "tablet": 1024, "mobile": 844}
 # One attached image per this many pixels of page. NOT one tall image: a vision
 # model shrinks an image to fit its longest edge (~1568px), so a single
 # 1280x6000 capture reaches the model at ~250px wide with every label
@@ -37,10 +34,10 @@ MAX_TILES = 3
 
 
 def render_page_image(page, viewport: str = "desktop", color_scheme: str | None = None) -> bytes:
-	from builder.html_preview_image import render
+	from builder.html_preview_image import render_full_page
 
 	markup = page.get_preview_html(color_scheme=color_scheme)
-	return render(markup, width=VIEWPORT_WIDTHS[viewport], height=CAPTURE_HEIGHT)
+	return render_full_page(markup, width=VIEWPORT_WIDTHS[viewport], height=VIEWPORT_HEIGHTS[viewport])
 
 
 # How far a pixel may drift from the background before it counts as content. The
@@ -138,13 +135,25 @@ def run_preview_page(ctx, args: dict) -> str:
 	viewport = args.get("viewport") if args.get("viewport") in VIEWPORT_WIDTHS else "desktop"
 	color_scheme = args.get("color_scheme") if args.get("color_scheme") in COLOR_SCHEMES else "light"
 	variant = f"{viewport}, {color_scheme} mode"
+	viewport_verified = True
 	try:
-		image = render_page_image(page, viewport, color_scheme)
+		try:
+			image = render_page_image(page, viewport, color_scheme)
+		except ImportError:
+			from builder.html_preview_image import render
+
+			image = render(
+				page.get_preview_html(color_scheme=color_scheme),
+				width=VIEWPORT_WIDTHS[viewport],
+				height=VIEWPORT_HEIGHTS[viewport],
+			)
+			viewport_verified = False
+			variant = f"fallback renderer, {color_scheme} mode; requested {viewport} geometry not verified"
 	except Exception:
 		logger.warning("preview_page: render failed for %s", page_id, exc_info=True)
 		return (
-			"Preview unavailable (screenshot renderer not reachable). "
-			"Continue without the visual check — do not retry."
+			"Preview failed during page rendering or capture. The layout has not been visually verified. "
+			"Check the page data/script errors before retrying; report this verification gap."
 		)
 	refresh_page_thumbnail(page)
 	# A text-only model can't receive the image — attaching it kills the whole turn
@@ -158,6 +167,7 @@ def run_preview_page(ctx, args: dict) -> str:
 			"images — skip the visual check and continue."
 		)
 	attached, complete = attach_to_model(ctx, page, image, variant)
+	complete = complete and viewport_verified
 	if not attached:
 		return "Screenshot captured but too large to attach for review — finish up."
 	extent = (

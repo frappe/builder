@@ -27,12 +27,12 @@ class TestAgentJobs(FrappeTestCase):
 			with (
 				patch.object(ModelRegistry, "find", return_value=MODEL),
 				patch("builder.ai.api.resolve_api_key", return_value=SECRET),
-				patch("frappe.enqueue") as enqueue,
+				patch("builder.ai.api.AIRun.enqueue") as enqueue,
 			):
 				queue()
 
-			self.assertNotIn("api_key", enqueue.call_args.kwargs)
-			self.assertNotIn(SECRET, enqueue.call_args.kwargs.values())
+			self.assertNotIn("api_key", enqueue.call_args.args[1])
+			self.assertNotIn(SECRET, enqueue.call_args.args[1].values())
 
 	def test_a_resume_without_a_key_queues_nothing(self):
 		_, session = chat_session()

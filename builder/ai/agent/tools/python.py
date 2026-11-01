@@ -58,7 +58,7 @@ def scope_reads_to_user(fr) -> None:
 	db["get_value"] = user_get_value
 	db["exists"] = user_exists
 	db["count"] = user_count
-	db["get_single_value"] = read_guarded(db["get_single_value"])
+	db["get_single_value"] = user_get_single_value
 
 
 def hide_exec_only_globals(safe: dict) -> None:
@@ -88,9 +88,11 @@ def user_get_list(doctype, fields=None, filters=None, **kwargs):
 
 
 def user_get_value(doctype, filters=None, fieldname="name", *args, as_dict=False, **kwargs):
-	if frappe.get_meta(doctype).issingle:
-		return read_guarded(frappe.db.get_value)(doctype, filters, fieldname, as_dict=as_dict)
 	fields = list(fieldname) if isinstance(fieldname, list | tuple) else [fieldname]
+	if frappe.get_meta(doctype).issingle:
+		doc = readable_doc(doctype)
+		values = frappe._dict({field: doc.get(field) for field in fields})
+		return values if as_dict else list(values.values()) if len(fields) > 1 else values[fields[0]]
 	rows = user_get_list(doctype, fields=fields, filters=by_name(filters), limit=1, as_list=not as_dict)
 	if not rows:
 		return None
@@ -113,18 +115,18 @@ def by_name(filters):
 def guarded_get_doc(*args, **kwargs):
 	from frappe.utils.safe_exec import SafeDoc
 
+	return SafeDoc(readable_doc(*args, **kwargs).as_dict())
+
+
+def readable_doc(*args, **kwargs):
 	doc = frappe.get_doc(*args, **kwargs)
 	doc.check_permission("read")
 	doc.apply_fieldlevel_read_permissions()
-	return SafeDoc(doc.as_dict())
+	return doc
 
 
-def read_guarded(fn):
-	def checked(doctype, *args, **kwargs):
-		frappe.has_permission(doctype, throw=True)
-		return fn(doctype, *args, **kwargs)
-
-	return checked
+def user_get_single_value(doctype, fieldname, *args, **kwargs):
+	return readable_doc(doctype).get(fieldname)
 
 
 def run_python(ctx, args: dict) -> str:

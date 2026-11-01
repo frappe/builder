@@ -115,7 +115,11 @@ def found_photo_list(ctx) -> str:
 
 	Every url here came back from a provider, so it resolves — unlike one the model
 	retyped from memory. Copy them EXACTLY."""
-	found = getattr(ctx, "found_images", None) or []
+	found = [
+		asset
+		for asset in getattr(ctx, "found_images", None) or []
+		if asset.get("url") and not asset.get("preview_only") and not asset.get("requires_acquisition")
+	]
 	if not found:
 		return ""
 	preamble = (
@@ -173,9 +177,7 @@ def log_generation_quality(model: str, finish_reason: str | None, yaml_text: str
 	try:
 		from builder.ai.page_writer import parse_generation_yaml, unwrap_root
 
-		# The same salvaging parser persist_page uses — telemetry must agree with
-		# what actually lands on the page (a salvaged parse is not a failed one).
-		root = unwrap_root(parse_generation_yaml(yaml_text))
+		root = unwrap_root(parse_generation_yaml(yaml_text, strict=True))
 		if isinstance(root, dict):
 			sections = len(root.get("c") or [])
 	except Exception as e:
@@ -206,7 +208,14 @@ def save_stream_buffer(ctx, yaml_content: str) -> None:
 	refreshes) mid-build can replay the preview instead of showing a stale draft."""
 	frappe.cache().set_value(
 		stream_buffer_key(ctx.page_id),
-		frappe.as_json({"yaml": yaml_content, "session_id": ctx.session_id}),
+		frappe.as_json(
+			{
+				"yaml": yaml_content,
+				"session_id": ctx.session_id,
+				"run_id": getattr(ctx, "run_id", None),
+				"generation_id": getattr(ctx, "generation_id", None),
+			}
+		),
 		expires_in_sec=600,
 	)
 
@@ -270,10 +279,13 @@ def generate_page_yaml(ctx, args: dict) -> list[dict]:
 			messages.append({"role": "user", "content": build_text})
 
 	ctx.emit("progress", message="Building the page…")
+	ctx.generation_id = frappe.generate_hash(length=16)
 
 	yaml_content = ""
 	finish_reason = None
 	buffered_at = 0
+	if usage := getattr(ctx, "usage", None):
+		usage["attempts"] = usage.get("attempts", 0) + 1
 	stream = llm.complete(
 		ctx.model,  # heavy model — generation quality
 		messages,
@@ -284,14 +296,12 @@ def generate_page_yaml(ctx, args: dict) -> list[dict]:
 	try:
 		for chunk in stream:
 			if ctx.is_cancelled():
-				# Stop, but KEEP: what already streamed is paid-for, visible work.
-				# Fall through to persist the partial page; the loop's own cancel
-				# check ends the turn right after this step returns.
+				# The streamed canvas is provisional; cancellation preserves the draft.
 				try:
 					stream.close()
 				except Exception:
 					pass
-				logger.info("generate_page_yaml: cancelled mid-stream, keeping the partial page")
+				logger.info("generate_page_yaml: cancelled mid-stream, preserving the previous draft")
 				break
 			ctx.record_usage(chunk, model=ctx.model)  # generation streams on the heavy model
 			if not chunk.choices:
@@ -302,9 +312,11 @@ def generate_page_yaml(ctx, args: dict) -> list[dict]:
 			if delta:
 				# offset = position of this chunk in the full stream, so a client that
 				# replayed the buffer (mid-build refresh) can drop duplicates / detect gaps.
-				offset = len(yaml_content)
+				offset = len(yaml_content.encode("utf-16-le")) // 2
 				yaml_content += delta
-				ctx.emit("stream", chunk=delta, kind="page_yaml", offset=offset)
+				ctx.emit(
+					"stream", chunk=delta, kind="page_yaml", offset=offset, generation_id=ctx.generation_id
+				)
 				if len(yaml_content) - buffered_at >= 512:
 					buffered_at = len(yaml_content)
 					save_stream_buffer(ctx, yaml_content)
@@ -314,6 +326,9 @@ def generate_page_yaml(ctx, args: dict) -> list[dict]:
 		clear_stream_buffer(ctx.page_id)
 
 	yaml_text = BlockCodec.strip_fences(yaml_content)
+	if ctx.is_cancelled() or finish_reason != "stop":
+		logger.warning("Generation was incomplete; retaining the previous draft")
+		return []
 	# Generation was a blind spot — log enough to explain a thin/broken/truncated page:
 	# the model, finish_reason (="length" → ran out of tokens mid-page), the YAML size,
 	# whether it parses, and how many top-level sections (root.c) it actually produced.
@@ -323,7 +338,9 @@ def generate_page_yaml(ctx, args: dict) -> list[dict]:
 		return []
 
 	from builder.ai import page_writer
+	from builder.ai.brief import validate_asset_usage
 
+	validate_asset_usage(getattr(ctx, "found_images", []) or [], yaml_text)
 	root, data_script = page_writer.persist_page(ctx.page_id, yaml_text)
 	if root is None:
 		# A discarded generation is paid-for work — keep the raw text for diagnosis

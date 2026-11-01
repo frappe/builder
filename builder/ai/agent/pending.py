@@ -163,26 +163,31 @@ def apply_connect_form(payload: dict) -> str:
 		desk_slug,
 		is_builder_submission_doctype,
 		missing_create_permission,
+		normalize_fields,
 	)
 
 	doctype = (payload.get("doctype_name") or "").strip()
 	fields = payload.get("fields") or []
 	page_id = (payload.get("page_id") or "").strip()
 	selector = (payload.get("form_selector") or "").strip()
-	if not doctype or not fields or not selector:
-		frappe.throw(frappe._("connect_form needs a doctype, fields, and a form selector"))
+	if not doctype or not fields or not selector or not page_id:
+		frappe.throw(frappe._("connect_form needs a page, doctype, fields, and a form selector"))
+	fields = normalize_fields(fields)
+	frappe.get_doc("Builder Page", page_id).check_permission("write")
 	if frappe.db.exists("DocType", doctype) and not is_builder_submission_doctype(doctype):
 		frappe.throw(frappe._("{0} already exists and is not a form submission DocType").format(doctype))
 	# Checked for both before creating either, so a missing permission leaves nothing half-made.
 	if action := missing_create_permission(doctype):
 		frappe.throw(frappe._("You are not permitted to {0}").format(action), frappe.PermissionError)
+	wf_name = desk_slug(doctype)
+	validate_form_reuse(doctype, wf_name, fields)
 
 	# 1. private submission DocType — System Manager only, NO guest permission
 	#    (the Web Form is the trusted boundary; submissions must not be readable by
 	#    other guests).
 	# Only DocType field keys (drop input_name, which is the browser-side name attr).
 	doctype_fields = [
-		{k: v for k, v in f.items() if k in ("fieldname", "label", "fieldtype", "options")}
+		{k: v for k, v in f.items() if k in ("fieldname", "label", "fieldtype", "options", "reqd")}
 		| {"in_list_view": 1}
 		for f in fields
 	]
@@ -200,7 +205,6 @@ def apply_connect_form(payload: dict) -> str:
 		).insert()
 
 	# 2. Web Form bound to it — guest-allowed (login_required off), published.
-	wf_name = desk_slug(doctype)
 	if not frappe.db.exists("Web Form", wf_name):
 		frappe.get_doc(
 			{
@@ -214,31 +218,54 @@ def apply_connect_form(payload: dict) -> str:
 				"login_required": 0,
 				"allow_multiple": 1,
 				"web_form_fields": [
-					{"fieldname": f["fieldname"], "label": f["label"], "fieldtype": f["fieldtype"]}
-					for f in fields
+					{k: f[k] for k in ("fieldname", "label", "fieldtype", "reqd")} for f in fields
 				],
 			}
 		).insert(ignore_permissions=True)  # missing_create_permission above is the gate
 
 	# 3. client script on the page: capture the form's fields and POST them to the
 	#    stock Web Form accept endpoint (guest-safe, rate-limited, ignore_permissions).
-	#    Fieldnames in FORM ORDER — the script maps inputs positionally (preferring a
-	#    matching name attr) so it works even if the form has no name attrs/class.
-	if page_id and frappe.db.exists("Builder Page", page_id):
-		ordered_fieldnames = [f["fieldname"] for f in fields]
-		attach_form_script(page_id, doctype, wf_name, selector, ordered_fieldnames)
+	attach_form_script(page_id, doctype, wf_name, selector, fields)
 	slug = desk_slug(doctype)
 	return frappe._(
 		"Form connected. Submissions save to '{0}'. View them in Desk: [/app/{1}](/app/{1})"
 	).format(doctype, slug)
 
 
-def attach_form_script(page_id: str, doctype: str, web_form: str, selector: str, fieldnames: list) -> None:
+def validate_form_reuse(doctype: str, web_form: str, fields: list) -> None:
+	"""Reject incompatible resources before schema creation can commit anything."""
+	if frappe.db.exists("DocType", doctype):
+		meta = frappe.get_meta(doctype)
+		for field in fields:
+			existing = meta.get_field(field["fieldname"])
+			if (
+				not existing
+				or existing.fieldtype != field["fieldtype"]
+				or bool(existing.reqd) != bool(field["reqd"])
+			):
+				frappe.throw(frappe._("The existing submission DocType has incompatible fields"))
+		mapped = {f["fieldname"] for f in fields}
+		if any(f.reqd and f.fieldname not in mapped and not f.default for f in meta.fields):
+			frappe.throw(frappe._("The submission DocType requires fields absent from this form"))
+	if not frappe.db.exists("Web Form", web_form):
+		return
+	doc = frappe.get_doc("Web Form", web_form)
+	if doc.doc_type != doctype or not doc.published or doc.login_required or doc.get("key_required"):
+		frappe.throw(frappe._("The existing Web Form is not a public endpoint for this submission DocType"))
+	expected = {(f["fieldname"], f["fieldtype"], bool(f["reqd"])) for f in fields}
+	actual = {(f.fieldname, f.fieldtype, bool(f.reqd)) for f in doc.web_form_fields}
+	if expected != actual or not doc.allow_multiple:
+		frappe.throw(frappe._("The existing Web Form has incompatible submission fields or settings"))
+
+
+def attach_form_script(page_id: str, doctype: str, web_form: str, selector: str, fields: list) -> None:
 	"""Create + attach a Builder Client Script that submits the form's inputs to
-	the Web Form accept endpoint. Idempotent per (page, web_form)."""
-	script_name = f"Save {doctype} submissions"
+	the Web Form accept endpoint. Idempotent per (page, web_form, selector)."""
+	from builder.ai.agent.tools.forms import form_script_name
+
+	script_name = form_script_name(page_id, doctype, web_form, selector)
 	existing = frappe.db.get_value("Builder Client Script", {"name": script_name}, "name")
-	code = build_form_script(selector, web_form, fieldnames)
+	code = build_form_script(selector, web_form, fields)
 	if existing:
 		# save(), NOT db.set_value — the doc's on_update regenerates the served
 		# public .js file; a bare set_value leaves the page serving stale JS.
@@ -265,75 +292,116 @@ def attach_form_script(page_id: str, doctype: str, web_form: str, selector: str,
 		page.save(ignore_permissions=True)
 
 
-def build_form_script(selector: str, web_form: str, fieldnames: list) -> str:
-	"""The submit-wiring JS. `fieldnames` are the DocType fieldnames in FORM ORDER.
-	It finds the form (the given selector, else auto-detects the container that best
-	matches — has a submit control and roughly `fieldnames` many inputs), maps each
-	input to a field POSITIONALLY (preferring a matching name attr), and POSTs to
-	the stock accept endpoint. Robust to a form with no name attrs or class."""
+def build_form_script(selector: str, web_form: str, fields: list) -> str:
+	"""Wire exact HTML names to DocType fields, preserving native control semantics."""
 	import json
 
-	sel = json.dumps(selector or "")
-	wf = json.dumps(web_form)
-	fields = json.dumps(fieldnames)
-	return f"""// Auto-wired by Bob: saves this form to the '{web_form}' Web Form.
+	mappings = [{"fieldname": f, "input_name": f} if isinstance(f, str) else f for f in fields]
+	sel, wf, fields_json = json.dumps(selector), json.dumps(web_form), json.dumps(mappings)
+	return f"""// Auto-wired by Bob: submits through the Web Form accept endpoint.
 (function () {{
-  // The script loads in <head>, before the form is parsed — wait for the DOM.
   if (document.readyState === 'loading') {{ document.addEventListener('DOMContentLoaded', init); }}
   else {{ init(); }}
   function init() {{
-  var SEL = {sel}, WF = {wf}, FIELDS = {fields};
-  var Q = 'input:not([type=hidden]):not([type=submit]):not([type=button]), select, textarea';
-  function findForm() {{
-    if (SEL) {{ var f = document.querySelector(SEL); if (f && f.querySelector(Q)) return f; }}
-    // Fallback: the tightest container that has a submit control and about the
-    // expected number of inputs — the form even without a class hook.
-    var best = null, bestScore = -1;
-    document.querySelectorAll('form, section, div').forEach(function (c) {{
-      var ins = c.querySelectorAll(Q);
-      if (!ins.length || ins.length > 15) return;
-      if (!c.querySelector('button, [type="submit"], [type="button"]')) return;
-      var score = 100 - Math.abs(ins.length - FIELDS.length) * 20 - Math.min(c.querySelectorAll('*').length, 400) / 20;
-      if (score > bestScore) {{ bestScore = score; best = c; }}
-    }});
-    return best;
-  }}
-  var form = findForm();
-  if (!form) return;
-  var inputs = Array.prototype.slice.call(form.querySelectorAll(Q));
-  var btn = form.querySelector('button, [type="submit"], input[type="submit"], [type="button"]');
-  var busy = false;
-  function submit(e) {{
-    if (e) e.preventDefault();
-    if (busy) return false;
-    var data = {{}};
-    inputs.forEach(function (el, i) {{
-      var fn = (el.name && FIELDS.indexOf(el.name) !== -1) ? el.name : FIELDS[i];
-      if (fn && (el.value || '').trim()) data[fn] = el.value;
-    }});
-    if (!Object.keys(data).length) return false;
-    busy = true;
-    var label = btn && btn.textContent;
-    if (btn) {{ btn.textContent = 'Sending…'; btn.disabled = true; }}
-    fetch('/api/method/frappe.website.doctype.web_form.web_form.accept', {{
-      method: 'POST',
-      headers: {{ 'Content-Type': 'application/json' }},
-      body: JSON.stringify({{ web_form: WF, data: data }})
-    }}).then(function (r) {{ if (!r.ok) throw r; return r.json(); }})
-      .then(function () {{
-        if (btn) btn.textContent = 'Thank you!';
-        inputs.forEach(function (el) {{ el.value = ''; }});
-      }})
-      .catch(function () {{
-        busy = false;
-        if (btn) {{ btn.textContent = label || 'Try again'; btn.disabled = false; }}
+    var SEL = {sel}, WF = {wf}, FIELDS = {fields_json};
+    var form;
+    try {{ form = document.querySelector(SEL); }} catch (e) {{ return; }}
+    if (!form) return;
+    if (form.tagName !== 'FORM' && form.querySelector('form')) form = form.querySelector('form');
+    if (form.dataset.bobConnected) return;
+    form.dataset.bobConnected = WF;
+    var Q = 'input, select, textarea';
+    var btn = form.querySelector('button[type="submit"], input[type="submit"], button:not([type])')
+      || form.querySelector('button[type="button"]');
+    var status = document.createElement('div');
+    status.setAttribute('role', 'status');
+    status.setAttribute('aria-live', 'polite');
+    form.appendChild(status);
+    var busy = false;
+    function fail(message) {{ status.textContent = message; return false; }}
+    function valuesOf(controls) {{
+      var values = [];
+      controls.forEach(function (el) {{
+        if ((el.type === 'checkbox' || el.type === 'radio') && !el.checked) return;
+        if (el.tagName === 'SELECT') {{
+          Array.prototype.forEach.call(el.selectedOptions, function (option) {{
+            if (!option.disabled && !(option.parentElement.tagName === 'OPTGROUP' && option.parentElement.disabled)) {{
+              values.push(option.value);
+            }}
+          }});
+        }} else values.push(el.value);
       }});
-    return false;
-  }}
-  // Attach to BOTH: the button click (fires whether or not it's type=submit) and,
-  // for a real <form>, the submit event (Enter key). The busy flag dedupes.
-  if (btn) btn.addEventListener('click', submit);
-  if (form.tagName === 'FORM') form.addEventListener('submit', submit);
+      return values;
+    }}
+    function submit(e) {{
+      if (e) e.preventDefault();
+      if (busy) return false;
+      var nativeForm = form.tagName === 'FORM';
+      var inputs = Array.prototype.slice.call(nativeForm ? form.elements : form.querySelectorAll(Q));
+      inputs = inputs.filter(function (el) {{
+        return el.matches(Q) && ['submit', 'button', 'reset', 'image'].indexOf(el.type) === -1;
+      }});
+      if (nativeForm && !HTMLFormElement.prototype.reportValidity.call(form)) return false;
+      if (!nativeForm && inputs.some(function (el) {{
+        return el.reportValidity && !el.reportValidity();
+      }})) return false;
+      var data = Object.create(null);
+      for (var i = 0; i < FIELDS.length; i++) {{
+        var field = FIELDS[i];
+        var named = inputs.filter(function (el) {{ return el.name === field.input_name; }});
+        if (!named.length) return fail('This form is missing a configured field. Please contact the site owner.');
+        var controls = named.filter(function (el) {{ return !el.matches(':disabled'); }});
+        if (!controls.length) continue;
+        if (controls.some(function (el) {{ return el.type === 'file'; }})) {{
+          return fail('File uploads are not supported by this form.');
+        }}
+        var first = controls[0], value;
+        var values = valuesOf(controls);
+        if (field.reqd && (!values.length || values.every(function (v) {{ return v === ''; }}))) {{
+          return fail('Please complete all required fields.');
+        }}
+        if (field.multiple) {{
+          value = JSON.stringify(values);
+        }} else if (first.type === 'checkbox' && field.fieldtype === 'Check' && controls.length === 1) {{
+          value = first.checked ? 1 : 0;
+        }} else {{
+          if (first.multiple || values.length > 1 || (controls.length > 1 && first.type !== 'radio')) {{
+            return fail('This form needs a multiple-value field mapping. Please contact the site owner.');
+          }}
+          if (!values.length) continue;
+          value = values[0];
+        }}
+        data[field.fieldname] = value;
+      }}
+      if (!Object.keys(data).length) return false;
+      busy = true;
+      status.textContent = 'Sending…';
+      var label = btn && btn.textContent;
+      if (btn) {{ btn.textContent = 'Sending…'; btn.disabled = true; }}
+      var headers = {{ 'Content-Type': 'application/json' }};
+      var token = window.csrf_token || (window.frappe && window.frappe.csrf_token);
+      if (token && token !== 'None') headers['X-Frappe-CSRF-Token'] = token;
+      fetch('/api/method/frappe.website.doctype.web_form.web_form.accept', {{
+        method: 'POST', headers: headers,
+        body: JSON.stringify({{ web_form: WF, data: data }})
+      }}).then(function (r) {{ if (!r.ok) throw r; return r.json(); }})
+        .then(function (response) {{
+          if (response.exc || response.exception) throw response;
+          status.textContent = 'Thank you! Your submission was saved.';
+          if (btn) btn.textContent = 'Thank you!';
+          if (nativeForm) HTMLFormElement.prototype.reset.call(form);
+        }})
+        .catch(function () {{
+          busy = false;
+          status.textContent = 'Your submission could not be saved. Please try again.';
+          if (btn) {{ btn.textContent = label || 'Try again'; btn.disabled = false; }}
+        }});
+      return false;
+    }}
+    if (form.tagName === 'FORM') {{
+      form.addEventListener('submit', submit);
+      if (btn && btn.type === 'button') btn.addEventListener('click', submit);
+    }} else if (btn) btn.addEventListener('click', submit);
   }}
 }})();
 """

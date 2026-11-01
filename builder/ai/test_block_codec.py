@@ -49,7 +49,12 @@ class TestCompress(FrappeTestCase):
 		)
 		out = BlockCodec.compress(icon)
 
-		self.assertEqual(out, {"icon": "star", "name": "Star", "style": {"display": "flex"}})
+		self.assertEqual(out["icon"], "star")
+		self.assertEqual(out["name"], "Star")
+		self.assertEqual(out["style"]["display"], "flex")
+		self.assertEqual(out["ref"], "abc123")
+		self.assertEqual(out["attrs"], {"src": "/files/a.png", "data-lucide": "star"})
+		self.assertNotIn("text", out)
 
 	def test_keeps_tablet_styles_shallow_on_a_simple_task(self):
 		nested = block(children=[block(children=[block(tabletStyles={"gap": "4px"})])])
@@ -106,6 +111,8 @@ class TestExpand(FrappeTestCase):
 		out = BlockCodec.expand(BlockCodec.compress(original))
 
 		self.assertEqual(out["element"], original["element"])
+		self.assertEqual(out["blockId"], original["blockId"])
+		self.assertEqual(out["children"][0]["blockId"], "child")
 		self.assertEqual(out["baseStyles"], original["baseStyles"])
 		self.assertEqual(out["attributes"], original["attributes"])
 		self.assertEqual(out["children"][0]["blockName"], "Hero")

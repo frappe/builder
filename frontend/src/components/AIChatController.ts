@@ -1,8 +1,16 @@
 import type Block from "@/block";
 import builderTokens from "@/data/builderToken";
 import { type AIChatHandlers, attachAIChatListeners, detachAIChatListeners } from "@/components/ai/realtime";
-import { type AffectedItems, type PageCanvas, ToolDispatcher } from "@/components/ai/toolDispatch";
-import type { AIProvider, AITurnStep, ChatMessage } from "@/components/ai/types";
+import { readDraft, RunEvents, type SendEnvelope, writeDraft } from "@/components/ai/lifecycle";
+import { type PageCanvas, ToolDispatcher } from "@/components/ai/toolDispatch";
+import type {
+	AIProvider,
+	AIRun,
+	AIRunEvent,
+	AISession,
+	AITurnStep,
+	ChatMessage,
+} from "@/components/ai/types";
 import { buildLocalMessage } from "@/components/ai/yaml";
 import type BuilderCanvas from "@/components/BuilderCanvas.vue";
 import useBuilderStore from "@/stores/builderStore";
@@ -45,6 +53,31 @@ export class AIChatController {
 	readonly sessionId = ref("");
 	readonly messages = ref<ChatMessage[]>([]);
 	readonly isLoadingSession = ref(false);
+	readonly isSwitchingSession = ref(false);
+	readonly isReverting = ref(false);
+	readonly isRefreshingPage = ref(false);
+	readonly activeRun = ref<AIRun | null>(null);
+	private readonly events = new RunEvents();
+	private readonly observedRuns = new Map<string, string>();
+	private readonly retryEnvelope = ref<SendEnvelope | null>(null);
+	private readonly stopWatchers: Array<() => void> = [];
+	private disposed = false;
+	private mounted = false;
+	private restoringDraft = false;
+	private blankSessionSelected = false;
+	private reconcilePromise: Promise<void> | null = null;
+	private reconcileAgain = false;
+	private pageNeedsRefresh = false;
+	private pageRefreshVersion = 0;
+	private reconcileFailures = 0;
+	private reconcileTimer: ReturnType<typeof setTimeout> | undefined;
+	private buildSyncPromise: Promise<void> | null = null;
+	private buildEpoch = 0;
+	private generationId = "";
+	private generationRunId = "";
+	private generationSequence = -1;
+	private readonly retiredGenerations = new Set<string>();
+	private readonly affectedByRun = new Map<string, Record<string, any>>();
 	// only the newest load may commit; older responses are stale
 	private loadSessionEpoch = 0;
 	// target of the newest in-flight load; refreshes follow it, not the current session
@@ -56,11 +89,10 @@ export class AIChatController {
 	private liveSend = 0;
 	// a blank chat can't tell its own turn's events from another chat's until run
 	// names the session it created, so they wait here and replay once it does
-	private heldEvents: Array<() => void> = [];
+	private heldEvents: Array<{ runId: string; replay: () => void }> = [];
+	private readonly foreignEvents = new Map<string, Array<{ data: AIRunEvent; replay: () => void }>>();
+	private readonly stepSequences = new Map<number, number>();
 	private cancelOnceKnown = false;
-	// both outlive their turn, so a new turn clears them before they can touch it
-	private completeTimer: ReturnType<typeof setTimeout> | undefined;
-	private cancelWatchdog: ReturnType<typeof setTimeout> | undefined;
 
 	private invalidateSessionLoads() {
 		this.loadSessionEpoch++;
@@ -80,51 +112,87 @@ export class AIChatController {
 	private beginCanvasBuild() {
 		this.builderStore.aiBuildingCanvas = true;
 		if (this.buildQuietTimer) clearTimeout(this.buildQuietTimer);
-		// If the run dies without a complete event, release the canvas and resync
-		// the draft from the server so the user isn't left editing a dead preview.
-		this.buildQuietTimer = setTimeout(() => this.endCanvasBuild(true), 45000);
+		// Silence is not proof of completion; ask the server before releasing a preview.
+		this.buildQuietTimer = setTimeout(() => this.requestReconciliation(true), 45000);
 	}
 
-	private endCanvasBuild(resyncDraft = false) {
+	private endCanvasBuild() {
 		if (this.buildQuietTimer) {
 			clearTimeout(this.buildQuietTimer);
 			this.buildQuietTimer = null;
 		}
 		if (!this.builderStore.aiBuildingCanvas) return;
 		this.builderStore.aiBuildingCanvas = false;
-		if (resyncDraft && this.pageId.value && this.pageId.value !== "new") {
-			this.pageStore.setPage(this.pageId.value, false);
-		}
 	}
 
 	/** Accept one page_yaml chunk for the canvas. Dedupes replayed chunks by stream
 	 * offset, and refetches the server buffer when a gap shows we missed some. */
-	private acceptPageYamlChunk(data: { chunk?: string; offset?: number }): void {
+	private acceptPageYamlChunk(
+		data: AIRunEvent & { generation_id?: string; chunk?: string; offset?: number },
+	): void {
+		if (!this.selectGeneration(data.run_id, data.generation_id, data.seq)) return;
 		if (typeof data.offset === "number") {
 			const have = this.pageStreamContent.value.length;
 			if (data.offset < have) return;
 			if (data.offset > have) {
-				this.syncActiveBuild();
+				void this.syncActiveBuild().catch(() => this.requestReconciliation(true));
 				return;
 			}
 		}
 		this.beginCanvasBuild();
-		this.previewUnconfirmed = true;
-		this.pageStreamContent.value += data.chunk!;
+		this.pageStreamContent.value += data.chunk || "";
 		this.scheduleStreamRender();
 	}
 
 	/** A mid-build page load: replay the in-flight generation stream from the
 	 * server's buffer so the canvas shows the live build, not the stale draft. */
-	private async syncActiveBuild() {
+	private selectGeneration(runId: string, generationId?: string, seq = -1) {
+		if (!generationId || this.events.finished(runId) || this.retiredGenerations.has(generationId))
+			return false;
+		if (this.generationId === generationId && this.generationRunId === runId) return true;
+		if (this.generationRunId === runId && seq >= 0 && seq < this.generationSequence) return false;
+		this.resetGeneration();
+		this.generationId = generationId;
+		this.generationRunId = runId;
+		this.generationSequence = seq;
+		return true;
+	}
+
+	private resetGeneration() {
+		this.buildEpoch++;
+		if (this.generationId) this.retiredGenerations.add(this.generationId);
+		this.clearStreamRenderTimer();
+		this.generationId = "";
+		this.generationRunId = "";
+		this.generationSequence = -1;
+		this.pageStreamContent.value = "";
+	}
+
+	private syncActiveBuild(): Promise<void> {
+		if (this.buildSyncPromise) return this.buildSyncPromise;
+		this.buildSyncPromise = this.loadActiveBuild().finally(() => {
+			this.buildSyncPromise = null;
+		});
+		return this.buildSyncPromise;
+	}
+
+	private async loadActiveBuild() {
 		const pid = this.pageId.value;
-		if (!pid || pid === "new") return;
-		const build: any = await createResource({ url: "builder.ai.api.get_active_build" })
-			.submit({ page_id: pid })
-			.catch(() => null);
-		if (this.pageId.value !== pid) return;
-		if (!build?.yaml) return;
-		if (build.yaml.length <= this.pageStreamContent.value.length) return;
+		const epoch = this.buildEpoch;
+		if (!pid || pid === "new" || this.disposed) return;
+		const build: any = await createResource({ url: "builder.ai.api.get_active_build" }).submit({
+			page_id: pid,
+		});
+		if (this.disposed || this.pageId.value !== pid || epoch !== this.buildEpoch) return;
+		if (!build?.generation_id || !build?.run_id) {
+			if (this.generationId) {
+				this.pageNeedsRefresh = true;
+				this.resetGeneration();
+			}
+			return;
+		}
+		if (!this.selectGeneration(build.run_id, build.generation_id)) return;
+		if (!build.yaml || build.yaml.length < this.pageStreamContent.value.length) return;
 		this.beginCanvasBuild();
 		this.pageStreamContent.value = build.yaml;
 		this.scheduleStreamRender();
@@ -134,10 +202,6 @@ export class AIChatController {
 	private pendingDisplayText: string | null = null;
 
 	private readonly pageStreamContent = ref(""); // accumulates kind="page_yaml" chunks
-	// True while the canvas shows a streamed preview that no authoritative
-	// tool_batch has replaced — if the turn ends in that state (failed generation,
-	// cancel), the preview is dead weight and the canvas must resync to the draft.
-	private previewUnconfirmed = false;
 	private readonly summaryContent = ref(""); // accumulates summary chunks
 	/** The in-flight turn's timeline, mirrored onto the pending message as it grows. */
 	private readonly liveSteps = ref<AITurnStep[]>([]);
@@ -201,6 +265,9 @@ export class AIChatController {
 		() =>
 			!!this.prompt.value.trim() &&
 			!this.isSubmitting.value &&
+			!this.isSwitchingSession.value &&
+			!this.isReverting.value &&
+			!this.isRefreshingPage.value &&
 			this.isEditingPage.value &&
 			!!this.selectedModel.value &&
 			!this.selectedModelUnusable.value,
@@ -209,45 +276,70 @@ export class AIChatController {
 	constructor() {
 		this.dispatcher = new ToolDispatcher(this.pageStore, this.pageCanvas);
 
-		watch(
-			this.currentProviderModels,
-			(models) => {
-				const isValid = models.some((m) => m.name === this.selectedModel.value);
-				if (models.length && (!this.selectedModel.value || !isValid)) {
-					this.selectedModel.value = models[0].name;
-				}
-			},
-			{ immediate: true },
+		this.stopWatchers.push(
+			watch(
+				this.currentProviderModels,
+				(models) => {
+					const isValid = models.some((m) => m.name === this.selectedModel.value);
+					if (models.length && (!this.selectedModel.value || !isValid)) {
+						this.selectedModel.value = models[0].name;
+					}
+				},
+				{ immediate: true },
+			),
 		);
 
-		watch(this.pageId, async (newPageId, oldPageId) => {
-			if (oldPageId) detachAIChatListeners(this.builderStore.realtime, oldPageId, this.handlers);
-			if (!newPageId) return;
-			attachAIChatListeners(this.builderStore.realtime, newPageId, this.handlers);
-			this.resetTransientState();
-			// Sessions are page-scoped: never carry one across a page switch.
-			this.sessionIntentEpoch++;
-			this.invalidateSessionLoads();
-			this.sessionId.value = "";
-			this.sessions.value = [];
-			this.messages.value = [];
-			if (newPageId === "new") return;
-			await this.loadSession();
-			// A build may be mid-stream on this page (opened from another chat's link,
-			// or a refresh mid-generation): replay the buffered stream as live preview.
-			this.syncActiveBuild();
-		});
+		this.stopWatchers.push(
+			watch(this.pageId, async (newPageId, oldPageId) => {
+				if (oldPageId) detachAIChatListeners(this.builderStore.realtime, oldPageId, this.handlers);
+				if (newPageId) attachAIChatListeners(this.builderStore.realtime, newPageId, this.handlers);
+				this.resetTransientState();
+				this.resetGeneration();
+				this.endCanvasBuild();
+				this.events.clear();
+				this.observedRuns.clear();
+				this.retiredGenerations.clear();
+				// Sessions are page-scoped: never carry one across a page switch.
+				this.sessionIntentEpoch++;
+				this.invalidateSessionLoads();
+				this.sessionId.value = "";
+				this.sessions.value = [];
+				this.messages.value = [];
+				this.restoreSessionChoice();
+				this.restoreComposer();
+				if (!newPageId || newPageId === "new") return;
+				await this.reconcile();
+			}),
+		);
 
 		// loadSession stands down until AI is known to be on — but that answer only
 		// arrives once ai_setup_state (and Builder Settings) resolve, which is AFTER
 		// mount runs. Without this retry the very first load bails and never comes
 		// back, so the panel settles on an empty "New chat" with the real
 		// conversation still sitting in the database and no history to switch to.
-		watch(
-			() => this.builderStore.isAIEnabled,
-			(enabled) => {
-				if (enabled && !this.sessionId.value) this.loadSession();
-			},
+		this.stopWatchers.push(
+			watch(
+				() => this.builderStore.isAIEnabled,
+				(enabled) => {
+					if (enabled && !this.sessionId.value) this.requestReconciliation();
+				},
+			),
+		);
+		this.restoreSessionChoice();
+		this.restoreComposer();
+		this.stopWatchers.push(
+			watch(
+				[
+					this.prompt,
+					this.imageData,
+					this.imagePreviewUrl,
+					this.imageFileName,
+					this.attachedBlocks,
+					this.retryEnvelope,
+				],
+				() => this.persistComposer(),
+				{ deep: true, flush: "sync" },
+			),
 		);
 	}
 
@@ -265,25 +357,17 @@ export class AIChatController {
 	}
 
 	resetTransientState() {
-		this.clearStreamRenderTimer();
-		this.clearTurnTimers();
 		this.liveSend = 0;
 		this.heldEvents = [];
 		this.cancelOnceKnown = false;
-		this.endCanvasBuild();
 		this.progressMessage.value = "";
-		this.pageStreamContent.value = "";
 		this.summaryContent.value = "";
 		this.liveSteps.value = [];
 		this.pendingAssistantId.value = null;
 		this.dispatcher.reset();
 		this.isSubmitting.value = false;
 		this.isCancelling.value = false;
-	}
-
-	private clearTurnTimers() {
-		clearTimeout(this.completeTimer);
-		clearTimeout(this.cancelWatchdog);
+		this.activeRun.value = null;
 	}
 
 	/** Throttle the streaming canvas preview: render at most every STREAM_RENDER_MS
@@ -352,14 +436,104 @@ export class AIChatController {
 		this.scrollToBottom();
 	};
 
+	private composerKey() {
+		return `composer:${this.pageId.value}:${this.sessionId.value || "new"}`;
+	}
+
+	private restoreSessionChoice() {
+		const selected = readDraft<string>(`selected:${this.pageId.value}`);
+		this.sessionId.value = selected || "";
+		this.blankSessionSelected = selected === "";
+	}
+
+	private persistComposer() {
+		if (this.restoringDraft || this.disposed) return;
+		writeDraft(this.composerKey(), {
+			prompt: this.prompt.value,
+			imageData: this.imageData.value,
+			imagePreviewUrl: this.imagePreviewUrl.value,
+			imageFileName: this.imageFileName.value,
+			blocks: this.attachedBlocks.value,
+			displayText: this.pendingDisplayText,
+			retryEnvelope: this.retryEnvelope.value,
+		});
+	}
+
+	private restoreComposer() {
+		const draft = readDraft<Partial<SendEnvelope> & { retryEnvelope?: SendEnvelope }>(this.composerKey());
+		this.restoringDraft = true;
+		this.retryEnvelope.value = draft?.retryEnvelope || null;
+		// An interrupted HTTP request is also a retryable draft after refresh.
+		const content = draft?.prompt ? draft : draft?.retryEnvelope || draft;
+		this.prompt.value = content?.prompt || "";
+		this.imageData.value = content?.imageData || null;
+		this.imagePreviewUrl.value = content?.imagePreviewUrl || null;
+		this.imageFileName.value = content?.imageFileName || "";
+		this.attachedBlocks.value = content?.blocks || [];
+		this.pendingDisplayText = content?.displayText || null;
+		this.restoringDraft = false;
+	}
+
+	private hydrateSession(session: AISession) {
+		const previousRun = this.activeRun.value?.run_id;
+		const run = session.active_run;
+		const sameRun = !!run && run.run_id === previousRun;
+		const pending = sameRun ? this.messages.value.find((m) => m.id === this.pendingAssistantId.value) : null;
+		if (previousRun && !sameRun && session.session_id === this.sessionId.value)
+			this.events.finish(previousRun);
+		if (session.session_id !== this.sessionId.value) {
+			this.sessionId.value = session.session_id;
+			this.restoreComposer();
+		}
+		writeDraft(`selected:${this.pageId.value}`, session.session_id);
+		this.messages.value = (session.messages || []).map(
+			(m) =>
+				({
+					...m,
+					role: m.role === "user" ? "user" : "assistant",
+					metadata: {
+						...m.metadata,
+						...(m.role === "assistant" ? this.affectedByRun.get(m.metadata?.runId) : {}),
+					},
+				}) as ChatMessage,
+		);
+		this.activeRun.value = run || null;
+		this.isSubmitting.value = !!run;
+		if (!sameRun) {
+			this.summaryContent.value = "";
+			this.liveSteps.value = [];
+			this.dispatcher.reset();
+			this.stepSequences.clear();
+			this.isCancelling.value = false;
+			this.progressMessage.value = run?.status === "queued" ? "Queued…" : "";
+		}
+		this.pendingAssistantId.value = null;
+		if (run) {
+			this.observedRuns.set(session.session_id, run.run_id);
+			const assistant =
+				pending || buildLocalMessage("assistant", "", { status: "running", run_id: run.run_id });
+			this.messages.value.push(assistant);
+			this.pendingAssistantId.value = assistant.id;
+		}
+		this.scrollToBottom();
+	}
+
 	/** Load a chat session: the given one, else the current one, else the page's
 	 * most recently used, or a blank chat when there is none. A page can hold
 	 * several parallel sessions; see switchSession/newSession. */
-	async loadSession(sessionId?: string) {
-		if (!this.pageId.value || !this.builderStore.isAIEnabled || this.isUnsavedPage.value) return;
+	async loadSession(sessionId?: string): Promise<boolean> {
+		if (this.disposed || !this.pageId.value || !this.builderStore.isAIEnabled || this.isUnsavedPage.value)
+			return false;
 		const target = sessionId || this.pendingSessionId || this.sessionId.value || undefined;
+		const pendingRequest =
+			!sessionId && this.retryEnvelope.value?.attempted ? this.retryEnvelope.value : null;
+		if (!target && this.blankSessionSelected && !pendingRequest) {
+			this.loadSessions();
+			return true;
+		}
 		const epoch = ++this.loadSessionEpoch;
 		const pageId = this.pageId.value;
+		const intent = this.sessionIntentEpoch;
 		this.pendingSessionId = target ?? null;
 		this.isLoadingSession.value = true;
 		try {
@@ -369,21 +543,129 @@ export class AIChatController {
 					page_id: pageId,
 					model: this.selectedModel.value,
 					session_id: target,
+					...(pendingRequest ? { request_id: pendingRequest.requestId } : {}),
 				}),
 			}).submit();
-			if (epoch !== this.loadSessionEpoch || this.pageId.value !== pageId) return;
-			const session = result as { session_id: string; messages: ChatMessage[] };
-			this.sessionId.value = session.session_id;
-			this.messages.value = (session.messages || []).map(
-				(m) => ({ ...m, role: m.role === "user" ? "user" : "assistant" }) as ChatMessage,
-			);
-			this.scrollToBottom();
+			if (
+				this.disposed ||
+				epoch !== this.loadSessionEpoch ||
+				this.pageId.value !== pageId ||
+				intent !== this.sessionIntentEpoch
+			)
+				return false;
+			const session = result as AISession;
+			// An unknown first request must not select an unrelated latest chat.
+			if (pendingRequest && !pendingRequest.sessionId && !session.request_run) return true;
+			if (session.request_run && this.retryEnvelope.value) {
+				const unchanged = this.sendEnvelope().requestId === this.retryEnvelope.value.requestId;
+				this.retryEnvelope.value = null;
+				if (unchanged) {
+					this.prompt.value = "";
+					this.attachedBlocks.value = [];
+					this.pendingDisplayText = null;
+					this.clearImage();
+				}
+				this.persistComposer();
+				if (session.session_id !== this.sessionId.value) {
+					writeDraft(`composer:${pageId}:${session.session_id}`, readDraft(this.composerKey()));
+					writeDraft(this.composerKey(), null);
+				}
+			}
+			this.hydrateSession(session);
+			this.blankSessionSelected = !session.session_id;
 			this.loadSessions();
+			return true;
 		} finally {
 			if (epoch === this.loadSessionEpoch) {
 				this.isLoadingSession.value = false;
 				this.pendingSessionId = null;
 			}
+		}
+	}
+
+	/** One in-flight read, with bounded backoff. Idle polling also discovers work in another tab. */
+	private scheduleReconciliation(delay?: number) {
+		clearTimeout(this.reconcileTimer);
+		if (!this.mounted || this.disposed) return;
+		const interval = this.isSubmitting.value || this.builderStore.aiBuildingCanvas ? 5000 : 15000;
+		this.reconcileTimer = setTimeout(
+			() => this.reconcile(),
+			delay ?? Math.min(30000, interval * 2 ** this.reconcileFailures),
+		);
+	}
+
+	private requestReconciliation = (refreshPage = false) => {
+		if (this.disposed) return;
+		this.pageNeedsRefresh ||= refreshPage;
+		if (refreshPage) this.pageRefreshVersion++;
+		if (this.reconcilePromise) this.reconcileAgain = true;
+		else void this.reconcile();
+	};
+
+	private onReconnect = () => this.requestReconciliation(true);
+	private onVisibility = () => {
+		if (document.visibilityState === "visible") this.requestReconciliation(true);
+	};
+
+	reconcile = (): Promise<void> => {
+		if (this.reconcilePromise) return this.reconcilePromise;
+		if (this.disposed || this.liveSend || this.isSwitchingSession.value || this.isReverting.value) {
+			this.scheduleReconciliation();
+			return Promise.resolve();
+		}
+		clearTimeout(this.reconcileTimer);
+		this.reconcilePromise = this.reconcileState()
+			.catch(() => {
+				this.reconcileFailures = Math.min(this.reconcileFailures + 1, 3);
+			})
+			.finally(() => {
+				this.reconcilePromise = null;
+				const again = this.reconcileAgain;
+				this.reconcileAgain = false;
+				this.scheduleReconciliation(again ? 0 : undefined);
+			});
+		return this.reconcilePromise;
+	};
+
+	private async reconcileState() {
+		const pageId = this.pageId.value;
+		const intent = this.sessionIntentEpoch;
+		const hadRun = !!this.activeRun.value;
+		const before = this.messages.value
+			.filter((m) => m.id !== this.pendingAssistantId.value)
+			.map((m) => m.id)
+			.join();
+		if (!(await this.loadSession())) return;
+		this.reconcileFailures = 0;
+		const after = this.messages.value
+			.filter((m) => m.id !== this.pendingAssistantId.value)
+			.map((m) => m.id)
+			.join();
+		this.pageNeedsRefresh ||= hadRun || !!this.activeRun.value || before !== after;
+		await this.syncActiveBuild();
+		if (this.disposed || this.pageId.value !== pageId || intent !== this.sessionIntentEpoch || this.liveSend)
+			return;
+		if (this.pageNeedsRefresh && this.isEditingPage.value) {
+			const version = this.pageRefreshVersion;
+			await this.refreshPage();
+			if (this.disposed || this.pageId.value !== pageId || intent !== this.sessionIntentEpoch) return;
+			this.pageNeedsRefresh = version !== this.pageRefreshVersion;
+			if (this.generationId) this.flushStreamRender();
+		}
+		if (!this.generationId && !this.activeRun.value) this.endCanvasBuild();
+		this.replayHeldEvents();
+	}
+
+	private async refreshPage() {
+		if (this.disposed || this.isUnsavedPage.value) return;
+		this.isRefreshingPage.value = true;
+		this.builderStore.aiEditEpoch++;
+		this.builderStore.aiBuildingCanvas = true;
+		try {
+			await this.pageStore.setPage(this.pageId.value, false);
+		} finally {
+			this.isRefreshingPage.value = false;
+			if (!this.activeRun.value && !this.generationId) this.endCanvasBuild();
 		}
 	}
 
@@ -394,7 +676,7 @@ export class AIChatController {
 		const rows = await createResource({ url: "builder.ai.api.list_page_ai_sessions" })
 			.submit({ page_id: pageId })
 			.catch(() => null);
-		if (rows && this.pageId.value === pageId)
+		if (!this.disposed && rows && this.pageId.value === pageId)
 			this.sessions.value = rows as Array<{ name: string; title: string | null }>;
 	};
 
@@ -402,33 +684,57 @@ export class AIChatController {
 		// reselecting the current chat is a no-op only when nothing else is pending
 		if (!sessionId || (sessionId === this.sessionId.value && !this.pendingSessionId)) return;
 		this.sessionIntentEpoch++;
+		this.persistComposer();
 		this.resetTransientState();
-		await this.loadSession(sessionId);
-		this.scrollToBottom();
+		this.isSwitchingSession.value = true;
+		const intent = this.sessionIntentEpoch;
+		try {
+			await this.loadSession(sessionId);
+		} catch (error) {
+			toast.error(getErrorMessage(error, "Could not load this chat"));
+		} finally {
+			if (intent === this.sessionIntentEpoch) this.isSwitchingSession.value = false;
+			this.scheduleReconciliation();
+		}
 	};
 
 	/** A blank chat. The server only creates its session with the first message. */
 	newSession = () => {
 		if (!this.pageId.value || this.isUnsavedPage.value) return;
 		this.sessionIntentEpoch++;
+		this.persistComposer();
 		this.invalidateSessionLoads();
 		this.resetTransientState();
 		this.sessionId.value = "";
 		this.messages.value = [];
+		this.isSwitchingSession.value = false;
+		this.blankSessionSelected = true;
+		writeDraft(`selected:${this.pageId.value}`, "");
+		this.restoreComposer();
 	};
 
 	deleteSession = async () => {
-		if (!this.sessionId.value) return;
-		if (!(await confirm("Delete this chat? Its messages are removed; the page itself is untouched."))) return;
-		const intent = ++this.sessionIntentEpoch;
+		const sessionId = this.sessionId.value;
 		const pageId = this.pageId.value;
-		await createResource({ url: "builder.ai.api.delete_ai_session" })
-			.submit({ session_id: this.sessionId.value })
-			.catch(() => null);
-		if (intent !== this.sessionIntentEpoch || this.pageId.value !== pageId) return;
+		const intent = this.sessionIntentEpoch;
+		if (!sessionId || this.isSubmitting.value) return;
+		if (!(await confirm("Delete this chat? Its messages are removed; the page itself is untouched."))) return;
+		if (this.disposed || intent !== this.sessionIntentEpoch || this.isSubmitting.value) return;
+		try {
+			await createResource({ url: "builder.ai.api.delete_ai_session" }).submit({ session_id: sessionId });
+		} catch (error) {
+			toast.error(getErrorMessage(error, "Could not delete this chat"));
+			return;
+		}
+		if (this.disposed || intent !== this.sessionIntentEpoch || this.pageId.value !== pageId) return;
+		this.sessionIntentEpoch++;
+		this.invalidateSessionLoads();
+		writeDraft(this.composerKey(), null);
 		this.resetTransientState();
 		this.sessionId.value = "";
-		await this.loadSession(); // falls back to the next most recent (or a blank chat)
+		this.retryEnvelope.value = null;
+		this.blankSessionSelected = false;
+		await this.reconcile();
 	};
 
 	clearImage = () => {
@@ -442,8 +748,10 @@ export class AIChatController {
 		if (!file.type.startsWith("image/")) return;
 		if (file.size > 5 * 1024 * 1024) return;
 		this.imageFileName.value = file.name || "pasted-image.png";
+		const intent = this.sessionIntentEpoch;
 		const reader = new FileReader();
 		reader.onload = (e) => {
+			if (this.disposed || intent !== this.sessionIntentEpoch) return;
 			this.imageData.value = e.target?.result as string;
 			this.imagePreviewUrl.value = this.imageData.value;
 		};
@@ -461,25 +769,72 @@ export class AIChatController {
 		return data.session_id !== this.sessionId.value;
 	}
 
-	private holdUntilSessionKnown(data: { session_id?: string }, replay: () => void): boolean {
-		if (!data.session_id || this.sessionId.value || !this.liveSend) return false;
-		this.heldEvents.push(replay);
-		return true;
+	private acceptEvent(data: AIRunEvent, replay: () => void, canvas = false): boolean {
+		if (this.disposed || !data.run_id || this.events.finished(data.run_id)) return false;
+		if (this.liveSend && !this.activeRun.value) {
+			if (this.heldEvents.length < 1000) this.heldEvents.push({ runId: data.run_id, replay });
+			return false;
+		}
+		if (this.isForeignSession(data)) {
+			if (!canvas) return false;
+			if (this.observedRuns.get(data.session_id) !== data.run_id) {
+				this.verifyForeignRun(data, replay);
+				return false;
+			}
+		} else if (this.activeRun.value?.run_id !== data.run_id) {
+			if (this.heldEvents.length < 1000) this.heldEvents.push({ runId: data.run_id, replay });
+			this.requestReconciliation();
+			return false;
+		}
+		return this.events.accept(data);
+	}
+
+	private verifyForeignRun(data: AIRunEvent, replay: () => void) {
+		const pending = this.foreignEvents.get(data.session_id);
+		if (pending) {
+			if (pending.length < 1000) pending.push({ data, replay });
+			return;
+		}
+		const events = [{ data, replay }];
+		this.foreignEvents.set(data.session_id, events);
+		const pageId = this.pageId.value;
+		void createResource({ url: "builder.ai.api.get_ai_session" })
+			.submit({
+				page_id: pageId,
+				session_id: data.session_id,
+			})
+			.then((session: AISession) => {
+				if (this.disposed || this.pageId.value !== pageId) return;
+				const run = session.active_run;
+				const previous = this.observedRuns.get(data.session_id);
+				if (previous && previous !== run?.run_id) this.events.finish(previous);
+				if (run) this.observedRuns.set(data.session_id, run.run_id);
+				for (const event of events) {
+					if (event.data.run_id === run?.run_id) event.replay();
+					else this.events.finish(event.data.run_id);
+				}
+				this.requestReconciliation(true);
+			})
+			.catch(() => this.requestReconciliation(true))
+			.finally(() => {
+				if (this.foreignEvents.get(data.session_id) === events) this.foreignEvents.delete(data.session_id);
+			});
 	}
 
 	private replayHeldEvents() {
-		this.heldEvents.splice(0).forEach((replay) => replay());
-		if (!this.cancelOnceKnown) return;
+		this.heldEvents.splice(0).forEach(({ runId, replay }) => {
+			if (runId === this.activeRun.value?.run_id) replay();
+		});
+		if (!this.cancelOnceKnown || !this.activeRun.value) return;
 		this.cancelOnceKnown = false;
-		this.cancel();
+		void this.cancel();
 	}
 
 	/** The turn's headline status ("Thinking with Claude Sonnet 5"), for the panel
 	 * header only. What the turn is DOING belongs to the timeline now — writing it
 	 * into the bubble as well just says the same thing twice. */
-	onProgress = (data: { message?: string; session_id?: string }) => {
-		if (this.holdUntilSessionKnown(data, () => this.onProgress(data))) return;
-		if (this.isForeignSession(data)) return;
+	onProgress = (data: AIRunEvent & { message?: string }) => {
+		if (!this.acceptEvent(data, () => this.onProgress(data))) return;
 		this.isSubmitting.value = true;
 		this.progressMessage.value = data.message || this.progressMessage.value;
 	};
@@ -488,11 +843,12 @@ export class AIChatController {
 	 * narration it wrote before moving on. A "text" step is also the signal that the
 	 * round is over — whatever has been streaming becomes part of the timeline and the
 	 * live answer resets for the next round. */
-	onStep = (data: AITurnStep & { session_id?: string }) => {
-		if (this.holdUntilSessionKnown(data, () => this.onStep(data))) return;
-		if (this.isForeignSession(data) || typeof data.id !== "number") return;
+	onStep = (data: AITurnStep & AIRunEvent) => {
+		if (!this.acceptEvent(data, () => this.onStep(data)) || typeof data.id !== "number") return;
+		if ((this.stepSequences.get(data.id) ?? -1) > data.seq) return;
+		this.stepSequences.set(data.id, data.seq);
 		this.isSubmitting.value = true;
-		const { session_id, page_id, ...step } = data as Record<string, any>;
+		const { session_id, page_id, run_id, seq, ...step } = data as Record<string, any>;
 		if (step.kind === "text") this.summaryContent.value = "";
 		const index = this.liveSteps.value.findIndex((s) => s.id === step.id);
 		if (index === -1) this.liveSteps.value.push(step as AITurnStep);
@@ -514,15 +870,17 @@ export class AIChatController {
 		});
 	}
 
-	onStream = (data: {
-		chunk?: string;
-		kind?: string;
-		session_id?: string;
-		offset?: number;
-		replace?: boolean;
-	}) => {
+	onStream = (
+		data: AIRunEvent & {
+			generation_id?: string;
+			chunk?: string;
+			kind?: string;
+			offset?: number;
+			replace?: boolean;
+		},
+	) => {
 		if (!data.chunk && !data.replace) return;
-		if (this.holdUntilSessionKnown(data, () => this.onStream(data))) return;
+		if (!this.acceptEvent(data, () => this.onStream(data), data.kind === "page_yaml")) return;
 		if (this.isForeignSession(data)) {
 			// Another chat on this page is generating: the canvas is page-level, so
 			// paint its preview, but keep its chat text out of this session.
@@ -552,7 +910,8 @@ export class AIChatController {
 	 * theme variables (var(--id) styles), the evaluated page data (repeater
 	 * previews), or the page doc (route/meta). NOT session-scoped — this state is
 	 * page/site-level, so any chat's turn should refresh it. */
-	onRefetch = async (data: { resources?: string[] }) => {
+	onRefetch = async (data: AIRunEvent & { resources?: string[] }) => {
+		if (!this.acceptEvent(data, () => this.onRefetch(data), true)) return;
 		const resources = data.resources || [];
 		if (resources.includes("variables")) {
 			builderTokens.reload();
@@ -562,7 +921,13 @@ export class AIChatController {
 			const pageLoadToken = this.pageStore.pageLoadToken;
 			const page = await this.pageStore.fetchActivePage(pageId).catch(() => null);
 			// another page may have opened meanwhile, and its canvas autosaves to activePage
-			if (pageLoadToken !== this.pageStore.pageLoadToken || this.pageStore.selectedPage !== pageId) return;
+			if (
+				this.disposed ||
+				this.events.finished(data.run_id) ||
+				pageLoadToken !== this.pageStore.pageLoadToken ||
+				this.pageStore.selectedPage !== pageId
+			)
+				return;
 			if (page) {
 				this.pageStore.activePage = page;
 				if (resources.includes("page_data")) await this.pageStore.setPageData(page);
@@ -570,28 +935,32 @@ export class AIChatController {
 		}
 	};
 
-	onToolBatch = (data: {
-		session_id?: string;
-		operations?: Array<{ tool_name: string; args: Record<string, any> }>;
-	}) => {
-		// Cancel any pending throttled stream render so it can't fire AFTER and clobber
-		// the authoritative apply below with stale partial YAML.
+	onToolBatch = (
+		data: AIRunEvent & {
+			operations?: Array<{ tool_name: string; args: Record<string, any> }>;
+		},
+	) => {
+		if (!this.acceptEvent(data, () => this.onToolBatch(data), true)) return;
 		this.clearStreamRenderTimer();
 		const operations = data.operations;
 		if (!operations?.length) return;
-		this.previewUnconfirmed = false;
-		// another chat's turn still edits this page, but its changes aren't this chat's;
-		// until run names this send's session, record aside and decide once it does
-		const aside: AffectedItems = { blocks: [], scripts: [] };
-		const undecided = this.holdUntilSessionKnown(data, () => {
-			if (!this.isForeignSession(data)) this.dispatcher.mergeAffected(aside);
-		});
-		const ownTurn = !undecided && !this.isForeignSession(data);
+		this.buildEpoch++;
+		if (this.isRefreshingPage.value) {
+			this.pageStore.pageLoadToken++;
+			this.requestReconciliation(true);
+		}
+		if (
+			this.generationRunId === data.run_id &&
+			operations.some((op) => ["generate_page", "set_page_blocks"].includes(op.tool_name))
+		) {
+			this.resetGeneration();
+		}
+		const ownTurn = !this.isForeignSession(data);
+
 		this.applyServerEdit(() => {
 			for (const op of operations) {
 				// before apply: a removed block can't be named afterwards
 				if (ownTurn) this.dispatcher.trackAffectedItem(op.tool_name, op.args);
-				else if (undecided) this.dispatcher.trackAffectedItem(op.tool_name, op.args, aside);
 				try {
 					this.dispatcher.applyToolOperation(op.tool_name, op.args);
 				} catch (e) {
@@ -622,7 +991,8 @@ export class AIChatController {
 			nextTick(() => {
 				// a whole-tree op rebuilt the history, and the new one ignores this id
 				if (pauseId) this.pageCanvas.value?.history?.resume(pauseId, true);
-				if (!wasQuiet) this.builderStore.aiBuildingCanvas = false;
+				if (!this.disposed && !wasQuiet && !this.activeRun.value && !this.generationId)
+					this.builderStore.aiBuildingCanvas = false;
 			});
 		}
 	}
@@ -646,124 +1016,64 @@ export class AIChatController {
 		return null;
 	}
 
-	onComplete = async (data: { message?: string; session_id?: string }) => {
-		if (this.holdUntilSessionKnown(data, () => this.onComplete(data))) return;
-		if (this.isForeignSession(data)) {
-			// The other chat's build on this page finished; the authoritative
-			// tool_batch already replaced the streamed preview.
-			this.endCanvasBuild();
-			return;
-		}
-		this.clearStreamRenderTimer();
-		this.endCanvasBuild(this.previewUnconfirmed);
-		this.previewUnconfirmed = false;
-		this.isSubmitting.value = false;
-		this.isCancelling.value = false;
-		this.progressMessage.value = data.message || "Done";
-		// the session this turn belongs to; the user may switch chats mid-await below
-		const completedSession = data.session_id || this.sessionId.value;
-
-		const meta: Record<string, any> = { status: "complete" };
-		if (this.dispatcher.pendingAffectedBlocks.value.length)
-			meta.affectedBlocks = [...this.dispatcher.pendingAffectedBlocks.value];
-		if (this.dispatcher.pendingAffectedScripts.value.length)
-			meta.affectedScripts = [...this.dispatcher.pendingAffectedScripts.value];
-		this.replacePendingAssistant(this.progressMessage.value, meta);
-		this.pageStreamContent.value = "";
-		this.summaryContent.value = "";
-		this.liveSteps.value = [];
-		this.dispatcher.reset();
-
-		const localMeta = { ...meta };
-		if (completedSession && (localMeta.affectedBlocks?.length || localMeta.affectedScripts?.length)) {
-			createResource({ url: "builder.ai.api.update_session_message_metadata" })
-				.submit({ session_id: completedSession, metadata: localMeta })
-				.catch(() => null);
-		}
-
-		const turn = this.turnCount;
-		await this.loadSession();
-		// a turn sent during the reload owns the chat's tail now
-		if (turn !== this.turnCount) return;
-
-		// Re-apply client-only metadata in case the server hasn't flushed it yet —
-		// but only onto the turn's own session, not one switched to meanwhile.
-		if (
-			this.sessionId.value === completedSession &&
-			(localMeta.affectedBlocks?.length || localMeta.affectedScripts?.length)
-		) {
-			let idx = this.messages.value.length - 1;
-			while (idx >= 0 && this.messages.value[idx]?.role !== "assistant") idx--;
-			if (idx >= 0) {
-				this.messages.value[idx] = {
-					...this.messages.value[idx],
-					metadata: { ...this.messages.value[idx].metadata, ...localMeta },
-				};
+	private finishRun(data: AIRunEvent, content: string, metadata: Record<string, any>) {
+		this.events.finish(data.run_id);
+		this.buildEpoch++;
+		if (this.generationRunId === data.run_id) this.resetGeneration();
+		this.pageNeedsRefresh = true;
+		if (!this.isForeignSession(data)) {
+			const affected = {
+				affectedBlocks: [...this.dispatcher.pendingAffectedBlocks.value],
+				affectedScripts: [...this.dispatcher.pendingAffectedScripts.value],
+			};
+			this.affectedByRun.set(data.run_id, affected);
+			if (affected.affectedBlocks.length || affected.affectedScripts.length) {
+				void createResource({ url: "builder.ai.api.update_session_message_metadata" })
+					.submit({ session_id: data.session_id, run_id: data.run_id, metadata: affected })
+					.catch(() => null);
 			}
-		}
-
-		this.scrollToBottom();
-		this.completeTimer = setTimeout(() => {
-			this.progressMessage.value = "";
+			this.invalidateSessionLoads();
+			this.replacePendingAssistant(content, metadata);
+			this.activeRun.value = null;
+			this.isSubmitting.value = false;
+			this.isCancelling.value = false;
 			this.pendingAssistantId.value = null;
-		}, 1200);
-	};
-
-	onError = async (data: { message?: string; session_id?: string }) => {
-		if (this.holdUntilSessionKnown(data, () => this.onError(data))) return;
-		if (this.isForeignSession(data)) return;
-		this.clearStreamRenderTimer();
-		this.endCanvasBuild(this.previewUnconfirmed);
-		this.previewUnconfirmed = false;
-		this.isSubmitting.value = false;
-		this.isCancelling.value = false;
-		this.progressMessage.value = "";
-		this.replacePendingAssistant(data.message || "Request failed", { status: "error" });
-		this.pageStreamContent.value = "";
-		this.summaryContent.value = "";
-		this.liveSteps.value = [];
-		await this.loadSession();
-		this.pendingAssistantId.value = null;
-	};
-
-	/** The agent composed a UI card (present_ui) — one generic renderer (AIUISpec)
-	 * draws it. Confirm-gated actions arrive as pending_action instead and keep
-	 * their dedicated Apply/Skip card. */
-	onClarify = async (data: {
-		question?: string;
-		ui?: Array<Record<string, any>>;
-		pending_action?: { kind: string; payload: Record<string, any> };
-		session_id?: string;
-	}) => {
-		if (this.holdUntilSessionKnown(data, () => this.onClarify(data))) return;
-		if (this.isForeignSession(data)) return;
-		this.clearStreamRenderTimer();
-		this.endCanvasBuild(this.previewUnconfirmed);
-		this.previewUnconfirmed = false;
-		this.isSubmitting.value = false;
-		this.isCancelling.value = false;
-		this.progressMessage.value = "";
-		this.pageStreamContent.value = "";
-		this.summaryContent.value = "";
-		this.liveSteps.value = [];
-
-		if (data.pending_action) {
-			this.replacePendingAssistant(data.question || "Confirm this change?", {
-				status: "pending_action",
-				kind: data.pending_action.kind,
-				payload: data.pending_action.payload,
-			});
-		} else {
-			this.replacePendingAssistant(data.question || "…", {
-				status: "ui",
-				text: data.question || "",
-				ui: data.ui || [],
-			});
+			this.progressMessage.value = "";
+			this.summaryContent.value = "";
+			this.liveSteps.value = [];
+			this.stepSequences.clear();
+			this.dispatcher.reset();
 		}
-		this.pendingAssistantId.value = null;
-		// Backend persists+commits clarify messages before emitting, so this is race-free.
-		await this.loadSession();
-		this.scrollToBottom();
+		this.requestReconciliation(true);
+	}
+
+	onComplete = async (data: AIRunEvent & { message?: string }) => {
+		if (!this.acceptEvent(data, () => this.onComplete(data), true)) return;
+		const metadata: Record<string, any> = { status: "complete" };
+		if (!this.isForeignSession(data)) {
+			metadata.affectedBlocks = [...this.dispatcher.pendingAffectedBlocks.value];
+			metadata.affectedScripts = [...this.dispatcher.pendingAffectedScripts.value];
+		}
+		this.finishRun(data, data.message || "Done", metadata);
+	};
+
+	onError = async (data: AIRunEvent & { message?: string }) => {
+		if (!this.acceptEvent(data, () => this.onError(data), true)) return;
+		this.finishRun(data, data.message || "Request failed", { status: "error" });
+	};
+
+	onClarify = async (
+		data: AIRunEvent & {
+			question?: string;
+			ui?: Array<Record<string, any>>;
+			pending_action?: { kind: string; payload: Record<string, any> };
+		},
+	) => {
+		if (!this.acceptEvent(data, () => this.onClarify(data), true)) return;
+		const metadata = data.pending_action
+			? { status: "pending_action", ...data.pending_action }
+			: { status: "ui", text: data.question || "", ui: data.ui || [] };
+		this.finishRun(data, data.question || "…", metadata);
 	};
 
 	// --- user actions -----------------------------------------------------
@@ -773,6 +1083,7 @@ export class AIChatController {
 	 * the compact line the chat shows instead of the full relay — the model
 	 * still receives the full reply. */
 	selectOption = (option: string, display?: string) => {
+		if (this.isSubmitting.value || this.isSwitchingSession.value || this.isReverting.value) return;
 		this.prompt.value = option;
 		this.pendingDisplayText = display?.trim() || null;
 		this.submitPrompt();
@@ -782,187 +1093,225 @@ export class AIChatController {
 	 * global settings, publish). The privileged write happens server-side in the endpoint;
 	 * we reload the session so the message's status flips out of "pending_action". */
 	confirmPendingAction = async (message: ChatMessage, decision: "apply" | "skip") => {
+		const sessionId = this.sessionId.value;
+		const pageId = this.pageId.value;
+		const intent = this.sessionIntentEpoch;
+		if (!sessionId || this.isSubmitting.value || this.isSwitchingSession.value) return;
 		try {
 			const res = await createResource({
 				url: "builder.ai.api.confirm_pending_settings",
 				method: "POST",
 			}).submit({ message_id: message.id, decision });
-			await this.loadSession();
+			if (
+				this.disposed ||
+				intent !== this.sessionIntentEpoch ||
+				this.sessionId.value !== sessionId ||
+				this.pageId.value !== pageId
+			)
+				return;
 			if (decision === "apply") toast.success(res?.message || "Applied");
-			if (res?.resumed) this.beginResumedTurn();
-		} catch (e: any) {
-			toast.error(e?.messages?.[0] || "Could not apply the change");
+			// The continuation can already have finished before this response arrives.
+			// Only durable active_run state may create its pending assistant.
+			this.requestReconciliation(true);
+			await this.reconcilePromise;
+		} catch (error) {
+			toast.error(getErrorMessage(error, "Could not apply the change"));
 		}
 	};
 
-	/** Running state for a turn the server started itself, after a confirmed action.
-	 * Must run after loadSession, which would drop the placeholder. */
-	beginResumedTurn = () => {
-		const assistantMessage = buildLocalMessage("assistant", "", { status: "running" });
-		this.messages.value.push(assistantMessage);
-		this.turnCount++;
-		this.clearTurnTimers();
-		this.pendingAssistantId.value = assistantMessage.id;
-		this.pageStreamContent.value = "";
-		this.summaryContent.value = "";
-		this.liveSteps.value = [];
-		this.dispatcher.reset();
-		this.isSubmitting.value = true;
-		this.scrollToBottom();
-	};
-
-	/** Ask the backend to abort the in-flight turn at its next stream chunk.
-	 * Anthropic/OpenRouter stop billing once the stream is closed. The backend's
-	 * cancelled `complete` event lands only after the next chunk + a round trip,
-	 * so we show "Cancelling" locally right away for instant feedback; that event
-	 * (or onError/onClarify) clears isCancelling when the turn actually ends. */
 	cancel = async () => {
-		if (!this.sessionId.value && this.liveSend) {
-			// the turn's session isn't known yet; cancel it the moment run names it
+		if (this.liveSend && !this.activeRun.value) {
 			this.cancelOnceKnown = true;
 			this.progressMessage.value = "Cancelling…";
 			return;
 		}
-		if (!this.sessionId.value || !this.isSubmitting.value || this.isCancelling.value) return;
+		const run = this.activeRun.value;
+		const intent = this.sessionIntentEpoch;
+		if (!run || !this.isSubmitting.value || this.isCancelling.value) return;
 		this.isCancelling.value = true;
 		this.progressMessage.value = "Cancelling…";
-		this.replacePendingAssistant("Cancelling…", { status: "running" });
-		const resetStuckCancel = async () => {
-			if (!this.isCancelling.value) return;
-			this.endCanvasBuild(!!this.pageStreamContent.value);
-			this.resetTransientState();
-			await this.loadSession();
-			toast.info("That run is no longer active.");
-		};
 		try {
-			const res: any = await createResource({ url: "builder.ai.api.cancel" }).submit({
-				session_id: this.sessionId.value,
+			await createResource({ url: "builder.ai.api.cancel" }).submit({
+				session_id: run.session_id,
+				run_id: run.run_id,
 			});
-			// No live turn holds the session lock (it crashed or timed out): nothing
-			// will ever acknowledge the flag, so resolve the UI now.
-			if (res?.status === "not_running") await resetStuckCancel();
-		} catch {
-			// Ignore — the user will see the event when it arrives.
+			if (this.disposed || intent !== this.sessionIntentEpoch || this.activeRun.value?.run_id !== run.run_id)
+				return;
+			// Queued cancellation is durable without a terminal socket event. Even
+			// "not_running" needs hydration: another tab may have started a new run.
+			this.requestReconciliation(true);
+			await this.reconcilePromise;
+		} catch (error) {
+			if (intent !== this.sessionIntentEpoch || this.activeRun.value?.run_id !== run.run_id) return;
+			this.isCancelling.value = false;
+			this.progressMessage.value = "";
+			toast.error(getErrorMessage(error, "Could not stop the run. Try again."));
+			this.requestReconciliation();
 		}
-		// Watchdog: a wedged run (e.g. a stalled provider connection) can't reach its
-		// next cancellation check. Don't leave "Cancelling…" up forever.
-		clearTimeout(this.cancelWatchdog);
-		this.cancelWatchdog = setTimeout(resetStuckCancel, 20000);
 	};
 
+	private sendEnvelope(): SendEnvelope {
+		const content = {
+			pageId: this.pageId.value,
+			sessionId: this.sessionId.value,
+			model: this.selectedModel.value,
+			prompt: this.prompt.value.trim(),
+			blocks: this.attachedBlocks.value.map((block) => ({ ...block })),
+			imageData: this.imageData.value,
+			imagePreviewUrl: this.imagePreviewUrl.value,
+			imageFileName: this.imageFileName.value,
+			displayText: this.pendingDisplayText,
+			canvasTheme: this.builderStore.canvasDarkMode ? "dark" : "light",
+		};
+		const previous = this.retryEnvelope.value;
+		if (previous) {
+			const { requestId, attempted, ...original } = previous;
+			if (JSON.stringify(original) === JSON.stringify(content)) return previous;
+		}
+		return { ...content, requestId: crypto.randomUUID(), attempted: false };
+	}
+
 	submitPrompt = async () => {
-		if (!this.canSubmit.value || !this.pageId.value || this.isUnsavedPage.value) return;
-		// submitting pins the current chat over any session choice still in flight
+		if (this.disposed || !this.canSubmit.value || this.isUnsavedPage.value) return;
 		this.sessionIntentEpoch++;
-		const pageId = this.pageId.value;
-		const sessionId = this.sessionId.value;
+		this.invalidateSessionLoads();
+		const envelope = this.sendEnvelope();
+		this.retryEnvelope.value = envelope;
 		const turn = ++this.turnCount;
 		this.liveSend = turn;
-		this.clearTurnTimers();
-		// a page or chat switch resets liveSend, and this send must then stand down
-		const stillOwned = () => this.pageId.value === pageId && this.liveSend === turn;
-
-		const userText = this.prompt.value.trim();
+		const stillOwned = () =>
+			!this.disposed && this.pageId.value === envelope.pageId && this.liveSend === turn;
 		this.prompt.value = "";
-
-		// Only explicitly attached blocks travel with the message.
-		const selectedBlockContext = this.attachedBlocks.value.map((b) => ({ id: b.id, label: b.label }));
-		const selectedIds = this.attachedBlocks.value.map((b) => b.id);
 		this.attachedBlocks.value = [];
-		const attachedImageData = this.imageData.value;
-		const attachedImageUrl = this.imagePreviewUrl.value;
 		this.clearImage();
-
-		const displayText = this.pendingDisplayText;
 		this.pendingDisplayText = null;
 
-		const contextMeta: Record<string, any> = {};
-		if (selectedBlockContext.length) contextMeta.selectedBlockContext = selectedBlockContext;
-		if (attachedImageUrl) contextMeta.attachedImageUrl = attachedImageUrl;
-		if (displayText) contextMeta.displayText = displayText;
-
-		const userMessage = buildLocalMessage("user", userText, contextMeta);
-		// Empty on purpose: the panel shows a "Thinking" shimmer for a running turn
-		// with no timeline yet, and the first step replaces it a moment later.
+		const userMessage = buildLocalMessage("user", envelope.prompt, {
+			selectedBlockContext: envelope.blocks,
+			attachedImageUrl: envelope.imagePreviewUrl,
+			displayText: envelope.displayText,
+		});
 		const assistantMessage = buildLocalMessage("assistant", "", { status: "running" });
 		this.messages.value.push(userMessage, assistantMessage);
 		this.pendingAssistantId.value = assistantMessage.id;
 		this.scrollToBottom();
-		this.pageStreamContent.value = "";
 		this.summaryContent.value = "";
 		this.liveSteps.value = [];
+		this.stepSequences.clear();
 		this.dispatcher.reset();
+		this.activeRun.value = null;
 		this.isSubmitting.value = true;
+		let accepted = false;
 
 		try {
-			// The server edits the page authoritatively from draft_blocks — flush any
-			// unsaved canvas changes first so the turn (and its revert snapshot) starts
-			// from exactly what the user sees.
-			await this.pageStore.savePage();
+			if (this.pageNeedsRefresh) {
+				await this.refreshPage();
+				if (!stillOwned()) return;
+				this.pageNeedsRefresh = false;
+			}
+			// An ambiguous retry may already be editing the server draft. Saving the
+			// stale local canvas again would overwrite that accepted work.
+			if (!envelope.attempted) await this.pageStore.savePage();
 			if (!stillOwned()) return;
-			const result = await createResource({
-				url: "builder.ai.api.run",
-				makeParams: () => ({
-					prompt: userText,
-					page_id: pageId,
-					model: this.selectedModel.value,
-					session_id: sessionId,
-					...(selectedIds.length ? { selected_block_ids: selectedIds } : {}),
-					...(selectedBlockContext.length ? { selected_block_context: selectedBlockContext } : {}),
-					...(attachedImageData ? { image_data: attachedImageData } : {}),
-					...(displayText ? { display_text: displayText } : {}),
-					canvas_theme: this.builderStore.canvasDarkMode ? "dark" : "light",
-				}),
-			}).submit();
+			envelope.attempted = true;
+			this.persistComposer();
+			const response = await createResource({ url: "builder.ai.api.run" }).submit({
+				request_id: envelope.requestId,
+				prompt: envelope.prompt,
+				page_id: envelope.pageId,
+				model: envelope.model,
+				session_id: envelope.sessionId,
+				selected_block_ids: envelope.blocks.map((block) => block.id),
+				selected_block_context: envelope.blocks,
+				...(envelope.imageData ? { image_data: envelope.imageData } : {}),
+				...(envelope.displayText ? { display_text: envelope.displayText } : {}),
+				canvas_theme: envelope.canvasTheme,
+			});
 			if (!stillOwned()) return;
-			const response = result as { session_id?: string; status?: string; message?: string };
-			if (response.session_id) this.sessionId.value = response.session_id;
-			// a blank chat's first send created its session; list it in the switcher
-			if (!sessionId) this.loadSessions();
+			if (response?.status !== "accepted" || !response.run_id || !response.session_id) {
+				throw new Error(response?.message || "Could not send the message");
+			}
+			accepted = true;
+			writeDraft(this.composerKey(), null);
+			this.retryEnvelope.value = null;
+			this.sessionId.value = response.session_id;
+			this.blankSessionSelected = false;
+			writeDraft(`selected:${envelope.pageId}`, response.session_id);
+			this.activeRun.value = {
+				run_id: response.run_id,
+				session_id: response.session_id,
+				status: "queued",
+				model: envelope.model,
+				user_message_id: userMessage.id,
+			};
+			this.observedRuns.set(response.session_id, response.run_id);
+			this.persistComposer();
+			this.loadSessions();
 		} catch (error) {
-			if (stillOwned()) this.failSend([userMessage.id, assistantMessage.id], userText, error);
+			if (stillOwned()) this.failSend([userMessage.id, assistantMessage.id], envelope, error);
 		} finally {
 			if (this.liveSend === turn) {
 				this.liveSend = 0;
-				this.replayHeldEvents();
+				if (accepted) {
+					this.replayHeldEvents();
+					this.requestReconciliation();
+				} else {
+					this.heldEvents = [];
+					this.cancelOnceKnown = false;
+					this.scheduleReconciliation();
+				}
 			}
 		}
 	};
 
-	/** The send failed before any turn started, so nothing reached the chat: take
-	 * the optimistic bubbles back out and hand the prompt back to the composer. */
-	private failSend(messageIds: string[], userText: string, error: unknown) {
+	private failSend(messageIds: string[], envelope: SendEnvelope, error: unknown) {
 		this.messages.value = this.messages.value.filter((m) => !messageIds.includes(m.id));
 		this.pendingAssistantId.value = null;
 		this.isSubmitting.value = false;
-		if (!this.prompt.value.trim()) this.prompt.value = userText;
-		toast.error(getErrorMessage(error, "Could not send the message"));
+		this.isCancelling.value = false;
+		this.prompt.value = envelope.prompt;
+		this.attachedBlocks.value = envelope.blocks.map((block) => ({ ...block }));
+		this.imageData.value = envelope.imageData;
+		this.imagePreviewUrl.value = envelope.imagePreviewUrl;
+		this.imageFileName.value = envelope.imageFileName;
+		this.pendingDisplayText = envelope.displayText;
+		this.persistComposer();
+		toast.error(getErrorMessage(error, "Could not send the message. Retry to check the same request."));
 	}
 
-	/** Revert an AI turn in ONE go: restore the page to the snapshot taken just before it
-	 * — blocks, page data AND client scripts (created ones get unlinked, edited ones
-	 * reverted) — and rewind the conversation, removing this message and everything after.
-	 * The pre-turn snapshot is the single source of truth; there is no separate undo. */
 	revertTurn = async (message: ChatMessage) => {
-		const snapshot: string | undefined = message.metadata?.revertSnapshot;
-		// a running turn is still writing the draft the snapshot would replace, and
-		// restoring reloads the page onto the active canvas, a component's while one is open
-		if (!snapshot || !this.sessionId.value || this.isSubmitting.value || !this.isEditingPage.value) return;
+		const sessionId = this.sessionId.value;
+		const pageId = this.pageId.value;
+		const intent = this.sessionIntentEpoch;
+		if (
+			!message.metadata?.revertSnapshot ||
+			!sessionId ||
+			this.isSubmitting.value ||
+			!this.isEditingPage.value ||
+			this.isReverting.value
+		)
+			return;
 		const confirmed = await confirm(
-			"Revert this AI edit? The page (blocks and scripts) returns to how it was just before this turn, and this message and everything after it are removed from the chat. Your live page won't change until you publish.",
+			"Revert this AI edit? The page's blocks, page data and scripts return to before this turn, and this turn and all later messages are removed. Shared scripts may affect other pages.",
 		);
-		if (!confirmed) return;
-		// 1. Rewind the conversation server-side (delete this turn + everything after).
-		await createResource({ url: "builder.ai.api.revert_to_message" })
-			.submit({ session_id: this.sessionId.value, message_id: message.id })
-			.catch(() => null);
-		// 2. Restore the page draft + scripts from the pre-turn snapshot. restore_snapshot
-		// re-applies blocks, page data and the client-script set/content, then re-fetches
-		// the page (which refreshes activePageScripts), so scripts revert in the same step.
-		await this.pageStore.restoreSnapshot(snapshot);
-		// 3. Reload the (now truncated) chat — restoreSnapshot doesn't touch the session.
-		await this.loadSession();
-		this.scrollToBottom();
+		if (!confirmed || this.disposed || intent !== this.sessionIntentEpoch || this.isSubmitting.value) return;
+		this.isReverting.value = true;
+		this.invalidateSessionLoads();
+		try {
+			const result = await createResource({ url: "builder.ai.api.revert_to_message" }).submit({
+				session_id: sessionId,
+				message_id: message.id,
+			});
+			if (this.disposed || this.pageId.value !== pageId || intent !== this.sessionIntentEpoch) return;
+			this.hydrateSession({ session_id: sessionId, messages: result.messages, active_run: null });
+			this.resetGeneration();
+			await this.refreshPage();
+		} catch (error) {
+			toast.error(getErrorMessage(error, "Could not revert this edit"));
+			throw error;
+		} finally {
+			this.isReverting.value = false;
+		}
 	};
 
 	selectBlockById = (blockId: string) => {
@@ -983,20 +1332,41 @@ export class AIChatController {
 			url: "builder.ai.api.get_ai_models",
 			auto: true,
 			onSuccess: (data: AIProvider[]) => {
-				this.availableModels.value = data;
+				if (!this.disposed) this.availableModels.value = data;
 			},
 		});
 	}
 
 	async mount() {
+		this.mounted = true;
 		if (this.pageId.value)
 			attachAIChatListeners(this.builderStore.realtime, this.pageId.value, this.handlers);
+		this.builderStore.realtime.on("connect", this.onReconnect);
+		window.addEventListener("online", this.onReconnect);
+		document.addEventListener("visibilitychange", this.onVisibility);
 		this.loadModels();
-		await this.loadSession();
+		await this.reconcile();
 	}
 
 	unmount() {
+		this.persistComposer();
+		this.disposed = true;
+		this.mounted = false;
+		this.sessionIntentEpoch++;
+		this.invalidateSessionLoads();
+		this.liveSend = 0;
+		this.heldEvents = [];
+		this.foreignEvents.clear();
+		this.stopWatchers.splice(0).forEach((stop) => stop());
+		clearTimeout(this.reconcileTimer);
+		this.resetGeneration();
+		this.endCanvasBuild();
+		if (this.scrollFrame) cancelAnimationFrame(this.scrollFrame);
+		if (this.isRefreshingPage.value) this.pageStore.pageLoadToken++;
 		if (this.pageId.value)
 			detachAIChatListeners(this.builderStore.realtime, this.pageId.value, this.handlers);
+		this.builderStore.realtime.off("connect", this.onReconnect);
+		window.removeEventListener("online", this.onReconnect);
+		document.removeEventListener("visibilitychange", this.onVisibility);
 	}
 }

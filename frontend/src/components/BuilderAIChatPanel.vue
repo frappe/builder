@@ -208,9 +208,10 @@
 						<!-- Agent-composed UI card (present_ui) -->
 						<AIUISpec
 							v-if="message.metadata?.status === 'ui' && message.metadata?.ui?.length"
+							:message-id="message.id"
 							:ui="message.metadata.ui"
 							:interactive="message.id === lastMessageId"
-							:disabled="isSubmitting || !isEditingPage"
+							:disabled="isSubmitting || isSwitchingSession || isReverting || !isEditingPage"
 							:answered-with="replyTo(message)"
 							:lead="message.metadata.text"
 							@submit="selectOption" />
@@ -343,7 +344,7 @@
 					size="md"
 					:rows="1"
 					class="no-scrollbar max-h-60 min-h-14 resize-none placeholder-ink-gray-4 disabled:border-0 disabled:bg-transparent"
-					:disabled="isSubmitting || !isEditingPage"
+					:disabled="isSubmitting || isSwitchingSession || isReverting || !isEditingPage"
 					:placeholder="composerPlaceholder"
 					@keydown="menu.onKeydown"
 					@keydown.enter.exact="onEnter" />
@@ -437,6 +438,7 @@ const chat = new AIChatController();
 
 const { prompt, isSubmitting, isCancelling, messages, modelLabel, canSubmit } = chat;
 const { isEditingPage } = chat;
+const { isSwitchingSession, isReverting } = chat;
 const { selectedModelUnusable } = chat;
 const { progressMessage } = chat;
 const currentActivity = computed(() => progressMessage.value || "Thinking…");
@@ -759,9 +761,9 @@ function debugHasSignal(debug: Record<string, any>): boolean {
 	if (!debug) return false;
 	return Boolean(
 		(debug.argsRepaired ?? 0) > 0 ||
-			(debug.toolFailures?.length ?? 0) > 0 ||
-			(debug.finishReasons || []).includes("length") ||
-			debug.stopReason === "max_rounds",
+		(debug.toolFailures?.length ?? 0) > 0 ||
+		(debug.finishReasons || []).includes("length") ||
+		debug.stopReason === "max_rounds",
 	);
 }
 

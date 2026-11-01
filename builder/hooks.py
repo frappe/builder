@@ -126,6 +126,7 @@ doc_events = {
 
 scheduler_events = {
 	"cron": {
+		"* * * * *": ["builder.ai.runs.dispatch_queued_runs"],
 		"*/10 * * * *": [
 			"builder.builder_analytics.ingest_web_page_views_to_duckdb",
 			"builder.builder_analytics.ingest_clicks_to_duckdb",

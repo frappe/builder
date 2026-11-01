@@ -26,6 +26,7 @@ def form_payload(doctype: str) -> dict:
 		"doctype_name": doctype,
 		"fields": [{"fieldname": "email", "label": "Email", "fieldtype": "Data"}],
 		"form_selector": "form",
+		"page_id": frappe.get_doc({"doctype": "Builder Page", "page_title": "Form fixture"}).insert().name,
 	}
 
 

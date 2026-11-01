@@ -13,6 +13,8 @@ the submission DocType needs NO guest permission.
 The user then reads submissions in Desk at /app/<doctype>.
 """
 
+import hashlib
+import json
 import re
 
 import frappe
@@ -21,8 +23,8 @@ from frappe.model import child_table_fields, default_fields
 from builder.ai.agent import pending
 from builder.ai.agent.registry import Tool
 
-# Fieldtypes a public form can safely write. Anything else (Link, Table, Attach…)
-# is coerced to Data. Select is deliberately EXCLUDED: an HTML <select> submits its
+# Fieldtypes a public form can safely write. Select is deliberately mapped to Data:
+# an HTML <select> submits its
 # option's `value` attr (e.g. "breathwork"), which rarely matches the DocType's
 # Select option labels ("Breathwork & Stillness") — Frappe then rejects the insert
 # with a validation error. Storing dropdowns as Data accepts whatever was chosen.
@@ -50,7 +52,13 @@ def safe_fieldname(fieldname: str) -> str:
 	return f"{fieldname}_field" if fieldname in RESERVED_FIELDNAMES else fieldname
 
 
-def connected_submission_doctype(page_id: str) -> str | None:
+def form_script_name(page_id: str, doctype: str, web_form: str, selector: str) -> str:
+	identity = json.dumps([page_id, web_form, selector])
+	suffix = hashlib.sha256(identity.encode()).hexdigest()[:12]
+	return f"Save {doctype} submissions [{suffix}]"
+
+
+def connected_submission_doctype(page_id: str, selector: str = "") -> str | None:
 	"""The submission DocType a form on this page already saves to, if any — read
 	from the attached 'Save <doctype> submissions' client script. Lets a "where do
 	my submissions go?" question be answered instead of creating a duplicate."""
@@ -62,9 +70,11 @@ def connected_submission_doctype(page_id: str) -> str | None:
 		pluck="builder_script",
 	)
 	for name in names:
-		m = re.match(r"^Save (.+) submissions$", name or "")
+		m = re.match(r"^Save (.+) submissions(?: \[[a-f0-9]+\])?$", name or "")
 		if m and frappe.db.exists("DocType", m.group(1)):
-			return m.group(1)
+			doctype = m.group(1)
+			if not selector or name == form_script_name(page_id, doctype, desk_slug(doctype), selector):
+				return doctype
 	return None
 
 
@@ -89,7 +99,8 @@ def request_connect_form(ctx, args: dict) -> str | None:
 		return "DECLINED: no page is open — build the form's page first."
 	# A form here is already wired — very likely a "where do submissions go?" ask.
 	# Answer with the existing DocType; don't create a duplicate (unless forced).
-	if not args.get("force_new") and (connected := connected_submission_doctype(ctx.page_id)):
+	selector = (args.get("form_selector") or "").strip()
+	if not args.get("force_new") and (connected := connected_submission_doctype(ctx.page_id, selector)):
 		return (
 			f"ALREADY CONNECTED: a form on this page saves to the '{connected}' DocType — its "
 			f"submissions are in Desk at /app/{desk_slug(connected)}. Do NOT create a new doctype; "
@@ -98,7 +109,6 @@ def request_connect_form(ctx, args: dict) -> str | None:
 		)
 	doctype = (args.get("doctype_name") or "").strip()
 	fields = [f for f in (args.get("fields") or []) if isinstance(f, dict) and f.get("fieldname")]
-	selector = (args.get("form_selector") or "").strip()
 	if not doctype or not fields or not selector:
 		return (
 			"DECLINED: connect_form needs doctype_name, at least one field, and form_selector "
@@ -111,13 +121,17 @@ def request_connect_form(ctx, args: dict) -> str | None:
 		)
 	if action := missing_create_permission(doctype):
 		return pending.not_permitted(action)
+	try:
+		fields = normalize_fields(fields)
+	except ValueError as exc:
+		return f"DECLINED: {exc}"
 	summary = (
 		f"Create the DocType '{doctype}' ({len(fields)} field(s)) and wire this form to save "
 		f"submissions to it? You'll see entries in Desk at /app/{desk_slug(doctype)}."
 	)
 	payload = {
 		"doctype_name": doctype,
-		"fields": [normalize_field(f) for f in fields],
+		"fields": fields,
 		"page_id": ctx.page_id,
 		"form_selector": selector,
 	}
@@ -126,17 +140,38 @@ def request_connect_form(ctx, args: dict) -> str | None:
 
 
 def normalize_field(f: dict) -> dict:
-	fieldtype = f.get("fieldtype") if f.get("fieldtype") in SAFE_FIELDTYPES else "Data"
-	input_name = frappe.scrub(f["fieldname"])  # the form input's `name` attribute
+	fieldtype = f.get("fieldtype") or "Data"
+	if fieldtype == "Select":
+		fieldtype = "Data"
+	if fieldtype not in SAFE_FIELDTYPES:
+		raise ValueError(f"Unsupported form fieldtype: {fieldtype}")
+	input_name = f.get("input_name") or f["fieldname"]
 	out = {
 		"input_name": input_name,
-		"fieldname": safe_fieldname(input_name),  # DocType fieldname (reserved names remapped)
+		"fieldname": safe_fieldname(frappe.scrub(f["fieldname"])),
 		"label": f.get("label") or f["fieldname"].replace("_", " ").title(),
-		"fieldtype": fieldtype,
+		"fieldtype": "Text" if f.get("multiple") else fieldtype,
+		"multiple": bool(f.get("multiple")),
+		"reqd": int(bool(f.get("required") or f.get("reqd"))),
 	}
-	if fieldtype == "Select" and f.get("options"):
-		out["options"] = f["options"]
 	return out
+
+
+def normalize_fields(fields: list) -> list[dict]:
+	if not all(isinstance(f, dict) and isinstance(f.get("fieldname"), str) for f in fields):
+		raise ValueError("Each form field needs a fieldname.")
+	normalized = [normalize_field(f) for f in fields]
+	if any(not isinstance(f["input_name"], str) or not f["input_name"].strip() for f in normalized):
+		raise ValueError("Each form field needs a nonempty HTML input name.")
+	for key in ("fieldname", "input_name"):
+		values = [f[key] for f in normalized]
+		if len(values) != len(set(values)):
+			raise ValueError(f"Duplicate form {key}; use one mapping per named control or group.")
+	if any(not re.fullmatch(r"[a-z][a-z0-9_]*", f["fieldname"]) for f in normalized):
+		raise ValueError(
+			"Form fieldnames must start with a letter and contain only letters, digits, or underscores."
+		)
+	return normalized
 
 
 def is_builder_submission_doctype(name: str) -> bool:
@@ -156,9 +191,10 @@ connect_form_tool = Tool(
 		"you build a real form that collects user input (contact, booking, signup, waitlist, RSVP). "
 		"Under the hood it creates a private DocType for the submissions, a guest-safe Web Form, and a "
 		"script that sends the form's fields to it — the owner reads entries in Desk at /app/<doctype>. "
-		"List `fields` in the SAME ORDER the inputs appear in the form (they map positionally); one field "
-		"per input/select. `form_selector` is a best-effort hint — the tool auto-finds the form if it "
-		"misses, so you need not pre-set name attributes or a class. Ends your turn to confirm."
+		"Set a name on every input and provide one field mapping per name (one for a radio/checkbox group). "
+		"input_name preserves the exact HTML name when fieldname differs. Use Check for a single checkbox; "
+		"set multiple=true for checkbox groups or multiple selects (stored as a JSON array in Text). "
+		"form_selector must match this form or its container. Ends your turn to confirm."
 	),
 	parameters={
 		"type": "object",
@@ -169,22 +205,24 @@ connect_form_tool = Tool(
 			},
 			"fields": {
 				"type": "array",
-				"description": "One entry per form input. fieldname must equal the input's name attribute.",
+				"description": "One mapping per HTML name, including one mapping per radio/checkbox group.",
 				"items": {
 					"type": "object",
 					"properties": {
 						"fieldname": {
 							"type": "string",
-							"description": "snake_case; equals the input's name attr.",
+							"description": "DocType fieldname; input_name defaults to this exact value.",
 						},
+						"input_name": {
+							"type": "string",
+							"description": "Exact original HTML name attribute.",
+						},
+						"multiple": {"type": "boolean", "description": "Checkbox group or select multiple."},
+						"required": {"type": "boolean"},
 						"label": {"type": "string"},
 						"fieldtype": {
 							"type": "string",
-							"description": "Data (default), Small Text, Text, Int, Float, Check, Select, Date, Datetime.",
-						},
-						"options": {
-							"type": "string",
-							"description": "For Select: newline-separated choices.",
+							"description": "Data (default, also for selects), Small Text, Text, Int, Float, Check, Date, Datetime.",
 						},
 					},
 					"required": ["fieldname"],

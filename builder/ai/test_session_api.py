@@ -43,12 +43,12 @@ class TestLazySessions(FrappeTestCase):
 			patch.object(api.ModelRegistry, "get_default", return_value="test/model"),
 			patch.object(api.ModelRegistry, "is_known_model", return_value=True),
 			patch.object(api, "resolve_api_key", return_value="key"),
-			patch.object(api.frappe, "enqueue") as enqueue,
+			patch.object(api.AIRun, "enqueue") as enqueue,
 		):
 			result = api.run("make it blue", self.page.name, model="test/model")
 
 		session_id = result["session_id"]
 		self.assertEqual(self.page_sessions(), [session_id])
-		self.assertEqual(enqueue.call_args.kwargs["session_id"], session_id)
+		self.assertEqual(enqueue.call_args.args[1]["session_id"], session_id)
 		messages = AISession.get(session_id).get_messages()
 		self.assertEqual([(m["role"], m["content"]) for m in messages], [("user", "make it blue")])

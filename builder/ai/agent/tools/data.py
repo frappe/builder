@@ -18,6 +18,7 @@ import frappe
 
 from builder.ai.agent import pending
 from builder.ai.agent.registry import Tool
+from builder.ai.agent.tools.python import readable_doc
 
 logger = frappe.logger("builder.ai.agent.data")
 logger.setLevel(logging.INFO)
@@ -88,7 +89,7 @@ def get_document(ctx, args: dict) -> str:
 	meta = frappe.get_meta(dt)
 	try:
 		if meta.issingle:
-			doc = frappe.get_cached_doc(dt)
+			doc = readable_doc(dt)
 		else:
 			name = (args.get("name") or "").strip()
 			if not name:
@@ -97,11 +98,11 @@ def get_document(ctx, args: dict) -> str:
 				)
 			if not frappe.db.exists(dt, name):
 				return json.dumps({"error": f"{dt} '{name}' not found"})
-			doc = frappe.get_doc(dt, name)
+			doc = readable_doc(dt, name)
+		data = doc.as_dict()
 	except Exception as e:
 		return json.dumps({"error": str(e)})
 
-	data = doc.as_dict()
 	wanted = args.get("fields")
 	if isinstance(wanted, list) and wanted:
 		# A typo'd fieldname must say so — a silent null reads as "field is empty"
@@ -118,7 +119,7 @@ def get_document(ctx, args: dict) -> str:
 	# A component's design IS its block tree — render it readable instead of letting
 	# the generic bound shred the raw JSON.
 	if dt == "Builder Component" and data.get("block") and doc.get("block"):
-		data["block"] = component_block_yaml(doc.block)
+		data["block"] = component_block_yaml(doc.get("block"))
 	return frappe.as_json(data)
 
 
@@ -191,8 +192,8 @@ RESERVED_DATA_KEYS_RE = re.compile(r"\bdata\.(items|keys|values|get|update|copy|
 # safe_exec has no __import__ — any import statement dies with ImportError at render.
 IMPORT_RE = re.compile(r"^\s*(import|from)\s+\w", re.MULTILINE)
 
-# With server scripts disabled, Builder runs data scripts through its own smaller
-# namespace (builder.utils.get_safer_globals); these are the names it keeps.
+# Bob scripts always use the smaller read-only namespace, even on sites with
+# server scripts enabled.
 PORTABLE_NAMES = (
 	"frappe.db.get_all",
 	"frappe.db.get_list",
@@ -203,7 +204,6 @@ PORTABLE_NAMES = (
 	"frappe.get_cached_doc",
 	"frappe.form_dict",
 	"frappe.session",
-	"frappe.make_get_request",
 	"frappe._",
 )
 PORTABLE_HINT = (
@@ -214,10 +214,6 @@ PORTABLE_HINT = (
 
 def missing_names(script: str) -> list[str]:
 	"""Names the data script uses that this site's executor doesn't provide."""
-	from frappe.utils.safe_exec import is_safe_exec_enabled
-
-	if is_safe_exec_enabled():
-		return []
 	return sorted(name for name in frappe_names(script) if not is_portable(name))
 
 
@@ -248,6 +244,9 @@ def write_page_data_script(ctx, args: dict) -> str:
 	bind blocks/repeaters to the keys it sets."""
 	if not ctx.page_id:
 		return "No page in context to attach a data script to."
+	from builder.ai.data_script import SCRIPT_PREFIX
+
+	frappe.get_doc("Builder Page", ctx.page_id).check_permission("write")
 	script = args.get("script") or ""
 	if any(token in script for token in DATA_SCRIPT_FORBIDDEN):
 		return (
@@ -273,11 +272,11 @@ def write_page_data_script(ctx, args: dict) -> str:
 		)
 	if missing := missing_names(script):
 		return (
-			f"FAILED: this site runs data scripts with server scripts disabled, where "
+			f"FAILED: Bob data scripts use a read-only namespace, where "
 			f"{', '.join(missing)} don't exist, so the page would fail to render. Use "
 			f"{PORTABLE_HINT}."
 		)
-	frappe.db.set_value("Builder Page", ctx.page_id, "page_data_script", script)
+	frappe.db.set_value("Builder Page", ctx.page_id, "page_data_script", SCRIPT_PREFIX + script)
 	from builder.ai.agent.tools.settings import emit_refetch
 
 	emit_refetch(ctx, "page_data")
@@ -437,10 +436,9 @@ write_page_data_script_tool = Tool(
 		"fields=['title', 'starts_on'], filters={'published': 1})`, then bind blocks and "
 		"repeaters to the keys you set. It runs sandboxed at render time with no imports. "
 		"Write it with the names every site provides, including sites with server scripts "
-		f"disabled: {PORTABLE_HINT}. frappe.db.get_all reads whatever the script asks for, "
-		"whoever is viewing, so list explicit `fields`, filter to what the page publishes, and "
-		"never query private records (users, form submissions); frappe.db.get_list answers "
-		"with the visitor's own permissions. Fields are plain fieldnames; SQL functions in "
+		f"disabled: {PORTABLE_HINT}. All reads, including get_all, respect the visitor's "
+		"document and field permissions. The namespace excludes network calls and document "
+		"writes. Fields are plain fieldnames; SQL functions in "
 		"`fields` are dropped. On a dynamic route ('partners/<partner_id>') the URL params arrive as "
 		"frappe.form_dict.<param>: data.partner = frappe.get_doc('Partner', "
 		"frappe.form_dict.partner_id). Keys are descriptive names (data.products), never dict "

@@ -26,9 +26,7 @@ def capture_page_state(page_id: str | None) -> dict | None:
 		return None
 	doc = frappe.get_doc("Builder Page", page_id)
 	field = "draft_blocks" if doc.get("draft_blocks") else "blocks"
-	if not doc.get(field):
-		return None
-	state = {field: doc.get(field), "page_data_script": doc.get("page_data_script")}
+	state = {field: doc.get(field) or "[]", "page_data_script": doc.get("page_data_script")}
 	# Capture client scripts so revert handles them too (no separate "undo script"):
 	# the page's links (always, even empty — so scripts the turn CREATES get unlinked on
 	# revert) plus each linked script's content (so scripts the turn EDITS are reverted).

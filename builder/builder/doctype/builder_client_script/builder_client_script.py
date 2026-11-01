@@ -84,11 +84,11 @@ class BuilderClientScript(StandardFileSync, Document):
 
 	def update_script_file(self):
 		script_type = self.script_type or ""
-		file_name = self.get_file_name_from_url()
 		file_extension = "js" if script_type == "JavaScript" else "css"
-		if not file_name:
-			name = self.name.strip() if self.name else "unnamed"
-			file_name = f"{name}-{frappe.generate_hash(length=10)}.{file_extension}"
+		# Never overwrite a file served by a committed script. A rolled-back edit
+		# must leave both the previous DB row and its public resource intact.
+		name = self.name.strip() if self.name else "unnamed"
+		file_name = f"{name}-{frappe.generate_hash(length=16)}.{file_extension}"
 		folder_name = "page_scripts" if script_type == "JavaScript" else "page_styles"
 		file_path = get_files_path(f"{folder_name}/{file_name}")
 		os.makedirs(os.path.dirname(file_path), exist_ok=True)
@@ -101,7 +101,8 @@ class BuilderClientScript(StandardFileSync, Document):
 			f.write(script)
 
 		public_url = f"/files/{folder_name}/{file_name}?v={frappe.generate_hash(length=10)}"
-		self.db_set("public_url", public_url, commit=True)
+		self.db_set("public_url", public_url)
+		frappe.db.after_rollback.add(lambda: os.path.exists(file_path) and os.remove(file_path))
 
 	def delete_script_file(self):
 		script_type = self.script_type or ""

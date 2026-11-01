@@ -101,7 +101,9 @@ class TestRepeaterDataScript(unittest.TestCase):
 			}
 		]
 		script = pw.build_repeater_data_script(parsed)
-		self.assertEqual(script, 'data.stats = [{"n":1}]')
+		data = {}
+		exec(script, {"__builtins__": {}, "data": data})
+		self.assertEqual(data, {"stats": [{"n": 1}]})
 
 
 class TestExpandPageYaml(unittest.TestCase):

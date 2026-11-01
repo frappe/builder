@@ -59,6 +59,7 @@ class Tool:
 class ToolRegistry:
 	def __init__(self):
 		self._tools: dict[str, Tool] = {}
+		self.active_names: set[str] | None = None
 
 	def register(self, tool: Tool) -> Tool:
 		self._tools[tool.name] = tool
@@ -76,7 +77,15 @@ class ToolRegistry:
 		return tool.side if tool else "client"
 
 	def schemas(self) -> list[dict]:
-		return [tool.schema() for tool in self._tools.values()]
+		return [
+			tool.schema()
+			for tool in self._tools.values()
+			if self.active_names is None or tool.name in self.active_names
+		]
+
+	def activate(self, names):
+		if self.active_names is not None:
+			self.active_names.update(names)
 
 	def names(self) -> list[str]:
 		return list(self._tools)
@@ -90,6 +99,7 @@ def build_default_registry() -> ToolRegistry:
 		components,
 		conversation,
 		data,
+		design,
 		forms,
 		generate,
 		images,
@@ -100,6 +110,7 @@ def build_default_registry() -> ToolRegistry:
 		query,
 		scripts,
 		settings,
+		toolsets,
 		web,
 	)
 
@@ -119,4 +130,7 @@ def build_default_registry() -> ToolRegistry:
 	registry.extend(preview.TOOLS)
 	registry.extend(components.TOOLS)
 	registry.extend(plugins.TOOLS)
+	registry.extend(design.TOOLS)
+	registry.extend(toolsets.TOOLS)
+	registry.active_names = set(toolsets.CORE_TOOLS)
 	return registry

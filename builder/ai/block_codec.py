@@ -55,21 +55,9 @@ class BlockCodec:
 		# existing page never ships the full SVG to the model. The rendered SVG
 		# lives in innerHTML; data-lucide is the round-trip hint.
 		custom = block.get("customAttributes") or {}
-		if custom.get("data-lucide"):
-			icon = {"icon": custom["data-lucide"]}
-			if block.get("blockName"):
-				icon["name"] = block["blockName"]
-			style = {
-				k: v
-				for k, v in (block.get("baseStyles") or {}).items()
-				if BlockCodec.ICON_STYLE_DEFAULTS.get(k) != v
-			}
-			if style:
-				icon["style"] = style
-			return icon
-
-		out = {}
-		if block.get("element"):
+		icon = custom.get("data-lucide")
+		out = {"icon": icon} if icon else {}
+		if block.get("element") and not icon:
 			out["el"] = block["element"]
 		if block.get("blockId"):
 			# Editor handle, surfaced as `ref` (NOT `id`) so the model never mistakes
@@ -79,6 +67,12 @@ class BlockCodec:
 			out["name"] = block["blockName"]
 
 		base_styles = block.get("baseStyles") or {}
+		if icon:
+			base_styles = {k: v for k, v in base_styles.items() if BlockCodec.ICON_STYLE_DEFAULTS.get(k) != v}
+			# Explicit unsets prevent expansion from restoring deleted icon defaults.
+			for key in (*BlockCodec.ICON_STYLE_DEFAULTS, "width", "height"):
+				if key not in (block.get("baseStyles") or {}):
+					base_styles[key] = None
 		if base_styles:
 			out["style"] = base_styles
 
@@ -134,7 +128,7 @@ class BlockCodec:
 			out["bind"] = bind
 		if block.get("classes"):
 			out["classes"] = block["classes"]
-		if block.get("innerHTML"):
+		if block.get("innerHTML") and not icon:
 			out["text"] = block["innerHTML"]
 
 		mob = block.get("mobileStyles") or {}
@@ -142,7 +136,7 @@ class BlockCodec:
 			out["m_style"] = mob
 
 		tab = block.get("tabletStyles") or {}
-		if tab and (task_tier == "complex" or depth <= 1):
+		if tab and (icon or task_tier == "complex" or depth <= 1):
 			out["t_style"] = tab
 
 		children = [
@@ -165,32 +159,45 @@ class BlockCodec:
 		if node.get("icon"):
 			from builder.ai.page_writer import convert_icon_block
 
-			return convert_icon_block(node)
-
-		attrs = node.get("attrs", {})
-		standard_attrs = {k: v for k, v in attrs.items() if k in STANDARD_ATTRS}
-		custom_attrs = {k: v for k, v in attrs.items() if k not in STANDARD_ATTRS}
-
-		block = {
-			"element": node.get("el", "div"),
-			"blockName": node.get("name", ""),
-			"baseStyles": node.get("style", {}),
-			"attributes": standard_attrs,
-			"customAttributes": custom_attrs,
-			"children": [BlockCodec.expand(c) for c in node.get("c", []) if isinstance(c, dict)],
-		}
+			block = convert_icon_block(node)
+		else:
+			attrs = node.get("attrs") or {}
+			block = {
+				"element": node.get("el", "div"),
+				"blockName": node.get("name", ""),
+				"baseStyles": node.get("style", {}),
+				"attributes": {k: v for k, v in attrs.items() if k in STANDARD_ATTRS},
+				"customAttributes": {k: v for k, v in attrs.items() if k not in STANDARD_ATTRS},
+			}
+		block["children"] = [BlockCodec.expand(c) for c in node.get("c") or [] if isinstance(c, dict)]
 		for yaml_key, block_key in [
 			("id", "blockId"),
+			("ref", "blockId"),
 			("text", "innerHTML"),
 			("m_style", "mobileStyles"),
 			("t_style", "tabletStyles"),
 			("classes", "classes"),
 			("component", "extendedFromComponent"),
 			("child_of", "isChildOfComponent"),
+			("of", "referenceBlockId"),
 			("client_script", "clientScript"),
 		]:
 			if yaml_key in node:
 				block[block_key] = node[yaml_key]
+		from builder.ai.page_writer import bind_to_dynamic_values, repeater_data_key
+
+		if isinstance(node.get("bind"), dict):
+			block["dynamicValues"] = bind_to_dynamic_values(node["bind"])
+		if isinstance(node.get("repeat"), dict):
+			repeat = node["repeat"]
+			block["isRepeaterBlock"] = True
+			block["dataKey"] = {
+				"key": repeater_data_key(repeat.get("data")),
+				"property": "innerHTML",
+				"type": "key",
+			}
+			if isinstance(repeat.get("item"), dict):
+				block["children"] = [BlockCodec.expand(repeat["item"])]
 
 		return block
 
@@ -236,7 +243,7 @@ class BlockCodec:
 		if not block:
 			raise ValueError("No valid blocks in response")
 
-		if isinstance(block, dict) and not block.get("id"):
+		if isinstance(block, dict) and not (block.get("ref") or block.get("id")):
 			block["id"] = "root"
 
 		return BlockCodec.expand(block)

@@ -16,6 +16,7 @@ from builder.ai.block_codec import BlockCodec
 from builder.ai.discovery import Discovery
 from builder.ai.llm import resolve_api_key, settings_api_key
 from builder.ai.models import GatewayListing, ModelRegistry
+from builder.ai.runs import AIRun
 from builder.ai.session import AISession
 from builder.utils import has_page_write
 
@@ -59,6 +60,7 @@ def run(
 	selected_block_context: list | None = None,
 	display_text: str | None = None,
 	canvas_theme: str | None = None,
+	request_id: str | None = None,
 ):
 	"""Single entry point: run the agent for one user turn of the in-editor chat.
 
@@ -70,23 +72,37 @@ def run(
 	image_url = BlockCodec.validate_image_data(image_data) if image_data else None
 	canvas_theme = canvas_theme if canvas_theme in ("light", "dark") else None
 
-	# Guard concurrency for an established session first — nothing may persist on the
-	# busy path. The worker takes the atomic run lock; this check just gives a fast
-	# 429 instead of a queued rejection.
-	if session_id and AISession.is_session_running(session_id):
+	resolved_model = ModelRegistry.get_default(model or "openrouter")
+	if not ModelRegistry.is_known_model(resolved_model):
+		frappe.throw(_("Unknown AI model: {0}").format(resolved_model))
+	if image_data and not ModelRegistry.supports_vision(resolved_model):
+		frappe.throw(_("This model cannot view images. Choose a vision-capable model."))
+	resolve_api_key(resolved_model)
+	frappe.get_doc("Builder Page", page_id).check_permission("write")
+	# Also serialize first-turn retries, before they have a session to lock.
+	if previous := AIRun.lock_request(request_id):
+		if previous.page != page_id or (session_id and previous.session != session_id):
+			frappe.throw(_("This request ID belongs to another chat."))
+		return {"status": "accepted", "session_id": previous.session, "run_id": previous.name}
+	if not session_id:
+		session_id = AISession.create({"page": page_id}, resolved_model).name
+	session = AISession.get(session_id, page_id=page_id)
+	run_doc, created = AIRun.admit(session_id, page_id, resolved_model, request_id)
+	if not run_doc:
 		frappe.local.response.http_status_code = 429
 		return {"status": "busy", "message": _("Another AI request is still processing. Please wait.")}
+	if not created:
+		return {"status": "accepted", "session_id": run_doc.session, "run_id": run_doc.name}
+	from builder.ai.brief import DesignBrief
+
+	DesignBrief(page_id).select_assets(prompt)
 
 	# A pasted image is a one-turn data URI: saved as a site file it gains a real URL
 	# that later turns can replay and a generation brief can carry as REFERENCE IMAGE.
 	image_file_url = save_attached_image(image_url) if image_url else None
 
-	if not session_id:
-		session_id = AISession.create({"page": page_id}, model).name
-
 	if session_id:
-		session = AISession.get(session_id, page_id=page_id)
-		msg_meta: dict = {"selectedBlockContext": selected_block_context or []}
+		msg_meta: dict = {"selectedBlockContext": selected_block_context or [], "runId": run_doc.name}
 		if canvas_theme:
 			msg_meta["canvasTheme"] = canvas_theme
 		if image_data:
@@ -95,41 +111,29 @@ def run(
 		# in the chat; the full labelled text stays the message content for the model.
 		if display_text:
 			msg_meta["displayText"] = display_text.strip()[:300]
-		session.append_message("user", prompt, message_type="chat", task_type="agent", metadata=msg_meta)
-
-	resolved_model = ModelRegistry.get_default(model or "openrouter")
-	if not ModelRegistry.is_known_model(resolved_model):
-		frappe.throw(_("Unknown AI model: {0}").format(resolved_model))
-	if image_data and not ModelRegistry.supports_vision(resolved_model):
-		frappe.throw(
-			_("{0} can't view images. Pick a vision-capable model or remove the image.").format(
-				resolved_model
-			)
+		message_id = session.append_message(
+			"user", prompt, message_type="chat", task_type="agent", metadata=msg_meta
 		)
-	# Fails fast on a missing key; the job resolves its own copy so the key never sits in the queue.
-	resolve_api_key(resolved_model)
+		frappe.db.set_value(AIRun.DOCTYPE, run_doc.name, "user_message", message_id)
+		frappe.db.set_value(AISession.DOCTYPE, session_id, "selected_model", resolved_model)
 
-	# Background queue (not now=True): a streaming generation can run 30-60s, and
-	# now=True would hold this web worker open for the entire stream — exhausting the
-	# worker pool under concurrency. Realtime events flow over Redis pub/sub regardless
-	# of which process runs the job.
-	frappe.enqueue(
-		run_agent_job,
-		queue="default",
-		timeout=600,
-		prompt=prompt,
-		model=resolved_model,
-		user=frappe.session.user,
-		page_id=page_id,
-		session_id=session_id,
-		enqueue_after_commit=True,
-		selected_block_ids=selected_block_ids,
-		image_url=image_url,
-		image_file_url=image_file_url,
-		canvas_theme=canvas_theme,
+	AIRun.enqueue(
+		run_doc.name,
+		{
+			"prompt": prompt,
+			"model": resolved_model,
+			"user": frappe.session.user,
+			"page_id": page_id,
+			"session_id": session_id,
+			"run_id": run_doc.name,
+			"selected_block_ids": selected_block_ids,
+			"image_url": image_url,
+			"image_file_url": image_file_url,
+			"canvas_theme": canvas_theme,
+		},
 	)
 	frappe.local.response.http_status_code = 202
-	return {"status": "accepted", "session_id": session_id}
+	return {"status": "accepted", "session_id": session_id, "run_id": run_doc.name}
 
 
 def ensure_session_owner(session_id: str) -> None:
@@ -156,8 +160,13 @@ def confirm_pending_settings(message_id: str, decision: str = "apply"):
 	owner = frappe.db.get_value(AISession.DOCTYPE, msg.session, "session_user")
 	if owner != frappe.session.user:
 		frappe.throw(_("This action does not belong to you"), frappe.PermissionError)
+	# Lock before reading status: two tabs must not consume the same confirmation.
+	frappe.db.get_value(AISession.MESSAGE_DOCTYPE, message_id, "name", for_update=True)
+	msg.reload()
 	if msg.status != "pending_action":
 		frappe.throw(_("No pending action on this message"))
+	if AISession.is_session_running(msg.session):
+		frappe.throw(_("Wait for this chat's current turn before applying the action."))
 
 	if decision != "apply":
 		frappe.db.set_value(AISession.MESSAGE_DOCTYPE, message_id, "status", "action_skipped")
@@ -167,13 +176,27 @@ def confirm_pending_settings(message_id: str, decision: str = "apply"):
 		return {"status": "skipped", "resumed": resumed}
 
 	meta = AISession.load_metadata(msg.metadata_json)
-	result = apply_pending_action(meta.get("kind"), meta.get("payload") or {})
-	frappe.db.set_value(AISession.MESSAGE_DOCTYPE, message_id, "status", "action_applied")
+	# Schema changes can implicitly commit in MariaDB. Consume the action before
+	# any DDL so releasing a row lock cannot make it executable by a second tab.
+	frappe.db.set_value(AISession.MESSAGE_DOCTYPE, message_id, "status", "action_applying")
+	frappe.db.commit()
+	try:
+		result = apply_pending_action(meta.get("kind"), meta.get("payload") or {})
+	except Exception:
+		frappe.db.set_value(AISession.MESSAGE_DOCTYPE, message_id, "status", "action_failed")
+		frappe.db.commit()
+		raise
+	status = "action_failed" if result.startswith("FAILED") else "action_applied"
+	frappe.db.set_value(AISession.MESSAGE_DOCTYPE, message_id, "status", status)
 	# The OUTCOME becomes part of the conversation — visible in the chat after a
 	# reload, and context for the agent's next turn (it knows what was applied).
 	AISession.try_append_message(msg.session, "assistant", result, message_type="status")
 	resumed = resume_after_action(msg.session, result)
-	return {"status": "applied", "message": result, "resumed": resumed}
+	return {
+		"status": "failed" if status == "action_failed" else "applied",
+		"message": result,
+		"resumed": resumed,
+	}
 
 
 def resume_after_action(session_id: str, outcome: str) -> bool:
@@ -192,18 +215,20 @@ def resume_after_action(session_id: str, outcome: str) -> bool:
 		resolved_model = ModelRegistry.get_default(model or "openrouter")
 		# A job that can't find its key fails out of sight, so check before queueing it.
 		resolve_api_key(resolved_model)
-		frappe.enqueue(
-			run_agent_job,
-			queue="default",
-			timeout=600,
-			# run_agent_job does not persist its prompt, so no phantom "continue" in the chat
-			prompt=f"{outcome}\n\nContinue with what you were doing. Do not repeat this step.",
-			model=resolved_model,
-			user=frappe.session.user,
-			page_id=page_id,
-			session_id=session_id,
-			canvas_theme=AISession.latest_canvas_theme(session_id),
-			enqueue_after_commit=True,
+		run_doc, created = AIRun.admit(session_id, page_id, resolved_model)
+		if not created:
+			return False
+		AIRun.enqueue(
+			run_doc.name,
+			{
+				"prompt": f"{outcome}\n\nContinue with what you were doing. Do not repeat this step.",
+				"model": resolved_model,
+				"user": frappe.session.user,
+				"page_id": page_id,
+				"session_id": session_id,
+				"run_id": run_doc.name,
+				"canvas_theme": AISession.latest_canvas_theme(session_id),
+			},
 		)
 		return True
 	except Exception:
@@ -213,7 +238,7 @@ def resume_after_action(session_id: str, outcome: str) -> bool:
 
 @frappe.whitelist()
 @has_page_write()
-def cancel(session_id: str):
+def cancel(session_id: str, run_id: str | None = None):
 	"""Request that the currently-running turn for this session abort at its
 	next stream chunk. The loop closes the LLM stream — Anthropic / OpenRouter
 	stop billing for further tokens once the connection drops."""
@@ -223,6 +248,20 @@ def cancel(session_id: str):
 	if not session_id:
 		return {"status": "ok"}
 	ensure_session_owner(session_id)
+	active = AIRun.active(session_id)
+	if active:
+		if run_id and active.name != run_id:
+			return {"status": "not_running"}
+		status = AIRun.cancel(active.name)
+		if status == "cancelled":
+			AISession.try_append_message(
+				session_id,
+				"assistant",
+				"Cancelled before starting.",
+				message_type="status",
+				metadata={"status": "cancelled", "runId": active.name},
+			)
+		return {"status": status, "run_id": active.name}
 	frappe.cache.set_value(f"builder_ai_cancel:{session_id}", "1", expires_in_sec=300)
 	# Only a live loop acknowledges the flag. If no turn holds the session lock
 	# (the run crashed, timed out, or never started), tell the panel directly —
@@ -241,11 +280,33 @@ def cancel(session_id: str):
 @frappe.whitelist()
 @has_page_write()
 def revert_to_message(session_id: str, message_id: str):
-	"""Rewind the conversation to before the given turn: delete that turn's user
-	prompt, its assistant reply, and every message after it. The page itself is
-	restored separately by the client via the turn's snapshot."""
+	"""Restore the page and rewind its conversation in the same transaction."""
+	from builder.ai import locks
+
 	session = AISession.get(session_id)
-	session.truncate_from_turn(message_id)
+	frappe.db.get_value(AISession.DOCTYPE, session_id, "name", for_update=True)
+	if AISession.is_session_running(session_id):
+		frappe.throw(_("Stop the active turn before reverting."))
+	metadata = frappe.db.get_value(
+		AISession.MESSAGE_DOCTYPE,
+		{"name": message_id, "session": session_id, "role": "assistant"},
+		"metadata_json",
+	)
+	snapshot = AISession.load_metadata(metadata).get("revertSnapshot")
+	if not snapshot or not frappe.db.exists("Builder Snapshot", snapshot):
+		frappe.throw(_("This restore point has expired. The page and conversation have been kept."))
+	with locks.guard(locks.page_key(session.page), locks.PAGE_LOCK_TTL) as token:
+		if not token:
+			frappe.throw(_("This page is still being edited. Try again in a moment."))
+		page = frappe.get_doc("Builder Page", session.page)
+		page.check_permission("write")
+		try:
+			page.restore_snapshot(snapshot)
+			session.truncate_from_turn(message_id)
+			frappe.db.commit()
+		except Exception:
+			frappe.db.rollback()
+			raise
 	return {"messages": session.get_messages()}
 
 
@@ -475,14 +536,22 @@ def finish_codex_login(redirect_url: str):
 
 @frappe.whitelist()
 @has_page_write()
-def get_ai_session(page_id: str, model: str | None = None, session_id: str | None = None):
+def get_ai_session(
+	page_id: str, model: str | None = None, session_id: str | None = None, request_id: str | None = None
+):
 	"""One page can hold several parallel chat sessions. With `session_id` this loads
 	that specific session; without it, the page's most recently used one. Reading
 	never creates a session: a page nobody has chatted on gets a blank one, and
 	`run` creates the session with the chat's first message."""
 	if not page_id or page_id == "new" or not frappe.db.exists("Builder Page", page_id):
 		return blank_session(page_id, model)
+	frappe.get_doc("Builder Page", page_id).check_permission("write")
 
+	request_run = AIRun.existing(request_id)
+	if request_run:
+		if request_run.page != page_id:
+			frappe.throw(_("This request belongs to another page."))
+		session_id = request_run.session
 	if not (session_id and frappe.db.exists(AISession.DOCTYPE, session_id)):
 		session_id = AISession.last_used({"page": page_id, "session_user": frappe.session.user})
 	if not session_id:
@@ -494,6 +563,8 @@ def get_ai_session(page_id: str, model: str | None = None, session_id: str | Non
 		"selected_model": session.selected_model,
 		"last_task_type": session.last_task_type,
 		"messages": session.get_messages(),
+		"active_run": AIRun.public(AIRun.active(session.name)),
+		"request_run": AIRun.public(request_run),
 	}
 
 
@@ -535,6 +606,8 @@ def list_page_ai_sessions(page_id: str, limit: int = 20):
 @has_page_write()
 def delete_ai_session(session_id: str):
 	ensure_session_owner(session_id)
+	if AISession.is_session_running(session_id):
+		frappe.throw(_("Stop the active turn before deleting this chat."))
 	# The session's on_trash takes its messages with it.
 	frappe.delete_doc(AISession.DOCTYPE, session_id, ignore_permissions=True)
 	return {"status": "ok"}
@@ -542,14 +615,14 @@ def delete_ai_session(session_id: str):
 
 @frappe.whitelist()
 @has_page_write()
-def update_session_message_metadata(session_id: str, metadata: dict):
+def update_session_message_metadata(session_id: str, metadata: dict, run_id: str | None = None):
 	"""Persist client-side metadata (affectedBlocks, affectedScripts) onto the last
 	assistant message so it survives page reloads."""
 	if not session_id or not frappe.db.exists(AISession.DOCTYPE, session_id):
 		return
 	session = AISession.get(session_id)  # asserts ownership
 	safe_meta = {k: metadata[k] for k in ("affectedBlocks", "affectedScripts") if k in metadata}
-	session.update_last_assistant_metadata(safe_meta)
+	session.update_last_assistant_metadata(safe_meta, run_id=run_id)
 
 
 @frappe.whitelist()
