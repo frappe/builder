@@ -4,7 +4,20 @@ from unittest.mock import Mock, patch
 
 from frappe.tests.utils import FrappeTestCase
 
+from builder.ai.agent.tools.preview import preview_page, render_page_image
 from builder.html_preview_image import preview_regions, render_full_page
+
+
+class TestAgentPreview(FrappeTestCase):
+	def test_renders_desktop_only(self):
+		page = Mock()
+		page.get_preview_html.return_value = "<p>Hi</p>"
+		with patch("builder.html_preview_image.render_full_page", return_value=b"preview") as render:
+			self.assertEqual(render_page_image(page, "dark"), b"preview")
+
+		self.assertNotIn("viewport", preview_page.parameters["properties"])
+		page.get_preview_html.assert_called_once_with(color_scheme="dark")
+		render.assert_called_once_with("<p>Hi</p>", width=1280, height=900)
 
 
 class TestFullPagePreview(FrappeTestCase):

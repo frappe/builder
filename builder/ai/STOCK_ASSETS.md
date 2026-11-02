@@ -1,6 +1,6 @@
 # Bob images and stock assets
 
-Direction previews are **WebP screenshots of real editable Builder blocks** at desktop/mobile sizes. Choosing a direction promotes those same blocks. Rendering a layout does not call an image model. Optional generated artwork is separate; a concept stays preview-only and cannot become the whole published page.
+Direction previews are **desktop WebP screenshots of real editable Builder blocks**. Choosing a direction promotes those same blocks. Rendering a layout does not call an image model. Optional generated artwork is separate; a concept stays preview-only and cannot become the whole published page. Responsive DOM checks remain available without generating a mobile preview.
 
 ## Discovery
 

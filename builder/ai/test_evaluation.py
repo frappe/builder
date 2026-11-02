@@ -38,15 +38,19 @@ class TestEvaluationEvidence(FrappeTestCase):
 		Image.new("RGB", (8, 8), "white").save(buffer, "WEBP")
 		with (
 			patch.dict(frappe.conf, {"allow_tests": True}),
-			patch("builder.html_preview_image.render_full_page", return_value=buffer.getvalue()),
+			patch("builder.html_preview_image.render_full_page", return_value=buffer.getvalue()) as render,
 		):
 			pages = [self.fixture("baseline-private"), self.fixture("candidate-private")]
 			for page in pages:
 				captured = evaluation.capture(page)
 				self.assertEqual(captured["runs"], [])
+				self.assertEqual(set(captured["previews"]), {"desktop"})
+			self.assertEqual(render.call_count, 2)
 			with tempfile.TemporaryDirectory() as directory:
 				result = evaluation.blind_pack(pages, str(Path(directory) / "review"))
 				markup = Path(result["review"]).read_text()
+				self.assertNotIn("mobile.webp", markup)
+				self.assertEqual(len(list(Path(directory, "review").glob("*.webp"))), 2)
 				self.assertNotIn("private/model", markup)
 				self.assertNotIn("baseline-private", markup)
 				self.assertIn("Candidate A", markup)

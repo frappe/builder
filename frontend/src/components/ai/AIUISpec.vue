@@ -118,14 +118,8 @@
 								class="h-24 w-full rounded-4 border border-black/10 object-cover"
 								loading="lazy"
 								alt="" />
-							<img
-								v-if="option.mobile_image && safeSrc(option.mobile_image)"
-								:src="option.mobile_image"
-								class="max-h-32 w-auto rounded border border-black/10"
-								loading="lazy"
-								alt="Mobile layout preview" />
 							<span
-								v-else-if="option.colors?.length"
+								v-if="option.colors?.length"
 								class="flex shrink-0 overflow-hidden rounded-4 border border-black/10">
 								<span
 									v-for="color in option.colors.slice(0, 5)"

@@ -21,9 +21,9 @@ logger.setLevel(logging.INFO)
 MAX_PREVIEWS_PER_TURN = 2  # hard cost bound — a screenshot loop can't run away
 MAX_IMAGE_VIEWS_PER_TURN = 3
 MAX_IMAGE_BYTES = 3 * 1024 * 1024  # mirrors BlockCodec.validate_image_data's cap
-VIEWPORT_WIDTHS = {"desktop": 1280, "tablet": 768, "mobile": 390}
+PREVIEW_WIDTH = 1280
+PREVIEW_HEIGHT = 900
 COLOR_SCHEMES = ("light", "dark")
-VIEWPORT_HEIGHTS = {"desktop": 900, "tablet": 1024, "mobile": 844}
 # One attached image per this many pixels of page. NOT one tall image: a vision
 # model shrinks an image to fit its longest edge (~1568px), so a single
 # 1280x6000 capture reaches the model at ~250px wide with every label
@@ -33,11 +33,11 @@ TILE_HEIGHT = 2000
 MAX_TILES = 3
 
 
-def render_page_image(page, viewport: str = "desktop", color_scheme: str | None = None) -> bytes:
+def render_page_image(page, color_scheme: str | None = None) -> bytes:
 	from builder.html_preview_image import render_full_page
 
 	markup = page.get_preview_html(color_scheme=color_scheme)
-	return render_full_page(markup, width=VIEWPORT_WIDTHS[viewport], height=VIEWPORT_HEIGHTS[viewport])
+	return render_full_page(markup, width=PREVIEW_WIDTH, height=PREVIEW_HEIGHT)
 
 
 # How far a pixel may drift from the background before it counts as content. The
@@ -134,23 +134,22 @@ def run_preview_page(ctx, args: dict) -> str:
 	setattr(ctx, counter, getattr(ctx, counter, 0) + 1)
 	page = frappe.get_doc("Builder Page", page_id)
 	page.check_permission("read")
-	viewport = args.get("viewport") if args.get("viewport") in VIEWPORT_WIDTHS else "desktop"
 	color_scheme = args.get("color_scheme") if args.get("color_scheme") in COLOR_SCHEMES else "light"
-	variant = f"{viewport}, {color_scheme} mode"
+	variant = f"desktop, {color_scheme} mode"
 	viewport_verified = True
 	try:
 		try:
-			image = render_page_image(page, viewport, color_scheme)
+			image = render_page_image(page, color_scheme)
 		except ImportError:
 			from builder.html_preview_image import render
 
 			image = render(
 				page.get_preview_html(color_scheme=color_scheme),
-				width=VIEWPORT_WIDTHS[viewport],
-				height=VIEWPORT_HEIGHTS[viewport],
+				width=PREVIEW_WIDTH,
+				height=PREVIEW_HEIGHT,
 			)
 			viewport_verified = False
-			variant = f"fallback renderer, {color_scheme} mode; requested {viewport} geometry not verified"
+			variant = f"fallback renderer, {color_scheme} mode; desktop geometry not verified"
 	except Exception:
 		logger.warning("preview_page: render failed for %s", page_id, exc_info=True)
 		return (
@@ -227,10 +226,10 @@ preview_page = Tool(
 		"screenshots. Also "
 		"works on ANOTHER page (pass its page_id) to study it as a visual reference — do "
 		"that BEFORE designing a page that must match it, paired with read_page for the "
-		"exact values. If the renderer is unavailable, continue without it. Pick "
-		"viewport and color_scheme to check the case you changed: a mobile fix at mobile, "
-		"a dark-mode change in dark. Never report a mobile or dark-mode change as done "
-		"from a desktop light capture."
+		"exact values. If the renderer is unavailable, continue without it. The "
+		"screenshot is desktop only; use verify_page for responsive DOM checks. Pick "
+		"color_scheme for a dark-mode change. Never claim mobile appearance was "
+		"visually checked from a desktop capture."
 	),
 	parameters={
 		"type": "object",
@@ -238,11 +237,6 @@ preview_page = Tool(
 			"page_id": {
 				"type": "string",
 				"description": "The page to screenshot. Defaults to the page you have open.",
-			},
-			"viewport": {
-				"type": "string",
-				"enum": list(VIEWPORT_WIDTHS),
-				"description": "Screen width to render at: desktop (1280px, default), tablet (768px) or mobile (390px).",
 			},
 			"color_scheme": {
 				"type": "string",

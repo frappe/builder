@@ -75,10 +75,8 @@ def capture(page_id: str):
 		raise ValueError("Wait for this experiment's active turn to finish")
 	page = frappe.get_doc("Builder Page", page_id)
 	revision = page_revision(page_id)
-	markup, previews = page.get_preview_html(), {}
-	for label, width in (("desktop", 1280), ("mobile", 390)):
-		image = render_full_page(markup, width=width, height=900 if width == 1280 else 844, max_height=1800)
-		previews[label] = save_raster(page_id, image, f"evaluation-{page_id}-{label}", private=True)["url"]
+	image = render_full_page(page.get_preview_html(), width=1280, height=900, max_height=1800)
+	previews = {"desktop": save_raster(page_id, image, f"evaluation-{page_id}-desktop", private=True)["url"]}
 	for row in runs:
 		row["metadata"] = json.loads(row.pop("metadata_json") or "{}")
 	if page_revision(page_id) != revision:
@@ -135,7 +133,8 @@ def blind_pack(page_ids: list, output_directory: str, seed: int = 0):
 	if len({value["case"]["id"] for _, value in values}) != 1:
 		raise ValueError("Blind comparisons must use the same corpus case")
 	if any(
-		not value.get("previews") or value.get("revision") != page_revision(page) for page, value in values
+		not value.get("previews", {}).get("desktop") or value.get("revision") != page_revision(page)
+		for page, value in values
 	):
 		raise ValueError("Capture each current page before exporting")
 	root = Path(output_directory)
@@ -150,15 +149,14 @@ def blind_pack(page_ids: list, output_directory: str, seed: int = 0):
 			"implementation": value["implementation"],
 			"sample": value["sample"],
 		}
-		for viewport, url in value["previews"].items():
-			file = frappe.get_doc("File", {"file_url": url})
-			file.check_permission("read")
-			(root / f"{label}-{viewport}.webp").write_bytes(file.get_content())
+		file = frappe.get_doc("File", {"file_url": value["previews"]["desktop"]})
+		file.check_permission("read")
+		(root / f"{label}-desktop.webp").write_bytes(file.get_content())
 		cards.append(
-			f'<article><h2>Candidate {label}</h2><img src="{label}-desktop.webp" alt="Desktop"><img class="mobile" src="{label}-mobile.webp" alt="Mobile"></article>'
+			f'<article><h2>Candidate {label}</h2><img src="{label}-desktop.webp" alt="Desktop"></article>'
 		)
 	case = values[0][1]["case"]
-	markup = '<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>Blind Bob comparison</title><style>body{font:16px system-ui;margin:24px;color:#222}main{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:24px}img{max-width:74%;vertical-align:top}.mobile{max-width:23%}article{border:1px solid #ccc;padding:12px}</style>'
+	markup = '<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>Blind Bob comparison</title><style>body{font:16px system-ui;margin:24px;color:#222}main{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:24px}img{max-width:100%;vertical-align:top}article{border:1px solid #ccc;padding:12px}</style>'
 	markup += f"<h1>{html.escape(case['id'])}</h1><p>{html.escape(case['prompt'])}</p><p>Score each dimension 1–5: {html.escape(', '.join(RUBRIC))}. Record corrections and acceptance separately. Screenshots cover the first 1800 pixels; test full pages separately.</p><main>{''.join(cards)}</main></html>"
 	(root / "index.html").write_text(markup)
 	(root / "identity.json").write_text(json.dumps(identity, indent=2))

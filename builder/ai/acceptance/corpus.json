@@ -33,6 +33,6 @@
     "id": "direction-exploration",
     "scenarios": ["D06", "D07", "D08", "A14"],
     "prompt": "This is a fictional evaluation fixture. I am making a site for a small architecture practice named Common Room. Our only supplied service is home renovation consultations; the visitor should email rooms@example.test. I am undecided about the look. Show two meaningfully different real layout previews using this content, one editorial and one compact. Do not generate paid imagery, invent projects or build the final page until I choose.",
-    "expected": ["Two real desktop/mobile raster layout previews", "Meaningful compositional differences", "No invented projects or paid imagery", "Choosing a direction promotes the exact editable layout"]
+    "expected": ["Two real desktop raster layout previews", "Meaningful compositional differences", "No invented projects or paid imagery", "Choosing a direction promotes the exact editable layout"]
   }
 ]

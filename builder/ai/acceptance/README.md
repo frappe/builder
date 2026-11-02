@@ -38,7 +38,7 @@ bench --site SITE execute builder.ai.evaluation.blind_pack \
   --kwargs '{"page_ids":["BASELINE_PAGE","CANDIDATE_PAGE"],"output_directory":"/tmp/bob-blind-review","seed":42}'
 ```
 
-The pack labels actual desktop/mobile images A/B/etc. Candidates must share a corpus case and current captured revisions. Give reviewers `index.html` and images; keep `identity.json` separate until scoring. Capture stores exact revisions, run statuses/timestamps and metadata/usage. Missing usage stays missing. Images cover the first 1800px: test full pages/interactions separately.
+The pack labels desktop images A/B/etc. Candidates must share a corpus case and current captured revisions. Give reviewers `index.html` and images; keep `identity.json` separate until scoring. Capture stores exact revisions, run statuses/timestamps and metadata/usage. Missing usage stays missing. Images cover the first 1800px: test mobile layout, full pages and interactions separately in a browser before rating responsive use.
 
 Score six dimensions 1–5: brief fit, factual fidelity, specificity, hierarchy, responsive use and interaction use. Anchors: 1 fails the task, 3 usable with corrections, 5 fits the intent with no material defect observed. Record explicit acceptance separately:
 
