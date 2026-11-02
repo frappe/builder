@@ -21,16 +21,20 @@
 				</Button>
 			</div>
 		</div>
-		<div class="flex flex-1 flex-col gap-5 overflow-hidden bg-surface-base p-14 px-16 pb-0">
-			<h2 class="text-xl-semibold leading-none text-ink-gray-9">{{ selectedItemDoc?.title }}</h2>
+		<div
+			class="flex flex-1 flex-col gap-5 overflow-hidden bg-surface-base"
+			:class="{ 'p-14 px-16 pb-0': !selectedItemDoc?.bare }">
+			<h2 v-if="!selectedItemDoc?.bare" class="text-xl-semibold leading-none text-ink-gray-9">
+				{{ selectedItemDoc?.title }}
+			</h2>
 			<Button
 				icon="lucide-x"
 				variant="subtle"
 				@click="$emit('close')"
-				class="absolute right-5 top-5"></Button>
+				class="absolute right-5 top-5 z-10"></Button>
 			<div v-if="settingsLoaded" class="no-scrollbar min-h-0 flex-1 overflow-y-auto overscroll-contain">
 				<KeepAlive>
-					<component :is="selectedItemDoc?.component" class="pb-16" />
+					<component :is="selectedItemDoc?.component" :class="{ 'pb-16': !selectedItemDoc?.bare }" />
 				</KeepAlive>
 			</div>
 			<div v-else class="flex items-center justify-center">

@@ -133,6 +133,23 @@ class TestGatewayListing(FrappeTestCase):
 		with patch("builder.ai.models.requests.get", return_value=reply):
 			self.assertEqual(GatewayListing(self.provider).credits(), {"balance": 2, "spent": None})
 
+	def test_the_settings_default_is_marked_and_used(self):
+		self.sync("model-a", "model-b")
+		default = f"{self.provider.route_prefix}/model-b"
+		frappe.db.set_single_value("Builder Settings", "default_ai_model", default)
+		with patch("builder.ai.models.fetch_openrouter_catalog", return_value={}):
+			marked = [
+				m["name"] for group in ModelRegistry.available() for m in group["models"] if m["default"]
+			]
+			self.assertEqual(marked, [default])
+			self.assertEqual(ModelRegistry.get_default("openrouter"), default)
+
+	def test_a_default_that_is_not_available_falls_back_to_the_first_model(self):
+		self.sync("model-a")
+		frappe.db.set_single_value("Builder Settings", "default_ai_model", "frappe/openai/not-served")
+		with patch("builder.ai.models.fetch_openrouter_catalog", return_value={}):
+			self.assertEqual(ModelRegistry.get_default("openrouter"), ModelRegistry.catalog()[0]["name"])
+
 	def test_deleting_a_provider_takes_its_models_along(self):
 		from builder.ai.api import delete_ai_provider
 

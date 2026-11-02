@@ -4,6 +4,7 @@ import ModeSwitcher from "@/components/ToolbarItems/ModeSwitcher.vue";
 import PageTitlePopover from "@/components/ToolbarItems/PageTitlePopover.vue";
 import ReadOnlyBadge from "@/components/ToolbarItems/ReadOnlyBadge.vue";
 import ToolbarActions from "@/components/ToolbarItems/ToolbarActions.vue";
+import TrialBadge from "@/components/ToolbarItems/TrialBadge.vue";
 import ViewerAvatars from "@/components/ToolbarItems/ViewerAvatars.vue";
 import useBuilderStore from "@/stores/builderStore";
 import usePageStore from "@/stores/pageStore";
@@ -41,6 +42,9 @@ toolbarItems.register({
 	component: ReadOnlyBadge,
 	condition: () => builderStore.readOnlyMode,
 });
+
+// no condition: the badge starts the billing check, and renders nothing off a trial
+toolbarItems.register({ name: "trial", region: "right", component: TrialBadge });
 
 // one item, not five: the icons share a gap-2 group inside a gap-4 region
 toolbarItems.register({ name: "actions", region: "right", component: ToolbarActions });
