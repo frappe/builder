@@ -83,32 +83,18 @@
 						v-else-if="tab === 'Versions'"
 						class="grid max-h-[65vh] gap-4 overflow-y-auto p-1 sm:grid-cols-2">
 						<p v-if="!variants.length" class="col-span-full text-p-sm text-ink-gray-6">
-							Ask Bob for visual directions. Each preview will show a real editable layout at desktop and
-							mobile sizes.
+							Ask Bob for visual directions. Preview a layout, inspect its sections, or tweak it before
+							choosing.
 						</p>
-						<div
+						<AIDesignCard
 							v-for="variant in variants"
 							:key="variant.variant_id"
-							class="space-y-2 rounded border border-outline-gray-2 p-3">
-							<p class="text-p-base font-medium">{{ variant.label }}</p>
-							<div class="flex items-start gap-2">
-								<img
-									:src="variant.image"
-									:alt="`${variant.label}, desktop`"
-									class="w-[76%] rounded border border-outline-gray-1" />
-								<img
-									:src="variant.mobile_image"
-									:alt="`${variant.label}, mobile`"
-									class="w-[22%] rounded border border-outline-gray-1" />
-							</div>
-							<p class="text-p-sm text-ink-gray-6">{{ variant.description }}</p>
-							<p v-if="variant.stale" class="text-p-xs text-ink-orange-5">
-								The brief changed. Ask Bob to refresh this direction.
-							</p>
-							<Button :disabled="variant.stale || busy" @click="choose(variant)">
-								{{ variant.status === "selected" ? "Continue this direction" : "Use this direction" }}
-							</Button>
-						</div>
+							:direction="variant"
+							:selected="variant.status === 'selected'"
+							:disabled="busy"
+							:action-label="variant.status === 'selected' ? 'Continue this direction' : 'Use this direction'"
+							@select="choose(variant)"
+							@refine="refine(variant, $event)" />
 					</div>
 					<div v-else class="max-h-[65vh] overflow-y-auto p-1">
 						<AIProjectPlan v-if="tab === 'Pages'" :project="project" />
@@ -133,6 +119,8 @@ import { ref, watch } from "vue";
 import AIProjectPlan from "./AIProjectPlan.vue";
 import AIVerification from "./AIVerification.vue";
 import AIMediaBudget from "./AIMediaBudget.vue";
+import AIDesignCard from "./AIDesignCard.vue";
+import { refinementReply } from "./cardDraft";
 const props = defineProps<{ pageId: string | null; busy?: boolean }>();
 const open = defineModel<boolean>({ default: false });
 const emit = defineEmits<{ select: [prompt: string] }>();
@@ -254,6 +242,10 @@ function choose(variant: Record<string, any>) {
 		"select",
 		`Use the ${variant.label} direction. Apply its editable layout and continue from it. [design: ${variant.variant_id}]`,
 	);
+}
+function refine(variant: Record<string, any>, changes: string) {
+	open.value = false;
+	emit("select", refinementReply(variant, changes));
 }
 watch([open, () => props.pageId], () => {
 	epoch++;

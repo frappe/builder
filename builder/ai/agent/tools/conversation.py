@@ -267,7 +267,7 @@ present_ui = Tool(
 					"option's `image` is a photo thumbnail URL (use the `thumb` from search_images) — "
 					"for letting the user pick a hero/section photo; the chosen option's image URL "
 					"comes back in their reply. Keep asset_id from search results. For layout choices, "
-					"use variant_id from create_design_directions: real desktop/mobile images and editable blocks.\n"
+					"use variant_id from create_design_directions: real desktop images, section details and editable blocks.\n"
 					"{kind:'input', label?, placeholder?} — one-line text field\n"
 					"{kind:'upload', label?} — image-upload field (logo, their own photo); the "
 					"uploaded file's URL arrives in their reply. Pair with an actions button, and "

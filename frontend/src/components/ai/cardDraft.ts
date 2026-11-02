@@ -23,6 +23,10 @@ export function optionReply(option: UIElement): string {
 	return reply;
 }
 
+export function refinementReply(option: UIElement, changes: string): string {
+	return `Tweak the "${option.label || "Design direction"}" preview (variant_id: ${option.variant_id}).\n${changes.trim()}\nRead its saved design specification and use it as the base. Show an updated preview for me to choose; keep the current page unchanged.`;
+}
+
 /** Message IDs keep a partially answered card independent of the selected chat. */
 export function useCardDraft(messageId: () => string | undefined) {
 	const stepIndex = ref(0);

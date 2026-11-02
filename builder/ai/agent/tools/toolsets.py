@@ -15,6 +15,7 @@ TOOLSETS = {
 	),
 	"design": (
 		"create_design_directions",
+		"read_design_direction",
 		"apply_design_direction",
 		"generate_page",
 		"add_block",

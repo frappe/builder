@@ -2,6 +2,8 @@
 
 Draft [PR #1023](https://github.com/frappe/builder/pull/1023) extends the original reliability work with native raster directions, durable design/project state, asset acquisition/generation, verification and an async orchestration service. [Current review coverage](pr-1023-coverage.md) maps every numbered finding and distinguishes implementation from evaluation.
 
+The later [UI follow-up](ui-2026-11-02.md) changes the optional direction picker to desktop-only previews with section details, preview tweaks, and next-step chips. The validation below records the earlier implementation.
+
 ## Behavior
 
 For a vague new-site request, Bob can gather consequential context, save the brief and show actual desktop/mobile WebP layout choices. Applying a choice promotes the exact editable blocks that produced its previews. More detailed requests can build directly. Users can correct facts, classify uploaded images, inspect versions, track page tasks, review checks and reconcile media spending in Project. SVG icons/illustrations remain supported where appropriate; SVG sketches are not the direction-preview path.

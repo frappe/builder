@@ -89,8 +89,20 @@
 					{{ controlLabel(i) }}
 				</p>
 				<div class="flex w-full flex-wrap gap-2">
-					<div v-for="(option, j) in el.options || []" :key="j" class="flex flex-1 basis-48 flex-col gap-1.5">
+					<div
+						v-for="(option, j) in el.options || []"
+						:key="option.id || option.variant_id || j"
+						class="flex min-w-0 flex-1 flex-col gap-1.5"
+						:class="option.variant_id ? 'basis-64' : 'basis-48'">
+						<AIDesignCard
+							v-if="option.variant_id"
+							:direction="option"
+							:selected="isSelected(i, j)"
+							:disabled="!interactive || disabled"
+							@select="onOptionClick(i, el, j, option)"
+							@refine="refineOption(option, $event)" />
 						<button
+							v-else
 							:disabled="!interactive || disabled"
 							class="group flex w-full flex-1 flex-col items-start gap-2 rounded-6 border px-3 py-2.5 text-left transition-all disabled:cursor-not-allowed disabled:opacity-50"
 							:class="
@@ -103,8 +115,7 @@
 							<img
 								v-if="option.image && safeSrc(option.image)"
 								:src="option.image"
-								class="w-full rounded-4 border border-black/10"
-								:class="option.variant_id ? 'max-h-64 object-contain' : 'h-24 object-cover'"
+								class="h-24 w-full rounded-4 border border-black/10 object-cover"
 								loading="lazy"
 								alt="" />
 							<img
@@ -242,9 +253,10 @@
 
 <script setup lang="ts">
 import ColorInput from "@/components/Controls/ColorInput.vue";
+import AIDesignCard from "./AIDesignCard.vue";
 import { Button, FileUploader, FormControl } from "frappe-ui";
 import { computed, watchEffect } from "vue";
-import { isPreviewOnly, optionReply, useCardDraft } from "./cardDraft";
+import { isPreviewOnly, optionReply, refinementReply, useCardDraft } from "./cardDraft";
 import {
 	INTERACTIVE_KINDS,
 	typedCardAnswers,
@@ -426,6 +438,11 @@ function setColorSlot(i: number, k: number, color: string) {
 
 function isSelected(elIndex: number, optIndex: number): boolean {
 	return selections[elIndex]?.has(optIndex) ?? false;
+}
+
+function refineOption(option: UIElement, changes: string) {
+	if (!props.interactive || props.disabled) return;
+	emit("submit", refinementReply(option, changes), `Tweak ${option.label}: ${changes}`);
 }
 
 function onOptionClick(elIndex: number, el: UIElement, optIndex: number, option: UIElement) {

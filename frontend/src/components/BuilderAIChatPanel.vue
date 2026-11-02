@@ -230,6 +230,18 @@
 							:answer="answerTo(message)"
 							:lead="message.metadata.text"
 							@submit="selectOption" />
+						<AINextSteps
+							v-if="
+								message.id === lastMessageId &&
+								!prompt.trim() &&
+								!isSubmitting &&
+								!isSwitchingSession &&
+								!isReverting &&
+								isEditingPage
+							"
+							:message="message"
+							:has-content="pageHasContent"
+							@select="useSuggestion" />
 					</div>
 					<!-- Block + image chips below the bubble -->
 					<div
@@ -443,6 +455,7 @@ import { providersLevel } from "@/components/ai/commands/providers";
 import type { BobContext } from "@/components/ai/commands/shared";
 import AIUISpec from "@/components/ai/AIUISpec.vue";
 import AIWorkspace from "@/components/ai/AIWorkspace.vue";
+import AINextSteps from "@/components/ai/AINextSteps.vue";
 import AIChatHistory from "@/components/ai/AIChatHistory.vue";
 import BobOrb from "@/components/ai/BobOrb.vue";
 import { AIChatController } from "@/components/AIChatController";

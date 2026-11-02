@@ -1,5 +1,6 @@
 import copy
 import json
+from io import BytesIO
 from types import SimpleNamespace
 from unittest.mock import patch
 
@@ -44,13 +45,12 @@ class TestDesignWorkflow(FrappeTestCase):
 
 	def test_cached_raster_variant_promotes_exact_native_blocks(self):
 		DesignBrief(self.page.name).update({"project": "Real user's studio", "goal": "Book a visit"})
-		with patch.object(
-			design, "save_preview", side_effect=["/private/files/desktop.webp", "/private/files/mobile.webp"]
-		) as render:
+		with patch.object(design, "save_preview", return_value="/private/files/desktop.webp") as render:
 			first = design.create_direction(self.page.name, {"label": "Quiet", "recipe": "compact"})
 			second = design.create_direction(self.page.name, {"label": "Quiet", "recipe": "compact"})
-		self.assertEqual(render.call_count, 2)
+		self.assertEqual(render.call_count, 1)
 		self.assertEqual(first, second)
+		self.assertNotIn("mobile_image", first)
 		_, candidate = Artifact.get(first["variant_id"], self.page.name, "design")
 		operations = []
 		ctx = SimpleNamespace(
@@ -62,6 +62,86 @@ class TestDesignWorkflow(FrappeTestCase):
 			candidate["blocks"],
 		)
 		self.assertEqual(operations[0]["args"]["blocks"], candidate["blocks"])
+
+	def test_tweak_keeps_base_specification_and_page_unchanged(self):
+		DesignBrief(self.page.name).update({"project": "A real studio"})
+		before = frappe.db.get_value("Builder Page", self.page.name, "draft_blocks")
+		with patch.object(design, "save_preview", return_value="/private/files/desktop.webp"):
+			base = design.create_direction(
+				self.page.name,
+				{
+					"label": "Original",
+					"recipe": "compact",
+					"headline": "User headline",
+					"palette": {"background": "#ffffff", "text": "#222222", "accent": "#0000ff"},
+				},
+			)
+			revised = design.create_direction(
+				self.page.name,
+				{
+					"label": "Warmer",
+					"base_variant_id": base["variant_id"],
+					"palette": {"accent": "#ff9900"},
+				},
+			)
+		_, original = Artifact.get(base["variant_id"], self.page.name, "design")
+		_, updated = Artifact.get(revised["variant_id"], self.page.name, "design")
+		self.assertNotEqual(base["variant_id"], revised["variant_id"])
+		self.assertEqual(updated["spec"]["headline"], "User headline")
+		self.assertEqual(updated["spec"]["recipe"], "compact")
+		self.assertEqual(
+			updated["spec"]["palette"], {"background": "#ffffff", "text": "#222222", "accent": "#ff9900"}
+		)
+		self.assertEqual(original["spec"]["palette"]["accent"], "#0000ff")
+		self.assertEqual(frappe.db.get_value("Builder Page", self.page.name, "draft_blocks"), before)
+
+	def test_custom_direction_requires_yaml_changes_instead_of_ignored_recipe_fields(self):
+		with self.assertRaisesRegex(ValueError, "edited YAML"):
+			design.revised_spec({"yaml": "el: div"}, {"font": "Inter"})
+		self.assertEqual(
+			design.revised_spec({"yaml": "el: div"}, {"yaml": "el: section"})["yaml"], "el: section"
+		)
+
+	def test_detail_previews_crop_existing_pixels_and_remain_private(self):
+		from PIL import Image
+
+		buffer = BytesIO()
+		Image.new("RGB", (400, 200), "#aa0000").save(buffer, format="WEBP")
+		with patch(
+			"frappe.utils.file_manager.save_file",
+			return_value=SimpleNamespace(file_url="/private/files/detail.webp"),
+		) as save:
+			details = design.save_detail_previews(
+				self.page.name,
+				"fixture",
+				buffer.getvalue(),
+				[{"label": "Contact", "box": (10, 20, 310, 120)}],
+			)
+		self.assertEqual(details, [{"label": "Contact", "image": "/private/files/detail.webp"}])
+		self.assertEqual(Image.open(BytesIO(save.call_args.args[1])).size, (300, 100))
+		self.assertTrue(save.call_args.kwargs["is_private"])
+		self.assertEqual(save.call_args.args[3], self.page.name)
+
+	def test_preview_regions_clip_to_captured_image_and_skip_offscreen_or_full_page(self):
+		from builder.html_preview_image import preview_regions
+
+		page = SimpleNamespace(
+			send=lambda *args: (
+				{
+					"result": {
+						"value": [
+							{"label": "Whole", "x": 0, "y": 0, "width": 1280, "height": 1800},
+							{"label": "Contact", "x": -20, "y": 1700, "width": 600, "height": 300},
+							{"label": "Offscreen", "x": 0, "y": 2000, "width": 600, "height": 300},
+						]
+					}
+				},
+				None,
+			)
+		)
+		self.assertEqual(
+			preview_regions(page, 1280, 1800), [{"label": "Contact", "box": (0, 1700, 580, 1800)}]
+		)
 
 	def test_changed_brief_invalidates_direction(self):
 		DesignBrief(self.page.name).update({"project": "Original"})

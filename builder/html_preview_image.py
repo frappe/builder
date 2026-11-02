@@ -39,8 +39,10 @@ def render_via_service(html: str) -> bytes:
 	return response.content
 
 
-def render_full_page(html: str, width: int = 1280, height: int = 900, max_height: int = 8000) -> bytes:
-	"""Capture document pixels without changing the viewport used by vh/media queries."""
+def render_full_page(
+	html: str, width: int = 1280, height: int = 900, max_height: int = 8000, regions: list | None = None
+) -> bytes:
+	"""Capture document pixels and optional section bounds in the same browser render."""
 	from frappe.utils.chromium import CDPSocketClient, ChromiumManager, Page
 	from frappe.utils.pdf import get_host_url
 	from frappe.utils.preview import safe_execute
@@ -67,6 +69,9 @@ def render_full_page(html: str, width: int = 1280, height: int = 900, max_height
 		if error:
 			raise RuntimeError("Could not measure screenshot document")
 		content = metrics.get("cssContentSize") or metrics["contentSize"]
+		capture_height = min(max_height, content["height"])
+		if regions is not None:
+			regions.extend(preview_regions(page, width, capture_height))
 		result, error = page.send(
 			"Page.captureScreenshot",
 			{
@@ -77,7 +82,7 @@ def render_full_page(html: str, width: int = 1280, height: int = 900, max_height
 					"x": 0,
 					"y": 0,
 					"width": width,
-					"height": min(max_height, content["height"]),
+					"height": capture_height,
 					"scale": 1,
 				},
 			},
@@ -89,3 +94,38 @@ def render_full_page(html: str, width: int = 1280, height: int = 900, max_height
 		safe_execute(page and page.close)
 		safe_execute(session and session.disconnect)
 		generator.remove_browser(browser_id)
+
+
+def preview_regions(page, width: int, height: int) -> list[dict]:
+	result, error = page.send(
+		"Runtime.evaluate",
+		{
+			"returnByValue": True,
+			"expression": """(() => {
+				const regions = [], included = [];
+				for (const node of [...document.querySelectorAll('header, nav, section, footer, form')].slice(0, 100)) {
+					if (included.some(parent => parent.contains(node))) continue;
+					const box = node.getBoundingClientRect();
+					if (box.width < 120 || box.height < 40) continue;
+					const heading = node.querySelector('h1, h2, h3');
+					const label = heading?.textContent?.trim() ||
+						({HEADER: 'Header', NAV: 'Navigation', FOOTER: 'Footer', FORM: 'Form'})[node.tagName] ||
+						`Section ${regions.length + 1}`;
+					regions.push({label: label.slice(0, 60), x: box.x + scrollX, y: box.y + scrollY,
+						width: box.width, height: box.height});
+					included.push(node);
+				}
+				return regions;
+			})()""",
+		},
+	)
+	if error or result.get("exceptionDetails"):
+		return []
+	regions = []
+	for region in result.get("result", {}).get("value", []):
+		x, y = max(0, int(region["x"])), max(0, int(region["y"]))
+		right = min(width, int(region["x"] + region["width"]))
+		bottom = min(height, int(region["y"] + region["height"]))
+		if right - x >= 120 and bottom - y >= 40 and (right - x) * (bottom - y) < width * height * 0.95:
+			regions.append({"label": region["label"], "box": (x, y, right, bottom)})
+	return regions[:4]

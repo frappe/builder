@@ -3,6 +3,7 @@
 import copy
 import html
 import json
+from io import BytesIO
 
 import frappe
 import yaml
@@ -68,16 +69,37 @@ def candidate_markup(root: dict) -> str:
 	return f'<!doctype html><html lang="en" data-prefers-color-scheme="light"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><base href="{html.escape(frappe.utils.get_url(), quote=True)}/"><link rel="stylesheet" href="/assets/builder/reset.css">{links}<style>body{{margin:0}}{get_variables_css()}</style>{style}</head><body>{content}</body></html>'
 
 
-def save_preview(page: str, root: dict, identity: str, viewport: str) -> str:
+def save_preview(page: str, root: dict, identity: str, details: list) -> str:
 	from frappe.utils.file_manager import save_file
 
 	from builder.html_preview_image import render_full_page
 
-	width, height = (1280, 900) if viewport == "desktop" else (390, 844)
-	image = render_full_page(candidate_markup(root), width=width, height=height, max_height=1800)
+	regions = []
+	image = render_full_page(candidate_markup(root), width=1280, height=900, max_height=1800, regions=regions)
+	details.extend(save_detail_previews(page, identity, image, regions))
 	return save_file(
-		f"bob-direction-{identity}-{viewport}.webp", image, "Builder Page", page, is_private=1
+		f"bob-direction-{identity}-desktop.webp", image, "Builder Page", page, is_private=1
 	).file_url
+
+
+def save_detail_previews(page: str, identity: str, image: bytes, regions: list) -> list:
+	from frappe.utils.file_manager import save_file
+	from PIL import Image
+
+	details = []
+	with Image.open(BytesIO(image)) as screenshot:
+		for index, region in enumerate(regions):
+			buffer = BytesIO()
+			screenshot.crop(region["box"]).save(buffer, format="WEBP", quality=85)
+			file = save_file(
+				f"bob-direction-{identity}-detail-{index}.webp",
+				buffer.getvalue(),
+				"Builder Page",
+				page,
+				is_private=1,
+			)
+			details.append({"label": region["label"], "image": file.file_url})
+	return details
 
 
 def resolve_image(brief: dict, asset_id: str | None) -> str | None:
@@ -91,9 +113,12 @@ def resolve_image(brief: dict, asset_id: str | None) -> str | None:
 
 def create_direction(page: str, spec: dict, run: str | None = None) -> dict:
 	frappe.get_doc("Builder Page", page).check_permission("write")
+	if spec.get("base_variant_id"):
+		_, original = Artifact.get(spec["base_variant_id"], page, "design")
+		spec = revised_spec(original["spec"], spec)
 	brief = DesignBrief(page).read()
 	key = digest(
-		{"spec": spec, "brief": brief_revision(brief), "page_revision": page_revision(page), "renderer": 4}
+		{"spec": spec, "brief": brief_revision(brief), "page_revision": page_revision(page), "renderer": 5}
 	)
 	identity = Artifact.key(page, "design", key)
 	if frappe.db.exists("Builder AI Artifact", identity):
@@ -121,6 +146,7 @@ def create_direction(page: str, spec: dict, run: str | None = None) -> dict:
 		raise ValueError(
 			"Design previews use static editable blocks; add behavior after choosing a direction"
 		)
+	details = []
 	value = {
 		"label": str(spec.get("label") or "Direction")[:120],
 		"rationale": str(spec.get("rationale") or "")[:500],
@@ -129,12 +155,24 @@ def create_direction(page: str, spec: dict, run: str | None = None) -> dict:
 		"blocks": root,
 		"asset_ids": [spec["asset_id"]] if spec.get("asset_id") else [],
 		"spec": spec,
-		"desktop": save_preview(page, root, key[:12], "desktop"),
-		"mobile": save_preview(page, root, key[:12], "mobile"),
+		"desktop": save_preview(page, root, key[:12], details),
+		"detail_previews": details,
 		"preview_kind": "rendered_layout",
 	}
 	doc = Artifact.save(page, "design", value, identity=key, run=run)
 	return direction_option(doc.name, value)
+
+
+def revised_spec(original: dict, changes: dict) -> dict:
+	if original.get("yaml") and "yaml" not in changes:
+		if set(changes) - {"base_variant_id", "label", "rationale"}:
+			raise ValueError(
+				"This direction uses custom YAML. Read its specification and supply edited YAML."
+			)
+	merged = original | changes
+	if "palette" in changes:
+		merged["palette"] = (original.get("palette") or {}) | (changes["palette"] or {})
+	return merged
 
 
 def direction_option(identity: str, value: dict) -> dict:
@@ -143,7 +181,7 @@ def direction_option(identity: str, value: dict) -> dict:
 		"description": value.get("rationale", ""),
 		"variant_id": identity,
 		"image": value["desktop"],
-		"mobile_image": value["mobile"],
+		"detail_previews": value.get("detail_previews", []),
 		"preview_kind": value["preview_kind"],
 	}
 

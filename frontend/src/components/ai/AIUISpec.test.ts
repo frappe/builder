@@ -33,6 +33,22 @@ beforeEach(() => {
 afterEach(() => scope.stop());
 
 describe("card submissions", () => {
+	it("requests a revised preview without selecting the direction or answering the form", () => {
+		const option = { label: "Quiet editorial", variant_id: "saved-direction" };
+		const props = { messageId: "tweak", interactive: true, ui: [{ kind: "choices", options: [option] }] };
+		const emit = vi.fn();
+		const card = scope.run(() => exports.default.setup(props, { expose: () => {}, emit }));
+		card.refineOption(option, "Use warmer colors");
+		expect(emit).toHaveBeenCalledWith(
+			"submit",
+			expect.stringContaining("variant_id: saved-direction"),
+			"Tweak Quiet editorial: Use warmer colors",
+		);
+		expect(emit.mock.calls[0][1]).toContain("keep the current page unchanged");
+		expect(card.isSelected(0, 0)).toBe(false);
+		expect(emit.mock.calls[0]).toHaveLength(3);
+	});
+
 	it("keeps full photo identity in a multistep model reply and a concise display label", () => {
 		const photo = {
 			label: "Morning",

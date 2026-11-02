@@ -29,6 +29,13 @@ def apply_direction(ctx, args):
 	return apply(ctx, args["variant_id"])
 
 
+def read_direction(ctx, args):
+	from builder.ai.artifacts import Artifact
+
+	_, value = Artifact.get(args["variant_id"], ctx.page_id, "design")
+	return json.dumps({"spec": value["spec"], "label": value["label"]}, ensure_ascii=False)
+
+
 def update_brief(ctx, args: dict) -> str:
 	if not ctx.page_id:
 		return "FAILED: open a page first."
@@ -43,7 +50,7 @@ TOOLS = [
 		name="create_design_directions",
 		side="server",
 		handler=create_directions,
-		description="Render one to three real desktop/mobile WebP previews from editable Builder layouts. Reuses cached variants. Supply real copy/assets; optional recipes editorial/split/compact/stage, or candidate YAML. No SVG previews. Pass returned choices to present_ui.",
+		description="Render one to three real desktop WebP previews with section details from editable Builder layouts. Reuses cached variants. Supply real copy/assets; optional recipes editorial/split/compact/stage, or candidate YAML. To tweak a preview, read_design_direction then provide base_variant_id and changed fields (or edited YAML). Show the updated choice before applying it. Pass returned choices to present_ui.",
 		parameters={
 			"type": "object",
 			"properties": {
@@ -57,6 +64,7 @@ TOOLS = [
 							key: {"type": "string"}
 							for key in (
 								"label",
+								"base_variant_id",
 								"rationale",
 								"recipe",
 								"headline",
@@ -83,6 +91,17 @@ TOOLS = [
 				}
 			},
 			"required": ["directions"],
+		},
+	),
+	Tool(
+		name="read_design_direction",
+		side="server",
+		handler=read_direction,
+		description="Read the saved specification of a design preview before tweaking it. Does not change the page. Use create_design_directions with base_variant_id and changes to show a revised preview.",
+		parameters={
+			"type": "object",
+			"properties": {"variant_id": {"type": "string"}},
+			"required": ["variant_id"],
 		},
 	),
 	Tool(
