@@ -412,6 +412,17 @@ class TestBuilderPage(FrappeTestCase):
 		finally:
 			page.delete()
 
+	def test_page_data_script_can_set_the_page_language(self):
+		page = insert_page("test-page-language", "Language")
+		page.page_data_script = 'data.language = "ar"'
+		page.save()
+		try:
+			page.publish()
+			content = get_response_content("/test-page-language")
+			self.assertIn('<html lang="ar"', content)
+		finally:
+			page.delete()
+
 	def test_live_page_cannot_move_to_staging(self):
 		page = insert_page("test-live-to-staging", "Live Content")
 		try:
