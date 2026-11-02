@@ -28,7 +28,10 @@ class Skills:
 
 	@classmethod
 	def parse(cls, name: str) -> tuple[dict, str]:
-		with open(os.path.join(cls.DIR, f"{name}.md")) as f:
+		if name not in cls.names():
+			raise ValueError(f"Unknown skill: {name}")
+		# Only exact filenames from this package's skill directory reach the file read.
+		with open(os.path.join(cls.DIR, f"{name}.md")) as f:  # nosemgrep: frappe-security-file-traversal
 			_, head, body = f.read().split("---\n", 2)
 		meta = dict(line.split(": ", 1) for line in head.strip().splitlines())
 		return meta, body.strip()
