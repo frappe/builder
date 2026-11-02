@@ -81,6 +81,48 @@ PRESETS = [
 ]
 
 
+SITE_PROVIDER = {"provider_name": "Frappe", "route_prefix": "frappe"}
+
+logger = frappe.logger("builder.ai.presets")
+
+
+def get_site_ai_key() -> dict | None:
+	"""The first `ai_keys` entry Frappe Cloud writes into site config, as {gateway_url, api_key}."""
+	entries = frappe.conf.get("ai_keys") or []
+	if not entries:
+		return None
+	entry = entries[0]
+	if not (entry.get("gateway_url") and entry.get("api_key")):
+		logger.error("site config ai_keys[0] needs both gateway_url and api_key")
+		return None
+	return entry
+
+
+def sync_site_provider() -> None:
+	"""Keep the Frappe provider in step with site config: on with its gateway while
+	`ai_keys` has a key, off when it has none. Site config keeps the key itself."""
+	entry = get_site_ai_key()
+	doc = get_site_provider(create=bool(entry))
+	if not doc:
+		return
+	fields = {"api_base": entry["gateway_url"] if entry else doc.api_base, "enabled": int(bool(entry))}
+	if doc.is_new() or any(doc.get(field) != value for field, value in fields.items()):
+		doc.update(fields)
+		doc.save(ignore_permissions=True)
+
+
+def get_site_provider(create: bool):
+	"""The provider row site config owns, a new unsaved one when `create` is set, or None."""
+	if name := frappe.db.get_value("Builder AI Provider", {"from_site_config": 1}):
+		return frappe.get_doc("Builder AI Provider", name)
+	if not create:
+		return None
+	if frappe.db.exists("Builder AI Provider", SITE_PROVIDER["provider_name"]):
+		logger.error("a provider named Frappe already exists, so the site config key is not connected")
+		return None
+	return frappe.get_doc({"doctype": "Builder AI Provider", "from_site_config": 1, **SITE_PROVIDER})
+
+
 def find_preset(preset_id: str) -> dict | None:
 	return next((p for p in PRESETS if p["id"] == preset_id), None)
 

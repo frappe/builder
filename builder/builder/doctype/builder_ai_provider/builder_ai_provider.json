@@ -16,6 +16,7 @@
   "connection_section",
   "api_base",
   "api_key",
+  "from_site_config",
   "column_break_conn"
  ],
  "fields": [
@@ -70,6 +71,14 @@
    "label": "API Key"
   },
   {
+   "default": "0",
+   "description": "Frappe Cloud sets this provider's API base and key in site config (ai_keys). The key is never stored here.",
+   "fieldname": "from_site_config",
+   "fieldtype": "Check",
+   "label": "From Site Config",
+   "read_only": 1
+  },
+  {
    "fieldname": "column_break_conn",
    "fieldtype": "Column Break"
   }
@@ -77,7 +86,7 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-10-20 12:00:00.000000",
+ "modified": "2026-11-02 14:00:00.000000",
  "modified_by": "Administrator",
  "module": "Builder",
  "name": "Builder AI Provider",

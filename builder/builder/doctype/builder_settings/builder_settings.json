@@ -22,6 +22,7 @@
   "restrict_click_handlers",
   "ai_section",
   "ai_api_key",
+  "default_ai_model",
   "persona_survey_done"
  ],
  "fields": [
@@ -130,6 +131,12 @@
    "label": "AI API Key"
   },
   {
+   "description": "The model Bob uses until a user picks another one, for example frappe/openai/gpt-6-luna. When this model is not available, Bob uses the first available model.",
+   "fieldname": "default_ai_model",
+   "fieldtype": "Data",
+   "label": "Default AI Model"
+  },
+  {
    "default": "0",
    "description": "A hidden flag. Builder sets it after it shows the persona survey. Builder Settings is a Single, so the flag applies to the whole site. On a trial site with one user, this is the same as one flag for each user.",
    "fieldname": "persona_survey_done",
@@ -142,7 +149,7 @@
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2026-10-25 12:00:00.000000",
+ "modified": "2026-11-02 15:00:00.000000",
  "modified_by": "Administrator",
  "module": "Builder",
  "name": "Builder Settings",

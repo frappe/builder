@@ -2,6 +2,7 @@
 # For license information, please see license.txt
 
 import re
+from urllib.parse import urlsplit
 
 import frappe
 from frappe import _
@@ -30,8 +31,21 @@ class BuilderAIProvider(Document):
 		return prefix
 
 	def resolved_key(self) -> str | None:
-		"""This provider's key, or None when it has none."""
+		"""This provider's key, or None when it has none. Site config owns the Frappe provider's key."""
+		if self.from_site_config:
+			from builder.ai.presets import get_site_ai_key
+
+			return (get_site_ai_key() or {}).get("api_key")
 		return self.get_password("api_key", raise_exception=False)
+
+	@property
+	def credits_url(self) -> str:
+		"""Where the gateway reports its balance. Frappe's gateway reports it at its host's
+		/v1/credits, outside the OpenAI-compatible base that site config names."""
+		if self.from_site_config:
+			parts = urlsplit(self.api_base)
+			return f"{parts.scheme}://{parts.netloc}/v1/credits"
+		return f"{self.api_base.rstrip('/')}/credits"
 
 	def on_update(self):
 		clear_registry_cache()
