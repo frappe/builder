@@ -1,11 +1,13 @@
 <template>
-	<button v-if="trialNotice" :disabled="isPlanPickerOpening" @click="openPlanPicker">
+	<button v-if="trialNotice" @click="builderStore.openBuilderSettings('global_billing')">
 		<Badge variant="subtle" :theme="trialNotice.theme" :label="trialNotice.badge" />
 	</button>
 </template>
 <script setup lang="ts">
-import { isPlanPickerOpening, openPlanPicker, useCloudBilling } from "@/composables/useCloudBilling";
+import { useCloudBilling } from "@/composables/useCloudBilling";
+import useBuilderStore from "@/stores/builderStore";
 import { Badge } from "frappe-ui";
 
+const builderStore = useBuilderStore();
 const { trialNotice } = useCloudBilling();
 </script>

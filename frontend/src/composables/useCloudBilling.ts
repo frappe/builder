@@ -1,8 +1,7 @@
 import { __ } from "@/translation";
-import { isCloudSettingsAvailable, openCloudSettings } from "@frappe/cloud-sdk";
+import { isCloudSettingsAvailable } from "@frappe/cloud-sdk";
 import { getBilling, type BillingSummary, type BillingTrial, type CloudContext } from "@frappe/cloud-sdk/api";
 import { StorageSerializers, useStorage } from "@vueuse/core";
-import { toast } from "frappe-ui";
 import { computed, ref } from "vue";
 
 // days left change once a day, and each fetch goes through Pilot and Central
@@ -75,7 +74,7 @@ export function getTrialNotice(trial: BillingTrial): TrialNotice {
 	};
 }
 
-// one copy for the dashboard card, the toolbar badge and the billing pane
+// one copy for the dashboard card and the toolbar badge
 const isAvailable = ref(false);
 const cached = useStorage<CachedBilling | null>("builderCloudBilling", null, undefined, {
 	serializer: StorageSerializers.object,
@@ -104,29 +103,9 @@ function checkAvailability() {
 		.catch((error) => console.error("Could not read Cloud Settings billing", error));
 }
 
-export const isPlanPickerOpening = ref(false);
-
-export async function openPlanPicker() {
-	isPlanPickerOpening.value = true;
-	try {
-		await openCloudSettings({
-			context: window.cloud_settings,
-			panels: ["billing"],
-			tab: "billing",
-			theme: "auto",
-			// choosing a plan ends the trial
-			onClose: () => refreshBilling().catch((error) => console.error("Could not read the billing", error)),
-		});
-	} catch (error) {
-		toast.error(error instanceof Error ? error.message : __("Could not open Cloud Settings"));
-	} finally {
-		isPlanPickerOpening.value = false;
-	}
-}
-
 /** The site's Frappe Cloud v2 billing. System Managers only. */
 export function useCloudBilling() {
 	checkAvailability();
 	const dismissTrialCard = () => (dismissedAt.value = Date.now());
-	return { billing, trialNotice, isTrialCardDismissed, dismissTrialCard };
+	return { trialNotice, isTrialCardDismissed, dismissTrialCard };
 }

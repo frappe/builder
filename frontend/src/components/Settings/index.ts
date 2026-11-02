@@ -17,6 +17,8 @@ export type SettingsItem = RegistryItem & {
 	load?: () => Promise<unknown>;
 	/** false keeps a heavy pane out of the idle prefetch: it loads on first open */
 	preload?: boolean;
+	/** the pane brings its own title and padding, as the Cloud billing panel does */
+	bare?: boolean;
 };
 
 /** a pane declares the loader once: register builds the component from it */
@@ -125,6 +127,7 @@ const panes: SettingsPane[] = [
 		group: "Global",
 		load: () => import("@/components/Settings/GlobalBilling.vue"),
 		condition: () => isCloudBillingAvailable.value,
+		bare: true,
 	},
 	{
 		name: "global_analytics",

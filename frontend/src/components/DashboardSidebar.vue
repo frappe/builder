@@ -87,7 +87,7 @@
 		</ScrollArea>
 
 		<div class="mt-auto">
-			<DashboardTrialCard />
+			<DashboardTrialCard @open-billing="openBillingSettings" />
 			<p class="p-2 text-center text-sm text-ink-gray-4">{{ __("Version") }}: {{ builderVersion }}</p>
 			<TrialBanner v-if="builderStore.isFCSite" />
 		</div>
@@ -249,5 +249,9 @@ const deleteFolder = async (folderName: string) => {
 	setFolderActive("");
 };
 const showSettingsDialog = ref(false);
+const openBillingSettings = () => {
+	builderStore.settingsActiveTab = "global_billing";
+	showSettingsDialog.value = true;
+};
 const builderVersion = (window as any).builder_version;
 </script>

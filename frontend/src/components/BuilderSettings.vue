@@ -21,16 +21,20 @@
 				</Button>
 			</div>
 		</div>
-		<div class="flex flex-1 flex-col gap-5 overflow-hidden bg-surface-base p-14 px-16 pb-0">
-			<h2 class="text-xl-semibold leading-none text-ink-gray-9">{{ selectedItemDoc?.title }}</h2>
+		<div
+			class="flex flex-1 flex-col gap-5 overflow-hidden bg-surface-base"
+			:class="{ 'p-14 px-16 pb-0': !selectedItemDoc?.bare }">
+			<h2 v-if="!selectedItemDoc?.bare" class="text-xl-semibold leading-none text-ink-gray-9">
+				{{ selectedItemDoc?.title }}
+			</h2>
 			<Button
 				icon="lucide-x"
 				variant="subtle"
 				@click="$emit('close')"
-				class="absolute right-5 top-5"></Button>
+				class="absolute right-5 top-5 z-10"></Button>
 			<div v-if="settingsLoaded" class="no-scrollbar min-h-0 flex-1 overflow-y-auto overscroll-contain">
 				<KeepAlive>
-					<component :is="selectedItemDoc?.component" class="pb-16" />
+					<component :is="selectedItemDoc?.component" :class="{ 'pb-16': !selectedItemDoc?.bare }" />
 				</KeepAlive>
 			</div>
 			<div v-else class="flex items-center justify-center">
@@ -46,7 +50,7 @@ import { builderSettings } from "@/data/builderSettings";
 import useBuilderStore from "@/stores/builderStore";
 import usePageStore from "@/stores/pageStore";
 import { __ } from "@/translation";
-import { computed, onActivated, onMounted, onUnmounted, provide, ref, watch } from "vue";
+import { computed, onActivated, onMounted, ref, watch } from "vue";
 import { useRoute } from "vue-router";
 
 const props = defineProps<{
@@ -64,14 +68,6 @@ const selectedItem = ref<string>(
 		(props.onlyGlobal ? "global_general" : "page_general"),
 );
 const settingsLoaded = ref(false);
-
-// a dialog from another app can't open over this one: the focus trap would pull focus back
-let afterClose: (() => void) | undefined;
-provide("closeSettings", (then?: () => void) => {
-	afterClose = then;
-	emit("close");
-});
-onUnmounted(() => afterClose?.());
 
 onMounted(async () => {
 	const promises = [];
