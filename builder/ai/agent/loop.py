@@ -137,6 +137,7 @@ READ_ONLY_SERVER_TOOLS = frozenset(
 		"preview_page",
 		"read_plugin",
 		"read_editor_source",
+		"read_skill",
 	}
 )
 
@@ -207,16 +208,33 @@ OUTLINE_PREAMBLE = (
 def render_skeleton_context(root: dict, selected_block_ids: tuple | list = ()) -> str:
 	"""Outline + full detail for any blocks the user has selected (so the common
 	targeted-edit case needs no read_block round-trip)."""
-	from builder.ai.agent.selectors import find_block, render_skeleton
+	from builder.ai.agent.selectors import render_skeleton
 
 	outline = render_skeleton(root)
-	parts = [OUTLINE_PREAMBLE, outline]
+	return "\n\n".join(
+		[
+			OUTLINE_PREAMBLE,
+			outline,
+			render_selected_context(root, selected_block_ids, include_components=False),
+		]
+	)
+
+
+def render_selected_context(
+	root: dict | None, selected_block_ids: tuple | list, *, include_components: bool = True
+) -> str:
+	from builder.ai.agent.selectors import find_block
+	from builder.ai.agent.tools.query import render_components
+
+	parts = []
 	for ref in selected_block_ids:
-		block = find_block(root, ref)
+		block = find_block(root, ref) if root else None
 		if block is None:
 			continue
 		detail = to_compact_yaml(BlockCodec.compress(block, depth=0, task_tier="complex"))
 		parts.append(f"Full detail for selected block {ref}:\n{detail}")
+		if include_components and (contract := render_components(block, on_open_page=True)):
+			parts.append(contract)
 	return "\n\n".join(parts)
 
 
@@ -358,8 +376,9 @@ class AgentRunner:
 		self.image_file_url = image_file_url
 		self.canvas_theme = canvas_theme
 		self.registry = registry or build_default_registry()
-		# skills the loop put in this turn's context (build_skill_context)
+		# Skills in context, including read_skill results; reset on every turn.
 		self.attached_skills: set[str] = set()
+		self.round_skills: set[str] = set()
 		# The editor-URL prefix is site-configurable; resolve it so the links the
 		# agent writes (e.g. to a page it built off-canvas) actually work here.
 		self.system_prompt = (system_prompt or Prompts.AGENT_SYSTEM).replace(
@@ -564,6 +583,17 @@ class AgentRunner:
 	def build_page_context(self) -> str:
 		return render_page_context(self.page_root(), self.selected_block_ids)
 
+	def build_initial_page_context(self) -> str:
+		if not self.page_id:
+			return ""
+		root = self.page_root()
+		state = "has content" if root and root.get("children") else "is empty"
+		return (
+			f"The open page {state}. Its full structure is available with read_page('{self.page_id}') "
+			"when you need to inspect or edit the page. Editor plugins can use the page API at runtime "
+			"without reading this page's blocks.\n\n" + render_selected_context(root, self.selected_block_ids)
+		)
+
 	def build_open_page_context(self) -> str:
 		"""The facts the agent cannot discover for itself: WHICH page the user has
 		open, and the theme the editor shows it in. Everything else about the site is
@@ -589,16 +619,24 @@ class AgentRunner:
 		return context
 
 	def build_skill_context(self) -> str:
-		"""An empty page means a new-page build whatever the user typed, so its skill
-		rides in with the page instead of waiting on the model to read it."""
+		"""Include the build guide when the model asks to inspect an empty page."""
 		root = self.page_root()
-		if not self.page_id or (root and root.get("children")):
+		if not self.page_id or (root and root.get("children")) or "new-page" in self.attached_skills:
 			return ""
 		self.attached_skills.add("new-page")
 		return (
-			"The open page is empty, so the new-page skill applies. Here it is in full; "
+			"For building on this empty page, here is the new-page skill in full; "
 			f"no read_skill needed this turn:\n\n{Skills.read('new-page')}"
 		)
+
+	def require_skill(self, name: str) -> str | None:
+		# A read alongside a write has not reached the model that authored that write.
+		if name not in self.round_skills:
+			return (
+				f"FAILED: read_skill('{name}') before authoring this work, then retry in the next round "
+				"using its guidance. Nothing was changed. Read it again on each continuation turn."
+			)
+		return None
 
 	def build_memory_context(self) -> str:
 		"""Facts the agent saved in past conversations (see tools/memory.py) — part of
@@ -621,13 +659,12 @@ class AgentRunner:
 		)
 		self.history_end_index = len(messages) - 1
 
-		# The page structure. It's resent on every round of a multi-round turn, so a
-		# cache marker on the prompt right after it cuts both latency and input cost
-		# across the loop.
+		# The page identity and selections stay useful across tasks. Load the full
+		# tree on demand: this context is cached across rounds, but changed history
+		# ahead of it generally prevents reuse across turns.
 		blocks = [
 			self.build_open_page_context(),
-			self.build_page_context(),
-			self.build_skill_context(),
+			self.build_initial_page_context(),
 			self.build_memory_context(),
 		]
 		context = "\n\n".join(block for block in blocks if block)
@@ -698,6 +735,7 @@ class AgentRunner:
 		after this returns, so a failed attempt leaves no partial state; we just re-issue the
 		identical completion (the cached prefix makes the retry cheap). litellm can't fall
 		back mid-stream (fallbacks are off while streaming), so this is the retry layer."""
+		self.round_skills = self.attached_skills.copy()
 		for attempt in range(STREAM_MAX_ATTEMPTS):
 			try:
 				return self.stream_tool_round(messages)
@@ -1454,6 +1492,8 @@ class AgentRunner:
 		and build on — what it just made (scripts, surgical fixes, one verify pass)."""
 		if not self.page_id:
 			return ("FAILED: no page is open.", [])
+		if missing := self.require_skill("new-page"):
+			return missing, []
 		entry = self.begin_activity(op["tool_name"], op["args"])
 		self.ensure_revert_snapshot()  # generation replaces the block tree
 		ops = tool.generator(self, op["args"])

@@ -5,7 +5,7 @@ Bob's instructions reach the model through four homes. Every new or changed inst
 | Home | Where | Reaches the model | Holds |
 |---|---|---|---|
 | Core prompt | `Prompts.AGENT_SYSTEM` in `prompts.py` | every round of every turn | identity, voice, honesty rules, the one-line tool router, styling mechanics every edit uses, AI tells, memory |
-| Skill | `skills/<name>.md` | when the loop attaches it for a state it can see (`AgentRunner.build_skill_context`), or when the model calls `read_skill` | a playbook for one kind of work that only some turns need |
+| Skill | `skills/<name>.md` | when a read supplies it for a state it can see (`read_page` / `AgentRunner.build_skill_context`), or when the model calls `read_skill` | a playbook for one kind of work that only some turns need |
 | Tool description | the tool's `description` and parameter docs | every round, inside the tool schemas | what the tool does and takes |
 | Tool result | the string a server tool returns | right after the call | what to do now that the tool ran (`preview_page`'s review rubric is the model) |
 
@@ -15,7 +15,7 @@ Bob's instructions reach the model through four homes. Every new or changed inst
 
 1. Find which turns need it, from data: each assistant `Builder AI Message` carries `metadata_json.debug.trace`, the tools of every round. Count on frappe.io and the dev sites; dev sites over-represent full builds.
 2. Most turns need it: core prompt. Only after a tool runs: that tool's result. One kind of work: a skill.
-3. A skill whose need the loop can see (an empty page, a component on the page) is attached in `build_skill_context`. A skill only the model can recognise the need for is read with `read_skill`, and its frontmatter `description` names the case that should trigger the read: it is the one line the core prompt carries for it (`Skills.index`).
+3. A skill whose need a read reveals can accompany its result: `read_page` includes `build_skill_context` for an empty page. An empty editor alone does not imply a page build; a plugin request needs neither the whole page nor the new-page guide. Other skills are read with `read_skill`, and their frontmatter `description` names the case that should trigger the read: it is the one line the core prompt carries for them (`Skills.index`).
 4. Say it once. Search `prompts.py`, `skills/` and the tool descriptions for the same rule before adding it, and move or merge instead of restating.
 
 Done when the instruction lives in exactly one place and the core prompt grew by at most a pointer line.
@@ -44,8 +44,12 @@ Done when no scenario passes fewer times than before, median prompt tokens did n
 ## Keeping the cache warm
 
 - The tool list and the core prompt are the cached prefix (tools, then system, then history). Keep them byte-stable across rounds and turns: no per-page, per-user or time-varying text, and the same tool list for the whole turn.
-- Per-turn text (page context, an attached skill, saved memory) goes in the context message after the history.
+- Per-turn text (page identity, selected blocks, saved memory) goes in the context message after the history. Skills and full page reads arrive as tool results.
+- The initial context includes the open page's identity and selected blocks. The full working tree comes from `read_page` on demand; its result is cached across subsequent rounds, but changed history prevents general reuse across turns.
 - Tool results are not saved into the chat history, so a skill read this turn is gone next turn. A multi-turn flow tells the model to read the skill again on the turn it continues.
+- `write_plugin` and `generate_page` require their skill to have reached a previous model round in the current turn. Reading a skill and writing in the same round does not ground the already-authored code or brief.
+
+Plugin evals validate a package in memory, without saving an installation or loading it into a real editor. Cleanup tracks exact documents inserted by the eval process, never all documents created in a time window.
 
 ## Next to move (Oct 2026)
 

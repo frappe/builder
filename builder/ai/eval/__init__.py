@@ -13,8 +13,11 @@ other. One run per scenario is a smoke test: pass repeat=3 before calling a clos
 import json
 import os
 from collections import Counter
+from contextlib import contextmanager
 from dataclasses import dataclass
 from statistics import median
+from types import SimpleNamespace
+from unittest.mock import patch
 
 import frappe
 
@@ -82,10 +85,34 @@ SCENARIOS = (
 		on_fixture=True,
 		forbid=("generate_page", *EDITS),
 	),
+	Scenario(
+		"editor-plugin",
+		"Add a panel to the editor that lists images without alt text and lets me select each one. "
+		"Call it Alt Text Audit. Build it now with the editor's usual controls and theme.",
+		expect_any=("write_plugin",),
+		forbid=("generate_page", "present_ui", *EDITS),
+	),
+	Scenario(
+		"editor-plugin-on-page",
+		"Create an editor plugin: a toolbar button that copies the page text to the clipboard. "
+		"Call it Copy Page Text. Build it now.",
+		on_fixture=True,
+		expect_any=("write_plugin",),
+		forbid=("generate_page", "present_ui", *EDITS),
+	),
 )
 
-# What a turn can mint site-wide; anything created during a scenario is deleted after it.
-MINTED = ("Builder Page", "Builder Component", "Builder Client Script", "Builder Token", "Builder AI Memory")
+# Track exact inserts in this process; a time window can delete somebody else's work.
+MINTED = (
+	"Builder Page",
+	"Builder Component",
+	"Builder Client Script",
+	"Builder Token",
+	"Builder AI Memory",
+	"Builder AI Session",
+	"Builder AI Message",
+	"Builder Snapshot",
+)
 
 
 def run(model: str, fixture: str | None = None, label: str = "run", only=None, repeat: int = 1, out_dir=None):
@@ -151,12 +178,14 @@ class ScenarioRun:
 		self.model = model
 		self.fixture = fixture
 		self.out_dir = out_dir
+		self.created: list[tuple[str, str]] = []
+		self.plugin_writes: list[dict] = []
 
 	def execute(self) -> dict:
-		started = frappe.utils.now_datetime()
-		page = self.make_page()
 		try:
-			return self.score(self.run_turn(page), page)
+			with self.sandbox():
+				page = self.make_page()
+				return self.score(self.run_turn(page), page)
 		except Exception as e:
 			frappe.log_error(f"Bob eval: {self.scenario.name}")
 			return {
@@ -166,7 +195,41 @@ class ScenarioRun:
 				"error": repr(e)[:500],
 			}
 		finally:
-			self.clean_up(started)
+			self.clean_up()
+
+	@contextmanager
+	def sandbox(self):
+		from frappe.model.document import Document
+
+		insert = Document.db_insert
+
+		def record_insert(doc, *args, **kwargs):
+			tracked = doc.doctype in MINTED
+			existed = tracked and doc.name and frappe.db.exists(doc.doctype, doc.name)
+			result = insert(doc, *args, **kwargs)
+			if tracked and not existed:
+				self.created.append((doc.doctype, doc.name))
+			return result
+
+		with (
+			patch.object(Document, "db_insert", record_insert),
+			patch("builder.plugins.bob.save_plugin", self.capture_plugin),
+			patch(
+				"builder.ai.agent.tools.plugins.load_in_editor",
+				return_value="Eval dry run: plugin package validated; nothing installed or loaded in the editor.",
+			),
+		):
+			yield
+
+	def capture_plugin(self, name, label, description, code, icon=None):
+		from builder.plugins.bob import build_package
+		from builder.plugins.package import validate_package
+
+		plugin, version = f"bob/{name}", "0.1.0"
+		package = build_package(plugin, label, description, version, code, None)
+		validate_package(package, plugin, version)
+		self.plugin_writes.append({"name": name, "code": code})
+		return SimpleNamespace(plugin=plugin, label=label, version=version, enabled=True)
 
 	def make_page(self):
 		blocks = None
@@ -208,6 +271,8 @@ class ScenarioRun:
 		tools = [tool["name"] for step in runner.trace for tool in step.get("tools") or []]
 		ran = set(tools)
 		expected = not self.scenario.expect_any or bool(ran & set(self.scenario.expect_any))
+		if "write_plugin" in self.scenario.expect_any:
+			expected = expected and bool(self.plugin_writes)
 		forbidden = sorted(ran & set(self.scenario.forbid))
 		reply = self.final_reply(runner.session_id)
 		result = {
@@ -256,9 +321,8 @@ class ScenarioRun:
 			f.write(image)
 		return path
 
-	def clean_up(self, since):
+	def clean_up(self):
 		frappe.db.rollback()
-		for doctype in MINTED:
-			for name in frappe.get_all(doctype, {"creation": [">=", since]}, pluck="name"):
-				frappe.delete_doc(doctype, name, force=True, ignore_permissions=True)
+		for doctype, name in reversed(self.created):
+			frappe.delete_doc(doctype, name, force=True, ignore_permissions=True, ignore_missing=True)
 		frappe.db.commit()
