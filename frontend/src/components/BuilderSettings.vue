@@ -46,7 +46,7 @@ import { builderSettings } from "@/data/builderSettings";
 import useBuilderStore from "@/stores/builderStore";
 import usePageStore from "@/stores/pageStore";
 import { __ } from "@/translation";
-import { computed, onActivated, onMounted, ref, watch } from "vue";
+import { computed, onActivated, onMounted, onUnmounted, provide, ref, watch } from "vue";
 import { useRoute } from "vue-router";
 
 const props = defineProps<{
@@ -64,6 +64,14 @@ const selectedItem = ref<string>(
 		(props.onlyGlobal ? "global_general" : "page_general"),
 );
 const settingsLoaded = ref(false);
+
+// a dialog from another app can't open over this one: the focus trap would pull focus back
+let afterClose: (() => void) | undefined;
+provide("closeSettings", (then?: () => void) => {
+	afterClose = then;
+	emit("close");
+});
+onUnmounted(() => afterClose?.());
 
 onMounted(async () => {
 	const promises = [];

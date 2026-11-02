@@ -1,6 +1,7 @@
 import { createRegistry, type RegistryItem } from "@/utils/createRegistry";
 import { defineAsyncComponent, type Component } from "vue";
 import { __ } from "@/translation";
+import { isCloudBillingAvailable } from "@/composables/useCloudBilling";
 
 export type SettingsGroup = "Current Page" | "Global";
 
@@ -115,6 +116,15 @@ const panes: SettingsPane[] = [
 		load: () => import("@/components/Settings/GlobalDomains.vue"),
 		// the boot data renders the Python bool, so "False" is a truthy string
 		condition: () => window.is_fc_site === "True",
+	},
+	{
+		name: "global_billing",
+		label: __("Billing"),
+		title: __("Billing"),
+		icon: "lucide-credit-card",
+		group: "Global",
+		load: () => import("@/components/Settings/GlobalBilling.vue"),
+		condition: () => isCloudBillingAvailable.value,
 	},
 	{
 		name: "global_analytics",

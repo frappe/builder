@@ -2,6 +2,8 @@ import { describe, expect, it, vi } from "vitest";
 
 // the registry calls __() at import time, which reads window
 vi.hoisted(() => vi.stubGlobal("window", {}));
+// the billing pane's condition imports the Cloud billing module, which shows its errors as toasts
+vi.mock("frappe-ui", () => ({ toast: { error: vi.fn() } }));
 
 import { settingsItems } from "./index";
 

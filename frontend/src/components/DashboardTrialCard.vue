@@ -1,17 +1,17 @@
 <template>
 	<SidebarCard
-		v-if="content"
+		v-if="trialNotice && !isTrialCardDismissed"
 		class="m-2"
-		:theme="content.theme"
-		:title="content.title"
-		:description="content.description"
-		:dismissible="content.dismissible"
-		:action="{ label: content.actionLabel, loading: opening, onClick: openBilling }"
-		@dismiss="dismiss" />
+		:theme="trialNotice.theme"
+		:title="trialNotice.title"
+		:description="trialNotice.description"
+		:dismissible="trialNotice.dismissible"
+		:action="{ label: trialNotice.actionLabel, loading: isPlanPickerOpening, onClick: openPlanPicker }"
+		@dismiss="dismissTrialCard" />
 </template>
 <script setup lang="ts">
-import { useTrialCard } from "@/composables/useTrialCard";
+import { isPlanPickerOpening, openPlanPicker, useCloudBilling } from "@/composables/useCloudBilling";
 import { SidebarCard } from "frappe-ui";
 
-const { content, opening, openBilling, dismiss } = useTrialCard();
+const { trialNotice, isTrialCardDismissed, dismissTrialCard } = useCloudBilling();
 </script>
