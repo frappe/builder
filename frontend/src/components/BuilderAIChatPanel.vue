@@ -390,6 +390,9 @@
 						:label="modelLabel"
 						class="min-w-0 !shrink"
 						@click="menu.open(modelLevel(bob))" />
+					<Tooltip v-if="credits" :text="credits.spent === null ? '' : `${money(credits.spent)} spent`">
+						<Badge variant="subtle" :theme="creditsTheme(credits)" :label="creditsLabel(credits)" />
+					</Tooltip>
 					<Button
 						v-if="isSubmitting"
 						variant="solid"
@@ -451,7 +454,7 @@ import { useCommandMenu } from "@/components/ai/commandMenu";
 import { connectLevel } from "@/components/ai/commands/connect";
 import { modelLevel } from "@/components/ai/commands/models";
 import { providersLevel } from "@/components/ai/commands/providers";
-import type { BobContext } from "@/components/ai/commands/shared";
+import { type BobContext, creditsLabel, creditsTheme, money } from "@/components/ai/commands/shared";
 import AIUISpec from "@/components/ai/AIUISpec.vue";
 import AIWorkspace from "@/components/ai/AIWorkspace.vue";
 import AINextSteps from "@/components/ai/AINextSteps.vue";
@@ -466,12 +469,12 @@ import type { AITurnStep, ChatMessage } from "@/components/ai/types";
 import { reloadAIRegistry } from "@/data/aiModels";
 import useBuilderStore from "@/stores/builderStore";
 import useCanvasStore from "@/stores/canvasStore";
-import { Button, Dropdown, KeyboardShortcut, Textarea, Tooltip } from "frappe-ui";
+import { Badge, Button, Dropdown, KeyboardShortcut, Textarea, Tooltip } from "frappe-ui";
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from "vue";
 
 const chat = new AIChatController();
 
-const { prompt, isSubmitting, isCancelling, messages, modelLabel, canSubmit } = chat;
+const { prompt, isSubmitting, isCancelling, messages, modelLabel, canSubmit, credits } = chat;
 const { isEditingPage } = chat;
 const { isSwitchingSession, isReverting } = chat;
 const { selectedModelUnusable } = chat;

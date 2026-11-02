@@ -2,6 +2,7 @@ import type Block from "@/block";
 import type { CardSubmission } from "@/components/ai/cardAnswers";
 import builderTokens from "@/data/builderToken";
 import { type AIChatHandlers, attachAIChatListeners, detachAIChatListeners } from "@/components/ai/realtime";
+import { type Credits, creditsFor } from "@/components/ai/commands/shared";
 import { readDraft, RunEvents, type SendEnvelope, writeDraft } from "@/components/ai/lifecycle";
 import { type PageCanvas, ToolDispatcher } from "@/components/ai/toolDispatch";
 import type {
@@ -251,6 +252,19 @@ export class AIChatController {
 			this.currentProviderModels.value.find((m) => m.name === this.selectedModel.value)?.label ||
 			"Select model",
 	);
+	/** The provider of the picked model, when it is a gateway that can report credits. */
+	readonly selectedGateway = computed(
+		() =>
+			this.availableModels.value.find((group) =>
+				group.models.some((m) => m.name === this.selectedModel.value && m.api_base),
+			)?.provider,
+	);
+	readonly credits = ref<Credits | null>(null);
+	refreshCredits = async () => {
+		const provider = this.selectedGateway.value;
+		const found = provider ? (await creditsFor([provider]))[provider] : null;
+		if (!this.disposed && provider === this.selectedGateway.value) this.credits.value = found;
+	};
 	readonly isVisionModel = computed(
 		() => this.currentProviderModels.value.find((m) => m.name === this.selectedModel.value)?.vision ?? false,
 	);
@@ -283,12 +297,16 @@ export class AIChatController {
 			watch(
 				this.currentProviderModels,
 				(models) => {
-					if (models.length && !this.selectedModel.value) {
-						this.selectedModel.value = models[0].name;
+					const isValid = models.some((m) => m.name === this.selectedModel.value);
+					if (models.length && (!this.selectedModel.value || !isValid)) {
+						this.selectedModel.value = (models.find((m) => m.default) ?? models[0]).name;
 					}
 				},
 				{ immediate: true },
 			),
+			watch(this.selectedGateway, this.refreshCredits, { immediate: true }),
+			// A finished turn has spent some of the balance.
+			watch(this.isSubmitting, (submitting) => submitting || this.refreshCredits()),
 		);
 
 		this.stopWatchers.push(

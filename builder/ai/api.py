@@ -16,6 +16,7 @@ from builder.ai.block_codec import BlockCodec
 from builder.ai.discovery import Discovery
 from builder.ai.llm import resolve_api_key, settings_api_key
 from builder.ai.models import GatewayListing, ModelRegistry
+from builder.ai.presets import sync_site_provider
 from builder.ai.runs import AIRun
 from builder.ai.session import AISession
 from builder.utils import has_page_write
@@ -488,7 +489,7 @@ def sync_one_provider(doc) -> None:
 
 @frappe.whitelist()
 def get_provider_credits(provider: str) -> dict | None:
-	"""The balance a gateway reports at <api_base>/credits, or None when it reports none."""
+	"""The balance a gateway reports at its credits_url, or None when it reports none."""
 	if not frappe.has_permission("Builder AI Provider", "read"):
 		frappe.throw(_("You are not permitted to view AI providers"), frappe.PermissionError)
 
@@ -497,8 +498,16 @@ def get_provider_credits(provider: str) -> dict | None:
 
 
 @frappe.whitelist()
+def get_site_ai_credits() -> dict | None:
+	"""The balance of the AI credits Frappe Cloud gives this site, or None when it gives none."""
+	provider = frappe.db.get_value("Builder AI Provider", {"from_site_config": 1, "enabled": 1})
+	return get_provider_credits(provider) if provider else None
+
+
+@frappe.whitelist()
 @has_page_write()
 def get_ai_models():
+	sync_site_provider()
 	# a stale list is refreshed behind the picker, which shows what is stored meanwhile
 	GatewayListing.refresh_in_background()
 	Discovery.refresh_in_background()
@@ -517,11 +526,14 @@ def ai_setup_state():
 	if not frappe.db.exists("DocType", "Builder AI Provider"):
 		return {"configured": False, "models": 0, "providers": 0, "needs_migrate": True, "presets": []}
 
-	providers = frappe.get_all("Builder AI Provider", filters={"enabled": 1}, fields=["name", "api_key"])
+	presets.sync_site_provider()
+	providers = frappe.get_all("Builder AI Provider", filters={"enabled": 1}, pluck="name")
 	settings_key = settings_api_key()
 	# A provider carrying its own key is enough on its own — a self-hosted gateway
 	# never needs the shared OpenRouter one.
-	has_key = bool(settings_key) or any(p.api_key for p in providers)
+	has_key = bool(settings_key) or any(
+		frappe.get_cached_doc("Builder AI Provider", name).resolved_key() for name in providers
+	)
 	return {
 		"configured": has_key and bool(frappe.db.count("Builder AI Model", {"enabled": 1})),
 		"models": frappe.db.count("Builder AI Model", {"enabled": 1}),
