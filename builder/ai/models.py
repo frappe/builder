@@ -27,7 +27,7 @@ ROWS_TTL = 3600
 FETCH_TIMEOUT = 10
 DEFAULT_CONTEXT_WINDOW = 200_000
 # a new site starts with this in Builder Settings: the Frappe Cloud gateway's model
-DEFAULT_AI_MODEL = "frappe/openai/gpt-6-luna"
+DEFAULT_AI_MODEL = "frappe/openai/gpt-5.6-terra"
 
 # Used only when the rows are unreachable (install/migrate ordering) or all gone,
 # so the agent still has something to call.
