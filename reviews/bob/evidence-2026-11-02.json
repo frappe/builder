@@ -6,7 +6,7 @@
   "previous_implementation": "7b7cafe794df09d1f2fc58597ccd80c7d9f622f8",
   "backend": {
     "passed": true,
-    "tests": 410,
+    "tests": 412,
     "environment": "Isolated Frappe/MariaDB/Redis site with live model/image/stock transport guards",
     "paid_calls": 0
   },
@@ -168,6 +168,10 @@
         "value": true
       },
       {
+        "name": "Five mutation endpoints reject authenticated GET requests",
+        "value": true
+      },
+      {
         "name": "Live setup state",
         "value": {
           "configured": true,
@@ -271,6 +275,14 @@
         "frontend/src/utils/blockController.ts",
         "frontend/src/utils/useBuilderEvents.ts"
       ]
+    },
+    "ruff_scope": "All 251 tracked Python files",
+    "semgrep": {
+      "new_blocking_findings": 0,
+      "rules": 76,
+      "baseline": "a112a3e6aea1f9e712c75cdb9aeb713009467a90",
+      "version": "1.183.0",
+      "parsing_limit": "Existing partial-parse warning in frontend/src/builder.d.ts"
     }
   },
   "not_evaluated": [
@@ -288,15 +300,30 @@
   ],
   "reproduction": "../../builder/ai/acceptance/README.md",
   "raw_log_sha256": {
-    "bob-acceptance-results.json": "3d4d324148b83012691d892adf3cb850f7a92a0a9a11551d9a0f335d637044fa",
+    "bob-acceptance-results.json": "e6b608db04f75460b1bdc1a476a06d6ba91ce2135255d3f527ed1ef4eab89f5b",
     "bob-frontend-tests.log": "b8b619dabdc2bb80690ffbaeda9f731183ffaf2dc7f146c896174ed49ac9acd3",
     "bob-browser-acceptance.json": "61cccdb43275a1395877e7427067702d4acd49c63c166708ab921fcee8ca3457",
     "bob-live-interactions.json": "d7a95b2a87fbf507bd9aed0cf7a5dad87000183674f6d17f23ec75b8c93a9b8d",
     "bob-runtime-integration.log": "f271467fd7842951ce2458ac75cb023201e60e45bb2ac7ab4835f2c894936ee3",
     "bob-live-form-browser.json": "cdf45cdcfe7573e90644808a9fb2c0c0f4d477903b8abfc143ea008d03002091",
-    "bob-raster-smoke.log": "7dbdbafc6d6fff6111abba09e190c3c006aad6c6000bf7db9095e9d0d1b55a48",
+    "bob-raster-smoke.log": "b3cc4bc67c45243e61475d90d3da186746fc9e516a91e0833d0fdcfc69a0b3fd",
     "browser-verification-2026-11-02.log": "7df84b2861408cc19a3323f865d0f1e6723391e287f0945fc86fd2256ff4833d",
     "build-latest.log": "aeedcfe39d0fc5bcc50f8220f933f4c9b532c85f2bf669da8825c34db4cf494c",
-    "bob-typecheck-final.log": "cf5be19f33d74af38f33e95759f880b9bd571318891b061f0caee2f551d6da14"
-  }
+    "bob-typecheck-final.log": "cf5be19f33d74af38f33e95759f880b9bd571318891b061f0caee2f551d6da14",
+    "bob-semgrep-final.json": "e60a664ca4f890e56eec7c6895a6545cc94e5fbecdaee865966c47d3f24dd5b5"
+  },
+  "github_dependency_audit": {
+    "passed": false,
+    "package": "litellm",
+    "version": "1.95.1",
+    "advisory": "CVE-2026-114612",
+    "scope": "Existing LiteLLM proxy authentication/privilege-escalation advisory; unchanged dependency pin",
+    "suppressed": false
+  },
+  "ci_followup": [
+    "POST-only Bob mutation endpoints; dispatch and live authenticated GET rejection verified",
+    "Static preview sandbox omits Frappe globals and arbitrary template loaders",
+    "Historical probe formatting and scoped analyzer annotations",
+    "Form harness declares jsdom and resolves it from the frontend workspace"
+  ]
 }

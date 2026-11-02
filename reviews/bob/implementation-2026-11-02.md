@@ -12,13 +12,13 @@ Model context starts with a small core and loads specialist instructions/tools o
 
 The async service awaits chat, generation and research model I/O without occupying an RQ worker or keeping a DB connection open. Ordinary tools use a bounded thread pool; sensitive confirmations still use their web request. Durable runs, event cursors, revision checks and effect receipts preserve committed work across reconnects and failures. Shutdown/crash recovery does not resume an arbitrary Python stack or replay an uncertain purchase. [Runtime setup](../../builder/ai/RUNTIME.md).
 
-Revert restores page/chat and tracked shared effects only when their revisions still match. It refuses a range containing confirmed external/schema/plugin/global actions, keeping history intact. Page deletion removes its artifacts, scoped memory and run journal and refuses active runs, applying actions or unresolved media requests. Project tasks can recreate a deleted draft without retaining stale completion evidence.
+Revert restores page/chat and tracked shared effects only when their revisions still match. It refuses a range containing confirmed external/schema/plugin/global actions, keeping history intact. All mutating Bob API endpoints require POST. Static direction templates use an isolated sandbox with only native layout filters and an empty standard-script include; they cannot access Frappe globals or arbitrary templates. Page deletion removes its artifacts, scoped memory and run journal and refuses active runs, applying actions or unresolved media requests. Project tasks can recreate a deleted draft without retaining stale completion evidence.
 
 ## Validation performed
 
 | Check | Result and actual boundary |
 | --- | --- |
-| Backend | **410 tests passed** on isolated MariaDB/Redis/Frappe. Live model/image/stock transports guarded. Covers run/session/permissions, canonical operations, effects/revisions, strict generation, media, scopes, plugin staging and evaluation export. |
+| Backend | **412 tests passed** on isolated MariaDB/Redis/Frappe. Live model/image/stock transports guarded. Covers run/session/permissions, canonical operations, effects/revisions, strict generation, media, scopes, plugin staging and evaluation export. |
 | Frontend | **74 tests passed** across eight focused files: controller recovery/races, cards, journal ordering, plugin registration/disposal and loader rollback. |
 | Chromium fixture suite | **Eight groups passed**: no-JS content, keyboard/RTL/vertical tabs, reinstall/disposal, reduced motion, tall footer/disclosure, responsive reflow, known accessibility defect detection and interaction assertions. |
 | Native browser verifier | Five actual Frappe Chromium steps passed: hidden content → click disclosure → visible → Space → hidden, with zero runtime errors. A visibility check was corrected after this exposed closed-details geometry differences. |
@@ -29,6 +29,8 @@ Revert restores page/chat and tracked shared effects only when their revisions s
 | Build/static checks | Production build, Ruff lint/format and whitespace checks passed. TypeScript has **37 diagnostics outside modified files**; the full project check remains failing. |
 
 The test site has a provider and three models configured by the user; validation preserved that setup and blocked model submissions from its smoke browser. The outside Builder Hub catalog returns a CORS error on this temporary origin. These errors are retained in the report, so the whole editor is not described as error-free.
+
+GitHub CI exposed the method restrictions and audit-probe lint gaps above; they were fixed. The form DOM harness now declares and resolves its `jsdom` development dependency from the frontend workspace. Local differential Semgrep reports zero new blocking findings. The dependency audit flags the unchanged `litellm==1.95.1` pin for **CVE-2026-114612** (LiteLLM proxy authentication/privilege escalation). Builder uses the client SDK, and this change does not upgrade or suppress that dependency finding.
 
 ## Public experiment and evidence
 

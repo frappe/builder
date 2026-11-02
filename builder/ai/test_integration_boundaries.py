@@ -3,6 +3,7 @@ import os
 from unittest.mock import patch
 
 import frappe
+from frappe.handler import execute_cmd
 from frappe.tests.utils import FrappeTestCase
 
 from builder.ai import api, locks, page_writer
@@ -22,6 +23,17 @@ class TestIntegrationBoundaries(FrappeTestCase):
 			{"doctype": "Builder Page", "page_title": "Bob integration fixture"}
 		).insert()
 		self.session = AISession.create({"page": self.page.name})
+
+	def test_mutation_dispatch_rejects_get_before_effects(self):
+		for method in ("run", "cancel", "confirm_pending_settings", "revert_to_message", "delete_ai_session"):
+			with (
+				self.subTest(method=method),
+				patch.object(frappe.local, "request", frappe._dict(method="GET"), create=True),
+				patch.object(frappe, "call") as invoke,
+			):
+				with self.assertRaises(frappe.PermissionError):
+					execute_cmd(f"builder.ai.api.{method}")
+				invoke.assert_not_called()
 
 	def test_failed_tool_cleans_new_files_callbacks_and_replay(self):
 		runner = AgentRunner("edit", "test/model", "test", page_id=self.page.name)
@@ -47,7 +59,7 @@ class TestIntegrationBoundaries(FrappeTestCase):
 		self.assertTrue(paths)
 		self.assertFalse(os.path.exists(paths[0]))
 		self.assertEqual(runner.pending_client_ops, [])
-		frappe.db.commit()
+		frappe.db.commit()  # nosemgrep: frappe-manual-commit -- Exercise real commit/rollback behavior in this regression.
 		self.assertEqual(effects, ["earlier"])
 
 	def test_malformed_generation_never_writes_partial_draft(self):
@@ -61,7 +73,7 @@ class TestIntegrationBoundaries(FrappeTestCase):
 
 		def committed_failure(ctx, args):
 			frappe.db.set_value("Builder Page", self.page.name, "page_title", "Committed plugin fixture")
-			frappe.db.commit()
+			frappe.db.commit()  # nosemgrep: frappe-manual-commit -- Exercise real commit/rollback behavior in this regression.
 			return "FAILED: installed, but it did not load in the editor."
 
 		tool = Tool(
@@ -83,20 +95,20 @@ class TestIntegrationBoundaries(FrappeTestCase):
 		savepoint.rollback()
 		self.assertEqual(frappe.local._realtime_log, before)
 		with patch("frappe.realtime.emit_via_redis") as emit:
-			frappe.db.commit()
+			frappe.db.commit()  # nosemgrep: frappe-manual-commit -- Exercise real commit/rollback behavior in this regression.
 		self.assertIn("bob_test_prior", [call.args[0] for call in emit.call_args_list])
 		self.assertNotIn("bob_test_failed", [call.args[0] for call in emit.call_args_list])
 
 	def test_failed_first_event_does_not_disable_later_events(self):
 		from builder.ai.transactions import ToolSavepoint
 
-		frappe.db.commit()
+		frappe.db.commit()  # nosemgrep: frappe-manual-commit -- Exercise real commit/rollback behavior in this regression.
 		savepoint = ToolSavepoint("test_first_event")
 		frappe.publish_realtime("bob_test_failed", {}, user="Administrator", after_commit=True)
 		savepoint.rollback()
 		frappe.publish_realtime("bob_test_later", {}, user="Administrator", after_commit=True)
 		with patch("frappe.realtime.emit_via_redis") as emit:
-			frappe.db.commit()
+			frappe.db.commit()  # nosemgrep: frappe-manual-commit -- Exercise real commit/rollback behavior in this regression.
 		self.assertEqual([call.args[0] for call in emit.call_args_list], ["bob_test_later"])
 
 	def test_paid_previews_and_selection_survive_new_search(self):

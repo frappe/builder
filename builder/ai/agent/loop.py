@@ -1832,7 +1832,10 @@ def run_agent_job(prompt: str, model: str, **kwargs):
 	try:
 		if run_id:
 			doc = frappe.get_doc(AIRun.DOCTYPE, run_id)
-			frappe.set_user(doc.run_user)
+			# The persisted admission owner is authenticated; page/session access is rechecked below.
+			frappe.set_user(  # nosemgrep: frappe-setuser
+				doc.run_user
+			)
 			frappe.get_doc("Builder Page", doc.page).check_permission("write")
 			AISession.get(doc.session, page_id=doc.page)
 		AgentRunner(prompt, model, llm.resolve_api_key(model), **kwargs).run()
@@ -1845,5 +1848,5 @@ def run_agent_job(prompt: str, model: str, **kwargs):
 			AISession.try_append_message(
 				session_id, "assistant", message, message_type="status", metadata=metadata
 			)
-			frappe.db.commit()
+			frappe.db.commit()  # nosemgrep: frappe-manual-commit -- Preserve startup failure before worker rollback.
 		raise

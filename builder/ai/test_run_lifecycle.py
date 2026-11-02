@@ -125,7 +125,7 @@ class TestRunLifecycle(FrappeTestCase):
 		)
 		before = self.session.get_messages()
 		with self.assertRaisesRegex(ValueError, "confirmed external"):
-			frappe.db.commit()
+			frappe.db.commit()  # nosemgrep: frappe-manual-commit -- Exercise real commit/rollback behavior in this regression.
 			api.revert_to_message(self.session.name, message)
 		self.assertEqual(self.session.get_messages(), before)
 
@@ -138,7 +138,7 @@ class TestRunLifecycle(FrappeTestCase):
 		snapshot = save_revert_snapshot(self.page.name, capture_page_state(self.page.name))
 		self.session.append_message("user", "Edit")
 		message = self.session.append_message("assistant", "Changed", metadata={"revertSnapshot": snapshot})
-		frappe.db.commit()
+		frappe.db.commit()  # nosemgrep: frappe-manual-commit -- Exercise real commit/rollback behavior in this regression.
 		with patch(
 			"builder.builder.doctype.builder_page.builder_page.BuilderPage.restore_snapshot",
 			side_effect=frappe.ValidationError,

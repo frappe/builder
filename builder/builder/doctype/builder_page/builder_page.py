@@ -10,6 +10,7 @@ from urllib.parse import quote_plus
 import bs4 as bs
 import frappe
 import frappe.utils
+from frappe import _
 from frappe.utils import now, set_request
 from frappe.utils.caching import redis_cache
 from frappe.utils.jinja import render_template
@@ -359,7 +360,7 @@ class BuilderPage(WebsiteGenerator):
 		if frappe.db.exists(
 			"Builder AI Artifact", {"page": self.name, "kind": "media_request", "status": "pending"}
 		):
-			frappe.throw("Resolve pending Bob media requests before deleting this page.")
+			frappe.throw(_("Resolve pending Bob media requests before deleting this page."))
 		for session in frappe.get_all("Builder AI Session", filters={"page": self.name}, pluck="name"):
 			# another user's chat on this page goes too, whoever deletes the page
 			frappe.delete_doc("Builder AI Session", session, ignore_missing=True, ignore_permissions=True)

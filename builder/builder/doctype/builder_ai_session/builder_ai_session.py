@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import frappe
+from frappe import _
 from frappe.model.document import Document
 
 
@@ -33,9 +34,9 @@ class BuilderAISession(Document):
 		from builder.ai.runs import AIRun
 
 		if AIRun.active(self.name):
-			frappe.throw("Stop the active Bob turn before deleting this chat or its page.")
+			frappe.throw(_("Stop the active Bob turn before deleting this chat or its page."))
 		if frappe.db.exists("Builder AI Message", {"session": self.name, "status": "action_applying"}):
-			frappe.throw("Resolve the applying Bob action before deleting this chat or its page.")
+			frappe.throw(_("Resolve the applying Bob action before deleting this chat or its page."))
 		for run in frappe.get_all("Builder AI Run", filters={"session": self.name}, pluck="name"):
 			frappe.db.delete("Builder AI Event", {"run": run})
 			frappe.db.delete("Builder AI Artifact", {"run": run})

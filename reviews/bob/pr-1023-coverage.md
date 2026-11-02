@@ -70,7 +70,7 @@ The proposed semantic PageSpec is represented by versioned native variant specs,
 
 ## Evidence and next experiment
 
-- **410 backend regressions**, **74 focused frontend tests**, **eight Chromium fixture groups** passed. Native Frappe Chromium passed five ordered disclosure/keyboard assertions. Real form database evidence confirmed three correct deliveries and guest denial. Async integration observed two simultaneous mocked provider waits, zero RQ jobs and prompt cancellation of a third silent wait.
+- **412 backend regressions**, **74 focused frontend tests**, **eight Chromium fixture groups** passed. Native Frappe Chromium passed five ordered disclosure/keyboard assertions. Real form database evidence confirmed three correct deliveries and guest denial. Async integration observed two simultaneous mocked provider waits, zero RQ jobs and prompt cancellation of a third silent wait.
 - Public editor: login, raster MIME/decoding, desktop/mobile Versions, selected preview/source link, refresh persistence and real API Revert passed. Model run requests were blocked in the smoke browser. Existing provider configuration was preserved.
 - Production build, lint/format and whitespace checks passed. TypeScript reports **37 existing diagnostics outside changed files**; the project-wide check is not clean.
 - The temporary origin still receives the external Builder Hub catalog CORS error. It is reported rather than suppressed.

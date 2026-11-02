@@ -48,7 +48,7 @@ def save_attached_image(data_url: str) -> str | None:
 		return None
 
 
-@frappe.whitelist()
+@frappe.whitelist(methods=["POST"])
 @has_page_write()
 def run(
 	prompt: str,
@@ -175,7 +175,7 @@ def ensure_session_owner(session_id: str) -> None:
 		frappe.throw(_("This chat belongs to another user"), frappe.PermissionError)
 
 
-@frappe.whitelist()
+@frappe.whitelist(methods=["POST"])
 def confirm_pending_settings(message_id: str, decision: str = "apply"):
 	"""Apply (or skip) a sensitive action the agent proposed. The privileged write runs
 	HERE, on this user-triggered call — never inside the model's turn. Reads the stored
@@ -221,7 +221,7 @@ def confirm_pending_settings(message_id: str, decision: str = "apply"):
 	# Schema changes can implicitly commit in MariaDB. Consume the action before
 	# any DDL so releasing a row lock cannot make it executable by a second tab.
 	frappe.db.set_value(AISession.MESSAGE_DOCTYPE, message_id, "status", "action_applying")
-	frappe.db.commit()
+	frappe.db.commit()  # nosemgrep: frappe-manual-commit -- Consume before DDL or external effects.
 	try:
 		result = apply_pending_action(meta.get("kind"), meta.get("payload") or {})
 	except Exception:
@@ -229,7 +229,7 @@ def confirm_pending_settings(message_id: str, decision: str = "apply"):
 		# Keep the consumed action reconcilable instead of promising no effects.
 		meta["reconciliation_required"] = True
 		frappe.db.set_value(AISession.MESSAGE_DOCTYPE, message_id, "metadata_json", frappe.as_json(meta))
-		frappe.db.commit()
+		frappe.db.commit()  # nosemgrep: frappe-manual-commit -- Persist uncertain-effect recovery before raising.
 		raise
 	status = "action_failed" if result.startswith("FAILED") else "action_applied"
 	frappe.db.set_value(AISession.MESSAGE_DOCTYPE, message_id, "status", status)
@@ -308,7 +308,7 @@ def reconcile_pending_action(message_id: str, outcome: str, evidence: str):
 	return {"status": message.status}
 
 
-@frappe.whitelist()
+@frappe.whitelist(methods=["POST"])
 @has_page_write()
 def cancel(session_id: str, run_id: str | None = None):
 	"""Request that the currently-running turn for this session abort at its
@@ -349,7 +349,7 @@ def cancel(session_id: str, run_id: str | None = None):
 	return {"status": "ok"}
 
 
-@frappe.whitelist()
+@frappe.whitelist(methods=["POST"])
 @has_page_write()
 def revert_to_message(session_id: str, message_id: str):
 	"""Restore the page and rewind its conversation in the same transaction."""
@@ -395,7 +395,7 @@ def revert_to_message(session_id: str, message_id: str):
 			if not (run_ids and restore_effects(run_ids)):
 				page.restore_snapshot(snapshot)
 			session.truncate_from_turn(message_id)
-			frappe.db.commit()
+			frappe.db.commit()  # nosemgrep: frappe-manual-commit -- Revert must commit while page ownership is held.
 		except Exception:
 			frappe.db.rollback()
 			raise
@@ -411,7 +411,7 @@ PROVIDER_FIELDS = (
 )
 
 
-@frappe.whitelist()
+@frappe.whitelist(methods=["POST"])
 def save_ai_provider(provider: dict, name: str | None = None) -> str:
 	"""Create or update a provider from the settings UI. An omitted api_key keeps
 	the stored one: the client never receives it (keys live in __Auth), so without
@@ -433,7 +433,7 @@ def save_ai_provider(provider: dict, name: str | None = None) -> str:
 	return doc.name
 
 
-@frappe.whitelist()
+@frappe.whitelist(methods=["POST"])
 def import_provider_models(provider: str) -> dict:
 	"""Add every chat model a gateway advertises at /models, right now rather than
 	on the picker's next sync. Existing rows are left alone, so this is safe to re-run."""
@@ -450,7 +450,7 @@ def import_provider_models(provider: str) -> dict:
 		frappe.throw(_("Could not reach {0}: {1}").format(doc.api_base, str(e)[:200]))
 
 
-@frappe.whitelist()
+@frappe.whitelist(methods=["POST"])
 def delete_ai_provider(provider: str) -> None:
 	"""Delete a provider with its models. A provider refuses to go while models still
 	point at it, so they go first, in the same request."""
@@ -459,7 +459,7 @@ def delete_ai_provider(provider: str) -> None:
 	frappe.delete_doc("Builder AI Provider", provider)
 
 
-@frappe.whitelist()
+@frappe.whitelist(methods=["POST"])
 def sync_ai_models(provider: str | None = None) -> None:
 	"""Pick up models the providers added or retired since the last sync: one
 	provider right now (its errors reach the user), or every gateway, with the
@@ -530,7 +530,7 @@ def ai_setup_state():
 	}
 
 
-@frappe.whitelist()
+@frappe.whitelist(methods=["POST"])
 @has_page_write()
 def connect_ai_provider(preset: str, api_key: str = ""):
 	"""Connect a provider by its key: checked, saved, and its frontier models found.
@@ -568,7 +568,7 @@ def get_addable_models(provider: str):
 	]
 
 
-@frappe.whitelist()
+@frappe.whitelist(methods=["POST"])
 @has_page_write()
 def add_ai_model(provider: str, model_id: str):
 	"""Switch a model on by hand. Discovery never switches it off again."""
@@ -577,7 +577,7 @@ def add_ai_model(provider: str, model_id: str):
 	return ProviderCatalog(frappe.get_doc("Builder AI Provider", provider)).add(model_id)
 
 
-@frappe.whitelist()
+@frappe.whitelist(methods=["POST"])
 @has_page_write()
 def start_codex_login():
 	"""Begin a ChatGPT sign-in: the code to show, the page to enter it on, and the state to poll."""
@@ -590,7 +590,7 @@ def start_codex_login():
 		return {"status": "failed", "message": str(e)}
 
 
-@frappe.whitelist()
+@frappe.whitelist(methods=["POST"])
 @has_page_write()
 def poll_codex_login(state: str):
 	"""Where a ChatGPT sign-in stands: pending, connected (with its models), failed or expired."""
@@ -603,7 +603,7 @@ def poll_codex_login(state: str):
 		return {"status": "failed", "message": str(e)}
 
 
-@frappe.whitelist()
+@frappe.whitelist(methods=["POST"])
 @has_page_write()
 def start_codex_browser_login():
 	"""The fallback sign-in, for a workspace without device codes: a link to open,
@@ -613,7 +613,7 @@ def start_codex_browser_login():
 	return codex_login.start_browser()
 
 
-@frappe.whitelist()
+@frappe.whitelist(methods=["POST"])
 @has_page_write()
 def finish_codex_login(redirect_url: str):
 	"""Complete a browser-link sign-in from the pasted redirect URL."""
@@ -702,7 +702,7 @@ def list_page_ai_sessions(page_id: str, limit: int = 20, offset: int = 0, search
 	return rows
 
 
-@frappe.whitelist()
+@frappe.whitelist(methods=["POST"])
 @has_page_write()
 def delete_ai_session(session_id: str):
 	ensure_session_owner(session_id)
@@ -721,7 +721,7 @@ def delete_ai_session(session_id: str):
 	return {"status": "ok", "deleted_session": session_id}
 
 
-@frappe.whitelist()
+@frappe.whitelist(methods=["POST"])
 @has_page_write()
 def update_session_message_metadata(session_id: str, metadata: dict, run_id: str | None = None):
 	"""Persist client-side metadata (affectedBlocks, affectedScripts) onto the last
@@ -733,7 +733,7 @@ def update_session_message_metadata(session_id: str, metadata: dict, run_id: str
 	session.update_last_assistant_metadata(safe_meta, run_id=run_id)
 
 
-@frappe.whitelist()
+@frappe.whitelist(methods=["POST"])
 @has_page_write()
 def test_api_key(provider: str | None = None, api_key: str | None = None):
 	"""Call the cheapest model this key can reach and report what happened. With a

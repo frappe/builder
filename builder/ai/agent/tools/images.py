@@ -165,10 +165,11 @@ def remember_for_generation(ctx, query: str, results: list[dict]) -> list[dict]:
 
 
 def render_results(provider: str, results: list[dict]) -> str:
-	lines = [
+	heading = (
 		f"{provider} results — keep the exact id when offering a choice; thumb is for present_ui only. "
 		"Use a page url only after any required acquisition. Preserve source, license and attribution."
-	]
+	)
+	lines = [heading]
 	for i, p in enumerate(results, 1):
 		desc = p["description"][:120] or "(no description)"
 		lines.append(

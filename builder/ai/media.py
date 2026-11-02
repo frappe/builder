@@ -147,7 +147,7 @@ class MediaRequest:
 			"prior_reconciliations": getattr(self, "prior_reconciliations", []),
 		}
 		Artifact.save(self.page, "media_request", self.value, identity=self.key, status="pending")
-		frappe.db.commit()
+		frappe.db.commit()  # nosemgrep: frappe-manual-commit -- Reserve durably before a potentially charged request.
 		return None
 
 	def finish(self, asset, usage=None, evidence=None):

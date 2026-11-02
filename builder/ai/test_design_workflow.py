@@ -5,6 +5,7 @@ from unittest.mock import patch
 
 import frappe
 from frappe.tests.utils import FrappeTestCase
+from jinja2 import TemplateNotFound, UndefinedError
 
 from builder.ai import cards, design, projects
 from builder.ai.artifacts import Artifact
@@ -25,6 +26,21 @@ class TestDesignWorkflow(FrappeTestCase):
 			{"doctype": "Builder Page", "page_title": "Bob workflow regression"}
 		).insert()
 		self.session = AISession.create({"page": self.page.name})
+
+	def test_native_preview_has_no_frappe_template_globals(self):
+		root = {
+			"blockId": "preview",
+			"element": "div",
+			"originalElement": "body",
+			"children": [{"blockId": "copy", "element": "p", "innerHTML": "A real studio"}],
+		}
+		self.assertIn("A real studio", design.candidate_markup(root))
+		root["children"][0]["innerHTML"] = "{{ frappe.db.get_value('User', 'Administrator', 'email') }}"
+		with self.assertRaises(UndefinedError):
+			design.candidate_markup(root)
+		root["children"][0]["innerHTML"] = "{% include 'site_config.json' %}"
+		with self.assertRaises(TemplateNotFound):
+			design.candidate_markup(root)
 
 	def test_cached_raster_variant_promotes_exact_native_blocks(self):
 		DesignBrief(self.page.name).update({"project": "Real user's studio", "goal": "Book a visit"})

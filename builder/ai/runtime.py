@@ -120,9 +120,12 @@ class SiteContext:
 		frappe.init(site=self.site, sites_path=self.sites_path)
 		try:
 			frappe.connect()
-			frappe.set_user(user or "Administrator")
+			# Internal daemon execution uses the persisted admission owner; page/session access is rechecked.
+			frappe.set_user(  # nosemgrep: frappe-setuser
+				user or "Administrator"
+			)
 			result = callback(*args)
-			frappe.db.commit()
+			frappe.db.commit()  # nosemgrep: frappe-manual-commit -- Each daemon slice owns its transaction.
 			return result
 		except BaseException:
 			if getattr(frappe.local, "db", None):
@@ -164,7 +167,10 @@ class RunWorkflow:
 		self.claimed = True
 		doc = frappe.get_doc(AIRun.DOCTYPE, self.run_id)
 		self.user = doc.run_user
-		frappe.set_user(self.user)
+		# Internal daemon execution uses the persisted admission owner; page/session access is rechecked.
+		frappe.set_user(  # nosemgrep: frappe-setuser
+			self.user
+		)
 		try:
 			frappe.get_doc("Builder Page", doc.page).check_permission("write")
 			AISession.get(doc.session, page_id=doc.page)
@@ -183,7 +189,7 @@ class RunWorkflow:
 			AISession.try_append_message(
 				doc.session, "assistant", metadata["reason"], message_type="status", metadata=metadata
 			)
-			frappe.db.commit()
+			frappe.db.commit()  # nosemgrep: frappe-manual-commit -- Preserve startup failure before slice rollback.
 			raise
 
 	def advance(self, value=None, error=None):

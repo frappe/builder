@@ -6,6 +6,8 @@ import json
 
 import frappe
 import yaml
+from jinja2 import DictLoader
+from jinja2.sandbox import SandboxedEnvironment
 
 from builder.ai.artifacts import Artifact
 from builder.ai.brief import TEXT_FIELDS, DesignBrief, validate_asset_usage
@@ -49,10 +51,16 @@ def brief_revision(brief: dict) -> str:
 def candidate_markup(root: dict) -> str:
 	from builder.builder.doctype.builder_page.builder_page import get_block_html, get_google_font_urls
 	from builder.builder.doctype.builder_token.builder_token import get_variables_css
+	from builder.utils import combine, to_safe_json
+	from builder.utils import hash as style_hash
 
 	content, style, fonts, _ = get_block_html(copy.deepcopy([root]))
-	content = frappe.render_template(content, {})
-	style = frappe.render_template(style, {})
+	# Native blocks use Jinja for props; static previews must not inherit Frappe's DB helpers.
+	environment = SandboxedEnvironment(loader=DictLoader({"templates/generators/webpage_scripts.html": ""}))
+	environment.globals.clear()
+	environment.filters.update(hash=style_hash, combine=combine, to_safe_json=to_safe_json)
+	content = environment.from_string(content).render()
+	style = environment.from_string(style).render()
 	links = "".join(
 		f'<link rel="stylesheet" href="{html.escape(url, quote=True)}">'
 		for url in get_google_font_urls(fonts)
@@ -85,7 +93,7 @@ def create_direction(page: str, spec: dict, run: str | None = None) -> dict:
 	frappe.get_doc("Builder Page", page).check_permission("write")
 	brief = DesignBrief(page).read()
 	key = digest(
-		{"spec": spec, "brief": brief_revision(brief), "page_revision": page_revision(page), "renderer": 3}
+		{"spec": spec, "brief": brief_revision(brief), "page_revision": page_revision(page), "renderer": 4}
 	)
 	identity = Artifact.key(page, "design", key)
 	if frappe.db.exists("Builder AI Artifact", identity):

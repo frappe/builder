@@ -65,6 +65,7 @@
     "eslint-config-prettier": "^9.1.0",
     "eslint-plugin-import": "^2.27.5",
     "eslint-plugin-vue": "^10.11.1",
+    "jsdom": "^27.4.0",
     "mdn-data": "2.37.2",
     "postcss": "^8.4.5",
     "prettier": "^3.9.6",

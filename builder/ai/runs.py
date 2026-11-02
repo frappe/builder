@@ -109,7 +109,7 @@ class AIRun:
 		frappe.db.set_value(
 			cls.DOCTYPE, run_id, {"status": "running", "heartbeat_on": frappe.utils.now_datetime()}
 		)
-		frappe.db.commit()  # Release admission lock before any network call.
+		frappe.db.commit()  # nosemgrep: frappe-manual-commit -- Persist claim and release admission lock before network I/O.
 		return True
 
 	@classmethod

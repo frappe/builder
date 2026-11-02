@@ -1,7 +1,10 @@
 // Runs the actual generated script against a local DOM. Fetch never leaves this process.
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
-const { JSDOM } = require('jsdom');
+const { createRequire } = require('node:module');
+const path = require('node:path');
+const frontendRequire = createRequire(path.join(__dirname, '../../frontend/package.json'));
+const { JSDOM } = frontendRequire('jsdom');
 
 async function main() {
   const input = JSON.parse(fs.readFileSync(0, 'utf8'));
