@@ -10,6 +10,8 @@ def get_context(context):
 	renderers, so this is the seam Builder uses to make the not-found page editable.
 	Falls back to the default 404.html template when no such page exists.
 	"""
+	# Frappe can pass the original 200 status when a page data script raises PageDoesNotExistError.
+	context.http_status_code = 404
 	page_name = find_page_with_path("404")
 	if not page_name:
 		return
@@ -18,4 +20,5 @@ def get_context(context):
 	# BuilderPage.get_context does `del context.favicon`, which assumes the key exists.
 	context.setdefault("favicon", None)
 	doc.get_context(context)
+	context.http_status_code = 404
 	context.template = "templates/generators/webpage.html"

@@ -203,6 +203,26 @@ class TestBuilderPage(FrappeTestCase):
 		content = get_response_content("/test-page")
 		self.assertTrue("Hello World!" in content)
 
+	def test_missing_dynamic_page_returns_404(self):
+		page = insert_page("test-missing-blog/<slug>", "Missing blog")
+		page.page_data_script = "raise frappe.PageDoesNotExistError"
+		page.dynamic_route = 1
+		page.save()
+		page.publish()
+		custom_404 = insert_page("test-custom-not-found", "Custom not found")
+		custom_404.publish()
+		for fallback in (None, custom_404.name):
+			with (
+				self.subTest(custom_404=bool(fallback)),
+				patch.object(
+					frappe.get_module("builder.www.404"), "find_page_with_path", return_value=fallback
+				),
+			):
+				response = get_response("/test-missing-blog/unknown")
+				self.assertEqual(response.status_code, 404)
+				if fallback:
+					self.assertIn("Custom not found", response.get_data(as_text=True))
+
 	def test_staging_page_is_served_but_kept_out_of_search(self):
 		noindex = '<meta name="robots" content="noindex, nofollow">'
 		page = insert_page("test-staging-page", "Staging Content")
