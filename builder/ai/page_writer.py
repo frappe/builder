@@ -278,7 +278,7 @@ def convert_yaml_block(node, is_root: bool = False) -> dict | None:
 		return node
 	# Icon reference → inline-svg wrapper (see convert_icon_block).
 	if node.get("icon"):
-		return convert_icon_block(node)
+		return BlockCodec.expand(node)
 	# Code/document elements never belong in the block tree: scripts don't execute
 	# in the editor, style blocks bypass the styling system (Google Fonts load from
 	# fontFamily automatically). Drop them — the page script tools are the code path.
@@ -315,11 +315,19 @@ def convert_yaml_block(node, is_root: bool = False) -> dict | None:
 		block["extendedFromComponent"] = node["component"]
 	if node.get("child_of"):
 		block["isChildOfComponent"] = node["child_of"]
+	for source, target in (
+		("ref", "blockId"),
+		("of", "referenceBlockId"),
+		("props", "props"),
+		("client_script", "clientScript"),
+	):
+		if source in node:
+			block[target] = node[source]
 
 	# `bind` maps a template field → loop-item key. innerHTML/text bind by content;
 	# anything else binds an HTML attribute (href, src, …).
 	bind = node.get("bind")
-	if isinstance(bind, dict) and bind:
+	if isinstance(bind, dict):
 		block["dynamicValues"] = bind_to_dynamic_values(bind)
 
 	children = node.get("c")
@@ -349,6 +357,7 @@ def convert_yaml_block(node, is_root: bool = False) -> dict | None:
 		block["children"] = child_blocks
 	elif block.get("extendedFromComponent"):
 		block["children"] = component_instance_children(block["extendedFromComponent"])
+	BlockCodec.restore_metadata(node, block)
 	absorb_moustache_bindings(block)
 	return block
 
@@ -584,6 +593,12 @@ def save_draft_blocks(page_id: str, root_block: dict) -> None:
 	"""Persist an edited block tree back to draft_blocks (same shape persist_page
 	writes). Used by the headless loop after each round of applied block ops; the
 	round's checkpoint commit is what makes a cancelled or crashed turn keep it."""
+	from builder.ai.brief import DesignBrief
+	from builder.ai.content_locks import preserve_locked
+	from builder.ai.credits import add_asset_credits
+
+	add_asset_credits(root_block, DesignBrief(page_id).read().get("assets", []))
+	preserve_locked(load_page_root(page_id), root_block)
 	frappe.db.set_value(
 		"Builder Page", page_id, "draft_blocks", compact_json([root_block]), update_modified=True
 	)
@@ -596,6 +611,13 @@ def persist_page(page_id: str, yaml_text: str) -> tuple[dict | None, str]:
 	blocks, data_script = expand_page_yaml(yaml_text, strict=True)
 	if not blocks:
 		return None, ""
+	validate_page_candidate(blocks[0])
+	from builder.ai.brief import DesignBrief
+	from builder.ai.content_locks import preserve_locked
+	from builder.ai.credits import add_asset_credits
+
+	add_asset_credits(blocks[0], DesignBrief(page_id).read().get("assets", []))
+	preserve_locked(load_page_root(page_id), blocks[0])
 	updates = {"draft_blocks": compact_json(blocks)}
 	if data_script:
 		existing = frappe.db.get_value("Builder Page", page_id, "page_data_script") or ""
@@ -611,3 +633,28 @@ def persist_page(page_id: str, yaml_text: str) -> tuple[dict | None, str]:
 	# generated result is authoritative and must land regardless.
 	frappe.db.set_value("Builder Page", page_id, updates, update_modified=True)
 	return blocks[0], data_script
+
+
+def validate_page_candidate(root: dict) -> None:
+	"""A parseable container is not evidence that generation finished a page."""
+	stack, seen, meaningful = [root], set(), False
+	while stack:
+		block = stack.pop()
+		identity = block.get("blockId")
+		if identity and identity in seen:
+			raise ValueError(f"Duplicate block identity {identity}; the previous draft was preserved.")
+		seen.add(identity)
+		meaningful |= bool(
+			block.get("innerHTML")
+			or block.get("innerText")
+			or block.get("dynamicValues")
+			or block.get("extendedFromComponent")
+			or block.get("element")
+			in {"img", "video", "audio", "iframe", "svg", "canvas", "input", "select", "textarea"}
+			or "url(" in str(block.get("baseStyles", {}).get("backgroundImage", ""))
+		)
+		stack.extend(child for child in block.get("children", []) if isinstance(child, dict))
+	if not meaningful:
+		raise ValueError(
+			"Generated page has no content, media, bindings or controls; the previous draft was preserved."
+		)

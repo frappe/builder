@@ -1,0 +1,42 @@
+{
+ "doctype": "DocType",
+ "name": "Builder AI Event",
+ "module": "Builder",
+ "engine": "InnoDB",
+ "autoname": "prompt",
+ "field_order": [
+  "run",
+  "sequence",
+  "event_type",
+  "payload_json"
+ ],
+ "fields": [
+  {
+   "fieldname": "run",
+   "fieldtype": "Link",
+   "label": "Run",
+   "options": "Builder AI Run",
+   "search_index": 1
+  },
+  {
+   "fieldname": "sequence",
+   "fieldtype": "Int",
+   "label": "Sequence",
+   "search_index": 1
+  },
+  {
+   "fieldname": "event_type",
+   "fieldtype": "Data",
+   "label": "Event Type"
+  },
+  {
+   "fieldname": "payload_json",
+   "fieldtype": "Long Text",
+   "label": "Payload"
+  }
+ ],
+ "permissions": [],
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "track_changes": 0
+}

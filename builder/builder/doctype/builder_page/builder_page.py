@@ -356,9 +356,15 @@ class BuilderPage(WebsiteGenerator):
 				delete_standard_dependency_if_unreferenced(doctype, identifier, app, delete_files)
 
 	def on_trash(self):
+		if frappe.db.exists(
+			"Builder AI Artifact", {"page": self.name, "kind": "media_request", "status": "pending"}
+		):
+			frappe.throw("Resolve pending Bob media requests before deleting this page.")
 		for session in frappe.get_all("Builder AI Session", filters={"page": self.name}, pluck="name"):
 			# another user's chat on this page goes too, whoever deletes the page
 			frappe.delete_doc("Builder AI Session", session, ignore_missing=True, ignore_permissions=True)
+		frappe.db.delete("Builder AI Artifact", {"page": self.name})
+		frappe.db.delete("Builder AI Memory", {"scope": "page", "page": self.name})
 
 		if self.is_template and self.template_group:
 			if frappe.conf.developer_mode:
@@ -510,6 +516,11 @@ class BuilderPage(WebsiteGenerator):
 				"client_scripts",
 				[{"builder_script": s.get("builder_script")} for s in (data.get("client_scripts") or [])],
 			)
+		from builder.ai.revisions import PAGE_FIELDS
+
+		for field in PAGE_FIELDS:
+			if field in data and field not in ("blocks", "draft_blocks"):
+				self.set(field, data[field])
 		self.save()
 		for name, content in (data.get("_ai_scripts") or {}).items():
 			if not frappe.db.exists("Builder Client Script", name):
@@ -520,7 +531,7 @@ class BuilderPage(WebsiteGenerator):
 			script_doc = frappe.get_doc("Builder Client Script", name)
 			script_doc.script = content.get("script")
 			script_doc.script_type = content.get("script_type")
-			script_doc.save(ignore_permissions=True)
+			script_doc.save()
 		return {"draft_blocks": blocks, "warnings": collect_restore_warnings(blocks)}
 
 	@frappe.whitelist()

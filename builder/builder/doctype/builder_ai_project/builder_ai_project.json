@@ -1,0 +1,58 @@
+{
+ "doctype": "DocType",
+ "name": "Builder AI Project",
+ "module": "Builder",
+ "engine": "InnoDB",
+ "autoname": "hash",
+ "field_order": [
+  "title",
+  "brief",
+  "tasks_json",
+  "revision"
+ ],
+ "fields": [
+  {
+   "fieldname": "title",
+   "fieldtype": "Data",
+   "label": "Title",
+   "reqd": 1
+  },
+  {
+   "fieldname": "brief",
+   "fieldtype": "Long Text",
+   "label": "Shared Brief"
+  },
+  {
+   "fieldname": "tasks_json",
+   "fieldtype": "Long Text",
+   "label": "Tasks"
+  },
+  {
+   "fieldname": "revision",
+   "fieldtype": "Int",
+   "label": "Revision",
+   "read_only": 1
+  }
+ ],
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 1,
+   "if_owner": 1
+  },
+  {
+   "role": "Website Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 1,
+   "if_owner": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "track_changes": 1
+}

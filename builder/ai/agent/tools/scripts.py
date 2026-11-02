@@ -22,6 +22,7 @@ logger.setLevel(logging.INFO)
 def page_scripts(page_id: str, script_type: str | None = None) -> list[dict]:
 	"""The client scripts attached to a page — shared by get_page_scripts (this
 	page) and read_page (a reference page, whose look may live in its CSS)."""
+	frappe.get_doc("Builder Page", page_id).check_permission("read")
 	script_names = frappe.db.get_all(
 		"Builder Page Client Script",
 		filters={"parent": page_id, "parenttype": "Builder Page"},
@@ -32,12 +33,18 @@ def page_scripts(page_id: str, script_type: str | None = None) -> list[dict]:
 	filters: dict = {"name": ["in", script_names]}
 	if script_type:
 		filters["script_type"] = script_type
-	scripts = frappe.db.get_all(
+	scripts = frappe.get_list(
 		"Builder Client Script",
 		filters=filters,
 		fields=["name", "script_type", "script"],
 	)
-	return [{"script_name": s.name, "script_type": s.script_type, "script": s.script} for s in scripts]
+	from builder.ai.agent.tools.python import readable_doc
+
+	readable = [readable_doc("Builder Client Script", row.name) for row in scripts]
+	return [
+		{"script_name": doc.name, "script_type": doc.script_type, "script": doc.get("script")}
+		for doc in readable
+	]
 
 
 def fetch_page_scripts(ctx, args: dict) -> str:
@@ -58,6 +65,7 @@ def apply_set_page_script(ctx, args: dict) -> str:
 
 	if not ctx.page_id:
 		return "FAILED: no page is open."
+	frappe.get_doc("Builder Page", ctx.page_id).check_permission("write")
 	if (verdict := validate_script(args)) != "Applied.":
 		return verdict
 	script_type = args.get("script_type") or "JavaScript"
@@ -69,10 +77,10 @@ def apply_set_page_script(ctx, args: dict) -> str:
 	}
 	if name and frappe.db.exists("Builder Client Script", name):
 		name = f"{name}-{frappe.generate_hash(length=5)}"
-	doc = frappe.get_doc({**doc_fields, **({"name": name} if name else {})}).insert(ignore_permissions=True)
+	doc = frappe.get_doc({**doc_fields, **({"name": name} if name else {})}).insert()
 	page = frappe.get_doc("Builder Page", ctx.page_id)
 	page.append("client_scripts", {"builder_script": doc.name})
-	page.save(ignore_permissions=True)
+	page.save()
 	# The created name rides the op back to the canvas (see SCRIPT_TWIN_TOOLS
 	# mirroring in the loop) so its script list / undo tracking pick it up.
 	args["script_name"] = doc.name
@@ -92,14 +100,16 @@ def apply_attach_page_script(ctx, args: dict) -> str:
 			"read_page's script listing or get_page_scripts."
 		)
 	page = frappe.get_doc("Builder Page", ctx.page_id)
-	doc = frappe.db.get_value("Builder Client Script", name, ["script_type", "script"], as_dict=True)
+	page.check_permission("write")
+	doc = frappe.get_doc("Builder Client Script", name)
+	doc.check_permission("read")
 	# The content rides the op to the canvas so its script list picks it up.
 	args["script_type"] = doc.script_type
 	args["script"] = doc.script
 	if any(row.builder_script == name for row in page.get("client_scripts") or []):
 		return f"Script '{name}' is already attached to this page."
 	page.append("client_scripts", {"builder_script": name})
-	page.save(ignore_permissions=True)
+	page.save()
 	return (
 		f"Attached shared {doc.script_type} script '{name}'. It is the SAME doc the other page "
 		"uses — editing it changes every page it is attached to; to diverge later, create a "
@@ -122,13 +132,14 @@ def apply_update_script(ctx, args: dict) -> str:
 	if (verdict := validate_script(args)) != "Applied.":
 		return verdict
 	doc = frappe.get_doc("Builder Client Script", name)
+	doc.check_permission("write")
 	doc.script = args.get("script") or ""
 	if args.get("script_type"):
 		doc.script_type = args["script_type"]
 	# A full save, never db.set_value: on_update rewrites the minified public file
 	# the published page serves and bumps its cache-busting URL — a bare column
 	# write leaves every published page running the OLD script.
-	doc.save(ignore_permissions=True)
+	doc.save()
 	return f"Updated script '{name}'."
 
 

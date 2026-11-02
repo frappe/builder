@@ -84,6 +84,9 @@ def load_models() -> list[dict]:
 				"label",
 				"provider",
 				"supports_vision",
+				"supports_tools",
+				"supports_streaming",
+				"max_output_tokens",
 				"max_tokens",
 				"frontier_rank",
 			],
@@ -112,6 +115,9 @@ def load_models() -> list[dict]:
 				"api_base": provider.api_base or None,
 				"max_tokens": row.max_tokens or DEFAULT_CONTEXT_WINDOW,
 				"vision": bool(row.supports_vision),
+				"tools": bool(row.supports_tools),
+				"streaming": bool(row.supports_streaming),
+				"output": row.max_output_tokens or None,
 			}
 		)
 	return models or [dict(FALLBACK_MODEL)]
@@ -371,6 +377,17 @@ class ModelRegistry:
 		(OpenRouter: 'No endpoints found that support image input')."""
 		m = cls.find(model_name)
 		return bool(m.get("vision")) if m else False
+
+	@classmethod
+	def capabilities(cls, model_name):
+		model = cls.find(model_name.removesuffix(":online")) or {}
+		return {
+			"context": int(model.get("max_tokens") or DEFAULT_CONTEXT_WINDOW),
+			"output": model.get("output"),
+			"tools": model.get("tools", True),
+			"streaming": model.get("streaming", True),
+			"vision": bool(model.get("vision")),
+		}
 
 	@classmethod
 	def get_default(cls, model_or_provider: str) -> str:

@@ -15,7 +15,8 @@
   "finished_on",
   "metadata_json",
   "payload_json",
-  "cancel_requested"
+  "cancel_requested",
+  "event_seq"
  ],
  "fields": [
   {
@@ -80,6 +81,12 @@
    "fieldname": "cancel_requested",
    "fieldtype": "Check",
    "label": "Cancel Requested",
+   "read_only": 1
+  },
+  {
+   "fieldname": "event_seq",
+   "fieldtype": "Int",
+   "label": "Event Sequence",
    "read_only": 1
   }
  ],

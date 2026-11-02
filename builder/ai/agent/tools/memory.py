@@ -14,13 +14,15 @@ MAX_MEMORIES = 50
 MAX_FACT_CHARS = 500
 
 
-def memory_context() -> str:
+def memory_context(page_id=None) -> str:
 	"""The saved facts as a context block, one line per memory with its id (the
 	handle `remember(forget=...)` takes). Empty string when nothing is saved."""
-	rows = frappe.get_all(DOCTYPE, fields=["name", "content"], order_by="creation asc", limit=MAX_MEMORIES)
+	from builder.ai.memory import visible
+
+	rows = visible(page_id)
 	if not rows:
 		return ""
-	lines = [f"- [{r.name}] {r.content}" for r in rows]
+	lines = [f"- [{r.name}] ({r.scope or 'user'}) {r.content}" for r in rows]
 	return (
 		"Saved memory — durable facts from past conversations on this site. "
 		"Apply them without being asked; update stale ones with the remember tool:\n" + "\n".join(lines)
@@ -36,28 +38,36 @@ def run_remember(ctx, args: dict) -> str:
 	if forget:
 		parts.append(forget_memory(forget))
 	if fact:
-		parts.append(save_fact(fact))
+		parts.append(save_fact(fact, scope=args.get("scope", "user"), page_id=ctx.page_id))
 	return " ".join(parts)
 
 
 def forget_memory(memory_id: str) -> str:
 	if not frappe.db.exists(DOCTYPE, memory_id):
 		return f"FAILED: no memory '{memory_id}' — ids are in your Saved memory context."
-	frappe.delete_doc(DOCTYPE, memory_id, ignore_permissions=True)
+	frappe.get_doc(DOCTYPE, memory_id).check_permission("delete")
+	frappe.delete_doc(DOCTYPE, memory_id)
 	return f"Forgot [{memory_id}]."
 
 
-def save_fact(fact: str) -> str:
+def save_fact(fact: str, scope="user", page_id=None) -> str:
 	if len(fact) > MAX_FACT_CHARS:
 		return f"FAILED: keep a fact under {MAX_FACT_CHARS} characters — one self-contained sentence or two."
-	if existing := frappe.db.get_value(DOCTYPE, {"content": fact}):
+	project = frappe.db.get_value("Builder Page", page_id, "ai_project") if page_id else None
+	filters = {
+		"memory_user": frappe.session.user,
+		"scope": scope,
+		"page": page_id if scope == "page" else None,
+		"project": project if scope == "project" else None,
+	}
+	if existing := frappe.db.get_value(DOCTYPE, {**filters, "content": fact}):
 		return f"Already remembered as [{existing}]."
-	if frappe.db.count(DOCTYPE) >= MAX_MEMORIES:
+	if frappe.db.count(DOCTYPE, {"memory_user": frappe.session.user}) >= MAX_MEMORIES:
 		return (
 			f"FAILED: memory is full ({MAX_MEMORIES} facts). Forget an outdated one first "
 			"(remember with forget=<id>)."
 		)
-	doc = frappe.get_doc({"doctype": DOCTYPE, "content": fact}).insert(ignore_permissions=True)
+	doc = frappe.get_doc({"doctype": DOCTYPE, "content": fact, **filters}).insert()
 	return f"Remembered [{doc.name}]."
 
 
@@ -65,7 +75,7 @@ remember_tool = Tool(
 	name="remember",
 	side="server",
 	description=(
-		"Save a durable fact to your persistent memory, shared by every future chat on this site — "
+		"Save a durable fact to your persistent memory, scoped to this user, page, project, or (administrator only) site — "
 		"or delete a stale one. Use it when the user states something that should outlive this "
 		"conversation: the brand's name/story/voice, a standing preference ('always use metric', "
 		"'never stock photos'), a correction to how you work. ONE short self-contained fact per call. "
@@ -75,6 +85,11 @@ remember_tool = Tool(
 	parameters={
 		"type": "object",
 		"properties": {
+			"scope": {
+				"type": "string",
+				"enum": ["user", "page", "project", "site"],
+				"description": "Default user. Use site only when explicitly requested.",
+			},
 			"fact": {
 				"type": "string",
 				"description": 'The fact to save, phrased to stand alone (e.g. "The owner\'s name is Meera; she prefers Hindi headings with English body text.").',

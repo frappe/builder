@@ -1,0 +1,38 @@
+[
+  {
+    "id": "vague-studio",
+    "scenarios": ["D01", "D03", "D10"],
+    "prompt": "Build a yoga studio site for me.",
+    "expected": ["Ask a few consequential questions or offer useful visual choices", "Do not invent the studio name, people, prices, proof or schedule", "Preserve answers when continuing the same chat"]
+  },
+  {
+    "id": "complete-studio",
+    "scenarios": ["D02", "D10", "V03", "A14"],
+    "prompt": "This is a fictional evaluation fixture. Build a one-page site for Fieldwork, a two-person ceramics studio in Pune. Visitors should email hello@example.test to book the Saturday 10am beginner workshop, priced INR 1800 including materials. Use only these facts. Tone: practical and welcoming. Use cream, charcoal and terracotta, compact navigation, workshop information and a short booking section. No stock photos, generated images, testimonials or made-up awards. Make the mobile layout usable. You have enough context to build now.",
+    "expected": ["Build without redundant discovery", "Keep city, time, price and email exact", "Use no paid imagery", "No invented proof", "Usable desktop and narrow mobile"]
+  },
+  {
+    "id": "dense-advisory",
+    "scenarios": ["D09", "D02", "V03", "F08"],
+    "prompt": "This is a fictional evaluation fixture. Create a restrained information page for Ledger Desk, an independent bookkeeping service. Audience: small shop owners comparing practical help. Services: monthly reconciliation, payroll preparation, and annual records handover. Fees are quoted after a call; never invent prices. Contact: office@example.test. Use a clear dense layout, plain headings, a comparison table for the three services, and an email link. No big hero, photography, motion, sales slogans, gradients or testimonials. Build directly from these details.",
+    "expected": ["Honor dense conservative design without imposing a poster hero", "Preserve the supplied services", "No invented prices", "Readable table on mobile", "Useful semantic headings and email link"]
+  },
+  {
+    "id": "rtl-workshop",
+    "scenarios": ["V07", "V08", "D02"],
+    "prompt": "هذا مثال خيالي للاختبار. أنشئ صفحة عربية باتجاه من اليمين إلى اليسار لورشة اسمها مرسم. الموعد السبت الساعة ١٠ صباحاً، والسعر ١٢٠ ريالاً. للتسجيل استخدم البريد studio@example.test. أريد عنواناً واضحاً وتفاصيل الموعد وزر بريد فقط. لا تضف آراء عملاء أو صوراً أو معلومات غير مذكورة. ابدأ مباشرة واجعل الصفحة قابلة للاستخدام على الهاتف وباستخدام لوحة المفاتيح.",
+    "expected": ["Arabic copy and correct RTL reading order", "Preserve date/time/price/email", "No invented content", "Mobile and keyboard use remain understandable"]
+  },
+  {
+    "id": "expressive-portfolio",
+    "scenarios": ["D02", "D08", "V09", "V10", "R09"],
+    "prompt": "This is a fictional evaluation fixture. Make an expressive typographic portfolio for sound artist Mira Sen. The only projects are Tide (field recordings, 2024), Transit (installation, 2025), and Afterlight (live performance, 2026). Use electric green and black, huge type and an unusual composition. No invented audio files, client logos or pictures. Contact mira@example.test. I like subtle scroll reveals, but all content must stay readable without JavaScript and with reduced motion. Build now.",
+    "expected": ["Distinctive composition grounded in the supplied projects", "No invented media or clients", "Reduced-motion and no-JS fallbacks", "Keyboard access and usable mobile composition"]
+  },
+  {
+    "id": "direction-exploration",
+    "scenarios": ["D06", "D07", "D08", "A14"],
+    "prompt": "This is a fictional evaluation fixture. I am making a site for a small architecture practice named Common Room. Our only supplied service is home renovation consultations; the visitor should email rooms@example.test. I am undecided about the look. Show two meaningfully different real layout previews using this content, one editorial and one compact. Do not generate paid imagery, invent projects or build the final page until I choose.",
+    "expected": ["Two real desktop/mobile raster layout previews", "Meaningful compositional differences", "No invented projects or paid imagery", "Choosing a direction promotes the exact editable layout"]
+  }
+]

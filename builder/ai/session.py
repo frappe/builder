@@ -70,11 +70,13 @@ class AISession:
 			frappe.throw(_("You do not have access to this AI session"))
 		if page_id and doc.page != page_id:
 			frappe.throw(_("AI session does not belong to this page"))
+		if doc.status == "Deleted":
+			frappe.throw(_("This chat was deleted. Start a new chat to continue."))
 		return cls(doc)
 
 	@classmethod
 	def try_append_message(cls, session_id: str | None, role: str, content: str, **kwargs) -> str | None:
-		if session_id and frappe.db.exists(cls.DOCTYPE, session_id):
+		if session_id and frappe.db.get_value(cls.DOCTYPE, session_id, "status") == "Active":
 			return cls(frappe.get_doc(cls.DOCTYPE, session_id)).append_message(role, content, **kwargs)
 		return None
 

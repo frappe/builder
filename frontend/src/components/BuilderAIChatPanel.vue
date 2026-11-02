@@ -16,6 +16,13 @@
 					tooltip="New chat"
 					:disabled="isSubmitting"
 					@click="newSession" />
+				<Button
+					variant="ghost"
+					size="sm"
+					aria-label="Open project brief, assets and versions"
+					@click="workspaceOpen = true">
+					Project
+				</Button>
 				<Dropdown v-if="sessionOptions.length" :options="sessionOptions" :offset="6">
 					<Button
 						variant="ghost"
@@ -205,14 +212,22 @@
 								</Button>
 							</div>
 						</div>
+						<AIActionRecovery
+							v-if="message.metadata?.status === 'action_applying'"
+							:message-id="message.id"
+							@resolved="chat.reconcile()" />
 						<!-- Agent-composed UI card (present_ui) -->
 						<AIUISpec
-							v-if="message.metadata?.status === 'ui' && message.metadata?.ui?.length"
-							:message-id="message.id"
+							v-if="
+								['ui', 'ui_answered', 'ui_replaced'].includes(message.metadata?.status) &&
+								message.metadata?.ui?.length
+							"
+							:message-id="message.metadata.cardId || message.id"
 							:ui="message.metadata.ui"
 							:interactive="message.id === lastMessageId"
 							:disabled="isSubmitting || isSwitchingSession || isReverting || !isEditingPage"
 							:answered-with="replyTo(message)"
+							:answer="answerTo(message)"
 							:lead="message.metadata.text"
 							@submit="selectOption" />
 					</div>
@@ -405,10 +420,17 @@
 				<AIDebugPanel :debug="debugData" />
 			</template>
 		</Dialog>
+		<AIWorkspace
+			v-model="workspaceOpen"
+			:page-id="chat.pageId.value"
+			:busy="isSubmitting"
+			@select="selectOption" />
+		<AIChatHistory v-model="chatHistoryOpen" :page-id="chat.pageId.value" @select="switchSession" />
 	</div>
 </template>
 
 <script setup lang="ts">
+import AIActionRecovery from "@/components/ai/AIActionRecovery.vue";
 import AIAffectedItems from "@/components/AIAffectedItems.vue";
 import AIPluginCard from "@/components/ai/AIPluginCard.vue";
 import AICommandMenu from "@/components/ai/AICommandMenu.vue";
@@ -420,12 +442,13 @@ import { modelLevel } from "@/components/ai/commands/models";
 import { providersLevel } from "@/components/ai/commands/providers";
 import type { BobContext } from "@/components/ai/commands/shared";
 import AIUISpec from "@/components/ai/AIUISpec.vue";
+import AIWorkspace from "@/components/ai/AIWorkspace.vue";
+import AIChatHistory from "@/components/ai/AIChatHistory.vue";
 import BobOrb from "@/components/ai/BobOrb.vue";
 import { AIChatController } from "@/components/AIChatController";
 import AIDebugPanel from "@/components/AIDebugPanel.vue";
 import Dialog from "@/components/Controls/Dialog.vue";
 import SparklesIcon from "@/components/Icons/Sparkles.vue";
-import { cardAnswers } from "@/components/ai/cardAnswers";
 import { renderMarkdown } from "@/components/ai/markdown";
 import type { AITurnStep, ChatMessage } from "@/components/ai/types";
 import { reloadAIRegistry } from "@/data/aiModels";
@@ -444,6 +467,8 @@ const { progressMessage } = chat;
 const currentActivity = computed(() => progressMessage.value || "Thinking…");
 const { revertTurn, selectOption } = chat;
 const { sessions, sessionId, switchSession, newSession, deleteSession, isLoadingSession } = chat;
+const workspaceOpen = ref(false);
+const chatHistoryOpen = ref(false);
 
 const currentSessionTitle = computed(() => {
 	// blank until loaded, not "New chat" flipping to the real title
@@ -477,6 +502,20 @@ const sessionOptions = computed(() => {
 			hideLabel: true,
 			// theme belongs on the item — a group-level one isn't inherited.
 			options: [
+				{
+					label: "Brief, assets and versions",
+					icon: "lucide-panels-top-left",
+					onClick: () => {
+						workspaceOpen.value = true;
+					},
+				},
+				{
+					label: "Search all chats",
+					icon: "lucide-search",
+					onClick: () => {
+						chatHistoryOpen.value = true;
+					},
+				},
 				{
 					label: "Delete current chat",
 					icon: "lucide-trash-2",
@@ -555,7 +594,9 @@ const lastMessageId = computed(() => messages.value.at(-1)?.id ?? null);
  * rendering both put the same ask on screen twice, once in jargon. */
 function assistantText(message: ChatMessage): string {
 	if (message.metadata?.status === "pending_action") return "";
-	return message.metadata?.status === "ui" ? (message.metadata?.text ?? message.content) : message.content;
+	return ["ui", "ui_answered", "ui_replaced"].includes(message.metadata?.status)
+		? (message.metadata?.text ?? message.content)
+		: message.content;
 }
 
 /** Whether the turn is running with nothing to show for it. Every step it finishes
@@ -582,14 +623,12 @@ function replyTo(message: ChatMessage): string | undefined {
  * of itself, so the card is the record and the reply drops out of the chat.
  * Only when the card actually paired them: a reply it can't show (an action
  * button, an unlabelled question) is left to speak for itself. */
-const visibleMessages = computed(() =>
-	messages.value.filter((message, i) => {
-		if (message.role !== "user") return true;
-		const card = messages.value[i - 1]?.metadata;
-		if (card?.status !== "ui" || !card?.ui?.length) return true;
-		return !cardAnswers(card.ui, message.content, card.text).length;
-	}),
-);
+const visibleMessages = computed(() => messages.value);
+
+function answerTo(message: ChatMessage) {
+	const next = messages.value[messages.value.findIndex((m) => m.id === message.id) + 1];
+	return next?.metadata?.cardAnswer;
+}
 
 // --- Empty-state suggestions -------------------------------------------------
 // Fresh page → describe the site to build; page with content → describe a change.
@@ -601,54 +640,24 @@ type Suggestion = { label: string; prompt: string };
 const pageHasContent = computed(() => (canvasStore.activeCanvas?.getRootBlock()?.children?.length ?? 0) > 0);
 const BUILD_POOL: Suggestion[] = [
 	{
-		label: "A wood-fired pizzeria in Goa",
+		label: "Build for my business",
 		prompt:
-			"Build a website for Forno, a wood-fired pizzeria in Anjuna, Goa. Warm, rustic-modern feel with big appetizing food photography and a cozy dark-terracotta palette. Sections: a hero with our story, the menu (wood-fired pizzas, small plates, natural wines), a photo gallery, and a visit section with hours and location.",
+			"Help me build a website for my business. Start with the few details about my real business, audience and goals that will shape the result, then show me visual directions.",
 	},
 	{
-		label: "Moody portfolio for a photographer",
+		label: "Explore a visual direction",
 		prompt:
-			"Build a portfolio for Aria Sen, a portrait and editorial photographer. Dark, cinematic, image-first design where the photos dominate. Sections: a full-bleed hero image, a gallery of selected work, a short about/bio, a client list, and a contact/booking section.",
+			"Help me find a visual direction for my site. Learn what I want to communicate and what content I have, then show me two or three real image previews before we build.",
 	},
 	{
-		label: "Waitlist page for an AI app",
+		label: "Use a reference I like",
 		prompt:
-			"Build a launch and waitlist page for Nimbus, an AI note-taking app. Clean and modern with a confident gradient accent. Sections: a punchy hero with the value prop and an email waitlist form, three key features, a short 'how it works', and social proof.",
+			"I'd like to start from a website or image I like. Ask me for the reference and what I like about it, then adapt it to my content and goals.",
 	},
 	{
-		label: "Menu & story for a ramen bar",
+		label: "I have a complete brief",
 		prompt:
-			"Build a website for Slurp, a ramen bar in Bandra, Mumbai. Bold, appetizing, a little playful. Sections: a hero, the ramen menu with descriptions and prices, our origin story, a gallery, and hours and location.",
-	},
-	{
-		label: "A vintage record store",
-		prompt:
-			"Build a website for Groove Vault, a vintage vinyl record store. Retro, textured, warm analog vibe. Sections: a hero, featured new arrivals, the genres we stock, our story, in-store events, and how to find us.",
-	},
-	{
-		label: "Landing page for a yoga studio",
-		prompt:
-			"Build a landing page for Stillpoint, a boutique yoga studio. Calm, airy, minimal with soft natural tones and gentle motion. Sections: a hero, class types and schedule, the teachers, a membership/pricing section, and a book-a-first-class CTA.",
-	},
-	{
-		label: "A bold skincare brand",
-		prompt:
-			"Build a product site for Lumen, a clean skincare brand. Bold, premium, editorial with big product shots. Sections: a hero, the hero product with ingredients and benefits, results, reviews, and a shop/buy CTA.",
-	},
-	{
-		label: "Personal site for a designer",
-		prompt:
-			"Build a personal site for Maya Rao, a product designer. Confident, minimal, type-driven. Sections: a short intro hero, selected case studies, an about section, and contact links (email, LinkedIn, resume).",
-	},
-	{
-		label: "A craft coffee roaster",
-		prompt:
-			"Build a website for Ember & Oak, a craft coffee roaster. Warm, artisanal, rich browns and texture. Sections: a hero, our roasts with tasting notes, the roasting story, wholesale info, and where to buy or visit.",
-	},
-	{
-		label: "Event page for a design meetup",
-		prompt:
-			"Build an event page for Design Jam, a monthly design meetup in Pune. Energetic, modern, poster-like. Sections: a hero with date, venue and RSVP, the speaker lineup, the schedule, past-event highlights, and sponsors.",
+			"I have my content, audience and design requirements ready. Help me turn my brief into an editable website, asking only about important gaps.",
 	},
 ];
 const EDIT_POOL: Suggestion[] = [

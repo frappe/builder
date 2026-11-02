@@ -81,6 +81,8 @@ class AIRun:
 	def admit(cls, session_id: str, page_id: str, model: str, request_id: str | None = None):
 		# Serialize admission, including the queued interval before a worker claims it.
 		frappe.db.get_value("Builder AI Session", session_id, "name", for_update=True)
+		if frappe.db.get_value("Builder AI Session", session_id, "status") != "Active":
+			raise ValueError("This chat was deleted or archived. Start a new chat to continue.")
 		if existing := cls.existing(request_id):
 			return existing, False
 		if cls.active(session_id, for_update=True):
@@ -112,6 +114,9 @@ class AIRun:
 
 	@classmethod
 	def finish(cls, run_id: str, status: str, metadata: dict | None = None):
+		current = frappe.db.get_value(cls.DOCTYPE, run_id, "status", for_update=True)
+		if current not in ACTIVE_STATUSES and current != status:
+			return False
 		frappe.db.set_value(
 			cls.DOCTYPE,
 			run_id,
@@ -122,6 +127,7 @@ class AIRun:
 				"metadata_json": json.dumps(metadata or {}, separators=(",", ":")),
 			},
 		)
+		return True
 
 	@staticmethod
 	def cancel_key(run_id: str) -> str:
@@ -158,6 +164,8 @@ class AIRun:
 
 
 def dispatch_run(run_id: str):
+	if frappe.conf.get("builder_ai_runtime") == "async":
+		return
 	doc = frappe.get_doc(AIRun.DOCTYPE, run_id)
 	if doc.status != "queued" or not doc.payload_json:
 		return
@@ -176,6 +184,6 @@ def dispatch_run(run_id: str):
 
 def dispatch_queued_runs():
 	for run_id in frappe.get_all(
-		AIRun.DOCTYPE, {"status": "queued"}, pluck="name", limit=100, order_by="creation asc"
+		AIRun.DOCTYPE, filters={"status": "queued"}, pluck="name", limit=100, order_by="creation asc"
 	):
 		dispatch_run(run_id)

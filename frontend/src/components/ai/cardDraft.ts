@@ -11,6 +11,7 @@ export function isPreviewOnly(option: UIElement) {
 }
 
 export function optionReply(option: UIElement): string {
+	if (option.variant_id) return `${option.label || "This direction"}\n[design: ${option.variant_id}]`;
 	const label = option.label || option.value || "";
 	let reply = option.description ? `${label}: ${option.description}` : String(label);
 	if (option.asset_id) reply += `\n[asset: ${option.asset_id}]`;

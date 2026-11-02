@@ -1,4 +1,5 @@
 import type Block from "@/block";
+import type { CardSubmission } from "@/components/ai/cardAnswers";
 import builderTokens from "@/data/builderToken";
 import { type AIChatHandlers, attachAIChatListeners, detachAIChatListeners } from "@/components/ai/realtime";
 import { readDraft, RunEvents, type SendEnvelope, writeDraft } from "@/components/ai/lifecycle";
@@ -200,6 +201,7 @@ export class AIChatController {
 
 	// Compact display line for a card-composed reply (set by selectOption).
 	private pendingDisplayText: string | null = null;
+	private pendingCardAnswer: CardSubmission | null = null;
 
 	private readonly pageStreamContent = ref(""); // accumulates kind="page_yaml" chunks
 	private readonly summaryContent = ref(""); // accumulates summary chunks
@@ -256,7 +258,7 @@ export class AIChatController {
 	 * keyless while the site as a whole looks set up. */
 	readonly selectedModelUnusable = computed(() => {
 		const model = this.currentProviderModels.value.find((m) => m.name === this.selectedModel.value);
-		return !!model && model.ready === false;
+		return !!this.selectedModel.value && (!model || model.ready === false);
 	});
 	/** A turn saves the canvas first, and with a component open on the canvas that
 	 * would write the component over the page draft. */
@@ -280,8 +282,7 @@ export class AIChatController {
 			watch(
 				this.currentProviderModels,
 				(models) => {
-					const isValid = models.some((m) => m.name === this.selectedModel.value);
-					if (models.length && (!this.selectedModel.value || !isValid)) {
+					if (models.length && !this.selectedModel.value) {
 						this.selectedModel.value = models[0].name;
 					}
 				},
@@ -455,6 +456,7 @@ export class AIChatController {
 			imageFileName: this.imageFileName.value,
 			blocks: this.attachedBlocks.value,
 			displayText: this.pendingDisplayText,
+			cardAnswer: this.pendingCardAnswer,
 			retryEnvelope: this.retryEnvelope.value,
 		});
 	}
@@ -471,10 +473,17 @@ export class AIChatController {
 		this.imageFileName.value = content?.imageFileName || "";
 		this.attachedBlocks.value = content?.blocks || [];
 		this.pendingDisplayText = content?.displayText || null;
+		this.pendingCardAnswer = content?.cardAnswer || null;
 		this.restoringDraft = false;
 	}
 
 	private hydrateSession(session: AISession) {
+		if (session.deleted_session) {
+			this.retryEnvelope.value = null;
+			this.sessionIntentEpoch++;
+			toast.info("This chat was deleted in another tab. Start a new chat to continue.");
+		}
+
 		const previousRun = this.activeRun.value?.run_id;
 		const run = session.active_run;
 		const sameRun = !!run && run.run_id === previousRun;
@@ -563,6 +572,7 @@ export class AIChatController {
 					this.prompt.value = "";
 					this.attachedBlocks.value = [];
 					this.pendingDisplayText = null;
+					this.pendingCardAnswer = null;
 					this.clearImage();
 				}
 				this.persistComposer();
@@ -654,6 +664,39 @@ export class AIChatController {
 		}
 		if (!this.generationId && !this.activeRun.value) this.endCanvasBuild();
 		this.replayHeldEvents();
+		await this.replayJournal();
+	}
+
+	private async replayJournal() {
+		const run = this.activeRun.value;
+		if (!run) return;
+		const intent = this.sessionIntentEpoch;
+		let cursor = this.events.cursor(run.run_id);
+		for (let page = 0; page < 10; page++) {
+			const result = await createResource({ url: "builder.ai.events.replay" }).submit({
+				run_id: run.run_id,
+				after_seq: cursor,
+			});
+			if (this.disposed || intent !== this.sessionIntentEpoch || this.activeRun.value?.run_id !== run.run_id)
+				return;
+			for (const event of result?.events || []) {
+				const handlers: Record<string, (data: any) => unknown> = {
+					progress: this.onProgress,
+					step: this.onStep,
+					stream: this.onStream,
+					refetch: this.onRefetch,
+					tool_batch: this.onToolBatch,
+					complete: this.onComplete,
+					error: this.onError,
+					clarify: this.onClarify,
+				};
+				if (handlers[event.type]) await handlers[event.type](event.data);
+				else this.events.accept(event.data);
+			}
+			if (!result?.has_more || result.cursor <= cursor) return;
+			cursor = result.cursor;
+		}
+		this.reconcileAgain = true;
 	}
 
 	private async refreshPage() {
@@ -776,6 +819,10 @@ export class AIChatController {
 			return false;
 		}
 		if (this.isForeignSession(data)) {
+			if (data.journal) {
+				if (canvas) this.requestReconciliation(true);
+				return false;
+			}
 			if (!canvas) return false;
 			if (this.observedRuns.get(data.session_id) !== data.run_id) {
 				this.verifyForeignRun(data, replay);
@@ -786,7 +833,9 @@ export class AIChatController {
 			this.requestReconciliation();
 			return false;
 		}
-		return this.events.accept(data);
+		const accepted = this.events.accept(data, replay);
+		if (!accepted && data.journal && data.seq > this.events.cursor(data.run_id)) this.requestReconciliation();
+		return accepted;
 	}
 
 	private verifyForeignRun(data: AIRunEvent, replay: () => void) {
@@ -1066,13 +1115,14 @@ export class AIChatController {
 		data: AIRunEvent & {
 			question?: string;
 			ui?: Array<Record<string, any>>;
+			card_id?: string;
 			pending_action?: { kind: string; payload: Record<string, any> };
 		},
 	) => {
 		if (!this.acceptEvent(data, () => this.onClarify(data), true)) return;
 		const metadata = data.pending_action
 			? { status: "pending_action", ...data.pending_action }
-			: { status: "ui", text: data.question || "", ui: data.ui || [] };
+			: { status: "ui", text: data.question || "", ui: data.ui || [], cardId: data.card_id };
 		this.finishRun(data, data.question || "…", metadata);
 	};
 
@@ -1082,10 +1132,11 @@ export class AIChatController {
 	 * collected form values) as the user's next ordinary message. `display` is
 	 * the compact line the chat shows instead of the full relay — the model
 	 * still receives the full reply. */
-	selectOption = (option: string, display?: string) => {
+	selectOption = (option: string, display?: string, answer?: CardSubmission) => {
 		if (this.isSubmitting.value || this.isSwitchingSession.value || this.isReverting.value) return;
 		this.prompt.value = option;
 		this.pendingDisplayText = display?.trim() || null;
+		this.pendingCardAnswer = answer || null;
 		this.submitPrompt();
 	};
 
@@ -1161,6 +1212,7 @@ export class AIChatController {
 			imagePreviewUrl: this.imagePreviewUrl.value,
 			imageFileName: this.imageFileName.value,
 			displayText: this.pendingDisplayText,
+			cardAnswer: this.pendingCardAnswer,
 			canvasTheme: this.builderStore.canvasDarkMode ? "dark" : "light",
 		};
 		const previous = this.retryEnvelope.value;
@@ -1185,11 +1237,13 @@ export class AIChatController {
 		this.attachedBlocks.value = [];
 		this.clearImage();
 		this.pendingDisplayText = null;
+		this.pendingCardAnswer = null;
 
 		const userMessage = buildLocalMessage("user", envelope.prompt, {
 			selectedBlockContext: envelope.blocks,
 			attachedImageUrl: envelope.imagePreviewUrl,
 			displayText: envelope.displayText,
+			cardAnswer: envelope.cardAnswer,
 		});
 		const assistantMessage = buildLocalMessage("assistant", "", { status: "running" });
 		this.messages.value.push(userMessage, assistantMessage);
@@ -1225,6 +1279,7 @@ export class AIChatController {
 				selected_block_context: envelope.blocks,
 				...(envelope.imageData ? { image_data: envelope.imageData } : {}),
 				...(envelope.displayText ? { display_text: envelope.displayText } : {}),
+				...(envelope.cardAnswer ? { card_answer: envelope.cardAnswer } : {}),
 				canvas_theme: envelope.canvasTheme,
 			});
 			if (!stillOwned()) return;
@@ -1275,6 +1330,7 @@ export class AIChatController {
 		this.imagePreviewUrl.value = envelope.imagePreviewUrl;
 		this.imageFileName.value = envelope.imageFileName;
 		this.pendingDisplayText = envelope.displayText;
+		this.pendingCardAnswer = envelope.cardAnswer || null;
 		this.persistComposer();
 		toast.error(getErrorMessage(error, "Could not send the message. Retry to check the same request."));
 	}

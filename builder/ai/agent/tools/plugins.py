@@ -34,31 +34,49 @@ SURFACES = {
 }
 
 
-def run_write_plugin(ctx, args: dict) -> str:
-	if not is_plugin_manager():
-		return (
-			"DECLINED: only a System Manager or a Website Manager can add plugins, so nothing was "
-			"saved. Tell the user in one plain sentence."
-		)
-	code = args.get("code") or ""
-	if error := bob.syntax_error(code):
-		return f"FAILED: main.js does not parse, so nothing was saved. Fix it and call write_plugin again.\n{error}"
+def run_write_plugin(ctx, args: dict) -> str | None:
+	from builder.ai.agent import pending
 
-	doc = bob.save_plugin(
-		# read_plugin lists the full id, and models pass it back as the name
-		(args.get("name") or "").strip().removeprefix(f"{bob.PUBLISHER}/"),
-		(args.get("label") or "").strip(),
-		(args.get("description") or "").strip(),
-		code,
-		args.get("icon"),
-	)
-	if doc.plugin not in ctx.plugins_written:
-		ctx.plugins_written.append(doc.plugin)
+	if not is_plugin_manager():
+		return "DECLINED: only a plugin manager can stage editor extensions."
 	if not ctx.page_id:
-		return "Installed. It loads the next time each user opens the editor."
-	if not doc.enabled:
-		return "Saved, but the plugin is turned off on this site. Tell the user to turn it on in the Plugins panel."
-	return load_in_editor(ctx, doc)
+		return "FAILED: open a page to test this editor extension."
+	artifact, value = bob.stage_plugin(ctx.page_id, args, ctx.run_id)
+	frappe.db.commit()
+	ctx.emit(
+		"tool_batch",
+		operations=[
+			{
+				"tool_name": "load_plugin",
+				"args": {
+					"plugin": f"{bob.PUBLISHER}/{value['slug']}",
+					"label": value["label"],
+					"version": value["version"],
+					"entry_url": "",
+					"candidate_id": artifact.name,
+					"page_id": ctx.page_id,
+					"token": value["token"],
+				},
+			}
+		],
+	)
+	ctx.checkpoint()
+	report = wait_for_report(ctx, value["token"])
+	if not report:
+		return "FAILED: the editor did not finish testing the candidate. Nothing was installed. Reopen the editor and retry."
+	if (
+		report.get("error")
+		or report.get("problems")
+		or report.get("disabled")
+		or not report.get("registered")
+	):
+		return f"FAILED: candidate checks failed; the working plugin is unchanged. {report}"
+	pending.request_confirmation(
+		ctx,
+		"activate_plugin",
+		f"Install {value['label']} for editors on this site? Its controls passed registration and render checks.",
+		{"candidate_id": artifact.name, "page_id": ctx.page_id},
+	)
 
 
 def load_in_editor(ctx, doc) -> str:
@@ -169,7 +187,7 @@ def plugin_line(row) -> str:
 
 WRITE_PLUGIN_DESCRIPTION = """Add a tool to the Builder EDITOR itself: a left bar panel, a toolbar button, a block right-click action, a property panel section, a settings page. Use it when the user asks for something in the editor (\"a panel that lists images without alt text\"), never for content on their page. Call it again with the same name and the WHOLE file to change a plugin; read_plugin shows the current code.
 
-It installs the plugin for everyone who edits this site and loads it into this user's open editor at once; the others get it on their next editor load. The result says whether it loaded, what it added, or the error to fix.
+It stages an uninstalled candidate, checks its registrations and components in this editor, and asks the user to activate that exact version. A failed candidate leaves the installed version unchanged. Use context.onDispose(cleanup) for listeners/timers; install must be synchronous. Checks do not prove arbitrary custom interactions.
 
 The code is ONE plain JavaScript ES module with no build step:
 - `export default { install(app, context) { ...register items... } }`
@@ -206,7 +224,7 @@ When the plugin changes the page, the change must look the same once published:
 
 write_plugin_tool = Tool(
 	name="write_plugin",
-	side="server",
+	side="terminal",
 	description=WRITE_PLUGIN_DESCRIPTION,
 	parameters={
 		"type": "object",

@@ -21,14 +21,48 @@ function withRawComponents<T extends object>(item: T): T {
 /** The plugin whose install() is running, and the unregisters of what each plugin registered. */
 let installingPlugin: string | null = null;
 const pluginItems = new Map<string, Array<() => void>>();
+type Registration = { dispose: () => void; rollback: () => void };
+type StagedRegistration = {
+	apply: () => Registration;
+	item: RegistryEntry;
+	surface: object;
+	active: () => boolean;
+};
+let stagedItems: StagedRegistration[] | null = null;
 
-/** Runs a plugin's install(), noting what it registers so `unregisterPluginItems` can take it back. */
-export function trackPluginItems(plugin: string, install: () => void) {
+export function collectPluginItems(plugin: string, install: () => unknown): StagedRegistration[] {
+	if (installingPlugin) throw new Error("Nested plugin installation is not supported");
 	installingPlugin = plugin;
+	stagedItems = [];
 	try {
-		install();
+		const result = install();
+		if (result && typeof (result as Promise<unknown>).then === "function") {
+			Promise.resolve(result).catch(() => {});
+			throw new Error(
+				"Plugin installation must be synchronous; register asynchronous resources with onDispose",
+			);
+		}
+		return stagedItems.filter((entry) => entry.active());
 	} finally {
 		installingPlugin = null;
+		stagedItems = null;
+	}
+}
+
+/** Runs a plugin's install(), noting what it registers so `unregisterPluginItems` can take it back. */
+export function trackPluginItems(plugin: string, install: () => unknown) {
+	const staged = collectPluginItems(plugin, install);
+	const installed: Registration[] = [];
+	try {
+		for (const entry of staged) installed.push(entry.apply());
+		unregisterPluginItems(plugin);
+		pluginItems.set(
+			plugin,
+			installed.map((entry) => entry.dispose),
+		);
+	} catch (error) {
+		installed.reverse().forEach((entry) => entry.rollback());
+		throw error;
 	}
 }
 
@@ -69,6 +103,7 @@ export type RegistryItem = RegistryEntry & {
  */
 export function createRegistry<T extends RegistryEntry>() {
 	const items = reactive(new Map<string, T>()) as Map<string, T>;
+	const owners = new Map<string, string | null>();
 	const order = ref<string[]>([]);
 
 	// re-registering without an anchor keeps the slot the name already holds, so
@@ -97,18 +132,48 @@ export function createRegistry<T extends RegistryEntry>() {
 		return items.delete(name);
 	};
 
-	// returns its own unregister, so a caller never has to track names
 	const register = (item: T) => {
 		const registered = withRawComponents({ ...item });
-		items.set(item.name, registered);
-		place(registered);
-		// a later registration under the same name owns the entry, so this must not delete it
-		const unregister = () => {
-			if (toRaw(items.get(item.name)) === registered) remove(item.name);
+		const owner = installingPlugin;
+		if (owner && items.has(item.name) && owners.get(item.name) !== owner)
+			throw new Error(`Registry name '${item.name}' belongs to another feature; use a plugin-specific name`);
+		let cancelled = false;
+		let dispose = () => {};
+		const apply = (): Registration => {
+			if (cancelled) return { dispose, rollback: dispose };
+			if (owner && items.has(item.name) && owners.get(item.name) !== owner)
+				throw new Error(
+					`Registry name '${item.name}' belongs to another feature; use a plugin-specific name`,
+				);
+			const previous = toRaw(items.get(item.name));
+			const previousOwner = owners.get(item.name);
+			const previousOrder = [...order.value];
+			items.set(item.name, registered);
+			owners.set(item.name, owner);
+			place(registered);
+			dispose = () => {
+				if (toRaw(items.get(item.name)) !== registered) return;
+				remove(item.name);
+				owners.delete(item.name);
+			};
+			return {
+				dispose,
+				rollback: () => {
+					dispose();
+					if (previous) {
+						items.set(item.name, previous);
+						owners.set(item.name, previousOwner ?? null);
+					}
+					order.value = previousOrder;
+				},
+			};
 		};
-		if (installingPlugin)
-			pluginItems.set(installingPlugin, [...(pluginItems.get(installingPlugin) ?? []), unregister]);
-		return unregister;
+		if (stagedItems) stagedItems.push({ apply, item: registered, surface: all, active: () => !cancelled });
+		else apply();
+		return () => {
+			cancelled = true;
+			dispose();
+		};
 	};
 
 	const all = computed(() => order.value.map((name) => items.get(name) as T));

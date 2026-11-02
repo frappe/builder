@@ -206,7 +206,14 @@ def run_acquire_asset(ctx, args: dict) -> str:
 	asset = next((a for a in saved.get("assets", []) if a.get("id") == args.get("asset_id")), None)
 	if not asset or asset.get("selected") is not True:
 		return "FAILED: Select this original asset from the saved search results before acquiring it."
-	if asset.get("preview_only") or asset.get("provider") == "Magnific":
+	if asset.get("provider") == "Magnific":
+		return (
+			"PREVIEW ONLY — this call does not purchase or license the image. "
+			"Use acquire_paid_asset for the selected original when account entitlement and a media budget "
+			"are configured; otherwise license/download and upload manually. "
+			f"Source: {asset.get('source_url', '')}"
+		)
+	if asset.get("preview_only"):
 		return (
 			"FAILED: "
 			+ asset_usage({**asset, "preview_only": True})

@@ -1,143 +1,75 @@
-# Optional centralized stock library for Bob
+# Bob images and stock assets
 
-Bob supports **Magnific (formerly Freepik) stock discovery** with one server-side
-site key. It searches photographs, excluding AI-generated content. It does not
-purchase, license, download, or publish Magnific assets. Results are previews
-with an original library link; acquiring and importing the original is manual.
+Direction previews are **WebP screenshots of real editable Builder blocks** at desktop/mobile sizes. Choosing a direction promotes those same blocks. Rendering a layout does not call an image model. Optional generated artwork is separate; a concept stays preview-only and cannot become the whole published page.
 
-## Setup
+## Discovery
 
-An administrator configures these entries through the site's normal private
-configuration management:
+`search_images` accepts `auto`, `magnific`, `pexels`, `unsplash`, or `openverse`. Auto tries configured Magnific, Pexels, Unsplash, then Openverse, stopping at the first nonempty result. Explicit providers never silently substitute. Responses contain at most six candidates with stable IDs, preview/original URLs, source, credit and license metadata.
+
+Configure keys privately through normal site configuration:
 
 ```json
 {
   "bob_stock_provider": "magnific",
-  "magnific_api_key": "<your organization API key>"
+  "magnific_api_key": "<organization API key>"
 }
 ```
 
-Both entries are required. Keep the key server-side, outside source control and
-chat. Obtain it from the organization's Magnific API settings and configure
-appropriate provider-side access restrictions and usage caps. No configuration
-or account changes are made by installing this adapter. Remove
-`bob_stock_provider` to disable it. Existing `pexels_api_key` and
-`unsplash_access_key` settings continue to work; Openverse needs no key.
+Existing `pexels_api_key` and `unsplash_access_key` work; Openverse needs no key. Remove `bob_stock_provider` to disable Magnific discovery. API search/download limits still apply.
 
-`search_images` accepts `provider: "auto" | "magnific" | "pexels" | "unsplash" |
-"openverse"`. Auto tries configured Magnific, Pexels, Unsplash, then Openverse,
-stopping at the first nonempty result. An explicit provider never silently
-substitutes another library. Choose a free provider to avoid manual paid-stock
-import. Each search returns at most six results and uses a ten-second timeout.
+Magnific search results are **preview only**, regardless of license tier: `url: ""`, `preview_only: true`, `requires_acquisition: true`. Source/thumbnail/license URLs are not evidence of acquisition. Page mutation and generation reject known previews. Selected IDs survive later searches, chats and reloads.
 
-## Preview and import workflow
+## Optional paid stock acquisition
 
-1. Search and display the thumbnail, original library link, credit, and
-   **preview only** status. Retain the exact `magnific:<resource-id>` identity
-   when the user chooses a result.
-2. Open that result's `source_url` in the library. Review its applicable terms
-   and download/license the chosen original using the appropriate account.
-   Retain any license evidence supplied by the library.
-3. Upload the licensed file through Builder's existing file upload and select
-   that uploaded original for the page. The upload does not automatically prove
-   a license or upgrade the earlier preview's status.
+Automatic Magnific photograph acquisition requires these administrator-supplied settings:
 
-Magnific records have `url: ""`, `preview_only: true`,
-`requires_acquisition: true`, and `license_status: "preview_only"`.
-`thumb` and `preview_url` hold the search image; `source_url` holds the original
-library page. `provider_licenses` preserves the provider's license metadata,
-**not evidence that this site acquired a license**. Preview dimensions describe
-the preview, not the downloadable original. Neither the thumbnail nor the
-source page may become `img src`, a background, a meta image, or a generation
-asset. Selecting a preview never authorizes an automatic purchase.
-
-## Verified public API contract
-
-The following official documentation was read without authentication on
-2026-11-01. No authenticated or paid endpoint was called.
-
-- [Search OpenAPI](https://docs.magnific.com/api-reference/resources/get-all-resources.md):
-  `GET https://api.magnific.com/v1/resources` with `x-magnific-api-key`.
-  Parameters: `term`, `limit`, `order=relevance`,
-  `filters[content_type][photo]=1`, `filters[ai-generated][excluded]=1`, and
-  optional `filters[orientation][landscape|portrait|square]=1`.
-  The response's `data[]` supplies integer `id`, `title`, original resource
-  `url`, `author.name`, `licenses[]`, and `image.source.{url,size,key}`.
-  The adapter treats the search image as preview-only, regardless of license tier.
-- [Download OpenAPI](https://docs.magnific.com/api-reference/resources/download-a-resource.md):
-  `GET /v1/resources/{resource-id}/download`, optionally `image_size` (small,
-  medium, large, original, or a supported pixel size). It returns
-  `data.filename`, `data.url`, and optional `data.signed_url`; the schema
-  explicitly describes `signed_url` as a **preview** URL.
-- [Format download OpenAPI](https://docs.magnific.com/api-reference/resources/download-resource-by-id-and-format.md):
-  `GET /v1/resources/{resource-id}/download/{resource-format}` returns a
-  `data[]` list of download objects. Neither download endpoint is implemented.
-- [Pricing](https://docs.magnific.com/pricing): Premium, Premium+ and Pro stock
-  downloads are capped at 100 per day without consuming credits. Business and
-  Enterprise stock downloads consume credits with no daily cap. Do not assume
-  a web subscription's unlimited allowances cover API consumption. This adapter
-  does not estimate charges or promise search pricing.
-- The [stock overview](https://docs.magnific.com/api-reference/resources/images-and-templates-api)
-  points to the [terms](https://www.magnific.com/legal/terms-of-use#api-services).
-  The terms were accessible and link to separate
-  [API Services terms](https://www.magnific.com/legal/api-services); fetching the
-  latter returned HTTP 403. An account's complete licensing entitlement and
-  authorization to redistribute originals were therefore **not verified**.
-
-A search result's license URL is not a license receipt. The public endpoint
-schemas alone do not supply a complete, budgeted acquisition workflow with
-user approval and account-specific rights. Consequently there is no paid
-acquisition tool, budget debit, or paid download path in this implementation.
-Supporting one later requires a separate explicit user action and server-side
-entitlement, budget, and license-evidence handling.
-
-## Unsplash selected use
-
-The exported `acquire_asset({"asset_id": "unsplash:<original-id>"})` tool
-records Unsplash's required download event. It accepts only an asset already
-persisted in this page's design brief with `selected: true`, checks page write
-permission, locks the page record, and requires `unsplash_access_key`. Model
-arguments cannot supply a replacement URL or resource ID outside the inventory.
-
-It calls the saved `links.download_location` only after verifying its HTTPS
-host and `/photos/<original-id>/download` path, without following redirects.
-Success persists `download_tracked: true` and `requires_acquisition: false`.
-Subsequent calls for the same saved page asset do not repeat the event. Search
-and displaying choices never trigger tracking. This is a free selected-use
-tracking event, not a license purchase or file download; Magnific IDs are always
-refused with instructions for manual import.
-
-The original `photo.urls.regular` hotlink, including its `ixid`, is preserved.
-The tracking response is not substituted as an image URL. Credit/source links
-include `utm_source=frappe_builder&utm_medium=referral`; UI and generated pages
-must retain linked photographer and Unsplash attribution. See the official
-[API guidelines](https://help.unsplash.com/en/articles/2511245-unsplash-api-guidelines)
-and [download tracking documentation](https://unsplash.com/documentation#track-a-photo-download).
-
-External tracking and the local database do not share a transaction. A network
-timeout after provider acceptance or a later database rollback can produce a
-duplicate event on retry; persistent success prevents ordinary repeated calls.
-No exactly-once guarantee is claimed.
-
-## Integration and offline checks
-
-`images.TOOLS` exports `search_images` and `acquire_asset`. The design tool group
-must activate both. The API records explicit user selections by original ID.
-The brief merges by ID, preserves selected originals and acquisition metadata,
-and bounds search inventory to twelve entries. Generation must exclude assets
-with `preview_only` or `requires_acquisition`, or without a page URL. The image
-picker must retain preview status, original link, license, and attribution
-metadata; a new search must not overwrite the chosen original.
-
-Run with the existing bench Python, without initializing a site:
-
-```sh
-<bench>/env/bin/python -m unittest builder.ai.test_assets -v
+```json
+{
+  "bob_media_budget_usd": 5,
+  "bob_media_daily_budget_usd": 20,
+  "bob_stock_entitlement": {
+    "approved": true,
+    "account_reference": "<entitled organization/account>",
+    "license_url": "<applicable account/API license reference>",
+    "max_download_cost_usd": 1
+  }
+}
 ```
 
-Tests replace HTTP and configuration access, forbid real network requests, and
-use dummy keys. They cover the documented search contract, explicit opt-in,
-fallbacks, preview-only output, permission/selection restrictions, tracking URL
-validation, and preservation of the selected original across search and later
-turns. Production credentials, account entitlement, live provider responses,
-and visual/manual import behavior are outside this offline validation.
+Amounts are examples, not provider price quotes. Configure conservative ceilings and provider-side limits. `bob_media_budget_usd` currently applies **per Builder page**, including pages in a multipage project; the daily cap applies across the site. Reservations estimate maximum cost, not verified invoices.
+
+1. Shortlist an exact asset. `acquire_paid_asset` presents an acquisition confirmation.
+2. Approval checks page permission, selection and configured entitlement, then commits a pending receipt before the external request.
+3. It calls `GET https://api.magnific.com/v1/resources/{id}/download` with `image_size=original`. Only `data.url` supplies the original; `signed_url` is documented as a preview.
+4. The downloaded raster becomes a local WebP delivery rendition. Its source ID, provider response, entitlement reference, credit and receipt persist.
+5. An ambiguous failure leaves the reservation pending. Bob will not automatically charge again. After five minutes an administrator can reconcile it in **Project → Spending** from billing/support evidence: not charged, original recovered, or charged without an asset. Late provider responses cannot overwrite reconciliation.
+
+The recorded status is `configured_account_entitlement`. The adapter **does not independently verify legal entitlement or issue a license certificate**. API Services terms returned HTTP 403 during the original review; account/multi-user redistribution rights require provider verification. Without this configuration, use manual license/download/upload or another library. No paid stock endpoint was called during implementation validation.
+
+Public contracts reviewed on 2026-11-01: [search](https://docs.magnific.com/api-reference/resources/get-all-resources.md), [original download](https://docs.magnific.com/api-reference/resources/download-a-resource.md), [pricing](https://docs.magnific.com/pricing), [API Services terms](https://www.magnific.com/legal/api-services). Web subscription allowances do not establish API entitlement.
+
+## Generated artwork and transformations
+
+The current raster adapter uses OpenAI Images generations/edits. It is separate from the chat connection:
+
+```json
+{
+  "bob_image_model": "<image model supporting low quality and WebP>",
+  "bob_image_api_key": "<API key>",
+  "bob_image_max_cost_usd": 1,
+  "bob_media_budget_usd": 5,
+  "bob_media_daily_budget_usd": 20
+}
+```
+
+`generate_artwork` requests one 1024×1024 low-quality WebP draft. `source_asset` edits a selected acquired original. Identical page/prompt/model/source settings reuse a completed receipt before downloading source bytes or charging again. Provider usage is recorded when supplied; unknown actual cost stays null. Concepts stay private/preview-only. Provider billing and generation have mocked coverage, not a paid production acceptance test.
+
+`transform_asset` creates cached focal crops, retaining source identity and attribution. No-derivatives licenses are rejected. Unsplash remains hotlinked; use CSS object-position rather than local transformations. `asset_contact_sheet` renders a bounded visual shortlist. Coherent art direction still requires model/user judgment.
+
+## Uploads, references and attribution
+
+Pasted uploads start private and undecided. **Project → Assets** offers reference/content/logo/product/team roles. References are excluded from generation's photo inventory. For page content, **Make available on published page** or `prepare_uploaded_asset` copies original bytes to a public page asset. Only its uploader or a System Manager may expose a private original. Reference-role placement is rejected even if the file was previously public.
+
+Unsplash `acquire_asset` performs required selected-use download tracking, not a purchase. It validates the saved URL/ID and persists success. Hotlinks retain `ixid`; generated pages receive linked photographer/provider credits. A timeout after provider acceptance can duplicate tracking on retry; no distributed exactly-once guarantee is claimed. See [API guidelines](https://help.unsplash.com/en/articles/2511245-unsplash-api-guidelines) and [download tracking](https://unsplash.com/documentation#track-a-photo-download).
+
+Openverse source/license/credit metadata remains attached. A catalog filter alone does not prove all rights to the depicted content. See [acceptance instructions](acceptance/README.md) for deterministic and live validation.

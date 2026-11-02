@@ -153,13 +153,99 @@ def load_report_key(user: str, token: str) -> str:
 
 @frappe.whitelist(methods=["POST"])
 @has_page_read(NO_BUILDER_ACCESS)
-def report_load(token: str, report: dict) -> None:
+def report_load(
+	token: str, report: dict, candidate_id: str | None = None, page_id: str | None = None
+) -> None:
 	"""The editor tells Bob how the plugin loaded. Keyed by user, so no one answers for another."""
 	if not isinstance(report, dict) or len(json.dumps(report)) > MAX_REPORT_BYTES:
 		frappe.throw(_("The load report is not valid."))
+	if candidate_id:
+		from builder.ai.artifacts import Artifact
+
+		assert_plugin_manager()
+		artifact, value = Artifact.get(candidate_id, page_id, "plugin")
+		if artifact.owner != frappe.session.user or value["token"] != token:
+			frappe.throw(_("This test belongs to another candidate"), frappe.PermissionError)
+		if artifact.status != "testing":
+			return
+		value["report"] = report
+		passed = bool(report.get("registered")) and not any(
+			report.get(key) for key in ("error", "problems", "disabled")
+		)
+		artifact.status = "verified" if passed else "failed"
+		artifact.payload_json = json.dumps(value)
+		artifact.save(ignore_permissions=True)
 	frappe.cache.set_value(load_report_key(frappe.session.user, token), report, expires_in_sec=120)
 
 
 def get_load_report(user: str, token: str) -> dict | None:
 	# expires: a poll must reach redis each time, not the request-local copy of its first miss
 	return frappe.cache.get_value(load_report_key(user, token), expires=True)
+
+
+def stage_plugin(page_id: str, args: dict, run_id: str | None = None):
+	"""Keep an uninstalled candidate until its exact source passes the editor checks."""
+	from builder.ai.artifacts import Artifact
+	from builder.ai.revisions import digest
+
+	assert_plugin_manager()
+	slug = (args.get("name") or "").strip().removeprefix(f"{PUBLISHER}/")
+	if not SLUG_PATTERN.fullmatch(slug):
+		raise ValueError("A plugin name holds lowercase letters, digits and hyphens")
+	code = args.get("code") or ""
+	if len(code) > 100_000 or (error := syntax_error(code)):
+		raise ValueError(error if len(code) <= 100_000 else "Plugin source exceeds 100 KB")
+	doc = get_or_new_installation(f"{PUBLISHER}/{slug}")
+	version = next_version(doc.version)
+	label = str(args.get("label") or slug)[:140]
+	package = build_package(f"{PUBLISHER}/{slug}", label, args.get("description") or "", version, code, None)
+	validate_package(package, f"{PUBLISHER}/{slug}", version)
+	value = {
+		"slug": slug,
+		"label": label,
+		"code": code,
+		"description": args.get("description") or "",
+		"icon": args.get("icon"),
+		"version": version,
+		"base_version": doc.version,
+		"token": frappe.generate_hash(length=32),
+	}
+	return Artifact.save(
+		page_id,
+		"plugin",
+		value,
+		identity=digest({"run": run_id, "code": code, "slug": slug}),
+		run=run_id,
+		status="testing",
+	), value
+
+
+@frappe.whitelist()
+def get_candidate(page_id: str, candidate_id: str):
+	from builder.ai.artifacts import Artifact
+
+	assert_plugin_manager()
+	doc, value = Artifact.get(candidate_id, page_id, "plugin")
+	if doc.owner != frappe.session.user:
+		frappe.throw(_("This plugin candidate belongs to another user"), frappe.PermissionError)
+	return {"code": value["code"], "label": value["label"]}
+
+
+def activate_candidate(payload: dict) -> str:
+	from builder.ai.artifacts import Artifact
+
+	assert_plugin_manager()
+	artifact, value = Artifact.get(payload["candidate_id"], payload["page_id"], "plugin")
+	frappe.db.get_value("Builder AI Artifact", artifact.name, "name", for_update=True)
+	artifact.reload()
+	if artifact.status == "activated":
+		return "This exact plugin candidate is already installed."
+	if artifact.status != "verified":
+		raise ValueError("The candidate has not passed the editor checks. Ask Bob to test it again.")
+	current = get_or_new_installation(f"{PUBLISHER}/{value['slug']}")
+	if current.version != value["base_version"]:
+		raise ValueError("The installed plugin changed since this candidate was tested. Refresh it first.")
+	doc = save_plugin(value["slug"], value["label"], value["description"], value["code"], value.get("icon"))
+	artifact.status = "activated"
+	artifact.save(ignore_permissions=True)
+	return f"Installed {doc.label} {doc.version}. It loads on the next editor reload. Registry and render checks passed; custom interactions still need a user check."

@@ -1,5 +1,6 @@
 import json
 import re
+from copy import deepcopy
 from typing import ClassVar
 
 import frappe
@@ -9,6 +10,18 @@ from frappe import _
 from builder.utils import to_compact_yaml
 
 STANDARD_ATTRS = {"src", "darkSrc", "alt", "href", "title", "value", "type", "placeholder"}
+PRESERVED_FIELDS = (
+	"dataKey",
+	"dynamicValues",
+	"visibilityCondition",
+	"editorConfig",
+	"componentVersion",
+	"originalElement",
+	"elementBeforeConversion",
+	"draggable",
+	"blockClientScript",
+	"isRepeaterBlock",
+)
 
 
 class BlockCodec:
@@ -103,11 +116,9 @@ class BlockCodec:
 		# Props compressed to name -> effective value (declarations on a definition,
 		# per-page values on an instance).
 		if isinstance(block.get("props"), dict) and block["props"]:
-			from builder.builder.doctype.builder_component.builder_component import (
-				get_component_prop_values,
-			)
-
-			out["props"] = get_component_prop_values(block)
+			out["props"] = deepcopy(block["props"])
+		if metadata := {key: deepcopy(block[key]) for key in PRESERVED_FIELDS if key in block}:
+			out["meta"] = metadata
 		# Repeaters and bindings read back in the same vocabulary they're written in
 		# (repeat/bind) — without them a data-driven block reads as a plain div and
 		# its dynamic wiring is invisible.
@@ -181,6 +192,7 @@ class BlockCodec:
 			("child_of", "isChildOfComponent"),
 			("of", "referenceBlockId"),
 			("client_script", "clientScript"),
+			("props", "props"),
 		]:
 			if yaml_key in node:
 				block[block_key] = node[yaml_key]
@@ -199,7 +211,25 @@ class BlockCodec:
 			if isinstance(repeat.get("item"), dict):
 				block["children"] = [BlockCodec.expand(repeat["item"])]
 
+		BlockCodec.restore_metadata(node, block)
 		return block
+
+	@staticmethod
+	def restore_metadata(node: dict, block: dict):
+		metadata = node.get("meta") if isinstance(node.get("meta"), dict) else {}
+		for key in PRESERVED_FIELDS:
+			if key not in metadata:
+				continue
+			if key == "dynamicValues" and "bind" in node:
+				old = {value.get("property"): value for value in metadata[key] if isinstance(value, dict)}
+				for value in block.get(key, []):
+					previous = old.get(value.get("property"), {})
+					if all(previous.get(field) == value.get(field) for field in ("key", "comesFrom")):
+						value.update(deepcopy(previous))
+			elif key == "dataKey" and "repeat" in node:
+				block[key] = {**deepcopy(metadata[key]), **block.get(key, {})}
+			else:
+				block[key] = deepcopy(metadata[key])
 
 	@staticmethod
 	def extract_block_id(block_context: str) -> str | None:

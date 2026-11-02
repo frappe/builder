@@ -30,5 +30,14 @@ class BuilderAISession(Document):
 		since a page deletes its sessions, that made a chat the user had once opened
 		enough to block deleting the page itself. on_trash runs before the link
 		check, so clearing them here is what lets both deletes through."""
+		from builder.ai.runs import AIRun
+
+		if AIRun.active(self.name):
+			frappe.throw("Stop the active Bob turn before deleting this chat or its page.")
+		if frappe.db.exists("Builder AI Message", {"session": self.name, "status": "action_applying"}):
+			frappe.throw("Resolve the applying Bob action before deleting this chat or its page.")
+		for run in frappe.get_all("Builder AI Run", filters={"session": self.name}, pluck="name"):
+			frappe.db.delete("Builder AI Event", {"run": run})
+			frappe.db.delete("Builder AI Artifact", {"run": run})
 		frappe.db.delete("Builder AI Message", {"session": self.name})
 		frappe.db.delete("Builder AI Run", {"session": self.name})

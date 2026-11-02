@@ -16,6 +16,8 @@ export type PluginContext = {
 	state: PluginState;
 	/** What the Open button in the plugin's details pane runs. Without one, the pane shows no button. */
 	setOpenHandler: (handler: () => void) => void;
+	/** Dispose listeners, observers, timers and other resources on replacement/unload. */
+	onDispose: (cleanup: () => void) => void;
 };
 
 export type RunnablePlugin = {
@@ -52,10 +54,50 @@ const browserState = (plugin: string): PluginState => {
 /** Reactive. The details pane shows its Open button from this. */
 export const openHandlers = reactive(new Map<string, () => void>());
 
-export const createPluginContext = (plugin: RunnablePlugin): PluginContext => ({
-	name: plugin.name,
-	label: plugin.label,
-	version: plugin.version,
-	state: plugin.isDevelopment ? browserState(plugin.name) : serverState(plugin.name),
-	setOpenHandler: (handler) => openHandlers.set(plugin.name, handler),
-});
+export function preparePluginContext(plugin: RunnablePlugin) {
+	const cleanup: Array<() => void> = [];
+	let handler: (() => void) | undefined;
+	let disposed = false;
+	let active = false;
+	const context: PluginContext = {
+		name: plugin.name,
+		label: plugin.label,
+		version: plugin.version,
+		state: plugin.isDevelopment ? browserState(plugin.name) : serverState(plugin.name),
+		setOpenHandler: (value) => {
+			if (disposed) return;
+			handler = value;
+			if (active) openHandlers.set(plugin.name, handler);
+		},
+		onDispose: (callback) => {
+			if (disposed) callback();
+			else cleanup.push(callback);
+		},
+	};
+	return {
+		context,
+		activate: () => {
+			if (disposed) return;
+			active = true;
+			if (handler) openHandlers.set(plugin.name, handler);
+		},
+		dispose: () => {
+			if (disposed) return;
+			disposed = true;
+			if (openHandlers.get(plugin.name) === handler) openHandlers.delete(plugin.name);
+			for (const callback of cleanup.reverse()) {
+				try {
+					callback();
+				} catch (error) {
+					console.error("Plugin disposal failed", error);
+				}
+			}
+		},
+	};
+}
+
+export function createPluginContext(plugin: RunnablePlugin): PluginContext {
+	const managed = preparePluginContext(plugin);
+	managed.activate();
+	return managed.context;
+}

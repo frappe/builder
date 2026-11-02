@@ -1,7 +1,7 @@
 import type { App, Plugin } from "vue";
 import { reactive } from "vue";
-import { trackPluginItems, unregisterPluginItems } from "@/utils/createRegistry";
-import { createPluginContext, type PluginContext, type RunnablePlugin } from "./context";
+import { collectPluginItems, trackPluginItems, unregisterPluginItems } from "@/utils/createRegistry";
+import { preparePluginContext, type PluginContext, type RunnablePlugin } from "./context";
 
 type LoadedPlugin = { plugin: RunnablePlugin; vuePlugin: Plugin };
 
@@ -16,6 +16,7 @@ export const runningPlugins = reactive(new Set<string>());
 
 /** The entry each running plugin came from. The same URL is the same module, which Vue will not install twice. */
 const runningEntries = new Map<string, string>();
+const disposers = new Map<string, () => void>();
 
 export const getRunningEntry = (plugin: string) => runningEntries.get(plugin);
 
@@ -36,11 +37,23 @@ export async function importPlugin(plugin: RunnablePlugin): Promise<Plugin> {
 }
 
 // not app.use: it skips a plugin object it has seen, and going back to a release reuses its cached module
-const runInstall = (app: App, vuePlugin: Plugin, context: PluginContext) =>
-	typeof vuePlugin === "function" ? vuePlugin(app, context) : vuePlugin.install(app, context);
+const runInstall = (app: App, vuePlugin: Plugin, context: PluginContext) => {
+	const install = typeof vuePlugin === "function" ? vuePlugin : vuePlugin.install;
+	if (install.constructor.name === "AsyncFunction") throw new Error("Plugin install must be synchronous");
+	return install(app, context);
+};
 
 const install = (app: App, { plugin, vuePlugin }: LoadedPlugin) => {
-	trackPluginItems(plugin.name, () => runInstall(app, vuePlugin, createPluginContext(plugin)));
+	const managed = preparePluginContext(plugin);
+	try {
+		trackPluginItems(plugin.name, () => runInstall(app, vuePlugin, managed.context));
+	} catch (error) {
+		managed.dispose();
+		throw error;
+	}
+	disposers.get(plugin.name)?.();
+	managed.activate();
+	disposers.set(plugin.name, managed.dispose);
 	runningPlugins.add(plugin.name);
 	runningEntries.set(plugin.name, plugin.entryUrl);
 };
@@ -83,12 +96,13 @@ export async function loadPlugin(plugin: RunnablePlugin) {
  */
 export async function replacePlugin(plugin: RunnablePlugin) {
 	const vuePlugin = await importPlugin(plugin);
-	unregisterPluginItems(plugin.name);
 	install(getEditorApp(), { plugin, vuePlugin });
 }
 
 /** Takes a plugin's items off the editor. Its module stays in memory until the next reload. */
 export function unloadPlugin(plugin: string) {
+	disposers.get(plugin)?.();
+	disposers.delete(plugin);
 	unregisterPluginItems(plugin);
 	runningPlugins.delete(plugin);
 	runningEntries.delete(plugin);
@@ -97,4 +111,19 @@ export function unloadPlugin(plugin: string) {
 export function getEditorApp(): App {
 	if (!editorApp) throw new Error("The editor has not started, so it cannot load a plugin");
 	return editorApp;
+}
+
+/** Inspect registrations without publishing them into the editor. Call dispose after rendering checks. */
+export async function inspectPlugin(plugin: RunnablePlugin) {
+	const vuePlugin = await importPlugin(plugin);
+	const managed = preparePluginContext(plugin);
+	try {
+		const entries = collectPluginItems(plugin.name, () =>
+			runInstall(getEditorApp(), vuePlugin, managed.context),
+		);
+		return { entries, dispose: managed.dispose };
+	} catch (error) {
+		managed.dispose();
+		throw error;
+	}
 }

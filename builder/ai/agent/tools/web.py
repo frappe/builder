@@ -101,6 +101,12 @@ RESEARCH_LIMIT = 6_000
 
 
 def run_research(ctx, args: dict) -> str:
+	from builder.ai.workflow import drive_sync
+
+	return drive_sync(iter_research(ctx, args))
+
+
+def iter_research(ctx, args: dict):
 	question = (args.get("question") or "").strip()
 	if not question:
 		return "FAILED: pass `question` — what to find out."
@@ -123,7 +129,21 @@ def run_research(ctx, args: dict) -> str:
 	]
 	try:
 		# ':online' is the provider's web-search variant of the SAME model.
-		text = llm.complete(f"{routed}:online", messages, {}, stream=False, api_key=api_key)
+		from builder.ai.workflow import ModelRequest
+
+		request = ModelRequest(
+			f"{routed}:online", messages, {"max_tokens": 1500}, api_key=api_key, tools=[], stream=False
+		)
+		from builder.ai.budgets import begin_attempt, finish_attempt
+
+		entry = begin_attempt(ctx, request, "research")
+		try:
+			response = yield request
+			ctx.record_usage(response, model=f"{routed}:online")
+		finally:
+			finish_attempt(entry, "provider_complete" if entry.get("usage") else "interrupted")
+
+		text = response.choices[0].message.content
 	except Exception as e:
 		return (
 			f"FAILED: research call failed ({type(e).__name__}) — fall back to read_url or proceed without."

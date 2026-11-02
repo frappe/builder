@@ -51,6 +51,8 @@ TRANSIENT_ERROR_NAMES = frozenset(
 # Failures the user can fix themselves, by class name (same MRO match as is_retryable).
 # Fixed wording only: the provider's own message can carry keys or internal ids.
 USER_FIXABLE_ERRORS = {
+	"RepairLimitError": "Several repair attempts failed. Your saved changes are intact; review the issue and continue with a different approach.",
+	"ContextBudgetError": "This turn reached the selected model or turn budget. Review the saved work, select a smaller section, or continue in another turn.",
 	"AuthenticationError": "The AI provider rejected the API key. Change it with /providers.",
 	"PermissionDeniedError": "The AI provider refused this request for your account. Check the key's access with /providers.",
 	"NotFoundError": "The selected model isn't available from its provider. Pick another with /model.",
@@ -246,10 +248,7 @@ def complete(model: str, messages: list, params: dict, *, stream: bool, api_key:
 	model, overrides, api_key = route(model, api_key)
 	patch_messages_for_provider(model, messages)
 	params = patch_params_for_provider(model, params)
-	logger.info(
-		f"LLM | model={model} stream={stream} params={params}\n"
-		+ "\n".join(f"[{m['role']}] {m['content']!s}" for m in messages)
-	)
+	logger.info("LLM | model=%s stream=%s messages=%d", model, stream, len(messages))
 	resp = litellm.completion(
 		model=model,
 		messages=messages,
@@ -269,7 +268,7 @@ def complete(model: str, messages: list, params: dict, *, stream: bool, api_key:
 	)
 	if not stream:
 		content = resp.choices[0].message.content or ""
-		logger.info(f"LLM response | length={len(content)}\n{content}")
+		logger.info("LLM response | length=%d", len(content))
 		return content
 	return resp
 
@@ -292,8 +291,7 @@ def complete_with_tools(
 	patch_messages_for_provider(model, messages)
 	params = patch_params_for_provider(model, params)
 	logger.info(
-		f"LLM tools | model={model} stream={stream} tools={[t['function']['name'] for t in tools]}\n"
-		+ "\n".join(f"[{m['role']}] {m['content']}" for m in messages)
+		"LLM tools | model=%s stream=%s tools=%d messages=%d", model, stream, len(tools), len(messages)
 	)
 	resp = litellm.completion(
 		model=model,

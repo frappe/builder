@@ -16,6 +16,8 @@ from builder.ai.session import AISession
 # Sensitive action kinds the confirm card understands. Kept explicit so an unknown
 # kind can never be applied.
 KINDS = {
+	"acquire_paid_asset",
+	"activate_plugin",
 	"home_page",
 	"global_settings",
 	"create_doctype",
@@ -38,7 +40,12 @@ def not_permitted(action: str) -> str:
 
 def request_confirmation(ctx, kind: str, summary: str, payload: dict) -> None:
 	"""Persist + emit a pending sensitive action, then end the turn without mutating."""
-	metadata = {"status": "pending_action", "kind": kind, "payload": payload}
+	metadata = {
+		"runId": getattr(ctx, "run_id", None),
+		"status": "pending_action",
+		"kind": kind,
+		"payload": payload,
+	}
 	# The card is this turn's ONLY persisted message — without the timeline and
 	# trace, everything the turn did before proposing (a whole page build) is
 	# invisible on reload and undebuggable after the fact.
@@ -71,7 +78,12 @@ def apply_pending_action(kind: str, payload: dict) -> str:
 	if kind not in KINDS:
 		frappe.throw(frappe._("Unknown pending action: {0}").format(kind))
 	payload = payload or {}
+	from builder.ai.media import acquire_paid_asset
+	from builder.plugins.bob import activate_candidate
+
 	return {
+		"activate_plugin": activate_candidate,
+		"acquire_paid_asset": acquire_paid_asset,
 		"home_page": apply_home_page,
 		"global_settings": apply_global_settings,
 		"create_doctype": apply_create_doctype,

@@ -24,6 +24,7 @@ from builder.ai.block_codec import BlockCodec
 from builder.ai.models import ModelRegistry
 from builder.ai.prompts import Prompts
 from builder.ai.session import AISession
+from builder.ai.workflow import ModelRequest, consume_stream, drive_sync
 from builder.public_fetch import public_session
 
 logger = frappe.logger("builder.ai.agent.artifact")
@@ -118,15 +119,18 @@ def found_photo_list(ctx) -> str:
 	found = [
 		asset
 		for asset in getattr(ctx, "found_images", None) or []
-		if asset.get("url") and not asset.get("preview_only") and not asset.get("requires_acquisition")
+		if asset.get("url")
+		and not asset.get("preview_only")
+		and not asset.get("requires_acquisition")
+		and asset.get("role") not in ("reference", "undecided")
 	]
 	if not found:
 		return ""
 	preamble = (
 		"PHOTOS AVAILABLE for this page — real results already searched for you. Use these "
-		"EXACT urls in img src (copy character for character, never retype or guess one), and "
-		"give every section that wants a photo one of them rather than falling back to a CSS "
-		"composition. Unused ones are fine to ignore."
+		"EXACT urls in img src (copy character for character, never retype or guess one) "
+		"when their subject serves a content role. Preserve the user's selected images. "
+		"Do not add imagery just to use every search result."
 	)
 	lines = [preamble]
 	for i, p in enumerate(found, 1):
@@ -225,7 +229,7 @@ def clear_stream_buffer(page_id: str | None) -> None:
 		frappe.cache().delete_value(stream_buffer_key(page_id))
 
 
-def generate_page_yaml(ctx, args: dict) -> list[dict]:
+def iter_page_candidate(ctx, args: dict) -> list[dict]:
 	"""Stream a complete page of YAML on the heavy model, persist it to the page
 	(the server is authoritative), and return a `generate_page` client op carrying
 	the expanded block tree — the canvas applies that, so both sides share block ids.
@@ -236,6 +240,12 @@ def generate_page_yaml(ctx, args: dict) -> list[dict]:
 	(live preview only — the returned op is the final word).
 	Returns [] if the model produced nothing usable.
 	"""
+	from builder.ai.content_locks import locked_paths
+
+	if locked_paths(ctx.tree.root if ctx.tree else None):
+		raise ValueError(
+			"This page contains protected sections. Edit the remaining sections individually or ask the user to unlock them before regenerating."
+		)
 	brief = (args.get("brief") or "").strip()
 
 	messages: list[dict] = [
@@ -286,41 +296,41 @@ def generate_page_yaml(ctx, args: dict) -> list[dict]:
 	buffered_at = 0
 	if usage := getattr(ctx, "usage", None):
 		usage["attempts"] = usage.get("attempts", 0) + 1
-	stream = llm.complete(
-		ctx.model,  # heavy model — generation quality
-		messages,
-		llm.TASK_PARAMS["complex"],
-		stream=True,
-		api_key=ctx.api_key,
-	)
+	request = ModelRequest(ctx.model, messages, llm.TASK_PARAMS["complex"], api_key=ctx.api_key)
+
+	from builder.ai.budgets import begin_attempt, finish_attempt
+
+	entry = begin_attempt(ctx, request, "page_generation")
+	status = "interrupted"
+
+	def consume(chunk):
+		nonlocal yaml_content, finish_reason, buffered_at
+		if ctx.is_cancelled():
+			from builder.ai.agent.loop import CancelledError
+
+			raise CancelledError
+		ctx.record_usage(chunk, model=ctx.model)  # generation streams on the heavy model
+		if not chunk.choices:
+			return
+		if fr := chunk.choices[0].finish_reason:
+			finish_reason = fr
+		delta = chunk.choices[0].delta.content
+		if delta:
+			# offset = position of this chunk in the full stream, so a client that
+			# replayed the buffer (mid-build refresh) can drop duplicates / detect gaps.
+			offset = len(yaml_content.encode("utf-16-le")) // 2
+			yaml_content += delta
+			ctx.emit("stream", chunk=delta, kind="page_yaml", offset=offset, generation_id=ctx.generation_id)
+			if len(yaml_content) - buffered_at >= 512:
+				buffered_at = len(yaml_content)
+				save_stream_buffer(ctx, yaml_content)
+
 	try:
-		for chunk in stream:
-			if ctx.is_cancelled():
-				# The streamed canvas is provisional; cancellation preserves the draft.
-				try:
-					stream.close()
-				except Exception:
-					pass
-				logger.info("generate_page_yaml: cancelled mid-stream, preserving the previous draft")
-				break
-			ctx.record_usage(chunk, model=ctx.model)  # generation streams on the heavy model
-			if not chunk.choices:
-				continue
-			if fr := chunk.choices[0].finish_reason:
-				finish_reason = fr
-			delta = chunk.choices[0].delta.content
-			if delta:
-				# offset = position of this chunk in the full stream, so a client that
-				# replayed the buffer (mid-build refresh) can drop duplicates / detect gaps.
-				offset = len(yaml_content.encode("utf-16-le")) // 2
-				yaml_content += delta
-				ctx.emit(
-					"stream", chunk=delta, kind="page_yaml", offset=offset, generation_id=ctx.generation_id
-				)
-				if len(yaml_content) - buffered_at >= 512:
-					buffered_at = len(yaml_content)
-					save_stream_buffer(ctx, yaml_content)
+		yield from consume_stream(request, consume)
+		status = "provider_complete"
 	finally:
+		entry["finish_reason"] = finish_reason
+		finish_attempt(entry, status)
 		# The buffer only serves mid-build refreshes; once this function returns the
 		# draft is persisted (or the turn failed/cancelled) and the DB is the truth.
 		clear_stream_buffer(ctx.page_id)
@@ -337,10 +347,24 @@ def generate_page_yaml(ctx, args: dict) -> list[dict]:
 		logger.warning("generate_page_yaml: nothing to persist (model=%s, page=%s)", ctx.model, ctx.page_id)
 		return []
 
+	return yaml_text
+
+
+def generate_page_yaml(ctx, args):
+	return persist_candidate(ctx, drive_sync(iter_page_candidate(ctx, args)))
+
+
+def persist_candidate(ctx, yaml_text):
+	if not yaml_text:
+		return []
+
 	from builder.ai import page_writer
 	from builder.ai.brief import validate_asset_usage
 
 	validate_asset_usage(getattr(ctx, "found_images", []) or [], yaml_text)
+	from builder.ai.revisions import require_revision
+
+	require_revision(ctx.page_id, getattr(ctx, "expected_revision", None))
 	root, data_script = page_writer.persist_page(ctx.page_id, yaml_text)
 	if root is None:
 		# A discarded generation is paid-for work — keep the raw text for diagnosis

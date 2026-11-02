@@ -14,7 +14,8 @@
   "selected_model",
   "last_task_type",
   "last_interaction_on",
-  "is_running"
+  "is_running",
+  "deleted_on"
  ],
  "fields": [
   {
@@ -43,7 +44,7 @@
    "fieldtype": "Select",
    "in_list_view": 1,
    "label": "Status",
-   "options": "Active\nArchived",
+   "options": "Active\nArchived\nDeleted",
    "reqd": 1
   },
   {
@@ -68,6 +69,12 @@
    "fieldname": "is_running",
    "fieldtype": "Check",
    "label": "Is Running"
+  },
+  {
+   "fieldname": "deleted_on",
+   "fieldtype": "Datetime",
+   "label": "Deleted On",
+   "read_only": 1
   }
  ],
  "grid_page_length": 50,

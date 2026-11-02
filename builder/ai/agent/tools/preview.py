@@ -128,10 +128,12 @@ def run_preview_page(ctx, args: dict) -> str:
 			return f"FAILED: {why}."
 	if not page_id or not frappe.db.exists("Builder Page", page_id):
 		return "FAILED: no page in context — open or create a page first."
-	if ctx.preview_count >= MAX_PREVIEWS_PER_TURN:
-		return "Preview limit reached for this turn — proceed with what you have."
-	ctx.preview_count += 1
+	counter = "preview_count" if page_id == ctx.page_id else "reference_count"
+	if getattr(ctx, counter, 0) >= MAX_PREVIEWS_PER_TURN:
+		return "Preview limit reached for this purpose — report any remaining unverified work."
+	setattr(ctx, counter, getattr(ctx, counter, 0) + 1)
 	page = frappe.get_doc("Builder Page", page_id)
+	page.check_permission("read")
 	viewport = args.get("viewport") if args.get("viewport") in VIEWPORT_WIDTHS else "desktop"
 	color_scheme = args.get("color_scheme") if args.get("color_scheme") in COLOR_SCHEMES else "light"
 	variant = f"{viewport}, {color_scheme} mode"
@@ -198,13 +200,9 @@ def run_preview_page(ctx, args: dict) -> str:
 		"children (update_block on its child_of refs) so it names this page. Orphaned "
 		"content: an empty styled box with its intended content stacked outside it means "
 		"children landed as siblings of their container; move_block them into it.\n"
-		"2. Generated look, six yes/no checks: (a) is the signature move visible? (b) are "
-		"sections structurally distinct (widths, grids, densities), not one centred column "
-		"with background swaps? (c) does the largest text read at least ~3.5x the body size? "
-		"(d) are photos treated (scrim, duotone, knockout, frame) rather than plain "
-		"rectangles? (e) does the page look like the brief's named concept? (f) is it free of "
-		"the AI tells in your instructions (an eyebrow over every heading, gradient headline "
-		"text, stock phrases, invented stats or testimonials, an icon tile on every item)?\n"
+		"2. Brief fit: does the composition match the chosen direction, real content, and "
+		"accepted/rejected decisions? Look for generic filler, invented claims and unreadable "
+		"photo overlays. Dense or quiet designs are valid when the brief asks for them.\n"
 		"Fix failures with surgical edits on the specific blocks (update_block, update_blocks, "
 		"set_page_script), never by regenerating the page. If a fix changes layout or "
 		"structure, spend your remaining preview confirming it landed before you summarize. "

@@ -116,22 +116,27 @@ user_invitation = {
 # Hook on document methods and events
 
 doc_events = {
+	"*": {
+		"before_save": "builder.ai.effects.capture_document",
+		"before_insert": "builder.ai.effects.capture_document",
+	},
 	"User Invitation": {
 		"after_insert": "builder.user_invitation.capture_user_invited",
-	}
+	},
 }
 
 # Scheduled Tasks
 # ---------------
 
 scheduler_events = {
+	"daily": ["builder.ai.events.prune"],
 	"cron": {
 		"* * * * *": ["builder.ai.runs.dispatch_queued_runs"],
 		"*/10 * * * *": [
 			"builder.builder_analytics.ingest_web_page_views_to_duckdb",
 			"builder.builder_analytics.ingest_clicks_to_duckdb",
 		],
-	}
+	},
 }
 
 # Testing
@@ -219,3 +224,6 @@ add_to_apps_screen = [
 # Expose method source code through the API discovery endpoints. Safe for open
 # source apps and helps API clients understand what a method does.
 expose_discovery_source = True
+
+permission_query_conditions = {"Builder AI Memory": "builder.ai.memory.permission_query"}
+has_permission = {"Builder AI Memory": "builder.ai.memory.has_permission"}

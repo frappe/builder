@@ -1,6 +1,6 @@
 import { ref } from "vue";
 import { describe, expect, it } from "vitest";
-import { createRegistry, type RegistryItem } from "./createRegistry";
+import { createRegistry, trackPluginItems, unregisterPluginItems, type RegistryItem } from "./createRegistry";
 
 type TestItem = RegistryItem & { label?: string };
 
@@ -147,5 +147,43 @@ describe("createRegistry", () => {
 		removeOld();
 		expect(names(registry.visible.value)).toEqual(["tab"]);
 		expect(registry.visible.value[0].label).toBe("new");
+	});
+});
+
+describe("plugin replacement", () => {
+	it("keeps the previous registrations and order when any new registration fails", () => {
+		const registry = createRegistry<TestItem>();
+		registry.register({ name: "built-in" });
+		trackPluginItems("atomic", () => registry.register({ name: "atomic-tab", label: "old" }));
+		expect(() =>
+			trackPluginItems("atomic", () => {
+				registry.register({ name: "atomic-tab", label: "new", before: "built-in" });
+				registry.register({ name: "built-in" });
+			}),
+		).toThrow("belongs to another");
+		expect(registry.all.value.map((item) => [item.name, item.label])).toEqual([
+			["built-in", undefined],
+			["atomic-tab", "old"],
+		]);
+		unregisterPluginItems("atomic");
+		expect(names(registry.all.value)).toEqual(["built-in"]);
+	});
+
+	it("disposes renamed entries and does not resurrect prior versions on unload", () => {
+		const registry = createRegistry<TestItem>();
+		trackPluginItems("replace", () => {
+			registry.register({ name: "tab", label: "first" });
+			registry.register({ name: "old-name" });
+		});
+		trackPluginItems("replace", () => registry.register({ name: "tab", label: "second" }));
+		expect(registry.all.value).toMatchObject([{ name: "tab", label: "second" }]);
+		unregisterPluginItems("replace");
+		expect(registry.all.value).toEqual([]);
+	});
+
+	it("honors disposal before staged items are committed", () => {
+		const registry = createRegistry<TestItem>();
+		trackPluginItems("cancelled", () => registry.register({ name: "cancelled" })());
+		expect(registry.all.value).toEqual([]);
 	});
 });

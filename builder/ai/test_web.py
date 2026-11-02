@@ -1,5 +1,5 @@
 from types import SimpleNamespace
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
 from frappe.tests.utils import FrappeTestCase
 
@@ -20,6 +20,8 @@ def ctx(**overrides):
 		"loop_model": "openrouter/test-model",
 		"model": "openrouter/test-model",
 		"api_key": "key",
+		"usage": {},
+		"record_usage": Mock(),
 	}
 	return SimpleNamespace(**{**defaults, **overrides})
 
@@ -77,11 +79,16 @@ class TestReadUrl(FrappeTestCase):
 
 class TestResearch(FrappeTestCase):
 	def test_uses_the_online_variant_of_the_loop_model(self):
-		with patch("builder.ai.llm.complete", return_value="- Finding (https://src)") as complete:
-			out = run_research(ctx(), {"question": "What are Café Nine's opening hours?"})
+		context = ctx()
+		response = SimpleNamespace(
+			choices=[SimpleNamespace(message=SimpleNamespace(content="- Finding (https://src)"))]
+		)
+		with patch("builder.ai.llm.complete_with_tools", return_value=response) as complete:
+			out = run_research(context, {"question": "What are Café Nine's opening hours?"})
 
 		self.assertEqual(out, "- Finding (https://src)")
 		self.assertTrue(complete.call_args.args[0].endswith(":online"))
+		context.record_usage.assert_called_once_with(response, model="openrouter/test-model:online")
 
 	def test_falls_back_helpfully_off_openrouter(self):
 		out = run_research(ctx(loop_model="codex/gpt-x", model="codex/gpt-x"), {"question": "q"})

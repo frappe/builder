@@ -9,7 +9,14 @@ import * as frappeUI from "frappe-ui";
 import { call } from "frappe-ui";
 import { createVNode, isVNode, nextTick, render, type Component, type VNode } from "vue";
 import type { RunnablePlugin } from "./context";
-import { getEditorApp, getRunningEntry, loadPlugin, replacePlugin, runningPlugins } from "./loader";
+import {
+	getEditorApp,
+	getRunningEntry,
+	inspectPlugin,
+	loadPlugin,
+	replacePlugin,
+	runningPlugins,
+} from "./loader";
 
 /** What Bob's write_plugin tool sent: the release to load and the token to answer with. */
 export type PluginLoadRequest = {
@@ -18,6 +25,8 @@ export type PluginLoadRequest = {
 	version: string;
 	entry_url: string;
 	token: string;
+	candidate_id?: string;
+	page_id?: string;
 };
 
 type RegisteredItem = { surface: string; name: string; label: string };
@@ -73,10 +82,13 @@ const handledTokens = new Set<string>();
 export async function tryPlugin(request: PluginLoadRequest) {
 	if (handledTokens.has(request.token)) return;
 	handledTokens.add(request.token);
-	const report = await loadAndCheck(request);
-	await call("builder.plugins.bob.report_load", { token: request.token, report }).catch((error: Error) =>
-		console.error("[builder] could not report the plugin load", error),
-	);
+	const report = request.candidate_id ? await inspectCandidate(request) : await loadAndCheck(request);
+	await call("builder.plugins.bob.report_load", {
+		token: request.token,
+		report,
+		candidate_id: request.candidate_id,
+		page_id: request.page_id,
+	}).catch((error: Error) => console.error("[builder] could not report the plugin load", error));
 	await reloadInstallations();
 	for (const item of report.registered ?? []) {
 		if (item.surface === "leftPanelTabs") unseenTabs.add(item.name);
@@ -305,4 +317,48 @@ function describeError(error: unknown, entryUrl: string): string {
 	const entry = new URL(entryUrl, window.location.origin).href;
 	const lines = text.split(entry).join("main.js").split("\n");
 	return [...new Set(lines)].slice(0, 6).join("\n");
+}
+
+async function inspectCandidate(request: PluginLoadRequest): Promise<LoadReport> {
+	if (pluginsDisabled.value) return { disabled: true };
+	let dispose = () => {};
+	let entryUrl = "";
+	try {
+		const candidate = await call<{ code: string }>("builder.plugins.bob.get_candidate", {
+			page_id: request.page_id,
+			candidate_id: request.candidate_id,
+		});
+		entryUrl = URL.createObjectURL(new Blob([candidate.code], { type: "text/javascript" }));
+		const staged = await inspectPlugin({
+			name: request.plugin,
+			label: request.label,
+			version: request.version,
+			entryUrl,
+		});
+		dispose = staged.dispose;
+		const entries = staged.entries.map((entry) => ({
+			item: entry.item as AnyItem,
+			surface:
+				Object.entries(registries).find(([, registry]) => registry.all === entry.surface)?.[0] || "unknown",
+		}));
+		const registered = entries.map(({ item, surface }) => ({
+			surface,
+			name: item.name,
+			label: item.label || item.name,
+		}));
+		const components = entries
+			.map((entry) => entry.item)
+			.filter((item): item is RenderableItem => Boolean(item.component));
+		const problems = [
+			...iconProblems(entries.map((entry) => entry.item)),
+			...(await checkComponents(components, entryUrl)),
+		];
+		if (!registered.length) problems.push("The plugin registers no editor controls");
+		return { registered, problems };
+	} catch (error) {
+		return { error: describeError(error, entryUrl || request.entry_url) };
+	} finally {
+		dispose();
+		if (entryUrl) URL.revokeObjectURL(entryUrl);
+	}
 }

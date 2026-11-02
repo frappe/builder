@@ -338,7 +338,9 @@ class TestRepeaterCompilation(unittest.TestCase):
 
 	def test_existing_script_is_preserved_and_no_partial_page_write_occurs(self):
 		db = MagicMock()
-		db.get_value.return_value = "data.existing = 'preserve this'"
+		db.get_value.side_effect = lambda doctype, name, fields, **kw: (
+			(None, None) if isinstance(fields, list) else "data.existing = 'preserve this'"
+		)
 		with patch.object(frappe, "db", db), self.assertRaisesRegex(ValueError, "existing page_data_script"):
 			page_writer.persist_page("fixture", yaml.safe_dump(repeater()))
 		db.set_value.assert_not_called()
@@ -347,6 +349,9 @@ class TestRepeaterCompilation(unittest.TestCase):
 		node = repeater()
 		del node["repeat"]["items"]
 		db = MagicMock()
+		db.get_value.side_effect = lambda doctype, name, fields, **kw: (
+			(None, None) if isinstance(fields, list) else None
+		)
 		with patch.object(frappe, "db", db):
 			page_writer.persist_page("fixture", yaml.safe_dump(node))
 		self.assertNotIn("page_data_script", db.set_value.call_args.args[2])

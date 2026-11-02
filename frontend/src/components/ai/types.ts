@@ -106,9 +106,11 @@ export interface AIRunEvent {
 	run_id: string;
 	seq: number;
 	session_id: string;
+	journal?: boolean;
 }
 
 export interface AISession {
+	deleted_session?: string;
 	session_id: string;
 	messages: ChatMessage[];
 	active_run: AIRun | null;

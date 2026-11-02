@@ -5,4 +5,7 @@ from frappe.model.document import Document
 
 
 class BuilderAIMemory(Document):
-	pass
+	def validate(self):
+		from builder.ai.memory import validate
+
+		validate(self)

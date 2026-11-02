@@ -32,6 +32,24 @@ const readOnly = () => builderStore.readOnlyMode;
 
 const options: ContextMenuOption[] = [
 	{
+		name: "protect-from-bob",
+		label: __("Protect from Bob edits"),
+		action: ({ block }) => {
+			block.editorConfig = { ...block.editorConfig, aiLocked: true };
+		},
+		condition: ({ block }) => !block.editorConfig?.aiLocked,
+		disabled: readOnly,
+	},
+	{
+		name: "allow-bob-edits",
+		label: __("Allow Bob edits"),
+		action: ({ block }) => {
+			block.editorConfig = { ...block.editorConfig, aiLocked: false };
+		},
+		condition: ({ block }) => !!block.editorConfig?.aiLocked,
+		disabled: readOnly,
+	},
+	{
 		name: "edit-html",
 		label: __("Edit HTML"),
 		action: ({ block }) => canvasStore.editHTML(block),

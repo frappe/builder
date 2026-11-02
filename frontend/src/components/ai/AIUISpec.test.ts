@@ -58,6 +58,12 @@ describe("card submissions", () => {
 			"submit",
 			expect.stringContaining("Photo: Morning: Sunlit bread\n[image: https://photo/original]"),
 			"Morning · Real bakery",
+			expect.objectContaining({
+				cardId: "card",
+				answers: expect.arrayContaining([
+					expect.objectContaining({ fieldId: "field-1", value: "Real bakery" }),
+				]),
+			}),
 		);
 		expect(emit.mock.calls[0][1]).toContain("Business: Real bakery");
 		expect(emit.mock.calls[0][1]).not.toContain("https://photo/thumb");
@@ -97,7 +103,12 @@ describe("asset picker selection", () => {
 		const emit = vi.fn();
 		const card = scope.run(() => exports.default.setup(props, { expose: () => {}, emit }));
 		card.onOptionClick(0, props.ui[0], 0, option);
-		expect(emit).toHaveBeenCalledWith("submit", expect.stringContaining("[asset: magnific:42]"), "Studio");
+		expect(emit).toHaveBeenCalledWith(
+			"submit",
+			expect.stringContaining("[asset: magnific:42]"),
+			"Studio",
+			expect.objectContaining({ cardId: "single" }),
+		);
 		expect(emit.mock.calls[0][1]).not.toContain("https://preview/42");
 		expect(emit.mock.calls[0][1]).toContain("https://library/42");
 	});

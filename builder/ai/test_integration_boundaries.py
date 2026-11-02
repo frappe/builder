@@ -139,6 +139,18 @@ class TestIntegrationBoundaries(FrappeTestCase):
 					)
 				self.assertEqual(frappe.db.get_value("User", "Administrator", "enabled"), 1)
 
+	def test_public_reference_is_not_offered_as_page_imagery(self):
+		runner = AgentRunner("edit", "test/model", "test")
+		runner.found_images = [
+			{"url": "/files/reference.png", "role": "reference"},
+			{"url": "/files/undecided.png", "role": "undecided"},
+			{"url": "/files/product.png", "role": "product"},
+		]
+		inventory = found_photo_list(runner)
+		self.assertIn("/files/product.png", inventory)
+		self.assertNotIn("/files/reference.png", inventory)
+		self.assertNotIn("/files/undecided.png", inventory)
+
 	def test_startup_failure_is_visible_in_chat(self):
 		run, _ = AIRun.admit(self.session.name, self.page.name, "test/model")
 		with patch("builder.ai.llm.resolve_api_key", side_effect=ValueError("no key")):

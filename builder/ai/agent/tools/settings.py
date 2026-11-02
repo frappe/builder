@@ -32,6 +32,7 @@ PAGE_SETTING_FIELDS = {
 def set_page_settings(ctx, args: dict) -> str:
 	if not ctx.page_id:
 		return "No page in context."
+	frappe.get_doc("Builder Page", ctx.page_id).check_permission("write")
 	updates = {f: args[f] for f in PAGE_SETTING_FIELDS if f in args and args[f] is not None}
 	if args.get("route"):
 		route = args["route"].strip().strip("/")
@@ -130,14 +131,14 @@ def set_design_token(ctx, args: dict) -> str:
 		doc = frappe.get_doc("Builder Token", existing)
 		doc.update(fields)
 		# Full save (not db.set_value) so on_update busts the rendered-CSS cache.
-		doc.save(ignore_permissions=True)
+		doc.save()
 		emit_refetch(ctx, "variables")
 		return f"Updated theme variable '{doc.token_name}' — reference it in styles as var(--{doc.name})."
 	doc = frappe.get_doc(
 		{"doctype": "Builder Token", "token_name": label, "group": "Brand", **fields}
 		# set_name survives naming (insert clears doc.name before autoname runs),
 		# so the caller can know the var(--<id>) handle before the doc exists.
-	).insert(ignore_permissions=True, set_name=wanted_id or None)
+	).insert(set_name=wanted_id or None)
 	emit_refetch(ctx, "variables")
 	return (
 		f"Created theme variable '{label}'. Reference it in styles EXACTLY as var(--{doc.name}) — "

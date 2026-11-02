@@ -18,7 +18,10 @@
   "supports_vision",
   "max_tokens",
   "column_break_cap",
-  "frontier_rank"
+  "frontier_rank",
+  "supports_tools",
+  "supports_streaming",
+  "max_output_tokens"
  ],
  "fields": [
   {
@@ -92,6 +95,23 @@
    "label": "Frontier Rank",
    "read_only": 1,
    "description": "Where discovery placed it among its provider's models, best first."
+  },
+  {
+   "fieldname": "supports_tools",
+   "fieldtype": "Check",
+   "label": "Tool Calling",
+   "default": 1
+  },
+  {
+   "fieldname": "supports_streaming",
+   "fieldtype": "Check",
+   "label": "Streaming",
+   "default": 1
+  },
+  {
+   "fieldname": "max_output_tokens",
+   "fieldtype": "Int",
+   "label": "Maximum Output Tokens"
   }
  ],
  "grid_page_length": 50,

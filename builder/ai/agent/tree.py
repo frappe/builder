@@ -252,11 +252,14 @@ def update_definition(component: str, mutate) -> None:
 
 	if not frappe.db.exists("Builder Component", component):
 		return
-	definition = frappe.parse_json(frappe.db.get_value("Builder Component", component, "block") or "{}")
+	doc = frappe.get_doc("Builder Component", component)
+	doc.check_permission("write")
+	definition = frappe.parse_json(doc.block or "{}")
 	if not isinstance(definition, dict):
 		return
 	mutate(definition)
-	frappe.db.set_value("Builder Component", component, "block", json.dumps(definition), update_modified=True)
+	doc.block = json.dumps(definition)
+	doc.save()
 
 
 def merge_bindings(block: dict, bind: dict) -> None:

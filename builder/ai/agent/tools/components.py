@@ -51,6 +51,14 @@ def run_extract_component(ctx, args: dict) -> str:
 		"extendedFromComponent": component_id,
 		"children": component_instance_children(component_id),
 	}
+	for style_key in ("baseStyles", "mobileStyles", "tabletStyles"):
+		placement = {
+			key: value
+			for key, value in target.get(style_key, {}).items()
+			if key in {"left", "top", "position"}
+		}
+		if placement:
+			instance[style_key] = placement
 	children = parent["children"]
 	children[next(i for i, c in enumerate(children) if c.get("blockId") == block_id)] = instance
 	ctx.queue_client_op({"tool_name": "set_page_blocks", "args": {"blocks": tree}})
@@ -79,7 +87,7 @@ def create_component_doc(name: str, block: dict) -> str:
 			"component_id": component_id,
 			"block": compact_json(block),
 		}
-	).insert(ignore_permissions=True)
+	).insert()
 	return component_id
 
 

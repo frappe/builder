@@ -48,5 +48,5 @@ class TestQueryRecords(FrappeTestCase):
 			)
 		)
 
-		self.assertIn(f"read_page('{page.name}')", rows[0]["draft_blocks"])
-		self.assertLessEqual(len(rows[0]["meta_description"]), FIELD_CAP + 1)
+		self.assertIn(f"read_page('{page.name}')", rows["records"][0]["draft_blocks"])
+		self.assertLessEqual(len(rows["records"][0]["meta_description"]), FIELD_CAP + 1)

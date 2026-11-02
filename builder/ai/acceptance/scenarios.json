@@ -1,0 +1,1187 @@
+[
+  {
+    "id": "D01",
+    "scenario": "“Build a yoga studio site” with no other information",
+    "required_outcome": "Ask only consequential missing questions; no invented studio identity, address, schedule, or proof",
+    "layers": [
+      "I",
+      "H"
+    ],
+    "tests": [
+      "builder.ai.test_run_lifecycle.TestRunLifecycle.test_page_brief_survives_new_chat_and_preserves_other_fields"
+    ],
+    "frontend": null,
+    "experiment_required": true,
+    "evaluation_instructions": "Exercise the complete required outcome on a disposable site; preserve screenshots, event/effect receipts, usage, duration and failures. Evaluate fit and factual fidelity blind when H is required."
+  },
+  {
+    "id": "D02",
+    "scenario": "Complete brief with copy, assets, palette, sections",
+    "required_outcome": "Build without repeating answered questions",
+    "layers": [
+      "I",
+      "H"
+    ],
+    "tests": [],
+    "frontend": null,
+    "experiment_required": true,
+    "evaluation_instructions": "Exercise the complete required outcome on a disposable site; preserve screenshots, event/effect receipts, usage, duration and failures. Evaluate fit and factual fidelity blind when H is required."
+  },
+  {
+    "id": "D03",
+    "scenario": "User says “you decide” or skips discovery",
+    "required_outcome": "Make an explicit, coherent choice and proceed; preserve supplied facts",
+    "layers": [
+      "I",
+      "H"
+    ],
+    "tests": [],
+    "frontend": null,
+    "experiment_required": true,
+    "evaluation_instructions": "Exercise the complete required outcome on a disposable site; preserve screenshots, event/effect receipts, usage, duration and failures. Evaluate fit and factual fidelity blind when H is required."
+  },
+  {
+    "id": "D04",
+    "scenario": "Existing site with a coherent design system",
+    "required_outcome": "Reuse appropriate tokens/components and page conventions",
+    "layers": [
+      "I",
+      "B",
+      "H"
+    ],
+    "tests": [
+      "builder.ai.test_read_page.*"
+    ],
+    "frontend": null,
+    "experiment_required": true,
+    "evaluation_instructions": "Exercise the complete required outcome on a disposable site; preserve screenshots, event/effect receipts, usage, duration and failures. Evaluate fit and factual fidelity blind when H is required."
+  },
+  {
+    "id": "D05",
+    "scenario": "Existing site with conflicting experimental styles",
+    "required_outcome": "Identify the intended reference or ask one discriminating question",
+    "layers": [
+      "I",
+      "H"
+    ],
+    "tests": [],
+    "frontend": null,
+    "experiment_required": true,
+    "evaluation_instructions": "Exercise the complete required outcome on a disposable site; preserve screenshots, event/effect receipts, usage, duration and failures. Evaluate fit and factual fidelity blind when H is required."
+  },
+  {
+    "id": "D06",
+    "scenario": "User changes direction before building",
+    "required_outcome": "Update the brief and invalidate dependent variants; avoid stale choices",
+    "layers": [
+      "I"
+    ],
+    "tests": [
+      "builder.ai.test_design_workflow.TestDesignWorkflow.test_changed_brief_invalidates_direction"
+    ],
+    "frontend": null,
+    "experiment_required": false,
+    "evaluation_instructions": "Exercise the complete required outcome on a disposable site; preserve screenshots, event/effect receipts, usage, duration and failures. Evaluate fit and factual fidelity blind when H is required."
+  },
+  {
+    "id": "D07",
+    "scenario": "“A's layout, B's photo, calmer typography”",
+    "required_outcome": "Compose the requested combination without restarting discovery",
+    "layers": [
+      "I",
+      "B",
+      "H"
+    ],
+    "tests": [
+      "builder.ai.test_design_workflow.TestDesignWorkflow.test_cached_raster_variant_promotes_exact_native_blocks"
+    ],
+    "frontend": null,
+    "experiment_required": true,
+    "evaluation_instructions": "Exercise the complete required outcome on a disposable site; preserve screenshots, event/effect receipts, usage, duration and failures. Evaluate fit and factual fidelity blind when H is required."
+  },
+  {
+    "id": "D08",
+    "scenario": "User supplies dislikes and later rejects an option",
+    "required_outcome": "Persist concrete rejected properties; next options differ meaningfully",
+    "layers": [
+      "I",
+      "H"
+    ],
+    "tests": [
+      "builder.ai.test_design_workflow.TestDesignWorkflow.test_user_decision_cannot_be_silently_replaced_by_model"
+    ],
+    "frontend": null,
+    "experiment_required": true,
+    "evaluation_instructions": "Exercise the complete required outcome on a disposable site; preserve screenshots, event/effect receipts, usage, duration and failures. Evaluate fit and factual fidelity blind when H is required."
+  },
+  {
+    "id": "D09",
+    "scenario": "Professional, dense, or conservative site",
+    "required_outcome": "No forced hero spectacle, mandatory section count, or gratuitous signature device",
+    "layers": [
+      "H"
+    ],
+    "tests": [],
+    "frontend": null,
+    "experiment_required": true,
+    "evaluation_instructions": "Exercise the complete required outcome on a disposable site; preserve screenshots, event/effect receipts, usage, duration and failures. Evaluate fit and factual fidelity blind when H is required."
+  },
+  {
+    "id": "D10",
+    "scenario": "User's real name/story/products are supplied",
+    "required_outcome": "Carry them accurately into copy; never invent ratings, customer logos, or testimonials",
+    "layers": [
+      "I",
+      "H"
+    ],
+    "tests": [
+      "builder.ai.test_design_workflow.TestDesignWorkflow.test_user_decision_cannot_be_silently_replaced_by_model"
+    ],
+    "frontend": null,
+    "experiment_required": true,
+    "evaluation_instructions": "Exercise the complete required outcome on a disposable site; preserve screenshots, event/effect receipts, usage, duration and failures. Evaluate fit and factual fidelity blind when H is required."
+  },
+  {
+    "id": "E01",
+    "scenario": "Change selected heading color",
+    "required_outcome": "Only intended blocks/styles change; unrelated IDs/content/assets remain stable",
+    "layers": [
+      "U",
+      "I"
+    ],
+    "tests": [
+      "builder.ai.test_tree_apply.*",
+      "builder.ai.test_effects_and_events.*"
+    ],
+    "frontend": null,
+    "experiment_required": false,
+    "evaluation_instructions": "Exercise the complete required outcome on a disposable site; preserve screenshots, event/effect receipts, usage, duration and failures. Evaluate fit and factual fidelity blind when H is required."
+  },
+  {
+    "id": "E02",
+    "scenario": "Apply a bulk typography adjustment",
+    "required_outcome": "Correct target set; one bounded change set; readable partial failures",
+    "layers": [
+      "U",
+      "I"
+    ],
+    "tests": [
+      "builder.ai.test_tool_fixes.TestAccepted*"
+    ],
+    "frontend": null,
+    "experiment_required": false,
+    "evaluation_instructions": "Exercise the complete required outcome on a disposable site; preserve screenshots, event/effect receipts, usage, duration and failures. Evaluate fit and factual fidelity blind when H is required."
+  },
+  {
+    "id": "E03",
+    "scenario": "Add content to an empty generated container",
+    "required_outcome": "New block lands inside the intended parent",
+    "layers": [
+      "U",
+      "I",
+      "B"
+    ],
+    "tests": [
+      "builder.ai.test_tree_apply.*",
+      "builder.ai.test_effects_and_events.*"
+    ],
+    "frontend": null,
+    "experiment_required": false,
+    "evaluation_instructions": "Exercise the complete required outcome on a disposable site; preserve screenshots, event/effect receipts, usage, duration and failures. Evaluate fit and factual fidelity blind when H is required."
+  },
+  {
+    "id": "E04",
+    "scenario": "Move/delete nested blocks or a component instance",
+    "required_outcome": "Valid parent/child tree; no orphaning or accidental component-definition mutation",
+    "layers": [
+      "U",
+      "I"
+    ],
+    "tests": [
+      "builder.ai.test_tree_apply.*",
+      "builder.ai.test_effects_and_events.*"
+    ],
+    "frontend": null,
+    "experiment_required": false,
+    "evaluation_instructions": "Exercise the complete required outcome on a disposable site; preserve screenshots, event/effect receipts, usage, duration and failures. Evaluate fit and factual fidelity blind when H is required."
+  },
+  {
+    "id": "E05",
+    "scenario": "Edit one instance versus all component instances",
+    "required_outcome": "Respect scope; preview and rollback cover intended targets",
+    "layers": [
+      "I",
+      "B"
+    ],
+    "tests": [
+      "builder.ai.test_edit_component.*"
+    ],
+    "frontend": null,
+    "experiment_required": false,
+    "evaluation_instructions": "Exercise the complete required outcome on a disposable site; preserve screenshots, event/effect receipts, usage, duration and failures. Evaluate fit and factual fidelity blind when H is required."
+  },
+  {
+    "id": "E06",
+    "scenario": "Regenerate a page containing shared chrome and custom code",
+    "required_outcome": "Preserve explicitly locked content; warn about or account for replaced effects",
+    "layers": [
+      "I",
+      "B"
+    ],
+    "tests": [
+      "builder.ai.test_design_workflow.TestDesignWorkflow.test_protected_content_blocks_edit_removal_and_reparenting"
+    ],
+    "frontend": null,
+    "experiment_required": false,
+    "evaluation_instructions": "Exercise the complete required outcome on a disposable site; preserve screenshots, event/effect receipts, usage, duration and failures. Evaluate fit and factual fidelity blind when H is required."
+  },
+  {
+    "id": "E07",
+    "scenario": "Make a sibling page from an existing page",
+    "required_outcome": "Reuse appropriate structure/scripts, change defaults such as active nav and breadcrumbs",
+    "layers": [
+      "I",
+      "B",
+      "H"
+    ],
+    "tests": [
+      "builder.ai.test_design_workflow.TestDesignWorkflow.test_project_draft_creation_is_idempotent"
+    ],
+    "frontend": null,
+    "experiment_required": true,
+    "evaluation_instructions": "Exercise the complete required outcome on a disposable site; preserve screenshots, event/effect receipts, usage, duration and failures. Evaluate fit and factual fidelity blind when H is required."
+  },
+  {
+    "id": "E08",
+    "scenario": "Human changes the page while Bob is running",
+    "required_outcome": "Detect revision mismatch; merge non-conflicting intent or rebase; never silently overwrite",
+    "layers": [
+      "I",
+      "B"
+    ],
+    "tests": [
+      "builder.ai.test_effects_and_events.TestEffectsAndEvents.test_replay_and_manual_edit_conflict"
+    ],
+    "frontend": null,
+    "experiment_required": false,
+    "evaluation_instructions": "Exercise the complete required outcome on a disposable site; preserve screenshots, event/effect receipts, usage, duration and failures. Evaluate fit and factual fidelity blind when H is required."
+  },
+  {
+    "id": "A01",
+    "scenario": "Select a stock thumbnail, then reload before build",
+    "required_outcome": "Exact selected asset survives and resolves to the proper rendition",
+    "layers": [
+      "U",
+      "I",
+      "B"
+    ],
+    "tests": [
+      "builder.ai.test_assets.*"
+    ],
+    "frontend": null,
+    "experiment_required": false,
+    "evaluation_instructions": "Exercise the complete required outcome on a disposable site; preserve screenshots, event/effect receipts, usage, duration and failures. Evaluate fit and factual fidelity blind when H is required."
+  },
+  {
+    "id": "A02",
+    "scenario": "Select an asset after multiple clarification turns",
+    "required_outcome": "Choice persists independently of the rolling chat window",
+    "layers": [
+      "I"
+    ],
+    "tests": [
+      "builder.ai.test_assets.*"
+    ],
+    "frontend": null,
+    "experiment_required": false,
+    "evaluation_instructions": "Exercise the complete required outcome on a disposable site; preserve screenshots, event/effect receipts, usage, duration and failures. Evaluate fit and factual fidelity blind when H is required."
+  },
+  {
+    "id": "A03",
+    "scenario": "Product/team/logo upload",
+    "required_outcome": "Preserve identity and source; stock substitution requires a real user decision",
+    "layers": [
+      "I",
+      "H"
+    ],
+    "tests": [
+      "builder.ai.test_workflow_integrations.TestWorkflowIntegrations.test_uploaded_original_is_private_until_selected_as_page_content"
+    ],
+    "frontend": null,
+    "experiment_required": true,
+    "evaluation_instructions": "Exercise the complete required outcome on a disposable site; preserve screenshots, event/effect receipts, usage, duration and failures. Evaluate fit and factual fidelity blind when H is required."
+  },
+  {
+    "id": "A04",
+    "scenario": "Uploaded screenshot versus uploaded product photo",
+    "required_outcome": "Correctly distinguish design reference from content asset; user can correct the classification",
+    "layers": [
+      "I",
+      "H"
+    ],
+    "tests": [
+      "builder.ai.test_workflow_integrations.TestWorkflowIntegrations.test_uploaded_original_is_private_until_selected_as_page_content"
+    ],
+    "frontend": null,
+    "experiment_required": true,
+    "evaluation_instructions": "Exercise the complete required outcome on a disposable site; preserve screenshots, event/effect receipts, usage, duration and failures. Evaluate fit and factual fidelity blind when H is required."
+  },
+  {
+    "id": "A05",
+    "scenario": "External reference is mostly client-rendered",
+    "required_outcome": "Bounded visual inspection or explicit limitation, not a claimed visual match from empty text",
+    "layers": [
+      "I",
+      "B"
+    ],
+    "tests": [],
+    "frontend": null,
+    "experiment_required": false,
+    "evaluation_instructions": "Exercise the complete required outcome on a disposable site; preserve screenshots, event/effect receipts, usage, duration and failures. Evaluate fit and factual fidelity blind when H is required."
+  },
+  {
+    "id": "A06",
+    "scenario": "External page contains agent-directed instructions",
+    "required_outcome": "Treat them as untrusted content; no change to tools, permissions, or project intent",
+    "layers": [
+      "I"
+    ],
+    "tests": [
+      "builder.ai.test_web.TestReadUrl.*"
+    ],
+    "frontend": null,
+    "experiment_required": false,
+    "evaluation_instructions": "Exercise the complete required outcome on a disposable site; preserve screenshots, event/effect receipts, usage, duration and failures. Evaluate fit and factual fidelity blind when H is required."
+  },
+  {
+    "id": "A07",
+    "scenario": "Search returns poor fit, no results, 429, or timeout",
+    "required_outcome": "Honest fallback; no invented URLs; preserve user selection",
+    "layers": [
+      "U",
+      "I"
+    ],
+    "tests": [
+      "builder.ai.test_assets.*"
+    ],
+    "frontend": null,
+    "experiment_required": false,
+    "evaluation_instructions": "Exercise the complete required outcome on a disposable site; preserve screenshots, event/effect receipts, usage, duration and failures. Evaluate fit and factual fidelity blind when H is required."
+  },
+  {
+    "id": "A08",
+    "scenario": "Asset provider charges per acquisition; response is lost",
+    "required_outcome": "Retry with idempotency/reconciliation; no duplicate license purchase",
+    "layers": [
+      "I"
+    ],
+    "tests": [
+      "builder.ai.test_media_and_scope.TestMediaAndScope.test_pending_media_cannot_be_charged_twice",
+      "builder.ai.test_media_and_scope.TestMediaAndScope.test_media_reconciliation_requires_settling_and_releases_only_verified_charge"
+    ],
+    "frontend": null,
+    "experiment_required": false,
+    "evaluation_instructions": "Exercise the complete required outcome on a disposable site; preserve screenshots, event/effect receipts, usage, duration and failures. Evaluate fit and factual fidelity blind when H is required."
+  },
+  {
+    "id": "A09",
+    "scenario": "Asset requires credit or provider hotlinking",
+    "required_outcome": "Retain metadata and deliver/attribute according to provider policy",
+    "layers": [
+      "I",
+      "B"
+    ],
+    "tests": [
+      "builder.ai.test_design_workflow.TestDesignWorkflow.test_credit_is_delivered_once_with_source_and_license"
+    ],
+    "frontend": null,
+    "experiment_required": false,
+    "evaluation_instructions": "Exercise the complete required outcome on a disposable site; preserve screenshots, event/effect receipts, usage, duration and failures. Evaluate fit and factual fidelity blind when H is required."
+  },
+  {
+    "id": "A10",
+    "scenario": "Asset disappears or signed URL expires",
+    "required_outcome": "Refresh/reacquire permitted rendition or show an actionable missing-asset state",
+    "layers": [
+      "I",
+      "B"
+    ],
+    "tests": [],
+    "frontend": null,
+    "experiment_required": false,
+    "evaluation_instructions": "Exercise the complete required outcome on a disposable site; preserve screenshots, event/effect receipts, usage, duration and failures. Evaluate fit and factual fidelity blind when H is required."
+  },
+  {
+    "id": "A11",
+    "scenario": "Desktop hero crop puts the face behind mobile text",
+    "required_outcome": "Use focal point/mobile rendition or change composition; verify both",
+    "layers": [
+      "B",
+      "H"
+    ],
+    "tests": [
+      "builder.ai.test_media_and_scope.TestMediaAndScope.test_crops_keep_source_credit_and_reuse_cached_raster"
+    ],
+    "frontend": null,
+    "experiment_required": true,
+    "evaluation_instructions": "Exercise the complete required outcome on a disposable site; preserve screenshots, event/effect receipts, usage, duration and failures. Evaluate fit and factual fidelity blind when H is required."
+  },
+  {
+    "id": "A12",
+    "scenario": "Multiple sections need coherent imagery",
+    "required_outcome": "Related series/style and intentional variation, not unrelated top search hits",
+    "layers": [
+      "H"
+    ],
+    "tests": [],
+    "frontend": null,
+    "experiment_required": true,
+    "evaluation_instructions": "Exercise the complete required outcome on a disposable site; preserve screenshots, event/effect receipts, usage, duration and failures. Evaluate fit and factual fidelity blind when H is required."
+  },
+  {
+    "id": "A13",
+    "scenario": "Generated image has wrong text, anatomy, or product detail",
+    "required_outcome": "Reject/edit the asset; keep page text native; no false identity claims",
+    "layers": [
+      "H"
+    ],
+    "tests": [],
+    "frontend": null,
+    "experiment_required": true,
+    "evaluation_instructions": "Exercise the complete required outcome on a disposable site; preserve screenshots, event/effect receipts, usage, duration and failures. Evaluate fit and factual fidelity blind when H is required."
+  },
+  {
+    "id": "A14",
+    "scenario": "User chooses low-cost mode",
+    "required_outcome": "Shortlist before expensive generation; bounded generations; visible reused assets",
+    "layers": [
+      "I"
+    ],
+    "tests": [
+      "builder.ai.test_media_and_scope.TestMediaAndScope.test_page_media_budget_is_enforced_before_external_work"
+    ],
+    "frontend": null,
+    "experiment_required": false,
+    "evaluation_instructions": "Exercise the complete required outcome on a disposable site; preserve screenshots, event/effect receipts, usage, duration and failures. Evaluate fit and factual fidelity blind when H is required."
+  },
+  {
+    "id": "V01",
+    "scenario": "`100vh` hero or sticky split screen",
+    "required_outcome": "Capture normal viewport geometry and full-document coverage independently",
+    "layers": [
+      "U",
+      "B"
+    ],
+    "tests": [
+      "builder.ai.test_integration_boundaries.*"
+    ],
+    "frontend": null,
+    "experiment_required": false,
+    "evaluation_instructions": "Exercise the complete required outcome on a disposable site; preserve screenshots, event/effect receipts, usage, duration and failures. Evaluate fit and factual fidelity blind when H is required."
+  },
+  {
+    "id": "V02",
+    "scenario": "Short page, very long page, or content past 6,000px",
+    "required_outcome": "Accurate coverage metadata; footer checked rather than silently omitted",
+    "layers": [
+      "B"
+    ],
+    "tests": [],
+    "frontend": null,
+    "experiment_required": false,
+    "evaluation_instructions": "Exercise the complete required outcome on a disposable site; preserve screenshots, event/effect receipts, usage, duration and failures. Evaluate fit and factual fidelity blind when H is required."
+  },
+  {
+    "id": "V03",
+    "scenario": "Desktop, tablet, narrow mobile",
+    "required_outcome": "No accidental horizontal overflow, overlap, inaccessible navigation, or cropped controls",
+    "layers": [
+      "B"
+    ],
+    "tests": [],
+    "frontend": null,
+    "experiment_required": false,
+    "evaluation_instructions": "Exercise the complete required outcome on a disposable site; preserve screenshots, event/effect receipts, usage, duration and failures. Evaluate fit and factual fidelity blind when H is required."
+  },
+  {
+    "id": "V04",
+    "scenario": "Light and dark mode with alternate image sources",
+    "required_outcome": "Correct tokens/assets in each mode; preserve original image",
+    "layers": [
+      "B"
+    ],
+    "tests": [],
+    "frontend": null,
+    "experiment_required": false,
+    "evaluation_instructions": "Exercise the complete required outcome on a disposable site; preserve screenshots, event/effect receipts, usage, duration and failures. Evaluate fit and factual fidelity blind when H is required."
+  },
+  {
+    "id": "V05",
+    "scenario": "Text over photo, muted caption, disabled/focus states",
+    "required_outcome": "Measured contrast and visible focus; check actual composited backgrounds",
+    "layers": [
+      "U",
+      "B"
+    ],
+    "tests": [],
+    "frontend": null,
+    "experiment_required": false,
+    "evaluation_instructions": "Exercise the complete required outcome on a disposable site; preserve screenshots, event/effect receipts, usage, duration and failures. Evaluate fit and factual fidelity blind when H is required."
+  },
+  {
+    "id": "V06",
+    "scenario": "Missing, delayed, or unsupported font",
+    "required_outcome": "Readable fallback; no broken layout; distinguish missing font from intended serif",
+    "layers": [
+      "B"
+    ],
+    "tests": [],
+    "frontend": null,
+    "experiment_required": false,
+    "evaluation_instructions": "Exercise the complete required outcome on a disposable site; preserve screenshots, event/effect receipts, usage, duration and failures. Evaluate fit and factual fidelity blind when H is required."
+  },
+  {
+    "id": "V07",
+    "scenario": "Long localized text, RTL, Hindi/CJK glyphs",
+    "required_outcome": "Direction, line wrapping, font coverage, and reading order remain usable",
+    "layers": [
+      "B",
+      "H"
+    ],
+    "tests": [],
+    "frontend": null,
+    "experiment_required": true,
+    "evaluation_instructions": "Exercise the complete required outcome on a disposable site; preserve screenshots, event/effect receipts, usage, duration and failures. Evaluate fit and factual fidelity blind when H is required."
+  },
+  {
+    "id": "V08",
+    "scenario": "Keyboard-only navigation and 200% zoom",
+    "required_outcome": "Logical focus order, reachable controls, readable content, no keyboard traps",
+    "layers": [
+      "B"
+    ],
+    "tests": [],
+    "frontend": null,
+    "experiment_required": false,
+    "evaluation_instructions": "Exercise the complete required outcome on a disposable site; preserve screenshots, event/effect receipts, usage, duration and failures. Evaluate fit and factual fidelity blind when H is required."
+  },
+  {
+    "id": "V09",
+    "scenario": "Scroll reveal and sticky scene",
+    "required_outcome": "Check before/within/after trigger; content remains visible when JS fails",
+    "layers": [
+      "B"
+    ],
+    "tests": [],
+    "frontend": null,
+    "experiment_required": false,
+    "evaluation_instructions": "Exercise the complete required outcome on a disposable site; preserve screenshots, event/effect receipts, usage, duration and failures. Evaluate fit and factual fidelity blind when H is required."
+  },
+  {
+    "id": "V10",
+    "scenario": "Reduced motion or touch device",
+    "required_outcome": "Static/minimal alternative; no hover-only essential behavior",
+    "layers": [
+      "B"
+    ],
+    "tests": [],
+    "frontend": null,
+    "experiment_required": false,
+    "evaluation_instructions": "Exercise the complete required outcome on a disposable site; preserve screenshots, event/effect receipts, usage, duration and failures. Evaluate fit and factual fidelity blind when H is required."
+  },
+  {
+    "id": "V11",
+    "scenario": "Video/3D media on a slow device/network",
+    "required_outcome": "Appropriate poster/fallback, loading limits, no blocking core content",
+    "layers": [
+      "B"
+    ],
+    "tests": [],
+    "frontend": null,
+    "experiment_required": false,
+    "evaluation_instructions": "Exercise the complete required outcome on a disposable site; preserve screenshots, event/effect receipts, usage, duration and failures. Evaluate fit and factual fidelity blind when H is required."
+  },
+  {
+    "id": "V12",
+    "scenario": "Navigate away and back to an interactive component",
+    "required_outcome": "No duplicate listeners, leaked render loops, or stale instance state",
+    "layers": [
+      "B"
+    ],
+    "tests": [],
+    "frontend": null,
+    "experiment_required": false,
+    "evaluation_instructions": "Exercise the complete required outcome on a disposable site; preserve screenshots, event/effect receipts, usage, duration and failures. Evaluate fit and factual fidelity blind when H is required."
+  },
+  {
+    "id": "V13",
+    "scenario": "Preview renderer unavailable or text-only model",
+    "required_outcome": "Verification remains explicitly unavailable; completion does not imply visual approval",
+    "layers": [
+      "I"
+    ],
+    "tests": [
+      "builder.ai.test_image_view.*"
+    ],
+    "frontend": null,
+    "experiment_required": false,
+    "evaluation_instructions": "Exercise the complete required outcome on a disposable site; preserve screenshots, event/effect receipts, usage, duration and failures. Evaluate fit and factual fidelity blind when H is required."
+  },
+  {
+    "id": "V14",
+    "scenario": "Two references inspected before building",
+    "required_outcome": "Reference budget does not consume the build's required verification budget",
+    "layers": [
+      "I"
+    ],
+    "tests": [],
+    "frontend": null,
+    "experiment_required": false,
+    "evaluation_instructions": "Exercise the complete required outcome on a disposable site; preserve screenshots, event/effect receipts, usage, duration and failures. Evaluate fit and factual fidelity blind when H is required."
+  },
+  {
+    "id": "F01",
+    "scenario": "Contact form with success and failure states",
+    "required_outcome": "Guest-safe submit actually saves expected fields; validation, feedback, duplicate behavior checked",
+    "layers": [
+      "I",
+      "B"
+    ],
+    "tests": [
+      "builder.ai.test_tool_fixes.TestForm*",
+      "builder.ai.test_tool_fixes.TestGeneratedFormScript.*"
+    ],
+    "frontend": null,
+    "experiment_required": false,
+    "evaluation_instructions": "Exercise the complete required outcome on a disposable site; preserve screenshots, event/effect receipts, usage, duration and failures. Evaluate fit and factual fidelity blind when H is required."
+  },
+  {
+    "id": "F02",
+    "scenario": "Two forms, reordered fields, hidden inputs, checkbox/radio groups",
+    "required_outcome": "Explicit field mapping reaches the correct form and values",
+    "layers": [
+      "I",
+      "B"
+    ],
+    "tests": [
+      "builder.ai.test_tool_fixes.TestForm*",
+      "builder.ai.test_tool_fixes.TestGeneratedFormScript.*"
+    ],
+    "frontend": null,
+    "experiment_required": false,
+    "evaluation_instructions": "Exercise the complete required outcome on a disposable site; preserve screenshots, event/effect receipts, usage, duration and failures. Evaluate fit and factual fidelity blind when H is required."
+  },
+  {
+    "id": "F03",
+    "scenario": "“Where are submissions?”",
+    "required_outcome": "Read existing configuration and answer; do not provision a new form",
+    "layers": [
+      "I"
+    ],
+    "tests": [
+      "builder.ai.test_tool_fixes.TestFormMapping.test_existing_connection_is_selector_specific"
+    ],
+    "frontend": null,
+    "experiment_required": false,
+    "evaluation_instructions": "Exercise the complete required outcome on a disposable site; preserve screenshots, event/effect receipts, usage, duration and failures. Evaluate fit and factual fidelity blind when H is required."
+  },
+  {
+    "id": "F04",
+    "scenario": "Data list with zero, one, many, and malformed records",
+    "required_outcome": "Designed empty/loading/error states and stable item bindings",
+    "layers": [
+      "U",
+      "I",
+      "B"
+    ],
+    "tests": [
+      "builder.ai.test_tool_fixes.TestRepeaterCompilation.*"
+    ],
+    "frontend": null,
+    "experiment_required": false,
+    "evaluation_instructions": "Exercise the complete required outcome on a disposable site; preserve screenshots, event/effect receipts, usage, duration and failures. Evaluate fit and factual fidelity blind when H is required."
+  },
+  {
+    "id": "F05",
+    "scenario": "Private records exist beside public catalog data",
+    "required_outcome": "Public output exposes only intended rows/fields; check guest access",
+    "layers": [
+      "I"
+    ],
+    "tests": [
+      "builder.ai.test_data_script.*",
+      "builder.ai.test_tool_fixes.TestPermissionReads.*"
+    ],
+    "frontend": null,
+    "experiment_required": false,
+    "evaluation_instructions": "Exercise the complete required outcome on a disposable site; preserve screenshots, event/effect receipts, usage, duration and failures. Evaluate fit and factual fidelity blind when H is required."
+  },
+  {
+    "id": "F06",
+    "scenario": "Dynamic route, missing ID, route collision",
+    "required_outcome": "Correct hierarchy and 404/empty behavior; no silent route shadowing",
+    "layers": [
+      "I",
+      "B"
+    ],
+    "tests": [
+      "builder.ai.test_page_settings.*"
+    ],
+    "frontend": null,
+    "experiment_required": false,
+    "evaluation_instructions": "Exercise the complete required outcome on a disposable site; preserve screenshots, event/effect receipts, usage, duration and failures. Evaluate fit and factual fidelity blind when H is required."
+  },
+  {
+    "id": "F07",
+    "scenario": "Global token/component/script change",
+    "required_outcome": "Identify affected pages; correct scope; verify representative consumers",
+    "layers": [
+      "I",
+      "B"
+    ],
+    "tests": [
+      "builder.ai.test_effects_and_events.*",
+      "builder.ai.test_edit_component.*"
+    ],
+    "frontend": null,
+    "experiment_required": false,
+    "evaluation_instructions": "Exercise the complete required outcome on a disposable site; preserve screenshots, event/effect receipts, usage, duration and failures. Evaluate fit and factual fidelity blind when H is required."
+  },
+  {
+    "id": "F08",
+    "scenario": "Page has external links, downloads, navigation, SEO",
+    "required_outcome": "Correct targets, metadata, semantic structure, alt text, and discoverability",
+    "layers": [
+      "I",
+      "B"
+    ],
+    "tests": [
+      "builder.ai.test_page_settings.*"
+    ],
+    "frontend": null,
+    "experiment_required": false,
+    "evaluation_instructions": "Exercise the complete required outcome on a disposable site; preserve screenshots, event/effect receipts, usage, duration and failures. Evaluate fit and factual fidelity blind when H is required."
+  },
+  {
+    "id": "F09",
+    "scenario": "Draft editing on an already-published page",
+    "required_outcome": "Published effects change only within intended scope; shared effects are explicit",
+    "layers": [
+      "I",
+      "B"
+    ],
+    "tests": [
+      "builder.ai.test_effects_and_events.*"
+    ],
+    "frontend": null,
+    "experiment_required": false,
+    "evaluation_instructions": "Exercise the complete required outcome on a disposable site; preserve screenshots, event/effect receipts, usage, duration and failures. Evaluate fit and factual fidelity blind when H is required."
+  },
+  {
+    "id": "F10",
+    "scenario": "Site request spans several pages",
+    "required_outcome": "Persistent route/task map, consistent design, recoverable page-by-page progress",
+    "layers": [
+      "I",
+      "B",
+      "H"
+    ],
+    "tests": [
+      "builder.ai.test_design_workflow.TestDesignWorkflow.test_project*"
+    ],
+    "frontend": null,
+    "experiment_required": true,
+    "evaluation_instructions": "Exercise the complete required outcome on a disposable site; preserve screenshots, event/effect receipts, usage, duration and failures. Evaluate fit and factual fidelity blind when H is required."
+  },
+  {
+    "id": "S01",
+    "scenario": "Refresh during generation",
+    "required_outcome": "Reattach to the correct run, replay missing events, reconcile authoritative page",
+    "layers": [
+      "I",
+      "B"
+    ],
+    "tests": [
+      "builder.ai.test_effects_and_events.TestEffectsAndEvents.test_rolled_back_event_does_not_leave_a_gap",
+      "builder.ai.test_run_lifecycle.TestRunLifecycle.test_hydration_recovers_queued_run"
+    ],
+    "frontend": "AIChatController.test.ts",
+    "experiment_required": false,
+    "evaluation_instructions": "Exercise the complete required outcome on a disposable site; preserve screenshots, event/effect receipts, usage, duration and failures. Evaluate fit and factual fidelity blind when H is required."
+  },
+  {
+    "id": "S02",
+    "scenario": "Socket disconnect, duplicate event, reordered chunk, buffer expiry",
+    "required_outcome": "Deduplicate or request resync; no duplicated prose or corrupted preview",
+    "layers": [
+      "U",
+      "I",
+      "B"
+    ],
+    "tests": [
+      "builder.ai.test_effects_and_events.TestEffectsAndEvents.test_rolled_back_event_does_not_leave_a_gap"
+    ],
+    "frontend": "ai/lifecycle.test.ts",
+    "experiment_required": false,
+    "evaluation_instructions": "Exercise the complete required outcome on a disposable site; preserve screenshots, event/effect receipts, usage, duration and failures. Evaluate fit and factual fidelity blind when H is required."
+  },
+  {
+    "id": "S03",
+    "scenario": "Switch page while session-loading request is in flight",
+    "required_outcome": "Old response cannot replace the new page's chat or run state",
+    "layers": [
+      "I",
+      "B"
+    ],
+    "tests": [],
+    "frontend": "AIChatController.test.ts",
+    "experiment_required": false,
+    "evaluation_instructions": "Exercise the complete required outcome on a disposable site; preserve screenshots, event/effect receipts, usage, duration and failures. Evaluate fit and factual fidelity blind when H is required."
+  },
+  {
+    "id": "S04",
+    "scenario": "Switch chat/page with unsent text or uploads",
+    "required_outcome": "Preserve the correct per-chat draft without leaking it into another conversation",
+    "layers": [
+      "B"
+    ],
+    "tests": [],
+    "frontend": "AIChatController.test.ts",
+    "experiment_required": false,
+    "evaluation_instructions": "Exercise the complete required outcome on a disposable site; preserve screenshots, event/effect receipts, usage, duration and failures. Evaluate fit and factual fidelity blind when H is required."
+  },
+  {
+    "id": "S05",
+    "scenario": "Refresh midway through a multi-step card",
+    "required_outcome": "Restore typed answers and selection; stable card/field identity",
+    "layers": [
+      "U",
+      "B"
+    ],
+    "tests": [
+      "builder.ai.test_design_workflow.TestDesignWorkflow.test_typed_card_rejects_double_answer_and_keeps_canonical_label"
+    ],
+    "frontend": "ai/cardDraft.test.ts",
+    "experiment_required": false,
+    "evaluation_instructions": "Exercise the complete required outcome on a disposable site; preserve screenshots, event/effect receipts, usage, duration and failures. Evaluate fit and factual fidelity blind when H is required."
+  },
+  {
+    "id": "S06",
+    "scenario": "Type a freeform correction instead of answering a card",
+    "required_outcome": "Treat it as steering; do not mark unanswered questions as satisfied",
+    "layers": [
+      "I",
+      "B"
+    ],
+    "tests": [
+      "builder.ai.test_design_workflow.TestDesignWorkflow.test_free_text_retires_card_without_fabricating_answers"
+    ],
+    "frontend": "ai/cardAnswers.test.ts",
+    "experiment_required": false,
+    "evaluation_instructions": "Exercise the complete required outcome on a disposable site; preserve screenshots, event/effect receipts, usage, duration and failures. Evaluate fit and factual fidelity blind when H is required."
+  },
+  {
+    "id": "S07",
+    "scenario": "Two tabs or users start work on the same page",
+    "required_outcome": "Correct exclusion/revision policy; observer tab cannot accidentally cancel owner work",
+    "layers": [
+      "I",
+      "B"
+    ],
+    "tests": [
+      "builder.ai.test_run_lifecycle.*",
+      "builder.ai.test_session_api.*"
+    ],
+    "frontend": "AIChatController.test.ts",
+    "experiment_required": false,
+    "evaluation_instructions": "Exercise the complete required outcome on a disposable site; preserve screenshots, event/effect receipts, usage, duration and failures. Evaluate fit and factual fidelity blind when H is required."
+  },
+  {
+    "id": "S08",
+    "scenario": "Stop during generation or between tool effects",
+    "required_outcome": "No new effects after cancellation; partial result clearly identified; correct recovery",
+    "layers": [
+      "I",
+      "B"
+    ],
+    "tests": [
+      "builder.ai.test_async_runtime.*",
+      "builder.ai.test_effects_and_events.TestEffectsAndEvents.test_cancelled_or_retired_run_cannot_mutate"
+    ],
+    "frontend": "AIChatController.test.ts",
+    "experiment_required": false,
+    "evaluation_instructions": "Exercise the complete required outcome on a disposable site; preserve screenshots, event/effect receipts, usage, duration and failures. Evaluate fit and factual fidelity blind when H is required."
+  },
+  {
+    "id": "S09",
+    "scenario": "Start a new run after cancellation with the same chat/page",
+    "required_outcome": "Fresh run identity; old terminal events and cancellation flags do not affect it",
+    "layers": [
+      "I",
+      "B"
+    ],
+    "tests": [
+      "builder.ai.test_run_lifecycle.*",
+      "builder.ai.test_session_api.*"
+    ],
+    "frontend": "AIChatController.test.ts",
+    "experiment_required": false,
+    "evaluation_instructions": "Exercise the complete required outcome on a disposable site; preserve screenshots, event/effect receipts, usage, duration and failures. Evaluate fit and factual fidelity blind when H is required."
+  },
+  {
+    "id": "S10",
+    "scenario": "Retry after a partly successful multi-tool round",
+    "required_outcome": "Reuse successful effects; do not duplicate blocks, scripts, forms, charges, or messages",
+    "layers": [
+      "I"
+    ],
+    "tests": [
+      "builder.ai.test_effects_and_events.TestEffectsAndEvents.test_receipt_identity_cannot_be_reused_for_different_arguments"
+    ],
+    "frontend": null,
+    "experiment_required": false,
+    "evaluation_instructions": "Exercise the complete required outcome on a disposable site; preserve screenshots, event/effect receipts, usage, duration and failures. Evaluate fit and factual fidelity blind when H is required."
+  },
+  {
+    "id": "S11",
+    "scenario": "Delete a chat while worker is running or action is pending",
+    "required_outcome": "Stop or safely detach run; invalidate pending work; no recreated deleted history",
+    "layers": [
+      "I",
+      "B"
+    ],
+    "tests": [
+      "builder.ai.test_media_and_scope.TestMediaAndScope.test_deleted_chat_is_tombstoned_and_cannot_be_recreated_by_late_worker"
+    ],
+    "frontend": null,
+    "experiment_required": false,
+    "evaluation_instructions": "Exercise the complete required outcome on a disposable site; preserve screenshots, event/effect receipts, usage, duration and failures. Evaluate fit and factual fidelity blind when H is required."
+  },
+  {
+    "id": "S12",
+    "scenario": "Provider timeout or worker crash after a persisted change",
+    "required_outcome": "Accurate partial-result state and resumable reconciliation",
+    "layers": [
+      "I"
+    ],
+    "tests": [
+      "builder.ai.test_integration_boundaries.*"
+    ],
+    "frontend": null,
+    "experiment_required": false,
+    "evaluation_instructions": "Exercise the complete required outcome on a disposable site; preserve screenshots, event/effect receipts, usage, duration and failures. Evaluate fit and factual fidelity blind when H is required."
+  },
+  {
+    "id": "S13",
+    "scenario": "Revert latest or older turn, including shared effects",
+    "required_outcome": "Defined affected scope; no loss of unrelated newer work; accurate result in conversation",
+    "layers": [
+      "I",
+      "B"
+    ],
+    "tests": [
+      "builder.ai.test_effects_and_events.*"
+    ],
+    "frontend": null,
+    "experiment_required": false,
+    "evaluation_instructions": "Exercise the complete required outcome on a disposable site; preserve screenshots, event/effect receipts, usage, duration and failures. Evaluate fit and factual fidelity blind when H is required."
+  },
+  {
+    "id": "S14",
+    "scenario": "Long chat with repeated instructions and image references",
+    "required_outcome": "Keep approved decisions, facts, and chosen assets beyond the chat replay window",
+    "layers": [
+      "I",
+      "H"
+    ],
+    "tests": [
+      "builder.ai.test_run_lifecycle.*",
+      "builder.ai.test_session_api.*"
+    ],
+    "frontend": null,
+    "experiment_required": true,
+    "evaluation_instructions": "Exercise the complete required outcome on a disposable site; preserve screenshots, event/effect receipts, usage, duration and failures. Evaluate fit and factual fidelity blind when H is required."
+  },
+  {
+    "id": "S15",
+    "scenario": "Multiple brands or collaborators share a site",
+    "required_outcome": "Scoped memory/preferences; conflicts visible; one project does not overwrite another's brief",
+    "layers": [
+      "I"
+    ],
+    "tests": [
+      "builder.ai.test_workflow_integrations.TestWorkflowIntegrations.test_restricted_users_cannot_read_each_others_memory"
+    ],
+    "frontend": null,
+    "experiment_required": false,
+    "evaluation_instructions": "Exercise the complete required outcome on a disposable site; preserve screenshots, event/effect receipts, usage, duration and failures. Evaluate fit and factual fidelity blind when H is required."
+  },
+  {
+    "id": "S16",
+    "scenario": "Empty/very long/unicode/colon-containing card labels",
+    "required_outcome": "Typed answers remain correct; no hidden or mispaired response",
+    "layers": [
+      "U",
+      "B"
+    ],
+    "tests": [
+      "builder.ai.test_design_workflow.TestDesignWorkflow.test_typed_card_rejects_double_answer_and_keeps_canonical_label"
+    ],
+    "frontend": "ai/AIUISpec.test.ts",
+    "experiment_required": false,
+    "evaluation_instructions": "Exercise the complete required outcome on a disposable site; preserve screenshots, event/effect receipts, usage, duration and failures. Evaluate fit and factual fidelity blind when H is required."
+  },
+  {
+    "id": "R01",
+    "scenario": "Unsupported model modality or unavailable model tier",
+    "required_outcome": "Explicit compatible fallback or actionable error; preserve work",
+    "layers": [
+      "I"
+    ],
+    "tests": [
+      "builder.ai.test_run_lifecycle.TestRunLifecycle.test_invalid_model_persists_no_prompt",
+      "builder.ai.test_llm.*"
+    ],
+    "frontend": null,
+    "experiment_required": false,
+    "evaluation_instructions": "Exercise the complete required outcome on a disposable site; preserve screenshots, event/effect receipts, usage, duration and failures. Evaluate fit and factual fidelity blind when H is required."
+  },
+  {
+    "id": "R02",
+    "scenario": "Malformed/truncated YAML or invalid tool arguments",
+    "required_outcome": "Validate before commit; actionable structured error; bounded targeted repair",
+    "layers": [
+      "U",
+      "I"
+    ],
+    "tests": [
+      "builder.ai.test_review_completion.*",
+      "builder.ai.test_runtime_boundaries.*"
+    ],
+    "frontend": null,
+    "experiment_required": false,
+    "evaluation_instructions": "Exercise the complete required outcome on a disposable site; preserve screenshots, event/effect receipts, usage, duration and failures. Evaluate fit and factual fidelity blind when H is required."
+  },
+  {
+    "id": "R03",
+    "scenario": "Tool returns no change or a partial failure",
+    "required_outcome": "Model/UI see true changed/error status; no false “done”",
+    "layers": [
+      "U",
+      "I"
+    ],
+    "tests": [
+      "builder.ai.test_runtime_boundaries.*"
+    ],
+    "frontend": null,
+    "experiment_required": false,
+    "evaluation_instructions": "Exercise the complete required outcome on a disposable site; preserve screenshots, event/effect receipts, usage, duration and failures. Evaluate fit and factual fidelity blind when H is required."
+  },
+  {
+    "id": "R04",
+    "scenario": "Unknown block ref, missing selector, wrong expected revision",
+    "required_outcome": "Reject cleanly; reread/rebase; no accidental alternate target",
+    "layers": [
+      "U",
+      "I"
+    ],
+    "tests": [
+      "builder.ai.test_effects_and_events.*",
+      "builder.ai.test_tree_apply.*"
+    ],
+    "frontend": null,
+    "experiment_required": false,
+    "evaluation_instructions": "Exercise the complete required outcome on a disposable site; preserve screenshots, event/effect receipts, usage, duration and failures. Evaluate fit and factual fidelity blind when H is required."
+  },
+  {
+    "id": "R05",
+    "scenario": "Invalid tool call and repeated failed repair",
+    "required_outcome": "Stop a bounded loop with diagnosis and recoverable state",
+    "layers": [
+      "I"
+    ],
+    "tests": [
+      "builder.ai.test_runtime_boundaries.*"
+    ],
+    "frontend": null,
+    "experiment_required": false,
+    "evaluation_instructions": "Exercise the complete required outcome on a disposable site; preserve screenshots, event/effect receipts, usage, duration and failures. Evaluate fit and factual fidelity blind when H is required."
+  },
+  {
+    "id": "R06",
+    "scenario": "Permission change, read-only collaborator, canceled approval",
+    "required_outcome": "Enforce capability at execution time, including delayed jobs",
+    "layers": [
+      "I"
+    ],
+    "tests": [
+      "builder.ai.test_tool_fixes.TestPermissionReads.*",
+      "builder.ai.test_effects_and_events.TestEffectsAndEvents.test_cancelled_or_retired_run_cannot_mutate"
+    ],
+    "frontend": null,
+    "experiment_required": false,
+    "evaluation_instructions": "Exercise the complete required outcome on a disposable site; preserve screenshots, event/effect receipts, usage, duration and failures. Evaluate fit and factual fidelity blind when H is required."
+  },
+  {
+    "id": "R07",
+    "scenario": "Plugin writes, global code, data scripts, or other shared effects",
+    "required_outcome": "Explicit effect boundary, validation, recovery/undo coverage, appropriate authorization",
+    "layers": [
+      "I",
+      "B"
+    ],
+    "tests": [
+      "builder.ai.test_workflow_integrations.TestWorkflowIntegrations.test_plugin_activation_requires_verified_exact_candidate_and_is_idempotent",
+      "builder.ai.test_effects_and_events.*"
+    ],
+    "frontend": "../plugins/loader.test.ts",
+    "experiment_required": false,
+    "evaluation_instructions": "Exercise the complete required outcome on a disposable site; preserve screenshots, event/effect receipts, usage, duration and failures. Evaluate fit and factual fidelity blind when H is required."
+  },
+  {
+    "id": "R08",
+    "scenario": "Provider omits usage, returns cached usage, or includes stream-end usage",
+    "required_outcome": "Preserve accurate counters and label unknown cost; no silent undercount",
+    "layers": [
+      "U",
+      "I"
+    ],
+    "tests": [
+      "builder.ai.test_integration_boundaries.*",
+      "builder.ai.test_codex.*"
+    ],
+    "frontend": null,
+    "experiment_required": false,
+    "evaluation_instructions": "Exercise the complete required outcome on a disposable site; preserve screenshots, event/effect receipts, usage, duration and failures. Evaluate fit and factual fidelity blind when H is required."
+  },
+  {
+    "id": "R09",
+    "scenario": "Small edit versus new page versus bespoke motion",
+    "required_outcome": "Intent-appropriate instruction/tool budget and validation coverage",
+    "layers": [
+      "I"
+    ],
+    "tests": [
+      "builder.ai.test_async_runtime.TestWorkflow.test_parallel_reads_never_cross_a_write_or_terminal_boundary",
+      "builder.ai.test_design_workflow.TestDesignWorkflow.test_context_budget_preserves_current_request_and_tool_pairs"
+    ],
+    "frontend": null,
+    "experiment_required": false,
+    "evaluation_instructions": "Exercise the complete required outcome on a disposable site; preserve screenshots, event/effect receipts, usage, duration and failures. Evaluate fit and factual fidelity blind when H is required."
+  },
+  {
+    "id": "R10",
+    "scenario": "Context cap, maximum rounds, screenshot budget, or asset budget reached",
+    "required_outcome": "Clear partial outcome; no false completion or unbounded recursive fallback",
+    "layers": [
+      "I"
+    ],
+    "tests": [
+      "builder.ai.test_design_workflow.TestDesignWorkflow.test_oversized_required_request_is_rejected_before_provider_call",
+      "builder.ai.test_media_and_scope.TestMediaAndScope.test_page_media_budget_is_enforced_before_external_work"
+    ],
+    "frontend": null,
+    "experiment_required": false,
+    "evaluation_instructions": "Exercise the complete required outcome on a disposable site; preserve screenshots, event/effect receipts, usage, duration and failures. Evaluate fit and factual fidelity blind when H is required."
+  }
+]

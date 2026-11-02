@@ -53,6 +53,12 @@ def run_present_ui(ctx, args: dict) -> str | None:
 	}
 	for element in ui:
 		for option in element.get("options", []):
+			if option.get("variant_id"):
+				from builder.ai.artifacts import Artifact
+				from builder.ai.design import direction_option
+
+				_, variant = Artifact.get(option["variant_id"], ctx.page_id, "design")
+				option.update(direction_option(option["variant_id"], variant))
 			if asset := assets.get(option.get("asset_id")) or assets.get(option.get("image")):
 				option.update(
 					{
@@ -72,7 +78,7 @@ def run_present_ui(ctx, args: dict) -> str | None:
 		return (
 			"FAILED: a choices group has no usable options — nothing renders and the user "
 			"cannot answer. Every option must be an object like {label, description?, font?, "
-			"svg?, colors?}. Call present_ui again with real options."
+			"image?, variant_id?, colors?}. Call present_ui again with real options."
 		)
 	# Same dead end, reached the other way: everything sanitized away (unknown
 	# kinds, or an oversized card trimmed to nothing). present_ui ends the turn,
@@ -84,12 +90,12 @@ def run_present_ui(ctx, args: dict) -> str | None:
 			"[{'kind': 'choices', 'options': [...]}]. Call present_ui again with real elements."
 		)
 	content = render_ui_text(text, ui)
-	metadata = {"status": "ui", "text": text, "ui": ui}
+	metadata = {"runId": getattr(ctx, "run_id", None), "status": "ui", "text": text, "ui": ui}
 	if timeline := ctx.timeline():
 		metadata["steps"] = timeline  # research done before asking survives a reload
 	# after_commit: the event triggers a session reload on the client, which must
 	# see this message already in the DB.
-	AISession.try_append_message(
+	message_id = AISession.try_append_message(
 		ctx.session_id,
 		"assistant",
 		content,
@@ -97,7 +103,7 @@ def run_present_ui(ctx, args: dict) -> str | None:
 		task_type="agent",
 		metadata=metadata,
 	)
-	ctx.emit("clarify", question=text, ui=ui, after_commit=True)
+	ctx.emit("clarify", question=text, ui=ui, card_id=message_id, after_commit=True)
 
 
 def sanitize_ui(raw) -> list[dict]:
@@ -112,10 +118,13 @@ def sanitize_ui(raw) -> list[dict]:
 		return []
 	elements = [e for e in raw if isinstance(e, dict) and e.get("kind") in ELEMENT_KINDS]
 	elements = elements[:MAX_ELEMENTS]
-	for el in elements:
+	for index, el in enumerate(elements):
+		el["id"] = f"field-{index}"
 		if el.get("kind") == "choices":
 			sanitized = (sanitize_option(o) for o in el.get("options") or [])
 			el["options"] = [o for o in sanitized if o]
+			for option_index, option in enumerate(el["options"]):
+				option["id"] = f"option-{option_index}"
 		elif el.get("kind") == "color_input":
 			el["colors"] = sanitize_color_slots(el.get("colors"))
 	while elements and len(json.dumps(elements)) > MAX_UI_JSON:
@@ -151,6 +160,7 @@ def sanitize_option(option) -> dict | None:
 		return {"label": option.strip()[:120]}
 	if not isinstance(option, dict):
 		return None
+	option.pop("svg", None)
 	if option.get("colors") is not None and not isinstance(option["colors"], list):
 		option.pop("colors")
 	if option.get("image") is not None and not isinstance(option["image"], str):
@@ -202,6 +212,8 @@ def option_text(option) -> str:
 	label = option.get("label") or option.get("value") or ""
 	desc = option.get("description") or ""
 	line = f"* {label} — {desc}" if desc else f"* {label}"
+	if option.get("variant_id"):
+		return line + f" [design: {option['variant_id']}]"
 	if option.get("asset_id"):
 		line += f" [asset: {option['asset_id']}]"
 	if option.get("preview_only"):
@@ -250,13 +262,12 @@ present_ui = Tool(
 					"{kind:'swatches', colors:['#hex'], label?} — colour palette row\n"
 					"{kind:'image', src, caption?} — an image (site file or https URL)\n"
 					"{kind:'choices', label?, multi?, options:[{label, description?, colors:['#hex']?, "
-					"image:'https://…'?, asset_id?, svg?}]} — tappable option cards; single-select submits immediately, "
+					"image:'https://…'?, asset_id?, variant_id?}]} — tappable option cards; single-select submits immediately, "
 					"multi collects. An option's `colors` renders as a small palette strip. An "
 					"option's `image` is a photo thumbnail URL (use the `thumb` from search_images) — "
 					"for letting the user pick a hero/section photo; the chosen option's image URL "
-					"comes back in their reply. Keep asset_id from search results. svg may contain a "
-					"compact static layout sketch using geometry/text and inline fill/stroke attributes; "
-					"scripts, links, CSS and remote resources are removed.\n"
+					"comes back in their reply. Keep asset_id from search results. For layout choices, "
+					"use variant_id from create_design_directions: real desktop/mobile images and editable blocks.\n"
 					"{kind:'input', label?, placeholder?} — one-line text field\n"
 					"{kind:'upload', label?} — image-upload field (logo, their own photo); the "
 					"uploaded file's URL arrives in their reply. Pair with an actions button, and "

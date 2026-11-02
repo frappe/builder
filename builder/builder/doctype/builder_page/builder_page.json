@@ -46,7 +46,8 @@
   "authenticated_access",
   "disable_indexing",
   "project_folder",
-  "ai_design_brief"
+  "ai_design_brief",
+  "ai_project"
  ],
  "fields": [
   {
@@ -276,6 +277,14 @@
    "label": "AI Design Brief",
    "hidden": 1,
    "read_only": 1
+  },
+  {
+   "fieldname": "ai_project",
+   "fieldtype": "Link",
+   "label": "AI Project",
+   "options": "Builder AI Project",
+   "hidden": 1,
+   "search_index": 1
   }
  ],
  "index_web_pages_for_search": 1,

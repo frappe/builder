@@ -3,7 +3,16 @@ import { createApp } from "vue";
 
 vi.mock("frappe-ui", () => ({ call: vi.fn() }));
 
-import { importPlugins, installPlugins, loadPlugin, runningPlugins } from "./loader";
+import {
+	importPlugins,
+	installPlugins,
+	loadPlugin,
+	replacePlugin,
+	unloadPlugin,
+	inspectPlugin,
+	runningPlugins,
+} from "./loader";
+import { openHandlers } from "./context";
 
 type Installed = { names: string[]; contexts: Record<string, unknown>[] };
 const installed = () => (globalThis as unknown as { installed: Installed }).installed;
@@ -55,5 +64,44 @@ describe("plugins", () => {
 
 		expect(installed().names).toEqual(["later"]);
 		expect(runningPlugins.has("acme/later")).toBe(true);
+	});
+
+	it("keeps the working plugin when replacement fails, and disposes on unload", async () => {
+		installPlugins(createApp({}), []);
+		const name = "acme/recoverable";
+		await loadPlugin(
+			plugin(
+				name,
+				`export default { install(app, context) { context.setOpenHandler(() => 'working'); context.onDispose(() => globalThis.installed.names.push('disposed')); } }`,
+			),
+		);
+		const original = openHandlers.get(name);
+		await expect(
+			replacePlugin(
+				plugin(
+					name,
+					`export default { install(app, context) { context.setOpenHandler(() => 'broken'); throw Error('bad candidate'); } }`,
+				),
+			),
+		).rejects.toThrow("bad candidate");
+		expect(openHandlers.get(name)).toBe(original);
+		expect(installed().names).toEqual([]);
+		unloadPlugin(name);
+		unloadPlugin(name);
+		expect(installed().names).toEqual(["disposed"]);
+		expect(openHandlers.has(name)).toBe(false);
+	});
+
+	it("inspects without activating a candidate and disposes its resources", async () => {
+		installPlugins(createApp({}), []);
+		const candidate = plugin(
+			"acme/candidate",
+			`export default { install(app, context) { context.setOpenHandler(() => {}); context.onDispose(() => globalThis.installed.names.push('candidate disposed')); } }`,
+		);
+		const inspected = await inspectPlugin(candidate);
+		expect(runningPlugins.has(candidate.name)).toBe(false);
+		expect(openHandlers.has(candidate.name)).toBe(false);
+		inspected.dispose();
+		expect(installed().names).toEqual(["candidate disposed"]);
 	});
 });

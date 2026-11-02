@@ -37,6 +37,7 @@ declare interface BlockAttributeMap {
 }
 
 declare interface BlockEditorConfig {
+	aiLocked?: boolean;
 	icon?: string;
 	showChildrenInEditor?: boolean;
 }
@@ -105,13 +106,7 @@ declare type RGBString = `rgb(${number}, ${number}, ${number})`;
 
 // the literals keep autocomplete; the string widens it for plugin tabs
 declare type LeftSidebarTabOption =
-	| "Blocks"
-	| "Layers"
-	| "Assets"
-	| "Code"
-	| "Chat"
-	| "variables"
-	| (string & {});
+	"Blocks" | "Layers" | "Assets" | "Code" | "Chat" | "variables" | (string & {});
 
 declare type BuilderMode = "select" | "text" | "container" | "image" | "repeater" | "move";
 

@@ -103,15 +103,16 @@
 							<img
 								v-if="option.image && safeSrc(option.image)"
 								:src="option.image"
-								class="h-24 w-full rounded-4 border border-black/10 object-cover"
+								class="w-full rounded-4 border border-black/10"
+								:class="option.variant_id ? 'max-h-64 object-contain' : 'h-24 object-cover'"
 								loading="lazy"
 								alt="" />
-							<!-- eslint-disable-next-line vue/no-v-html -- static SVG allowlist in sanitizeLayoutSVG -->
-							<div
-								v-else-if="layoutPreviews[i]?.[j]"
-								class="h-28 w-full overflow-hidden rounded-4 border border-black/10 [&>svg]:h-full [&>svg]:w-full"
-								aria-hidden="true"
-								v-html="layoutPreviews[i][j]" />
+							<img
+								v-if="option.mobile_image && safeSrc(option.mobile_image)"
+								:src="option.mobile_image"
+								class="max-h-32 w-auto rounded border border-black/10"
+								loading="lazy"
+								alt="Mobile layout preview" />
 							<span
 								v-else-if="option.colors?.length"
 								class="flex shrink-0 overflow-hidden rounded-4 border border-black/10">
@@ -244,10 +245,10 @@ import ColorInput from "@/components/Controls/ColorInput.vue";
 import { Button, FileUploader, FormControl } from "frappe-ui";
 import { computed, watchEffect } from "vue";
 import { isPreviewOnly, optionReply, useCardDraft } from "./cardDraft";
-import { sanitizeLayoutSVG } from "./cardPreview";
 import {
 	INTERACTIVE_KINDS,
-	cardAnswers,
+	typedCardAnswers,
+	type CardSubmission,
 	isControlLabel,
 	labelOfControl,
 	labelOfQuestion,
@@ -269,6 +270,7 @@ const props = defineProps<{
 	 * writes "Question: answer" lines, so the card can show what was chosen
 	 * without the answers needing to be stored a second time. */
 	answeredWith?: string;
+	answer?: CardSubmission;
 	/** The card's lead-in — the question the model wrote above the controls. It
 	 * names the first question when that atom carries no label of its own. */
 	lead?: string;
@@ -276,16 +278,9 @@ const props = defineProps<{
 
 /** `reply` is the full text the model receives; `display` is the compact line
  * the chat shows as the user's message (option label, typed values). */
-const emit = defineEmits<{ submit: [reply: string, display?: string] }>();
+const emit = defineEmits<{ submit: [reply: string, display?: string, answer?: CardSubmission] }>();
 
 const elements = computed(() => (Array.isArray(props.ui) ? props.ui : []));
-const layoutPreviews = computed(() =>
-	elements.value.map((element) =>
-		Array.isArray(element.options)
-			? element.options.map((option: UIElement) => sanitizeLayoutSVG(option.svg))
-			: [],
-	),
-);
 const hasChoices = computed(() => elements.value.some((el) => el.kind === "choices"));
 // Option tiles are cards already, so ANY card containing choices renders flat —
 // its other atoms (heading, upload, actions) sit between the tiles unboxed.
@@ -311,6 +306,11 @@ const steps = computed<number[][]>(() => {
 		// An unlabelled input straight after a question is that question's escape
 		// hatch ("or paste a link"), not a question of its own.
 		const escapeHatch = el.kind === "input" && !el.label && !consumedAsLabel(i - 1);
+		if (out.length && (escapeHatch || el.kind === "upload")) {
+			out[out.length - 1].push(...pending);
+			pending = [];
+			return;
+		}
 		if (QUESTION_KINDS.has(el.kind) && !(escapeHatch && out.length)) {
 			out.push(pending);
 			pending = [];
@@ -352,7 +352,7 @@ function goBack() {
 	if (stepIndex.value > 0) stepIndex.value -= 1;
 }
 
-const answers = computed(() => cardAnswers(elements.value, props.answeredWith, props.lead));
+const answers = computed(() => typedCardAnswers(elements.value, props.answer));
 // A choices group with zero options renders nothing tappable — it must not
 // count as interactive, or it suppresses the fallback button and dead-ends the card.
 const interactiveAtoms = computed(() =>
@@ -430,7 +430,8 @@ function isSelected(elIndex: number, optIndex: number): boolean {
 
 function onOptionClick(elIndex: number, el: UIElement, optIndex: number, option: UIElement) {
 	if (!el.multi && isSingleQuestion.value) {
-		emit("submit", optionReply(option), String(option.label || option.value || ""));
+		selections[elIndex] = new Set([optIndex]);
+		emit("submit", optionReply(option), String(option.label || option.value || ""), collectAnswers());
 		return;
 	}
 	selections[elIndex] ??= new Set();
@@ -500,7 +501,29 @@ function submitCollected(actionLabel?: string) {
 		}
 	});
 	const reply = lines.join("\n").trim();
-	if (reply) emit("submit", reply, values.join(" · ") || actionLabel);
+	if (reply) emit("submit", reply, values.join(" · ") || actionLabel, collectAnswers());
+}
+
+function collectAnswers(): CardSubmission {
+	const answers: CardSubmission["answers"] = [];
+	elements.value.forEach((field, i) => {
+		const fieldId = field.id || `field-${i}`;
+		if (field.kind === "choices" && selections[i]?.size) {
+			const indices = [...selections[i]];
+			answers.push({
+				fieldId,
+				value: indices.map((j) => field.options[j].label || field.options[j].value),
+				optionIds: indices.map((j) => field.options[j].id || `option-${j}`),
+			});
+		} else if (field.kind === "input" && inputs[i]?.trim()) {
+			answers.push({ fieldId, value: inputs[i].trim() });
+		} else if (field.kind === "upload" && uploads[i]) {
+			answers.push({ fieldId, value: uploads[i] });
+		} else if (field.kind === "color_input" && colorSlots[i]) {
+			answers.push({ fieldId, value: colorSlots[i] });
+		}
+	});
+	return { cardId: props.messageId || "", answers };
 }
 
 /** Same-origin paths and https only — the spec comes from the model. */

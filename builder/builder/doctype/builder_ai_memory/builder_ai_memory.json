@@ -8,7 +8,11 @@
  "editable_grid": 1,
  "engine": "InnoDB",
  "field_order": [
-  "content"
+  "content",
+  "scope",
+  "memory_user",
+  "page",
+  "project"
  ],
  "fields": [
   {
@@ -17,6 +21,34 @@
    "in_list_view": 1,
    "label": "Content",
    "reqd": 1
+  },
+  {
+   "fieldname": "scope",
+   "fieldtype": "Select",
+   "label": "Scope",
+   "options": "user\npage\nproject\nsite",
+   "default": "user",
+   "reqd": 1
+  },
+  {
+   "fieldname": "memory_user",
+   "fieldtype": "Link",
+   "label": "User",
+   "options": "User",
+   "read_only": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "page",
+   "fieldtype": "Link",
+   "label": "Page",
+   "options": "Builder Page"
+  },
+  {
+   "fieldname": "project",
+   "fieldtype": "Link",
+   "label": "Project",
+   "options": "Builder AI Project"
   }
  ],
  "grid_page_length": 50,

@@ -66,13 +66,24 @@ class TestRunLifecycle(FrappeTestCase):
 		run, _ = self.admit()
 		payload = {"prompt": "hello", "model": "test/model", "run_id": run.name}
 		frappe.db.set_value(AIRun.DOCTYPE, run.name, "payload_json", json.dumps(payload))
-		with patch("frappe.enqueue", side_effect=ConnectionError):
+		with (
+			patch.dict(frappe.conf, {"builder_ai_runtime": "rq"}),
+			patch("frappe.enqueue", side_effect=ConnectionError),
+		):
 			dispatch_run(run.name)
 		self.assertEqual(frappe.db.get_value(AIRun.DOCTYPE, run.name, "status"), "queued")
-		with patch("frappe.enqueue") as enqueue:
+		with patch.dict(frappe.conf, {"builder_ai_runtime": "rq"}), patch("frappe.enqueue") as enqueue:
 			dispatch_run(run.name)
 		self.assertTrue(enqueue.call_args.kwargs["deduplicate"])
 		self.assertEqual(enqueue.call_args.kwargs["run_id"], run.name)
+
+	def test_async_dispatch_keeps_payload_for_daemon_without_rq_job(self):
+		run, _ = self.admit()
+		frappe.db.set_value(AIRun.DOCTYPE, run.name, "payload_json", '{"prompt":"fixture"}')
+		with patch.dict(frappe.conf, {"builder_ai_runtime": "async"}), patch("frappe.enqueue") as enqueue:
+			dispatch_run(run.name)
+			enqueue.assert_not_called()
+		self.assertEqual(frappe.db.get_value(AIRun.DOCTYPE, run.name, "status"), "queued")
 
 	def test_expired_snapshot_keeps_history_and_page(self):
 		self.session.append_message("user", "Change the heading")
@@ -99,6 +110,24 @@ class TestRunLifecycle(FrappeTestCase):
 			json.loads(frappe.db.get_value("Builder Page", self.page.name, "draft_blocks")),
 			json.loads(original),
 		)
+
+	def test_revert_does_not_erase_confirmed_external_action_history(self):
+		from builder.ai.snapshots import capture_page_state, save_revert_snapshot
+
+		snapshot = save_revert_snapshot(self.page.name, capture_page_state(self.page.name))
+		message = self.session.append_message(
+			"assistant", "Before purchase", metadata={"revertSnapshot": snapshot}
+		)
+		self.session.append_message(
+			"assistant",
+			"Acquired original",
+			metadata={"status": "action_applied", "kind": "acquire_paid_asset"},
+		)
+		before = self.session.get_messages()
+		with self.assertRaisesRegex(ValueError, "confirmed external"):
+			frappe.db.commit()
+			api.revert_to_message(self.session.name, message)
+		self.assertEqual(self.session.get_messages(), before)
 
 	def test_failed_restore_keeps_the_conversation(self):
 		from builder.ai.snapshots import capture_page_state, save_revert_snapshot

@@ -201,6 +201,7 @@ def run_read_page(ctx, args: dict) -> str:
 		)
 	if page_id == ctx.page_id:
 		return "That's the page you have open — its structure is already in your context."
+	frappe.get_doc("Builder Page", page_id).check_permission("read")
 	if ctx.page_read_count >= MAX_PAGE_READS_PER_TURN:
 		return "Page-read limit reached for this turn — work with the references you have."
 	ctx.page_read_count += 1

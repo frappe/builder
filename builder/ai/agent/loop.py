@@ -57,6 +57,7 @@ from builder.ai.prompts import Prompts
 from builder.ai.runs import AIRun
 from builder.ai.session import AISession
 from builder.ai.snapshots import capture_page_state, save_revert_snapshot
+from builder.ai.workflow import Delay, ModelRequest, consume_stream, drive_sync
 from builder.utils import to_compact_yaml
 
 logger = frappe.logger("builder.ai.agent.loop")
@@ -127,6 +128,8 @@ READ_ONLY_SERVER_TOOLS = frozenset(
 	{
 		"query_blocks",
 		"load_tools",
+		"search_images",
+		"asset_contact_sheet",
 		"read_block",
 		"read_page",
 		"run_python",
@@ -138,6 +141,8 @@ READ_ONLY_SERVER_TOOLS = frozenset(
 		"get_doctype_schema",
 		"get_page_scripts",
 		"preview_page",
+		"verify_page",
+		"inspect_reference",
 		"read_plugin",
 		"read_editor_source",
 	}
@@ -357,6 +362,8 @@ class AgentRunner:
 		self.session_id = session_id
 		self.run_id = run_id
 		self.event_seq = 0
+		self.expected_revision = None
+		self.current_tool_call = None
 		self.terminal_status = "failed"
 		self.started = time.monotonic()
 		self.last_cancel_check = 0.0
@@ -431,6 +438,8 @@ class AgentRunner:
 		# Each is fed back to the model to self-correct; also logged and surfaced here so a
 		# "why didn't my edit land" is traceable in the agent debugger, not just live logs.
 		self.tool_failures: list[str] = []
+		self.failed_operations = {}
+		self.repair_count = 0
 		# How many streaming rounds had to be retried after a transient failure this turn.
 		# Surfaced like args_repaired so a flaky provider shows up in the data, not as a
 		# silent turn failure.
@@ -504,28 +513,20 @@ class AgentRunner:
 			self.terminal_status = {"complete": "complete", "error": "failed", "clarify": "waiting_input"}[
 				suffix
 			]
-		# The channel is the page (in-editor chat) or, page-less, the session (dashboard
-		# chat + sub-agent progress). Fixed at construction — see self.channel.
-		#
-		# after_commit=True for any event whose handler READS what this turn just wrote
-		# (a reload, a refetch, the final transcript): frappe holds the emit until the
-		# transaction lands and drops it on rollback, so the client can never fetch
-		# state that doesn't exist yet. Live narration (stream/progress) emits at once.
-		event = f"{EVENT_PREFIX}_{suffix}"
-		if self.channel:
-			event = f"{event}_{self.channel}"
-		frappe.publish_realtime(
-			event,
-			{
-				"page_id": self.page_id,
-				"session_id": self.session_id,
-				"run_id": self.run_id,
-				"seq": self.event_seq,
-				**kwargs,
-			},
-			user=self.user,
-			after_commit=after_commit,
-		)
+		payload = {
+			"page_id": self.page_id,
+			"session_id": self.session_id,
+			"run_id": self.run_id,
+			"seq": self.event_seq,
+			**kwargs,
+		}
+		if self.run_id:
+			from builder.ai.events import append
+
+			payload = append(self.run_id, suffix, payload)
+			after_commit = True
+		event = f"{EVENT_PREFIX}_{suffix}" + (f"_{self.channel}" if self.channel else "")
+		frappe.publish_realtime(event, payload, user=self.user, after_commit=after_commit)
 
 	def ensure_revert_snapshot(self) -> None:
 		"""Snapshot the page's pre-turn state the first time the turn mutates it —
@@ -562,12 +563,24 @@ class AgentRunner:
 		completion = getattr(usage, "completion_tokens", 0) or 0
 		total = getattr(usage, "total_tokens", 0) or 0
 		cached = self.cached_prompt_tokens(usage)
-		self.usage["prompt_tokens"] += prompt
-		self.usage["completion_tokens"] += completion
-		self.usage["total_tokens"] += total
-		self.usage["cached_tokens"] += cached
-		self.usage["calls"] += 1
-		self.usage["per_call"].append({"prompt": prompt, "completion": completion, "cached": cached})
+		from builder.ai.budgets import usage_cost
+
+		entry = getattr(self, "current_attempt", None)
+		values = {
+			"prompt_tokens": prompt,
+			"completion_tokens": completion,
+			"total_tokens": total,
+			"cached_tokens": cached,
+		}
+		previous = (entry or {}).get("usage") or {}
+		for key, value in values.items():
+			self.usage[key] += value - previous.get(key, 0)
+		if not previous:
+			self.usage["calls"] += 1
+			self.usage["per_call"].append({"prompt": prompt, "completion": completion, "cached": cached})
+		if entry is not None:
+			entry["usage"] = values
+			entry["estimated_cost_usd"] = usage_cost(model or self.loop_model, prompt, completion)
 
 	def record_round(self, round_index: int, tool_operations: list[dict], text: str) -> None:
 		"""Append one round to the debug trace: which tools the model called (with
@@ -623,7 +636,7 @@ class AgentRunner:
 		the cached context block, so remembering costs nothing per-round."""
 		from builder.ai.agent.tools.memory import memory_context
 
-		return memory_context()
+		return memory_context(self.page_id)
 
 	def build_messages(self) -> list[dict]:
 		messages: list[dict] = [{"role": "system", "content": self.system_prompt}]
@@ -637,21 +650,51 @@ class AgentRunner:
 				self.session_id, include_images=ModelRegistry.supports_vision(self.loop_model)
 			)
 		)
+		if self.session_id:
+			deferred = frappe.get_all(
+				AIRun.DOCTYPE,
+				filters={"session": self.session_id, "name": ["!=", self.run_id or ""]},
+				fields=["status", "metadata_json"],
+				order_by="creation desc",
+				limit=1,
+			)
+			if (
+				deferred
+				and deferred[0].status == "waiting_input"
+				and (
+					operations := AISession.load_metadata(deferred[0].metadata_json).get("deferredOperations")
+				)
+			):
+				messages.append(
+					{
+						"role": "user",
+						"content": "Previously deferred work (reconsider against the latest answer; do not blindly replay): "
+						+ json.dumps(operations),
+					}
+				)
 		self.history_end_index = len(messages) - 1
 
 		# The page structure. It's resent on every round of a multi-round turn, so a
 		# cache marker on the prompt right after it cuts both latency and input cost
 		# across the loop.
-		blocks = [self.build_open_page_context(), self.build_page_context(), self.build_memory_context()]
+		blocks = [
+			self.build_open_page_context(),
+			self.build_page_context(),
+			self.build_memory_context(),
+		]
 		if self.page_id:
 			from builder.ai.brief import DesignBrief
 
 			brief = DesignBrief(self.page_id)
 			blocks.append(brief.context())
+			from builder.ai.projects import for_page
+
+			if project := for_page(self.page_id):
+				blocks.append("Project route/task map: " + json.dumps(project))
 			self.found_images = brief.read().get("assets", [])
 		context = "\n\n".join(block for block in blocks if block)
 		if context:
-			messages.append({"role": "user", "content": context})
+			messages.append({"role": "user", "content": context, "_bob_keep": True})
 			messages.append({"role": "assistant", "content": "Understood. I have the current context."})
 
 		user_text = self.prompt
@@ -676,6 +719,7 @@ class AgentRunner:
 			)
 		else:
 			messages.append({"role": "user", "content": user_text})
+		messages[-1]["_bob_keep"] = True
 		self.prompt_index = len(messages) - 1
 		return messages
 
@@ -710,7 +754,10 @@ class AgentRunner:
 
 	# --- LLM call ---------------------------------------------------------
 
-	def call_tool_llm(self, messages: list[dict]) -> tuple[list[dict], str, list[dict]]:
+	def call_tool_llm(self, messages: list[dict]):
+		return drive_sync(self.iter_call_tool_llm(messages))
+
+	def iter_call_tool_llm(self, messages: list[dict]) -> tuple[list[dict], str, list[dict]]:
 		"""Stream one tool-calling round, retrying the WHOLE round on a transient stream
 		failure (network drop, 429, 5xx, mid-stream reset). Safe because a round applies
 		nothing until it returns — ops are emitted and `messages` mutated by the caller only
@@ -719,7 +766,7 @@ class AgentRunner:
 		back mid-stream (fallbacks are off while streaming), so this is the retry layer."""
 		for attempt in range(STREAM_MAX_ATTEMPTS):
 			try:
-				return self.stream_tool_round(messages)
+				return (yield from self.iter_stream_tool_round(messages))
 			except CancelledError:
 				raise
 			except Exception as exc:
@@ -734,9 +781,12 @@ class AgentRunner:
 					exc,
 					backoff,
 				)
-				self.interruptible_sleep(backoff)
+				yield Delay(backoff)
 
-	def stream_tool_round(self, messages: list[dict]) -> tuple[list[dict], str, list[dict]]:
+	def stream_tool_round(self, messages: list[dict]):
+		return drive_sync(self.iter_stream_tool_round(messages))
+
+	def iter_stream_tool_round(self, messages: list[dict]) -> tuple[list[dict], str, list[dict]]:
 		"""Stream one tool-calling completion. Returns (tool_operations,
 		text_content, raw_tool_calls). Applies nothing (see call_tool_llm) —
 		accumulates into locals only, so it is safe to re-run; the narration it
@@ -749,14 +799,18 @@ class AgentRunner:
 		to that tool's generator, which streams the artifact as content.
 		"""
 		self.usage["attempts"] += 1
-		stream = llm.complete_with_tools(
+		request = ModelRequest(
 			self.loop_model,
 			messages,
-			self.registry.schemas(),
 			llm.TASK_PARAMS["agent"],
 			api_key=self.api_key,
-			stream=True,
+			tools=self.registry.schemas(),
 		)
+
+		from builder.ai.budgets import begin_attempt, finish_attempt
+
+		entry = begin_attempt(self, request, "coordinator")
+		status = "interrupted"
 
 		content_parts: list[str] = []
 		# index -> {"id", "name", "args"}; preserves call order across chunks.
@@ -773,47 +827,49 @@ class AgentRunner:
 		thinking = self.add_step("thinking", status="running")
 		thinking_since: float | None = time.monotonic()
 
+		def consume(chunk):
+			nonlocal finish_reason, thinking_since
+			if self.is_cancelled():
+				raise CancelledError
+			self.record_usage(chunk)
+			# The final include_usage chunk carries usage but no choices.
+			if not chunk.choices:
+				return
+			if fr := chunk.choices[0].finish_reason:
+				finish_reason = fr
+			delta = chunk.choices[0].delta
+			content = getattr(delta, "content", None)
+			tool_calls = getattr(delta, "tool_calls", None)
+			if reasoning := getattr(delta, "reasoning_content", None):
+				thinking["text"] = (thinking.get("text") or "") + reasoning
+				self.emit("stream", chunk=reasoning, kind="reasoning")
+			if thinking_since is not None and (content or tool_calls):
+				self.finish_step(thinking, started=thinking_since)
+				thinking_since = None
+			if content:
+				content_parts.append(content)
+				# Stream the model's words as it writes them. A round that turns out
+				# to have called tools commits this as a narration step below; the
+				# last round's text is the turn's answer and stays as the content.
+				self.live_text += content
+				self.emit("stream", chunk=content)
+			for tc in tool_calls or []:
+				idx = tc.index if tc.index is not None else 0
+				entry = acc.setdefault(idx, {"id": None, "name": None, "args": ""})
+				if tc.id:
+					entry["id"] = tc.id
+				fn = getattr(tc, "function", None)
+				if fn and fn.name:
+					entry["name"] = fn.name
+				if fn and fn.arguments:
+					entry["args"] += fn.arguments
+
 		try:
-			for chunk in stream:
-				if self.is_cancelled():
-					try:
-						stream.close()
-					except Exception:
-						pass
-					raise CancelledError
-				self.record_usage(chunk)
-				# The final include_usage chunk carries usage but no choices.
-				if not chunk.choices:
-					continue
-				if fr := chunk.choices[0].finish_reason:
-					finish_reason = fr
-				delta = chunk.choices[0].delta
-				content = getattr(delta, "content", None)
-				tool_calls = getattr(delta, "tool_calls", None)
-				if reasoning := getattr(delta, "reasoning_content", None):
-					thinking["text"] = (thinking.get("text") or "") + reasoning
-					self.emit("stream", chunk=reasoning, kind="reasoning")
-				if thinking_since is not None and (content or tool_calls):
-					self.finish_step(thinking, started=thinking_since)
-					thinking_since = None
-				if content:
-					content_parts.append(content)
-					# Stream the model's words as it writes them. A round that turns out
-					# to have called tools commits this as a narration step below; the
-					# last round's text is the turn's answer and stays as the content.
-					self.live_text += content
-					self.emit("stream", chunk=content)
-				for tc in tool_calls or []:
-					idx = tc.index if tc.index is not None else 0
-					entry = acc.setdefault(idx, {"id": None, "name": None, "args": ""})
-					if tc.id:
-						entry["id"] = tc.id
-					fn = getattr(tc, "function", None)
-					if fn and fn.name:
-						entry["name"] = fn.name
-					if fn and fn.arguments:
-						entry["args"] += fn.arguments
+			yield from consume_stream(request, consume)
+			status = "provider_complete"
 		finally:
+			entry["finish_reason"] = finish_reason
+			finish_attempt(entry, status)
 			# A cancel or a dropped stream must not leave the spinner running forever.
 			if thinking_since is not None:
 				self.finish_step(thinking, started=thinking_since)
@@ -913,6 +969,9 @@ class AgentRunner:
 		self.held_locks.append((key, token))
 		self.tree = WorkingTree(page_writer.load_page_root(page_id))
 		self.pending_state = capture_page_state(page_id)
+		from builder.ai.revisions import page_revision
+
+		self.expected_revision = page_revision(page_id)
 		return ""
 
 	# --- turn timeline ------------------------------------------------------
@@ -1079,17 +1138,15 @@ class AgentRunner:
 				logger.warning("Client op rejected — %s: %s", op["tool_name"], content)
 			applied.extend(self.tree.accepted_operations)
 		if applied:
-			self.applied_operations.extend(applied)
-			# after_commit: an op can reference a doc this round created (a component
-			# extract) — mirrored early, the canvas fetches it before the checkpoint
-			# commit lands and caches a Missing placeholder.
-			self.emit("tool_batch", operations=applied, after_commit=True)
 			if self.page_id and self.tree.root:
 				from builder.ai import page_writer
 
-				# Persist after every applied round so a cancel/crash keeps the work
-				# done so far (the same live-apply semantics the canvas shows).
+				before = json.dumps(self.tree.root)
 				page_writer.save_draft_blocks(self.page_id, self.tree.root)
+				if json.dumps(self.tree.root) != before:
+					applied.append({"tool_name": "set_page_blocks", "args": {"blocks": self.tree.root}})
+			self.applied_operations.extend(applied)
+			self.emit("tool_batch", operations=applied, after_commit=True)
 		return results, applied
 
 	def run_handler(self, tool, op: dict) -> str:
@@ -1130,7 +1187,92 @@ class AgentRunner:
 			del self.pending_client_ops[pending_count:]
 		return result
 
-	def run_op(self, op: dict, client_results: dict[int, str]) -> str | None:
+	def execute_op(self, op: dict):
+		return drive_sync(self.iter_execute_op(op))
+
+	def iter_execute_op(self, op: dict):
+		from copy import deepcopy
+
+		from jsonschema import Draft7Validator
+
+		from builder.ai.budgets import RepairLimitError
+		from builder.ai.effects import EffectReceipt
+		from builder.ai.revisions import digest
+		from builder.ai.transactions import ToolSavepoint
+
+		operation_key = digest(op)
+		if self.repair_count >= 6:
+			self.stop_reason = "repair_limit"
+			raise RepairLimitError("Review the saved work before trying a different approach")
+		if self.failed_operations.get(operation_key, 0) >= 2:
+			self.repair_count += 1
+			return "FAILED: this exact operation already failed twice. Read the current state and change the approach."
+		tool = self.registry.get(op["tool_name"])
+		if not tool:
+			return self.failed_operation(operation_key, "unknown tool. Load the relevant tool group first.")
+		if errors := list(Draft7Validator(tool.parameters).iter_errors(op["args"])):
+			return self.failed_operation(
+				operation_key, "invalid arguments: " + "; ".join(error.message[:300] for error in errors[:3])
+			)
+		receipt = EffectReceipt(self, op) if tool.effects and self.run_id and self.page_id else None
+		if receipt and (saved := receipt.replay()):
+			return saved["result"]
+		candidate = None
+		if tool.artifact == "page_yaml":
+			from builder.ai.agent.artifact import iter_page_candidate
+
+			candidate = yield from iter_page_candidate(self, op["args"])
+		elif op["tool_name"] == "research":
+			from builder.ai.agent.tools.web import iter_research
+
+			return (yield from iter_research(self, op["args"]))
+		savepoint = ToolSavepoint("effect") if receipt else None
+		root = deepcopy(self.tree.root) if receipt and self.tree else None
+		applied_count = len(self.applied_operations)
+		snapshot, pending_state = self.revert_snapshot, self.pending_state
+		try:
+			if receipt:
+				receipt.begin()
+				self.ensure_revert_snapshot()
+			results = self.apply_client_ops([op])[0] if self.op_kind(op) == "client" else {}
+			result = self.run_op(op, results, candidate)
+			if receipt:
+				if isinstance(result, str) and result.startswith("FAILED"):
+					savepoint.rollback()
+					self.tree.root = root
+					self.revert_snapshot, self.pending_state = snapshot, pending_state
+					del self.applied_operations[applied_count:]
+				changes = receipt.finish(result, self.applied_operations[applied_count:])
+				if changes:
+					self.server_mutations += 1
+			if isinstance(result, str) and result.startswith("FAILED"):
+				self.failed_operation(operation_key, result)
+			self.checkpoint()
+			return result
+		except CancelledError:
+			if savepoint:
+				savepoint.rollback()
+				self.tree.root = root
+				self.revert_snapshot, self.pending_state = snapshot, pending_state
+				del self.applied_operations[applied_count:]
+			raise
+		except Exception as error:
+			if savepoint:
+				savepoint.rollback()
+				self.tree.root = root
+				self.revert_snapshot, self.pending_state = snapshot, pending_state
+				del self.applied_operations[applied_count:]
+			return self.failed_operation(operation_key, str(error))
+		finally:
+			if receipt:
+				receipt.close()
+
+	def failed_operation(self, key: str, message: str) -> str:
+		self.failed_operations[key] = self.failed_operations.get(key, 0) + 1
+		self.repair_count += 1
+		return message if message.startswith("FAILED") else f"FAILED: {message}"
+
+	def run_op(self, op: dict, client_results: dict[int, str], candidate=None) -> str | None:
 		"""Produce one tool call's result string. Client ops were already applied by
 		apply_client_ops; server ops run their handler here. Returns None when a
 		terminal tool ended the turn (its handler emitted the card and persisted it)."""
@@ -1149,7 +1291,7 @@ class AgentRunner:
 			# Generation is a STEP of the turn: the generator streams YAML live (the
 			# canvas preview), persists the page, and the loop continues — so the model
 			# can add scripts, verify, and refine in the same turn.
-			content, ops = self.run_generation_step(tool, op)
+			content, ops = self.run_generation_step(tool, op, candidate)
 			self.applied_operations.extend(ops)
 			if ops:
 				# The authoritative op replaces the throwaway streamed preview with
@@ -1162,8 +1304,7 @@ class AgentRunner:
 		content = self.run_handler(tool, op)
 		self.end_activity(entry)
 		self.drain_queued_ops()
-		if op["tool_name"] not in READ_ONLY_SERVER_TOOLS and not str(content).startswith("FAILED"):
-			self.server_mutations += 1
+		if not str(content).startswith("FAILED"):
 			if op["tool_name"] in SCRIPT_TWIN_TOOLS:
 				# Mirror the server-applied script op so the open editor updates its
 				# script list / undo tracking — flagged so the canvas does NO DB work.
@@ -1217,6 +1358,17 @@ class AgentRunner:
 		self.emit("error", message=message, after_commit=True)
 
 	def run(self):
+		last = 0
+
+		def checkpoint_stream():
+			nonlocal last
+			if time.monotonic() - last >= 0.2:
+				self.checkpoint()
+				last = time.monotonic()
+
+		return drive_sync(self.iter_run(), checkpoint=checkpoint_stream)
+
+	def iter_run(self):
 		started = time.monotonic()
 		logger.info(
 			f"AgentRunner.run: page_id={self.page_id}, model={self.model}, "
@@ -1240,17 +1392,18 @@ class AgentRunner:
 			if self.is_cancelled():
 				self.emit_cancelled()
 				return
-			self.run_turn(started)
+			yield from self.iter_run_turn(started)
 		except Exception as exc:
 			logger.exception("AI run failed")
 			self.fail_turn(llm.user_facing_error(exc))
 		finally:
 			try:
 				metadata = self.turn_metadata()
-				if self.session_id:
-					AISession.get(self.session_id, user=self.user).update_last_assistant_metadata(metadata)
-				if self.run_id:
-					AIRun.finish(self.run_id, self.terminal_status, metadata)
+				finished = not self.run_id or AIRun.finish(self.run_id, self.terminal_status, metadata)
+				if self.session_id and finished:
+					AISession.get(self.session_id, user=self.user).update_last_assistant_metadata(
+						metadata, run_id=self.run_id
+					)
 				frappe.db.commit()
 			finally:
 				self.clear_cancel_flag()
@@ -1261,6 +1414,9 @@ class AgentRunner:
 					AISession.end_run(self.session_id, self.run_token)
 
 	def run_turn(self, started: float):
+		return drive_sync(self.iter_run_turn(started))
+
+	def iter_run_turn(self, started: float):
 		# Load the page into the authoritative working tree, under the page lock.
 		if self.page_id and self.tree is None:
 			if self.load_page(self.page_id).startswith("FAILED"):
@@ -1286,38 +1442,58 @@ class AgentRunner:
 				# kept its partial page) ends the turn HERE, before another paid call.
 				if self.is_cancelled():
 					raise CancelledError
+				from builder.ai.policies import system_prompt
+
+				if self.system_prompt == Prompts.AGENT_SYSTEM:
+					messages[0]["content"] = system_prompt(getattr(self, "loaded_groups", ()))
 				self.refresh_cache_markers(messages)
-				tool_operations, summary_text, raw_tool_calls = self.call_tool_llm(messages)
+				tool_operations, summary_text, raw_tool_calls = yield from self.iter_call_tool_llm(messages)
 				self.record_round(round_index, tool_operations, summary_text)
 
 				if not tool_operations:
 					self.stop_reason = "model_finished"
 					break
 
-				# Apply block/script ops FIRST — the canvas updates live, and a terminal
-				# tool in the same round can no longer silently discard them.
-				client_ops = [op for op in tool_operations if self.op_kind(op) == "client"]
-				client_results, applied = self.apply_client_ops(client_ops)
-
-				# Committed for a terminal round too: the sentence the model writes
-				# before a card ("I'll settle the direction first…") is part of the
-				# conversation, and present_ui persists the timeline with the card.
-				self.commit_round_text(summary_text, applied)
-
+				self.commit_round_text(summary_text, [])
 				messages.append(
 					{"role": "assistant", "content": summary_text or None, "tool_calls": raw_tool_calls}
 				)
-				turn_over = False
-				for tc, op in zip(raw_tool_calls, tool_operations, strict=True):
-					content = self.run_op(op, client_results)
+				from builder.ai.scheduling import ReadBatch, read_prefix
+
+				index = 0
+				while index < len(tool_operations):
+					if self.repair_count >= 6:
+						from builder.ai.budgets import RepairLimitError
+
+						self.stop_reason = "repair_limit"
+						raise RepairLimitError("Repeated tool failures reached this turn's repair budget")
+					if self.page_id and (batch := read_prefix(tool_operations[index:], self.registry)):
+						entries = [self.begin_activity(op["tool_name"], op["args"]) for op in batch]
+						results = yield ReadBatch(batch, self.page_id, self.run_id)
+						for offset, (op, result) in enumerate(zip(batch, results, strict=True)):
+							self.end_activity(entries[offset])
+							if str(result).startswith("FAILED"):
+								self.failed_operation(json.dumps(op, sort_keys=True), result)
+							messages.append(
+								{
+									"role": "tool",
+									"tool_call_id": raw_tool_calls[index + offset]["id"],
+									"content": self.tool_result(result),
+								}
+							)
+						index += len(batch)
+						continue
+					tc, op = raw_tool_calls[index], tool_operations[index]
+					self.current_tool_call = tc["id"]
+					content = yield from self.iter_execute_op(op)
 					if content is None:
-						turn_over = True  # terminal card emitted + persisted
-						break
+						self.defer_operations(tool_operations[index + 1 :])
+						return
 					messages.append(
-						{"role": "tool", "tool_call_id": tc["id"], "content": self.bounded_result(content)}
+						{"role": "tool", "tool_call_id": tc["id"], "content": self.tool_result(content)}
 					)
-				if turn_over:
-					return
+					index += 1
+
 				self.flush_pending_images(messages)
 				self.compact_tool_history(messages)
 				self.checkpoint()
@@ -1339,6 +1515,9 @@ class AgentRunner:
 
 		self.finish_turn(summary_text, started)
 
+	def defer_operations(self, operations: list[dict]):
+		self.deferred_operations = operations
+
 	def checkpoint(self) -> None:
 		"""Make this round's work durable. A turn runs as a background job, and a job
 		that raises rolls the WHOLE transaction back (background_jobs.execute_job) —
@@ -1356,6 +1535,17 @@ class AgentRunner:
 				},
 			)
 		frappe.db.commit()  # nosemgrep
+
+	def tool_result(self, content):
+		if len(content) <= 16000 or not self.page_id:
+			return self.bounded_result(content)
+		from builder.ai.artifacts import Artifact
+
+		doc = Artifact.save(self.page_id, "tool_result", {"text": content}, run=self.run_id)
+		return (
+			content[:8000]
+			+ f"\n[Full result: read_artifact artifact_id={doc.name}, offset=8000. {len(content)} characters total.]"
+		)
 
 	@staticmethod
 	def bounded_result(content: str) -> str:
@@ -1388,6 +1578,8 @@ class AgentRunner:
 			"runId": self.run_id,
 			"model": self.model,
 			"operations": len(self.applied_operations),
+			"deferredOperations": getattr(self, "deferred_operations", []),
+			"revisionAfter": self.expected_revision,
 			"debug": {
 				"stopReason": self.stop_reason or self.terminal_status,
 				"loopModel": self.loop_model,
@@ -1480,6 +1672,8 @@ class AgentRunner:
 			"runId": self.run_id,
 			"model": self.model,
 			"operations": len(self.applied_operations),
+			"deferredOperations": getattr(self, "deferred_operations", []),
+			"revisionAfter": self.expected_revision,
 			# Trace for the agent debugger: why the turn ended + what the model did each
 			# round. Explains cases like "only 2 blocks updated" at a glance.
 			"debug": {
@@ -1545,7 +1739,7 @@ class AgentRunner:
 			return tool.handler(self, op["args"])
 		return None
 
-	def run_generation_step(self, tool, op: dict) -> tuple[str, list[dict]]:
+	def run_generation_step(self, tool, op: dict, candidate=None) -> tuple[str, list[dict]]:
 		"""Run generate_page as one STEP of the turn. The generator persists the page
 		server-side; point the working tree at the result so the model can read back —
 		and build on — what it just made (scripts, surgical fixes, one verify pass)."""
@@ -1554,7 +1748,12 @@ class AgentRunner:
 		entry = self.begin_activity(op["tool_name"], op["args"])
 		self.ensure_revert_snapshot()  # generation replaces the block tree
 		try:
-			ops = tool.generator(self, op["args"])
+			if candidate is None:
+				ops = tool.generator(self, op["args"])
+			else:
+				from builder.ai.agent.artifact import persist_candidate
+
+				ops = persist_candidate(self, candidate)
 		except ValueError as error:
 			return (f"FAILED: {error}", [])
 		finally:

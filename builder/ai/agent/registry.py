@@ -44,6 +44,7 @@ class Tool:
 	# and returns the canonical client op(s) to apply. None = ordinary tool.
 	artifact: str | None = None
 	generator: Callable | None = None
+	effects: tuple[str, ...] = ()
 
 	def schema(self) -> dict:
 		return {
@@ -103,14 +104,19 @@ def build_default_registry() -> ToolRegistry:
 		forms,
 		generate,
 		images,
+		media,
 		memory,
 		plugins,
 		preview,
+		projects,
 		python,
 		query,
+		recipes,
+		results,
 		scripts,
 		settings,
 		toolsets,
+		verify,
 		web,
 	)
 
@@ -118,19 +124,56 @@ def build_default_registry() -> ToolRegistry:
 	registry.extend(generate.TOOLS)
 	registry.extend(blocks.TOOLS)
 	registry.extend(query.TOOLS)
+	registry.extend(results.TOOLS)
+	registry.extend(recipes.TOOLS)
 	registry.extend(scripts.TOOLS)
 	registry.extend(conversation.TOOLS)
 	registry.extend(memory.TOOLS)
+	registry.extend(media.TOOLS)
 	registry.extend(data.TOOLS)
 	registry.extend(python.TOOLS)
 	registry.extend(forms.TOOLS)
 	registry.extend(settings.TOOLS)
 	registry.extend(images.TOOLS)
 	registry.extend(web.TOOLS)
+	registry.extend(verify.TOOLS)
 	registry.extend(preview.TOOLS)
 	registry.extend(components.TOOLS)
 	registry.extend(plugins.TOOLS)
+	registry.extend(projects.TOOLS)
 	registry.extend(design.TOOLS)
 	registry.extend(toolsets.TOOLS)
+	page_tools = {
+		"add_block",
+		"update_block",
+		"update_blocks",
+		"remove_block",
+		"move_block",
+		"set_page_blocks",
+		"generate_page",
+		"set_page_settings",
+		"set_page_script",
+		"attach_page_script",
+		"update_script",
+		"write_page_data_script",
+		"extract_component",
+		"edit_component",
+		"apply_design_direction",
+	}
+	shared_tools = {"set_design_token", "edit_component", "extract_component", "update_script"}
+	for name in registry.names():
+		tool = registry.get(name)
+		tool.effects = tuple(
+			dict.fromkeys(
+				(
+					*tool.effects,
+					*(
+						scope
+						for scope, names in (("page", page_tools), ("shared", shared_tools))
+						if name in names
+					),
+				)
+			)
+		)
 	registry.active_names = set(toolsets.CORE_TOOLS)
 	return registry

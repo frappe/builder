@@ -67,14 +67,23 @@ def query_records(ctx, args: dict) -> str:
 		return json.dumps({"error": f"DocType '{dt}' not found"})
 	fields = args.get("fields") or ["name"]
 	filters = args.get("filters") if isinstance(args.get("filters"), dict) else {}
-	limit = min(int(args.get("limit") or 20), 100)
+	limit = max(1, min(int(args.get("limit") or 20), 100))
+	offset = max(0, int(args.get("offset") or 0))
 	try:
 		# get_list, not get_all — reads answer with the session user's permissions.
-		rows = frappe.get_list(dt, filters=filters, fields=fields, limit=limit)
+		rows = frappe.get_list(
+			dt, filters=filters, fields=fields, limit=limit + 1, start=offset, order_by="name asc"
+		)
 	except Exception as e:
 		return json.dumps({"error": str(e)})
 	meta = frappe.get_meta(dt)
-	return json.dumps([truncate_record(dt, meta, dict(r)) for r in rows], default=str)
+	return json.dumps(
+		{
+			"records": [truncate_record(dt, meta, dict(r)) for r in rows[:limit]],
+			"next_offset": offset + limit if len(rows) > limit else None,
+		},
+		default=str,
+	)
 
 
 def get_document(ctx, args: dict) -> str:
@@ -359,6 +368,10 @@ list_doctypes_tool = Tool(
 			"module": {"type": "string"},
 			"custom": {"type": "boolean", "description": "True = only user/custom DocTypes."},
 			"limit": {"type": "integer"},
+			"offset": {
+				"type": "integer",
+				"description": "Continue from next_offset returned by the previous query.",
+			},
 		},
 		"required": [],
 	},

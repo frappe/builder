@@ -14,13 +14,34 @@ export interface CardAnswer {
 	answer: string;
 }
 
+export interface CardSubmission {
+	cardId: string;
+	answers: Array<{ fieldId: string; value: unknown; optionIds?: string[] }>;
+}
+
+export function typedCardAnswers(elements: UIElement[], submission?: CardSubmission): CardAnswer[] {
+	if (!submission) return [];
+	return submission.answers.map((answer) => {
+		const index = elements.findIndex((field, i) => (field.id || `field-${i}`) === answer.fieldId);
+		const field = elements[index];
+		return {
+			question: field?.label || (index >= 0 ? labelOfQuestion(elements, index) : "") || "Answer",
+			answer: typeof answer.value === "string" ? answer.value : JSON.stringify(answer.value),
+		};
+	});
+}
+
 /** A text atom right before an unlabelled control is that control's question —
  * the control renders it as its form label, so it must not render twice. */
 export function isControlLabel(elements: UIElement[], i: number): boolean {
 	const el = elements[i];
 	const next = elements[i + 1];
 	return (
-		el?.kind === "text" && !!next && LABELLABLE.has(next.kind) && !next.label && !!String(el.text || "").trim()
+		el?.kind === "text" &&
+		!!next &&
+		LABELLABLE.has(next.kind) &&
+		!next.label &&
+		!!String(el.text || "").trim()
 	);
 }
 

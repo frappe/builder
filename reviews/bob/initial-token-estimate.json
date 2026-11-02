@@ -1,0 +1,8 @@
+{
+  "tokenizer": "o200k_base",
+  "system_tokens": 11107,
+  "initial_tools": 10,
+  "initial_schema_tokens": 3592,
+  "initial_total": 14699,
+  "all_schema_tokens": 11289
+}

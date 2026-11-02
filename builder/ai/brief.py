@@ -16,13 +16,15 @@ TEXT_FIELDS = (
 	"open_questions",
 )
 STAGES = ("discover", "directions", "build", "refine")
-MAX_BRIEF_CHARS = 12000
+MAX_BRIEF_CHARS = 24000
 
 
 def validate_asset_usage(assets: list[dict], content):
 	encoded = content if isinstance(content, str) else json.dumps(content, ensure_ascii=False)
 	for asset in assets:
-		if not (asset.get("preview_only") or asset.get("requires_acquisition")):
+		if not (
+			asset.get("preview_only") or asset.get("requires_acquisition") or asset.get("role") == "reference"
+		):
 			continue
 		for field in ("url", "thumb", "preview_url"):
 			if asset.get(field) and asset[field] in encoded:
@@ -44,7 +46,7 @@ class DesignBrief:
 			data = {}
 		return data if isinstance(data, dict) else {}
 
-	def update(self, patch: dict, source_message: str | None = None) -> dict:
+	def update(self, patch: dict, source_message: str | None = None, user_edit=False) -> dict:
 		frappe.get_doc("Builder Page", self.page_id).check_permission("write")
 		frappe.db.get_value("Builder Page", self.page_id, "name", for_update=True)
 		brief = self.read()
@@ -57,6 +59,9 @@ class DesignBrief:
 			if patch["stage"] not in STAGES:
 				raise ValueError("Invalid design stage")
 			brief["stage"] = patch["stage"]
+		from builder.ai.workspace import update_decisions
+
+		update_decisions(brief, patch, source_message, user_edit)
 		brief["revision"] = int(brief.get("revision", 0)) + 1
 		brief["source_message"] = source_message
 		self.save(brief)

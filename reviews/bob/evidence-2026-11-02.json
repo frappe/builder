@@ -1,0 +1,302 @@
+{
+  "date": "2026-11-02",
+  "pull_request": "https://github.com/frappe/builder/pull/1023",
+  "source": "Implementation in the commit containing this file; validation ran before commit.",
+  "develop_base": "a112a3e6aea1f9e712c75cdb9aeb713009467a90",
+  "previous_implementation": "7b7cafe794df09d1f2fc58597ccd80c7d9f622f8",
+  "backend": {
+    "passed": true,
+    "tests": 410,
+    "environment": "Isolated Frappe/MariaDB/Redis site with live model/image/stock transport guards",
+    "paid_calls": 0
+  },
+  "scenario_trace": {
+    "total": 82,
+    "statuses": {
+      "partial_evidence": 70,
+      "evaluation_required": 12
+    },
+    "unresolved_test_patterns": 0,
+    "whole_scenario_pass_inferred": false,
+    "pairwise_plan": "not_run"
+  },
+  "frontend": {
+    "passed": true,
+    "tests": 74,
+    "files": 8
+  },
+  "browser_fixtures": {
+    "checks": [
+      {
+        "id": "progressive-enhancement",
+        "scenarios": [
+          "V09",
+          "V11"
+        ],
+        "passed": true
+      },
+      {
+        "id": "tabs-keyboard-rtl-vertical",
+        "scenarios": [
+          "V07",
+          "V08"
+        ],
+        "passed": true
+      },
+      {
+        "id": "repeat-install-dispose",
+        "scenarios": [
+          "V12"
+        ],
+        "passed": true
+      },
+      {
+        "id": "reduced-motion-visible",
+        "scenarios": [
+          "V09",
+          "V10",
+          "V12"
+        ],
+        "passed": true
+      },
+      {
+        "id": "tall-footer-disclosure",
+        "scenarios": [
+          "V02",
+          "V09"
+        ],
+        "passed": true
+      },
+      {
+        "id": "responsive-reflow",
+        "scenarios": [
+          "V03",
+          "V08"
+        ],
+        "passed": true
+      },
+      {
+        "id": "declarative-interaction-assertions",
+        "scenarios": [
+          "V09",
+          "F01"
+        ],
+        "passed": true
+      },
+      {
+        "id": "diagnostics-detect-known-defects",
+        "scenarios": [
+          "V05",
+          "F08",
+          "A10"
+        ],
+        "passed": true
+      }
+    ],
+    "limitations": [
+      "Deterministic fixtures, not generated-site aesthetic evaluation",
+      "200% reflow uses equivalent CSS viewport, not browser chrome zoom",
+      "No paid media calls"
+    ],
+    "passed": true
+  },
+  "native_interactions": {
+    "passed": true,
+    "steps": 5,
+    "runtime_errors": [],
+    "sequence": [
+      "assert hidden",
+      "click disclosure",
+      "assert visible",
+      "press Space",
+      "assert hidden"
+    ],
+    "boundary": "Real Frappe Chromium preview; does not submit forms or certify screen-reader behavior"
+  },
+  "published_forms": {
+    "passed": true,
+    "checks": [
+      "Required fields block network submission",
+      "Guest success and double-submit guard",
+      "Guest cannot read private submissions",
+      "Authenticated success with CSRF",
+      "Network failure retains values; one real retry succeeds"
+    ],
+    "observed_request_attempts": 4,
+    "rows_verified_in_database": 3,
+    "row_cases": [
+      "Guest fixture",
+      "Authenticated fixture",
+      "Retry fixture"
+    ],
+    "verified_fields": [
+      "reserved name mapped to name_field",
+      "consent true",
+      "radio evening",
+      "multiple select design/code",
+      "checkbox group email/phone"
+    ],
+    "guest_record_read_status": 403,
+    "fixture_cleaned": true
+  },
+  "async_runtime": {
+    "max_concurrent_provider_waits": 2,
+    "rq_jobs_used": 0,
+    "run_states": [
+      "complete",
+      "complete",
+      "cancelled"
+    ],
+    "all_event_sequences_contiguous": true,
+    "transport": "Mocked provider streams against real database and journal",
+    "fixtures_cleaned": true
+  },
+  "public_reference": {
+    "passed": true,
+    "source": "https://example.com",
+    "preview_format": "WebP",
+    "summary": "DOM/style summary from bounded native rendering",
+    "live_fetch": true,
+    "boundary": "Public-only bounded fetch; API/frame-dependent content may be incomplete"
+  },
+  "public_editor": {
+    "url": "https://slight-max-printed-worthy.trycloudflare.com/builder/",
+    "passed": true,
+    "checks": [
+      {
+        "name": "Authenticated editor and deterministic after-state",
+        "value": true
+      },
+      {
+        "name": "Live setup state",
+        "value": {
+          "configured": true,
+          "models": 3,
+          "providers": 1
+        }
+      },
+      {
+        "name": "Persisted real WebP direction card renders",
+        "value": true
+      },
+      {
+        "name": "Workspace shows desktop/mobile versions and keyboard tab navigation",
+        "value": true
+      },
+      {
+        "name": "Preview-only asset renders with separate source link",
+        "value": true
+      },
+      {
+        "name": "Refresh retains card step, direction, asset selection, and input",
+        "value": true
+      },
+      {
+        "name": "Chat history dialog renders and searches persisted sessions",
+        "value": true
+      },
+      {
+        "name": "Revert through UI and real API restores blocks/data script and rewinds conversation",
+        "value": true
+      },
+      {
+        "name": "Model run requests",
+        "value": 0
+      }
+    ],
+    "model_run_requests": 0,
+    "clean_editor": false,
+    "page_errors": [
+      "Failed to fetch",
+      "Failed to fetch"
+    ],
+    "failed_requests": [
+      {
+        "url": "https://preview.frappe.cloud/api/method/builder_hub.plugins.api.get_catalog?page=1&protocol_version=1",
+        "error": "net::ERR_FAILED"
+      },
+      {
+        "url": "https://preview.frappe.cloud/api/method/builder_hub.plugins.api.get_catalog?page=1&protocol_version=1",
+        "error": "net::ERR_FAILED"
+      }
+    ],
+    "failed_http_responses": [],
+    "external_error": "Builder Hub catalog CORS failure on the temporary origin",
+    "fixture_cleanup": {
+      "page": true,
+      "session": true,
+      "messages": true,
+      "snapshot": true
+    },
+    "screenshot": "evidence/raster-workspace.png",
+    "screenshot_boundary": "Deterministic minimal layout fixture, not model-generated aesthetic evidence"
+  },
+  "post_cleanup_health": {
+    "services_running": 11,
+    "authenticated_websocket": true,
+    "session_cookie": {
+      "secure": true,
+      "httpOnly": true,
+      "sameSite": "Lax"
+    },
+    "login_dashboard_browser_errors": [],
+    "login_dashboard_failed_responses": []
+  },
+  "static_context": {
+    "tokenizer": "o200k_base",
+    "initial_tools": 11,
+    "system_tokens": 819,
+    "initial_schema_tokens": 3929,
+    "initial_total": 4748,
+    "generation_system_tokens": 3689,
+    "all_group_instruction_tokens": 1563,
+    "limitations": "Static text only; excludes page/history/images, provider framing/caching, output, repair and asset cost.",
+    "original_audit_static_total": 21719,
+    "intermediate_implementation_static_total": 14699,
+    "reduction_from_original_percent": 78.1
+  },
+  "static_checks": {
+    "production_build": "passed",
+    "ruff_lint": "passed",
+    "ruff_format": "passed",
+    "whitespace": "passed",
+    "typescript": {
+      "passed": false,
+      "diagnostics": 37,
+      "diagnostics_in_modified_files": 0,
+      "files": [
+        "frappe-ui/src/index.ts",
+        "frontend/src/block.ts",
+        "frontend/src/components/EditorDemo/editorDemoStage.ts",
+        "frontend/src/utils/blockController.ts",
+        "frontend/src/utils/useBuilderEvents.ts"
+      ]
+    }
+  },
+  "not_evaluated": [
+    "Paid provider execution and actual account/license entitlement",
+    "Six-case live model corpus and blind human review",
+    "Measured cost/time/corrections to acceptance",
+    "All 82 end-to-end scenarios and pairwise combinations",
+    "Screen-reader conformance, complex contrast and font glyph coverage",
+    "MotionSites-level aesthetics or arbitrary 3D/video scene authoring"
+  ],
+  "deployment_limits": [
+    "Quick Tunnel lasts for its running process",
+    "Host restart supervision and permanent hostname remain deployment work",
+    "Ordinary blocking tools use bounded daemon threads; confirmations use web requests"
+  ],
+  "reproduction": "../../builder/ai/acceptance/README.md",
+  "raw_log_sha256": {
+    "bob-acceptance-results.json": "3d4d324148b83012691d892adf3cb850f7a92a0a9a11551d9a0f335d637044fa",
+    "bob-frontend-tests.log": "b8b619dabdc2bb80690ffbaeda9f731183ffaf2dc7f146c896174ed49ac9acd3",
+    "bob-browser-acceptance.json": "61cccdb43275a1395877e7427067702d4acd49c63c166708ab921fcee8ca3457",
+    "bob-live-interactions.json": "d7a95b2a87fbf507bd9aed0cf7a5dad87000183674f6d17f23ec75b8c93a9b8d",
+    "bob-runtime-integration.log": "f271467fd7842951ce2458ac75cb023201e60e45bb2ac7ab4835f2c894936ee3",
+    "bob-live-form-browser.json": "cdf45cdcfe7573e90644808a9fb2c0c0f4d477903b8abfc143ea008d03002091",
+    "bob-raster-smoke.log": "7dbdbafc6d6fff6111abba09e190c3c006aad6c6000bf7db9095e9d0d1b55a48",
+    "browser-verification-2026-11-02.log": "7df84b2861408cc19a3323f865d0f1e6723391e287f0945fc86fd2256ff4833d",
+    "build-latest.log": "aeedcfe39d0fc5bcc50f8220f933f4c9b532c85f2bf669da8825c34db4cf494c",
+    "bob-typecheck-final.log": "cf5be19f33d74af38f33e95759f880b9bd571318891b061f0caee2f551d6da14"
+  }
+}

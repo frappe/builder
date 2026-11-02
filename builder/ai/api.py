@@ -59,6 +59,7 @@ def run(
 	image_data: str | None = None,
 	selected_block_context: list | None = None,
 	display_text: str | None = None,
+	card_answer: dict | None = None,
 	canvas_theme: str | None = None,
 	request_id: str | None = None,
 ):
@@ -72,11 +73,16 @@ def run(
 	image_url = BlockCodec.validate_image_data(image_data) if image_data else None
 	canvas_theme = canvas_theme if canvas_theme in ("light", "dark") else None
 
+	if model and model != "openrouter" and not ModelRegistry.is_known_model(model):
+		frappe.throw(_("The selected model is no longer available. Choose another model explicitly."))
 	resolved_model = ModelRegistry.get_default(model or "openrouter")
 	if not ModelRegistry.is_known_model(resolved_model):
 		frappe.throw(_("Unknown AI model: {0}").format(resolved_model))
 	if image_data and not ModelRegistry.supports_vision(resolved_model):
 		frappe.throw(_("This model cannot view images. Choose a vision-capable model."))
+	capabilities = ModelRegistry.capabilities(resolved_model)
+	if not capabilities["tools"] or not capabilities["streaming"]:
+		frappe.throw(_("Bob requires a model with tool calling and streaming enabled."))
 	resolve_api_key(resolved_model)
 	frappe.get_doc("Builder Page", page_id).check_permission("write")
 	# Also serialize first-turn retries, before they have a session to lock.
@@ -100,6 +106,24 @@ def run(
 	# A pasted image is a one-turn data URI: saved as a site file it gains a real URL
 	# that later turns can replay and a generation brief can carry as REFERENCE IMAGE.
 	image_file_url = save_attached_image(image_url) if image_url else None
+	if image_file_url:
+		DesignBrief(page_id).remember_assets(
+			[
+				{
+					"id": f"upload:{image_file_url}",
+					"provider": "Upload",
+					"url": image_file_url,
+					"thumb": image_file_url,
+					"original_url": image_file_url,
+					"owner": frappe.session.user,
+					"role": "undecided",
+					"description": "Your uploaded image",
+					"selected": True,
+					"preview_only": True,
+					"requires_acquisition": False,
+				}
+			]
+		)
 
 	if session_id:
 		msg_meta: dict = {"selectedBlockContext": selected_block_context or [], "runId": run_doc.name}
@@ -111,9 +135,16 @@ def run(
 		# in the chat; the full labelled text stays the message content for the model.
 		if display_text:
 			msg_meta["displayText"] = display_text.strip()[:300]
+		if card_answer:
+			from builder.ai.cards import validate_card_answer
+
+			msg_meta["cardAnswer"] = validate_card_answer(session_id, card_answer)
 		message_id = session.append_message(
 			"user", prompt, message_type="chat", task_type="agent", metadata=msg_meta
 		)
+		from builder.ai.cards import consume_questions
+
+		consume_questions(session_id, message_id, msg_meta.get("cardAnswer"))
 		frappe.db.set_value(AIRun.DOCTYPE, run_doc.name, "user_message", message_id)
 		frappe.db.set_value(AISession.DOCTYPE, session_id, "selected_model", resolved_model)
 
@@ -151,8 +182,6 @@ def confirm_pending_settings(message_id: str, decision: str = "apply"):
 	payload off the pending-action message and dispatches to apply_pending_action."""
 	from builder.ai.agent.pending import apply_pending_action
 
-	if not frappe.has_permission("Builder Settings", "write"):
-		frappe.throw(_("You are not permitted to apply this change"), frappe.PermissionError)
 	if not message_id or not frappe.db.exists(AISession.MESSAGE_DOCTYPE, message_id):
 		frappe.throw(_("Pending action not found"))
 
@@ -160,6 +189,8 @@ def confirm_pending_settings(message_id: str, decision: str = "apply"):
 	owner = frappe.db.get_value(AISession.DOCTYPE, msg.session, "session_user")
 	if owner != frappe.session.user:
 		frappe.throw(_("This action does not belong to you"), frappe.PermissionError)
+	frappe.db.get_value(AISession.DOCTYPE, msg.session, "name", for_update=True)
+	AISession.get(msg.session)
 	# Lock before reading status: two tabs must not consume the same confirmation.
 	frappe.db.get_value(AISession.MESSAGE_DOCTYPE, message_id, "name", for_update=True)
 	msg.reload()
@@ -176,6 +207,17 @@ def confirm_pending_settings(message_id: str, decision: str = "apply"):
 		return {"status": "skipped", "resumed": resumed}
 
 	meta = AISession.load_metadata(msg.metadata_json)
+	kind = meta.get("kind")
+	if kind in {
+		"home_page",
+		"global_settings",
+		"create_doctype",
+		"seed_sample_data",
+		"connect_form",
+	} and not frappe.has_permission("Builder Settings", "write"):
+		raise frappe.PermissionError("You are not permitted to apply this change")
+	if target_page := (meta.get("payload") or {}).get("page_id"):
+		frappe.get_doc("Builder Page", target_page).check_permission("write")
 	# Schema changes can implicitly commit in MariaDB. Consume the action before
 	# any DDL so releasing a row lock cannot make it executable by a second tab.
 	frappe.db.set_value(AISession.MESSAGE_DOCTYPE, message_id, "status", "action_applying")
@@ -183,7 +225,10 @@ def confirm_pending_settings(message_id: str, decision: str = "apply"):
 	try:
 		result = apply_pending_action(meta.get("kind"), meta.get("payload") or {})
 	except Exception:
-		frappe.db.set_value(AISession.MESSAGE_DOCTYPE, message_id, "status", "action_failed")
+		# DDL or a provider charge may have committed before the exception.
+		# Keep the consumed action reconcilable instead of promising no effects.
+		meta["reconciliation_required"] = True
+		frappe.db.set_value(AISession.MESSAGE_DOCTYPE, message_id, "metadata_json", frappe.as_json(meta))
 		frappe.db.commit()
 		raise
 	status = "action_failed" if result.startswith("FAILED") else "action_applied"
@@ -234,6 +279,33 @@ def resume_after_action(session_id: str, outcome: str) -> bool:
 	except Exception:
 		logger.warning(f"could not resume session {session_id} after a confirmed action", exc_info=True)
 		return False
+
+
+@frappe.whitelist(methods=["POST"])
+def reconcile_pending_action(message_id: str, outcome: str, evidence: str):
+	"""Record a human-verified outcome after a callback crashed; never repeat its effects."""
+	message = frappe.get_doc(AISession.MESSAGE_DOCTYPE, message_id)
+	AISession.get(message.session)
+	frappe.db.get_value(AISession.DOCTYPE, message.session, "name", for_update=True)
+	message = frappe.get_doc(AISession.MESSAGE_DOCTYPE, message_id, for_update=True)
+	if message.status != "action_applying" or outcome not in ("applied", "not_applied"):
+		raise ValueError("This action does not need outcome reconciliation")
+	if frappe.utils.time_diff_in_seconds(frappe.utils.now_datetime(), message.modified) < 300:
+		raise ValueError("The action may still be running. Wait five minutes before reconciling it.")
+	if not isinstance(evidence, str) or not 10 <= len(evidence) <= 2000:
+		raise ValueError("Describe the result you verified, including the provider receipt for paid work")
+	metadata = AISession.load_metadata(message.metadata_json)
+	metadata["reconciliation"] = {"outcome": outcome, "evidence": evidence, "user": frappe.session.user}
+	message.status = "action_applied" if outcome == "applied" else "action_failed"
+	message.metadata_json = frappe.as_json(metadata)
+	message.save(ignore_permissions=True)
+	AISession.try_append_message(
+		message.session,
+		"assistant",
+		f"You verified this action as {outcome}: {evidence}",
+		message_type="status",
+	)
+	return {"status": message.status}
 
 
 @frappe.whitelist()
@@ -301,7 +373,27 @@ def revert_to_message(session_id: str, message_id: str):
 		page = frappe.get_doc("Builder Page", session.page)
 		page.check_permission("write")
 		try:
-			page.restore_snapshot(snapshot)
+			from builder.ai.effects import restore_effects
+			from builder.ai.revisions import require_revision
+
+			creation = frappe.db.get_value(AISession.MESSAGE_DOCTYPE, message_id, "creation")
+			rows = frappe.get_all(
+				AISession.MESSAGE_DOCTYPE,
+				filters={"session": session_id, "creation": [">=", creation], "role": "assistant"},
+				fields=["metadata_json", "status"],
+				order_by="creation asc",
+			)
+			metas = [AISession.load_metadata(row.metadata_json) for row in rows]
+			for row, meta in zip(rows, metas, strict=True):
+				if meta.get("kind") and row.status in ("action_applied", "action_applying", "action_failed"):
+					raise ValueError(
+						"This range includes a confirmed external or shared action. Page Revert cannot undo purchases, schema, plugin activation or global settings. Use their settings or receipt to reconcile the action; the page and conversation were kept."
+					)
+			run_ids = list(dict.fromkeys(meta["runId"] for meta in metas if meta.get("runId")))
+			revisions = [meta["revisionAfter"] for meta in metas if meta.get("revisionAfter")]
+			require_revision(session.page, revisions[-1] if revisions else None)
+			if not (run_ids and restore_effects(run_ids)):
+				page.restore_snapshot(snapshot)
 			session.truncate_from_turn(message_id)
 			frappe.db.commit()
 		except Exception:
@@ -556,6 +648,9 @@ def get_ai_session(
 		session_id = AISession.last_used({"page": page_id, "session_user": frappe.session.user})
 	if not session_id:
 		return blank_session(page_id, model)
+	if frappe.db.get_value(AISession.DOCTYPE, session_id, "status") == "Deleted":
+		ensure_session_owner(session_id)
+		return {**blank_session(page_id, model), "active_run": None, "deleted_session": session_id}
 	session = AISession.get(session_id, page_id=page_id)
 	return {
 		"session_id": session.name,
@@ -580,16 +675,21 @@ def blank_session(page_id: str, model: str | None) -> dict:
 
 @frappe.whitelist()
 @has_page_write()
-def list_page_ai_sessions(page_id: str, limit: int = 20):
+def list_page_ai_sessions(page_id: str, limit: int = 20, offset: int = 0, search: str = ""):
 	"""This page's chat sessions for the current user — powers the session switcher."""
 	if not page_id or page_id == "new":
 		return []
+	frappe.get_doc("Builder Page", page_id).check_permission("read")
+	filters = {"page": page_id, "session_user": frappe.session.user, "status": "Active"}
+	if search.strip():
+		filters["title"] = ["like", f"%{search.strip()[:100]}%"]
 	rows = frappe.get_all(
 		AISession.DOCTYPE,
-		filters={"page": page_id, "session_user": frappe.session.user, "status": "Active"},
+		filters=filters,
 		fields=["name", "title", "last_interaction_on"],
-		order_by="last_interaction_on desc",
-		limit=min(int(limit), 50),
+		order_by="last_interaction_on desc, name desc",
+		limit=max(1, min(int(limit), 50)),
+		limit_start=max(0, int(offset)),
 	)
 	# A user-set title wins; otherwise the first user message names the session.
 	for r in rows:
@@ -606,11 +706,19 @@ def list_page_ai_sessions(page_id: str, limit: int = 20):
 @has_page_write()
 def delete_ai_session(session_id: str):
 	ensure_session_owner(session_id)
+	frappe.db.get_value(AISession.DOCTYPE, session_id, "name", for_update=True)
 	if AISession.is_session_running(session_id):
 		frappe.throw(_("Stop the active turn before deleting this chat."))
-	# The session's on_trash takes its messages with it.
-	frappe.delete_doc(AISession.DOCTYPE, session_id, ignore_permissions=True)
-	return {"status": "ok"}
+	if frappe.db.exists(AISession.MESSAGE_DOCTYPE, {"session": session_id, "status": "action_applying"}):
+		frappe.throw(_("Resolve the applying action before deleting this chat."))
+	# Keep a tombstone so late responses and stale tabs cannot recreate this chat.
+	frappe.db.set_value(
+		AISession.DOCTYPE,
+		session_id,
+		{"status": "Deleted", "title": "", "deleted_on": frappe.utils.now_datetime()},
+	)
+	frappe.db.delete(AISession.MESSAGE_DOCTYPE, {"session": session_id})
+	return {"status": "ok", "deleted_session": session_id}
 
 
 @frappe.whitelist()

@@ -94,6 +94,14 @@ async function settle() {
 let chat: AIChatController;
 let server: AISession;
 
+function readyChat() {
+	const controller = new AIChatController();
+	controller.availableModels.value = [
+		{ provider: "Fixture", models: [{ name: "model", label: "Fixture", ready: true, vision: true }] },
+	];
+	return controller;
+}
+
 beforeEach(() => {
 	vi.useFakeTimers();
 	vi.clearAllMocks();
@@ -130,7 +138,7 @@ beforeEach(() => {
 		update_session_message_metadata: vi.fn().mockResolvedValue({ status: "ok" }),
 	};
 	mocks.confirm.mockResolvedValue(true);
-	chat = new AIChatController();
+	chat = readyChat();
 	chat.sessionId.value = "A";
 });
 afterEach(() => {
@@ -250,7 +258,7 @@ describe("run admission and retry", () => {
 		await chat.submitPrompt();
 		const first = mocks.api.run.mock.calls[0][0];
 		chat.unmount();
-		chat = new AIChatController();
+		chat = readyChat();
 		expect(chat.prompt.value).toBe("First message");
 		await chat.submitPrompt();
 		expect(mocks.api.run.mock.calls[1][0].request_id).toBe(first.request_id);
