@@ -1,42 +1,54 @@
 <template>
 	<Dialog v-model="open" title="Your project" size="4xl">
 		<template #default>
-			<Tabs v-model="tab" :tabs="tabItems" variant="subtle" class="space-y-4">
+			<Tabs v-model="tab" :tabs="tabItems" variant="subtle" class="workspace-tabs space-y-4 text-ink-gray-9">
 				<template #tab-panel>
 					<p v-if="error" role="alert" class="text-p-sm text-ink-red-5">{{ error }}</p>
 					<p v-if="loading" class="text-p-sm text-ink-gray-5">Loading your project…</p>
-					<div v-else-if="tab === 'Brief'" class="max-h-[65vh] space-y-4 overflow-y-auto p-1">
+					<div v-else-if="tab === 'Brief'" class="max-h-[60vh] space-y-6 overflow-y-auto p-1">
 						<p class="text-p-sm text-ink-gray-6">
 							Keep the facts, voice and constraints you want Bob to use across chats. Your corrections take
 							precedence.
 						</p>
-						<div class="grid gap-3 sm:grid-cols-2">
+						<div class="grid gap-4 sm:grid-cols-2">
 							<FormControl
 								v-for="field in fields"
 								:key="field.key"
 								v-model="brief[field.key]"
+								class="min-w-0"
 								type="textarea"
 								:label="field.label"
 								:placeholder="field.placeholder" />
 						</div>
-						<div v-for="kind in ['facts', 'decisions'] as const" :key="kind" class="space-y-2">
-							<p class="text-p-sm font-medium capitalize">{{ kind }}</p>
-							<div
-								v-for="record in brief[kind] || []"
-								:key="record.id"
-								class="flex items-start gap-2 rounded border border-outline-gray-2 p-2">
-								<div class="flex-1">
-									<p class="text-p-sm font-medium">{{ record.label }}</p>
-									<p class="text-p-sm">{{ record.value }}</p>
+						<template v-for="kind in ['facts', 'decisions'] as const" :key="kind">
+							<section v-if="brief[kind]?.length" class="space-y-3" :aria-label="kind">
+								<div class="space-y-1">
+									<h4 class="text-p-sm font-medium capitalize text-ink-gray-8">{{ kind }}</h4>
+									<p class="text-p-xs text-ink-gray-6">
+										Confirm what Bob should use, or exclude anything that isn't right.
+									</p>
 								</div>
-								<FormControl
-									v-model="record.status"
-									type="select"
-									:options="['proposed', 'accepted', 'rejected']"
-									:aria-label="`Decision about ${record.label || record.value}`" />
-							</div>
-						</div>
-						<Button :loading="saving" variant="solid" @click="save">Save brief</Button>
+								<ul
+									class="m-0 list-none divide-y divide-outline-gray-2 rounded-5 border border-outline-gray-2 p-0">
+									<li
+										v-for="record in brief[kind]"
+										:key="record.id"
+										class="flex flex-col gap-3 p-3 sm:flex-row sm:items-start sm:gap-4">
+										<div class="min-w-0 flex-1 space-y-1 [overflow-wrap:anywhere]">
+											<p class="text-p-sm font-medium text-ink-gray-8">{{ record.label }}</p>
+											<p class="whitespace-pre-wrap text-p-sm text-ink-gray-7">{{ record.value }}</p>
+										</div>
+										<div class="w-36 max-w-full shrink-0">
+											<FormControl
+												v-model="record.status"
+												type="select"
+												:options="recordStatuses"
+												:aria-label="`Status for ${record.label || record.value}`" />
+										</div>
+									</li>
+								</ul>
+							</section>
+						</template>
 					</div>
 					<div
 						v-else-if="tab === 'Assets'"
@@ -110,6 +122,12 @@
 				</template>
 			</Tabs>
 		</template>
+		<template v-if="tab === 'Brief' && !loading" #actions>
+			<div class="flex items-center justify-between gap-4 border-t border-outline-gray-2 pt-4">
+				<p class="text-p-xs text-ink-gray-6">Changes apply when you save.</p>
+				<Button :loading="saving" :disabled="!pageId" variant="solid" @click="save">Save brief</Button>
+			</div>
+		</template>
 	</Dialog>
 </template>
 
@@ -151,6 +169,11 @@ const fields = [
 	},
 	{ key: "visual_direction", label: "Visual direction", placeholder: "The decisions you want to keep" },
 	{ key: "open_questions", label: "Still deciding", placeholder: "What would you like help choosing?" },
+];
+const recordStatuses = [
+	{ label: "Needs review", value: "proposed" },
+	{ label: "Confirmed", value: "accepted" },
+	{ label: "Don't use", value: "rejected" },
 ];
 const safeImage = (value: unknown) =>
 	typeof value === "string" && (/^\/(?!\/)/.test(value) || value.startsWith("https://"));
@@ -253,3 +276,10 @@ watch([open, () => props.pageId], () => {
 	if (open.value) load();
 });
 </script>
+
+<style scoped>
+.workspace-tabs :deep([role="tablist"]) {
+	max-width: 100%;
+	overflow-x: auto;
+}
+</style>
