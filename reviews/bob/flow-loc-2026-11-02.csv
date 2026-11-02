@@ -1,0 +1,185 @@
+scope,path,language,code,comments,blank,physical
+production,builder/ai/acceptance.py,Python,100,4,18,122
+production,builder/ai/agent/artifact.py,Python,254,77,51,382
+production,builder/ai/agent/loop.py,Python,1323,367,165,1855
+production,builder/ai/agent/pending.py,Python,237,146,36,419
+production,builder/ai/agent/registry.py,Python,131,27,21,179
+production,builder/ai/agent/selectors.py,Python,96,25,19,140
+production,builder/ai/agent/tools/blocks.py,Python,338,2,7,347
+production,builder/ai/agent/tools/components.py,Python,170,16,25,211
+production,builder/ai/agent/tools/conversation.py,Python,304,37,29,370
+production,builder/ai/agent/tools/data.py,Python,410,44,62,516
+production,builder/ai/agent/tools/design.py,Python,132,0,16,148
+production,builder/ai/agent/tools/forms.py,Python,186,31,28,245
+production,builder/ai/agent/tools/generate.py,Python,35,6,4,45
+production,builder/ai/agent/tools/images.py,Python,252,9,29,290
+production,builder/ai/agent/tools/media.py,Python,151,0,22,173
+production,builder/ai/agent/tools/memory.py,Python,83,7,16,106
+production,builder/ai/agent/tools/plugins.py,Python,255,44,49,348
+production,builder/ai/agent/tools/preview.py,Python,253,46,45,344
+production,builder/ai/agent/tools/projects.py,Python,65,0,9,74
+production,builder/ai/agent/tools/python.py,Python,126,23,41,190
+production,builder/ai/agent/tools/query.py,Python,524,61,76,661
+production,builder/ai/agent/tools/recipes.py,Python,54,0,6,60
+production,builder/ai/agent/tools/results.py,Python,31,0,5,36
+production,builder/ai/agent/tools/scripts.py,Python,223,24,24,271
+production,builder/ai/agent/tools/settings.py,Python,203,32,29,264
+production,builder/ai/agent/tools/toolsets.py,Python,85,1,7,93
+production,builder/ai/agent/tools/verify.py,Python,83,0,9,92
+production,builder/ai/agent/tools/web.py,Python,155,11,33,199
+production,builder/ai/agent/tree.py,Python,467,86,95,648
+production,builder/ai/api.py,Python,594,87,101,782
+production,builder/ai/artifacts.py,Python,68,1,8,77
+production,builder/ai/assets.py,Python,104,2,17,123
+production,builder/ai/block_codec.py,Python,241,27,34,302
+production,builder/ai/brief.py,Python,100,3,15,118
+production,builder/ai/browser/checks.js,JavaScript,59,0,0,59
+production,builder/ai/browser/interactions.js,JavaScript,42,0,0,42
+production,builder/ai/browser/motion.js,JavaScript,22,0,0,22
+production,builder/ai/browser/tabs.js,JavaScript,33,0,0,33
+production,builder/ai/browser_check.py,Python,194,2,21,217
+production,builder/ai/budgets.py,Python,111,3,23,137
+production,builder/ai/cards.py,Python,77,2,9,88
+production,builder/ai/catalog.py,Python,56,9,9,74
+production,builder/ai/codex.py,Python,426,49,95,570
+production,builder/ai/codex_login.py,Python,130,20,39,189
+production,builder/ai/content_locks.py,Python,25,1,8,34
+production,builder/ai/credits.py,Python,41,1,4,46
+production,builder/ai/data_script.py,Python,13,1,5,19
+production,builder/ai/design.py,Python,176,2,26,204
+production,builder/ai/design_recipes.py,Python,125,1,6,132
+production,builder/ai/discovery.py,Python,192,33,49,274
+production,builder/ai/effects.py,Python,122,3,20,145
+production,builder/ai/evaluation.py,Python,141,7,21,169
+production,builder/ai/events.py,Python,45,2,11,58
+production,builder/ai/listings.py,Python,44,11,21,76
+production,builder/ai/llm.py,Python,196,66,50,312
+production,builder/ai/locks.py,Python,31,32,22,85
+production,builder/ai/lucide.py,Python,23,10,8,41
+production,builder/ai/media.py,Python,327,4,28,359
+production,builder/ai/memory.py,Python,39,1,10,50
+production,builder/ai/models.py,Python,292,58,54,404
+production,builder/ai/page_writer.py,Python,473,107,80,660
+production,builder/ai/policies.py,Python,18,21,6,45
+production,builder/ai/presets.py,Python,159,19,27,205
+production,builder/ai/projects.py,Python,104,1,15,120
+production,builder/ai/prompts.py,Python,10,135,22,167
+production,builder/ai/reference.py,Python,112,2,11,125
+production,builder/ai/revisions.py,Python,39,1,9,49
+production,builder/ai/runs.py,Python,158,9,22,189
+production,builder/ai/runtime.py,Python,359,11,43,413
+production,builder/ai/scheduling.py,Python,36,1,10,47
+production,builder/ai/session.py,Python,283,60,42,385
+production,builder/ai/snapshots.py,Python,38,16,12,66
+production,builder/ai/transactions.py,Python,35,3,5,43
+production,builder/ai/workflow.py,Python,109,1,17,127
+production,builder/ai/workspace.py,Python,154,1,22,177
+production,builder/builder/doctype/builder_ai_artifact/builder_ai_artifact.py,Python,3,0,2,5
+production,builder/builder/doctype/builder_ai_event/builder_ai_event.py,Python,3,0,2,5
+production,builder/builder/doctype/builder_ai_memory/builder_ai_memory.py,Python,5,2,4,11
+production,builder/builder/doctype/builder_ai_message/builder_ai_message.py,Python,3,0,2,5
+production,builder/builder/doctype/builder_ai_model/builder_ai_model.py,Python,38,11,12,61
+production,builder/builder/doctype/builder_ai_project/builder_ai_project.py,Python,5,0,3,8
+production,builder/builder/doctype/builder_ai_provider/builder_ai_provider.py,Python,33,7,14,54
+production,builder/builder/doctype/builder_ai_run/builder_ai_run.py,Python,3,0,2,5
+production,builder/builder/doctype/builder_ai_session/__init__.py,Python,0,1,0,1
+production,builder/builder/doctype/builder_ai_session/builder_ai_session.py,Python,25,10,9,44
+production,frontend/src/components/AIAffectedItems.vue,Vuejs Component,55,2,4,61
+production,frontend/src/components/AIChatController.ts,TypeScript,1234,111,84,1429
+production,frontend/src/components/AIDebugPanel.vue,Vuejs Component,249,12,21,282
+production,frontend/src/components/BuilderAIChatPanel.vue,Vuejs Component,812,206,48,1066
+production,frontend/src/components/ai/AIActionRecovery.vue,Vuejs Component,51,0,0,51
+production,frontend/src/components/ai/AIChatHistory.vue,Vuejs Component,62,0,2,64
+production,frontend/src/components/ai/AICommandMenu.vue,Vuejs Component,143,10,13,166
+production,frontend/src/components/ai/AIDesignCard.vue,Vuejs Component,137,0,8,145
+production,frontend/src/components/ai/AIDesignPreview.vue,Vuejs Component,92,0,4,96
+production,frontend/src/components/ai/AIMediaBudget.vue,Vuejs Component,39,0,0,39
+production,frontend/src/components/ai/AIMediaRecovery.vue,Vuejs Component,55,0,0,55
+production,frontend/src/components/ai/AINextSteps.vue,Vuejs Component,49,0,2,51
+production,frontend/src/components/ai/AIPluginCard.vue,Vuejs Component,58,2,5,65
+production,frontend/src/components/ai/AIProjectPlan.vue,Vuejs Component,35,0,0,35
+production,frontend/src/components/ai/AITurnTimeline.vue,Vuejs Component,135,35,15,185
+production,frontend/src/components/ai/AIUISpec.vue,Vuejs Component,350,164,37,551
+production,frontend/src/components/ai/AIVerification.vue,Vuejs Component,38,0,0,38
+production,frontend/src/components/ai/AIWorkspace.vue,Vuejs Component,253,0,2,255
+production,frontend/src/components/ai/BobOrb.vue,Vuejs Component,155,9,19,183
+production,frontend/src/components/ai/bobCommands.ts,TypeScript,56,1,1,58
+production,frontend/src/components/ai/cardAnswers.ts,TypeScript,72,19,10,101
+production,frontend/src/components/ai/cardDraft.ts,TypeScript,83,2,7,92
+production,frontend/src/components/ai/cardPreview.ts,TypeScript,55,1,1,57
+production,frontend/src/components/ai/commandMenu.ts,TypeScript,195,23,25,243
+production,frontend/src/components/ai/commands/addModel.ts,TypeScript,67,4,6,77
+production,frontend/src/components/ai/commands/chats.ts,TypeScript,29,0,1,30
+production,frontend/src/components/ai/commands/connect.ts,TypeScript,196,12,11,219
+production,frontend/src/components/ai/commands/models.ts,TypeScript,43,1,2,46
+production,frontend/src/components/ai/commands/providers.ts,TypeScript,170,3,11,184
+production,frontend/src/components/ai/commands/shared.ts,TypeScript,62,6,8,76
+production,frontend/src/components/ai/lifecycle.ts,TypeScript,78,3,9,90
+production,frontend/src/components/ai/lucideIcon.ts,TypeScript,21,14,3,38
+production,frontend/src/components/ai/markdown.ts,TypeScript,52,6,5,63
+production,frontend/src/components/ai/normalizeStyles.ts,TypeScript,101,31,8,140
+production,frontend/src/components/ai/realtime.ts,TypeScript,37,6,7,50
+production,frontend/src/components/ai/slashCommands.ts,TypeScript,10,3,2,15
+production,frontend/src/components/ai/toolDispatch.ts,TypeScript,303,43,20,366
+production,frontend/src/components/ai/types.ts,TypeScript,105,14,16,135
+production,frontend/src/components/ai/yaml.ts,TypeScript,178,33,9,220
+tests,builder/ai/test_agent_jobs.py,Python,44,0,12,56
+tests,builder/ai/test_artifact.py,Python,68,0,29,97
+tests,builder/ai/test_assets.py,Python,332,3,47,382
+tests,builder/ai/test_async_runtime.py,Python,125,0,26,151
+tests,builder/ai/test_attach_script.py,Python,58,1,19,78
+tests,builder/ai/test_attached_images.py,Python,57,0,14,71
+tests,builder/ai/test_block_codec.py,Python,134,0,55,189
+tests,builder/ai/test_budgets.py,Python,53,0,8,61
+tests,builder/ai/test_cache_markers.py,Python,33,1,15,49
+tests,builder/ai/test_codex.py,Python,251,7,34,292
+tests,builder/ai/test_codex_login.py,Python,28,4,10,42
+tests,builder/ai/test_data_script.py,Python,45,0,19,64
+tests,builder/ai/test_design_workflow.py,Python,297,0,25,322
+tests,builder/ai/test_edit_component.py,Python,120,0,26,146
+tests,builder/ai/test_effects_and_events.py,Python,109,0,14,123
+tests,builder/ai/test_evaluation.py,Python,55,0,5,60
+tests,builder/ai/test_form_script.cjs,JavaScript,38,1,1,40
+tests,builder/ai/test_gateway_listing.py,Python,128,2,25,155
+tests,builder/ai/test_get_document.py,Python,38,0,14,52
+tests,builder/ai/test_image_view.py,Python,48,0,22,70
+tests,builder/ai/test_integration_boundaries.py,Python,184,0,26,210
+tests,builder/ai/test_interactions.py,Python,19,0,4,23
+tests,builder/ai/test_llm.py,Python,142,0,51,193
+tests,builder/ai/test_locks.py,Python,50,0,22,72
+tests,builder/ai/test_lucide.py,Python,17,0,8,25
+tests,builder/ai/test_media_and_scope.py,Python,139,0,16,155
+tests,builder/ai/test_next_steps.py,Python,74,0,6,80
+tests,builder/ai/test_page_settings.py,Python,32,0,18,50
+tests,builder/ai/test_page_writer.py,Python,105,8,19,132
+tests,builder/ai/test_pending.py,Python,151,1,33,185
+tests,builder/ai/test_presets.py,Python,14,0,3,17
+tests,builder/ai/test_read_page.py,Python,479,15,80,574
+tests,builder/ai/test_review_completion.py,Python,21,1,8,30
+tests,builder/ai/test_run_lifecycle.py,Python,151,0,23,174
+tests,builder/ai/test_run_python.py,Python,96,4,28,128
+tests,builder/ai/test_runtime_boundaries.py,Python,96,0,14,110
+tests,builder/ai/test_selectors.py,Python,121,2,38,161
+tests,builder/ai/test_session_api.py,Python,42,0,12,54
+tests,builder/ai/test_tool_fixes.py,Python,603,13,70,686
+tests,builder/ai/test_tree_apply.py,Python,214,12,33,259
+tests,builder/ai/test_web.py,Python,76,0,26,102
+tests,builder/ai/test_workflow_integrations.py,Python,91,0,7,98
+tests,builder/builder/doctype/builder_ai_message/test_builder_ai_message.py,Python,19,0,5,24
+tests,frontend/src/components/AIChatController.test.ts,TypeScript,602,0,41,643
+tests,frontend/src/components/ai/AINextSteps.test.ts,TypeScript,74,1,6,81
+tests,frontend/src/components/ai/AIUISpec.test.ts,TypeScript,155,3,6,164
+tests,frontend/src/components/ai/cardAnswers.test.ts,TypeScript,16,0,1,17
+tests,frontend/src/components/ai/cardDraft.test.ts,TypeScript,114,0,4,118
+tests,frontend/src/components/ai/cardPreview.test.ts,TypeScript,29,1,1,31
+tests,frontend/src/components/ai/lifecycle.test.ts,TypeScript,31,0,2,33
+tests,frontend/src/components/ai/toolDispatch.test.ts,TypeScript,152,0,10,162
+schemas,builder/builder/doctype/builder_ai_artifact/builder_ai_artifact.json,JSON,66,0,0,66
+schemas,builder/builder/doctype/builder_ai_event/builder_ai_event.json,JSON,42,0,0,42
+schemas,builder/builder/doctype/builder_ai_memory/builder_ai_memory.json,JSON,90,0,0,90
+schemas,builder/builder/doctype/builder_ai_message/builder_ai_message.json,JSON,106,0,0,106
+schemas,builder/builder/doctype/builder_ai_model/builder_ai_model.json,JSON,152,0,0,152
+schemas,builder/builder/doctype/builder_ai_project/builder_ai_project.json,JSON,58,0,0,58
+schemas,builder/builder/doctype/builder_ai_provider/builder_ai_provider.json,JSON,112,0,0,112
+schemas,builder/builder/doctype/builder_ai_run/builder_ai_run.json,JSON,107,0,0,107
+schemas,builder/builder/doctype/builder_ai_session/builder_ai_session.json,JSON,117,0,0,117
