@@ -1,6 +1,6 @@
 import type { RunnablePlugin } from "@/plugins/context";
 import { devPlugin, isDevPlugin } from "@/plugins/devPlugin";
-import { loadPlugin, runningPlugins } from "@/plugins/loader";
+import { loadPlugin, runningPlugins, unloadPlugin } from "@/plugins/loader";
 import { useStorage } from "@vueuse/core";
 import { call, createResource, getCachedResource, toast } from "frappe-ui";
 import { computed, reactive, shallowRef } from "vue";
@@ -40,7 +40,7 @@ type Installation = {
 	icon?: string;
 	version: string;
 	/** Where the files came from. */
-	source: "Hub" | "App" | "Development";
+	source: "Hub" | "App" | "Development" | "Bob";
 	/** The Builder Hub that it came from, when `source` is "Hub". */
 	hub_url?: string;
 	enabled: boolean;
@@ -206,11 +206,17 @@ const setPluginEnabled = async (plugin: string, enabled: boolean) => {
 	else promptReload(enabled ? "Plugin enabled" : "Plugin disabled");
 };
 
+/** Left bar tabs a plugin added while the editor ran, which the user has not opened yet. */
+const unseenTabs = reactive(new Set<string>());
+
+/** A plugin Bob wrote registers its items in install(), so they come off in place. Others may hold more, so they ask for a reload. */
 const uninstallPlugin = async (plugin: string) => {
 	const wasRunning = runningPlugins.has(plugin);
+	const fromBob = findInstallation(plugin)?.source === "Bob";
 	await call(`${METHOD}.uninstall_plugin`, { plugin });
 	await reloadInstallations();
-	if (wasRunning) promptReload("Plugin uninstalled");
+	if (wasRunning && fromBob) unloadPlugin(plugin);
+	else if (wasRunning) promptReload("Plugin uninstalled");
 };
 
 /** Loads one installed plugin while the editor runs. */
@@ -331,6 +337,7 @@ const listenForPluginJobs = (realtime: { on: (event: string, handler: (data: any
 
 export {
 	canManagePlugins,
+	unseenTabs,
 	pluginsDisabled,
 	getPluginsCatalog,
 	getPluginUpdate,

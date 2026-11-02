@@ -1120,6 +1120,11 @@
 "@framework/ui@link:../frappe/ui":
   version "0.0.0"
 
+"@frappe/cloud-sdk@0.6.0":
+  version "0.6.0"
+  resolved "https://registry.yarnpkg.com/@frappe/cloud-sdk/-/cloud-sdk-0.6.0.tgz#2e619f023b6d2927e3475898d27399dc1a4dad8d"
+  integrity sha512-v8+YFslbrNmX+n94ya6w74Ptwa+qznsbj058AgeKEf/N/AzWjbelkW0kUf92rQL2zQ3LPEtBjYeaLDBgTyXTEw==
+
 "@humanfs/core@^0.19.2":
   version "0.19.2"
   resolved "https://registry.yarnpkg.com/@humanfs/core/-/core-0.19.2.tgz#a8272ca03b2acf492670222b2320b6c421bfde60"

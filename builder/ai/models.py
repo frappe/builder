@@ -26,6 +26,8 @@ CATALOG_TTL = 6 * 3600
 ROWS_TTL = 3600
 FETCH_TIMEOUT = 10
 DEFAULT_CONTEXT_WINDOW = 200_000
+# a new site starts with this in Builder Settings: the Frappe Cloud gateway's model
+DEFAULT_AI_MODEL = "frappe/openai/gpt-5.6-terra"
 
 # Used only when the rows are unreachable (install/migrate ordering) or all gone,
 # so the agent still has something to call.
@@ -227,12 +229,10 @@ class GatewayListing:
 		return {"added": added, "skipped": sorted(set(listed) - set(chat)), "found": len(listed)}
 
 	def credits(self) -> dict | None:
-		"""The balance the gateway reports at <api_base>/credits, or None when it reports none."""
+		"""The balance the gateway reports at its credits_url, or None when it reports none."""
 		_, headers = self.request()
 		try:
-			response = requests.get(
-				f"{self.provider.api_base.rstrip('/')}/credits", headers=headers, timeout=FETCH_TIMEOUT
-			)
+			response = requests.get(self.provider.credits_url, headers=headers, timeout=FETCH_TIMEOUT)
 			response.raise_for_status()
 			reported = response.json()
 		except Exception:
@@ -325,13 +325,16 @@ class ModelRegistry:
 		from builder.ai.llm import provider_api_key, settings_api_key, uses_settings_key
 
 		fallback = bool(settings_api_key())
+		default = get_configured_default()
 		grouped: dict[str, list] = {}
 		for m in cls.catalog():
 			if not cls.still_served(m):
 				continue
 			if not (m.get("api_base") or provider_api_key(m) or (fallback and uses_settings_key(m))):
 				continue
-			grouped.setdefault(m["provider"], []).append({**m, "ready": True})
+			grouped.setdefault(m["provider"], []).append(
+				{**m, "ready": True, "default": m["name"] == default}
+			)
 		return [{"provider": provider, "models": models} for provider, models in grouped.items()]
 
 	@staticmethod
@@ -376,12 +379,21 @@ class ModelRegistry:
 	def get_default(cls, model_or_provider: str) -> str:
 		"""Resolve a selection to a model name. A known model passes through;
 		anything else (a provider name, or the legacy "openrouter" sentinel the
-		frontend still sends) falls back to the first configured model."""
+		frontend still sends) falls back to the Builder Settings default, then to
+		the first configured model."""
 		if cls.find(model_or_provider):
 			return model_or_provider
+		default = get_configured_default()
+		if default and cls.find(default):
+			return default
 		catalog = cls.catalog()
 		return catalog[0]["name"] if catalog else model_or_provider
 
 	@classmethod
 	def is_known_model(cls, model: str) -> bool:
 		return cls.find(model) is not None
+
+
+def get_configured_default() -> str | None:
+	"""The model Builder Settings names as the default, which may not be available."""
+	return frappe.db.get_single_value("Builder Settings", "default_ai_model")

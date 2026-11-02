@@ -318,7 +318,8 @@ def merge_block_update(block: dict, args: dict) -> None:
 
 
 def insert_child(parent: dict, block: dict, after_block_id: str | None, index) -> None:
-	children = parent.setdefault("children", [])
+	# a generated leaf carries "children": None, which setdefault would keep
+	children = parent["children"] = parent.get("children") or []
 	if after_block_id:
 		for i, child in enumerate(children):
 			if isinstance(child, dict) and child.get("blockId") == after_block_id:

@@ -106,6 +106,9 @@
 								v-if="assistantText(message)"
 								class="ai-prose prose prose-sm max-w-none break-words text-p-sm"
 								v-html="renderMarkdown(assistantText(message))" />
+							<div v-if="cardPlugins(message).length" class="mt-2 flex flex-col gap-2">
+								<AIPluginCard v-for="plugin in cardPlugins(message)" :key="plugin" :plugin="plugin" />
+							</div>
 							<!-- Turn running, nothing on the clock. Between rounds the shimmer is
 							     the timeline's own tail row (same geometry as the steps, so the
 							     next step replaces it in place, no layout shift); this standalone
@@ -360,6 +363,9 @@
 						:label="modelLabel"
 						class="min-w-0 !shrink"
 						@click="menu.open(modelLevel(bob))" />
+					<Tooltip v-if="credits" :text="credits.spent === null ? '' : `${money(credits.spent)} spent`">
+						<Badge variant="subtle" :theme="creditsTheme(credits)" :label="creditsLabel(credits)" />
+					</Tooltip>
 					<Button
 						v-if="isSubmitting"
 						variant="solid"
@@ -406,6 +412,7 @@
 
 <script setup lang="ts">
 import AIAffectedItems from "@/components/AIAffectedItems.vue";
+import AIPluginCard from "@/components/ai/AIPluginCard.vue";
 import AICommandMenu from "@/components/ai/AICommandMenu.vue";
 import AITurnTimeline from "@/components/ai/AITurnTimeline.vue";
 import { registerBobCommands } from "@/components/ai/bobCommands";
@@ -413,7 +420,7 @@ import { useCommandMenu } from "@/components/ai/commandMenu";
 import { connectLevel } from "@/components/ai/commands/connect";
 import { modelLevel } from "@/components/ai/commands/models";
 import { providersLevel } from "@/components/ai/commands/providers";
-import type { BobContext } from "@/components/ai/commands/shared";
+import { type BobContext, creditsLabel, creditsTheme, money } from "@/components/ai/commands/shared";
 import AIUISpec from "@/components/ai/AIUISpec.vue";
 import BobOrb from "@/components/ai/BobOrb.vue";
 import { AIChatController } from "@/components/AIChatController";
@@ -426,12 +433,12 @@ import type { AITurnStep, ChatMessage } from "@/components/ai/types";
 import { reloadAIRegistry } from "@/data/aiModels";
 import useBuilderStore from "@/stores/builderStore";
 import useCanvasStore from "@/stores/canvasStore";
-import { Button, Dropdown, KeyboardShortcut, Textarea, Tooltip } from "frappe-ui";
+import { Badge, Button, Dropdown, KeyboardShortcut, Textarea, Tooltip } from "frappe-ui";
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from "vue";
 
 const chat = new AIChatController();
 
-const { prompt, isSubmitting, isCancelling, messages, modelLabel, canSubmit } = chat;
+const { prompt, isSubmitting, isCancelling, messages, modelLabel, canSubmit, credits } = chat;
 const { isEditingPage } = chat;
 const { selectedModelUnusable } = chat;
 const { progressMessage } = chat;
@@ -647,6 +654,11 @@ const BUILD_POOL: Suggestion[] = [
 ];
 const EDIT_POOL: Suggestion[] = [
 	{
+		label: "A panel for images missing alt text",
+		prompt:
+			"Build an editor plugin: a left bar panel that lists every image on this page that has no alt text, with a thumbnail of each. Clicking one selects it on the canvas.",
+	},
+	{
 		label: "Add a testimonials section",
 		prompt:
 			"Add a testimonials section with three or four short customer quotes, each with a name and role, styled to match the rest of the page.",
@@ -699,6 +711,31 @@ function useSuggestion(suggestion: Suggestion) {
 	prompt.value = suggestion.prompt;
 	promptInput.value?.focus();
 }
+
+// one card per plugin, on the turn that last changed it: the card shows the plugin as it is now
+const lastPluginMessage = computed(() => {
+	const last = new Map<string, string>();
+	for (const message of messages.value) {
+		for (const plugin of message.metadata?.plugins ?? []) last.set(plugin, message.id);
+	}
+	return last;
+});
+const cardPlugins = (message: ChatMessage): string[] =>
+	(message.metadata?.plugins ?? []).filter(
+		(plugin: string) => lastPluginMessage.value.get(plugin) === message.id,
+	);
+
+// a sentence another panel started for the user, like "Build with Bob" in Plugins; they finish it here
+watch(
+	() => builderStore.aiPromptDraft,
+	(draft) => {
+		if (draft === null) return;
+		builderStore.aiPromptDraft = null;
+		prompt.value = draft;
+		nextTick(() => promptInput.value?.focus());
+	},
+	{ immediate: true },
+);
 
 /** Size the box to its content. Reset to auto first — scrollHeight only ever
  * grows while an explicit height is set, so without it the box could never

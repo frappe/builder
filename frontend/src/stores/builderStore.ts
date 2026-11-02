@@ -70,6 +70,8 @@ const useBuilderStore = defineStore("builderStore", {
 		// Builder Settings is the only thing the client can see for itself.
 		// null until the server answers; false means "asked, not configured"
 		aiConfigured: <boolean | null>null,
+		// text for Bob's composer, set by another panel; the chat takes it and clears it
+		aiPromptDraft: <string | null>null,
 	}),
 	getters: {
 		isSmallScreen(): boolean {

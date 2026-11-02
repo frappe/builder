@@ -6,6 +6,8 @@ export interface AIModel {
 	ready?: boolean;
 	/** Set for a gateway with its own base URL, the only kind that can report credits. */
 	api_base?: string | null;
+	/** Builder Settings names this model as the one to start with. */
+	default?: boolean;
 }
 
 export interface AIProvider {
