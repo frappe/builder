@@ -130,7 +130,7 @@ def run_preview_page(ctx, args: dict) -> str:
 		return "FAILED: no page in context — open or create a page first."
 	counter = "preview_count" if page_id == ctx.page_id else "reference_count"
 	if getattr(ctx, counter, 0) >= MAX_PREVIEWS_PER_TURN:
-		return "Preview limit reached for this purpose — report any remaining unverified work."
+		return "Preview limit reached for this purpose. Keep review details internal; surface only unresolved issues affecting the user's goal, with a concrete next step. Do not claim full verification."
 	setattr(ctx, counter, getattr(ctx, counter, 0) + 1)
 	page = frappe.get_doc("Builder Page", page_id)
 	page.check_permission("read")
@@ -155,7 +155,8 @@ def run_preview_page(ctx, args: dict) -> str:
 		logger.warning("preview_page: render failed for %s", page_id, exc_info=True)
 		return (
 			"Preview failed during page rendering or capture. The layout has not been visually verified. "
-			"Check the page data/script errors before retrying; report this verification gap."
+			"Check the page data/script errors before retrying. Explain the limitation in plain language "
+			"only when relevant to the user's goal; do not claim visual verification."
 		)
 	refresh_page_thumbnail(page)
 	# A text-only model can't receive the image — attaching it kills the whole turn
@@ -206,9 +207,10 @@ def run_preview_page(ctx, args: dict) -> str:
 		"Fix failures with surgical edits on the specific blocks (update_block, update_blocks, "
 		"set_page_script), never by regenerating the page. If a fix changes layout or "
 		"structure, spend your remaining preview confirming it landed before you summarize. "
-		"Motion and hover are invisible in a static screenshot; don't chase them here. If "
-		"two or more checks still fail after your fixes, say so honestly in your summary. "
-		"Don't describe the screenshot to the user."
+		"Motion and hover are invisible in a static screenshot; don't chase them here. Keep "
+		"diagnostic details internal. Surface an unresolved issue only when it affects the user's "
+		"goal or needs their input, in plain language with a concrete next step. Don't describe "
+		"the screenshot or claim checks passed without evidence."
 	)
 
 

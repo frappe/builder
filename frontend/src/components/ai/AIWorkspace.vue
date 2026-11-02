@@ -110,7 +110,6 @@
 					</div>
 					<div v-else class="max-h-[65vh] overflow-y-auto p-1">
 						<AIProjectPlan v-if="tab === 'Pages'" :project="project" />
-						<AIVerification v-if="tab === 'Checks'" :reports="verification" />
 						<AIMediaBudget
 							v-if="tab === 'Spending' && pageId"
 							:page-id="pageId"
@@ -135,21 +134,19 @@
 import { Button, Dialog, FormControl, Tabs, call } from "frappe-ui";
 import { ref, watch } from "vue";
 import AIProjectPlan from "./AIProjectPlan.vue";
-import AIVerification from "./AIVerification.vue";
 import AIMediaBudget from "./AIMediaBudget.vue";
 import AIDesignCard from "./AIDesignCard.vue";
 import { refinementReply } from "./cardDraft";
 const props = defineProps<{ pageId: string | null; busy?: boolean }>();
 const open = defineModel<boolean>({ default: false });
 const emit = defineEmits<{ select: [prompt: string] }>();
-const tabs = ["Brief", "Assets", "Versions", "Pages", "Checks", "Spending"] as const;
+const tabs = ["Brief", "Assets", "Versions", "Pages", "Spending"] as const;
 const tabItems = tabs.map((name) => ({ value: name, label: name }));
 const tab = ref<(typeof tabs)[number]>("Brief");
 const brief = ref<Record<string, any>>({});
 const variants = ref<Array<Record<string, any>>>([]);
 const project = ref<any>(null),
 	canReconcileMedia = ref(false),
-	verification = ref<any[]>([]),
 	media = ref<any[]>([]),
 	mediaBudget = ref<number | string>(0);
 const loading = ref(false),
@@ -188,7 +185,6 @@ async function load() {
 		brief.value = data.brief;
 		variants.value = data.variants;
 		project.value = data.project;
-		verification.value = data.verification || [];
 		media.value = data.media || [];
 		mediaBudget.value = data.media_budget_usd || 0;
 		canReconcileMedia.value = data.can_reconcile_media || false;

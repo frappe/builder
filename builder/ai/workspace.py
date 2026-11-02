@@ -73,15 +73,7 @@ def get_design_workspace(page_id: str):
 			}
 		)
 	from builder.ai.projects import for_page
-	from builder.ai.revisions import page_revision
 
-	revision = page_revision(page_id)
-	verification = []
-	for row in Artifact.list(page_id, "verification", limit=5):
-		value = json.loads(row.payload_json)
-		verification.append(
-			{"id": row.name, "created": row.modified, "stale": value.get("revision") != revision, **value}
-		)
 	media = []
 	for row in Artifact.list(page_id, "media_request", limit=50):
 		value = json.loads(row.payload_json)
@@ -99,7 +91,6 @@ def get_design_workspace(page_id: str):
 		"brief": brief,
 		"variants": variants,
 		"project": for_page(page_id),
-		"verification": verification,
 		"media": media,
 		"media_budget_usd": frappe.conf.get("bob_media_budget_usd") or 0,
 		"can_reconcile_media": "System Manager" in frappe.get_roles(),

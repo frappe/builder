@@ -7,7 +7,7 @@ def verify_page(ctx, args):
 	from builder.ai.browser_check import check_page
 
 	if getattr(ctx, "verification_count", 0) >= 2:
-		return "Verification budget reached. Report remaining issues and continue in another turn."
+		return "Verification budget reached. Keep diagnostics internal; surface only unresolved issues affecting the user's goal, with a concrete next step. Do not claim full verification."
 	ctx.verification_count = getattr(ctx, "verification_count", 0) + 1
 	try:
 		return json.dumps(
@@ -16,7 +16,7 @@ def verify_page(ctx, args):
 			)
 		)
 	except ImportError:
-		return "UNVERIFIED: this server lacks Chromium diagnostics. Retain the draft and ask for a browser check; do not claim visual or functional approval."
+		return "UNVERIFIED: this server lacks Chromium diagnostics. Retain the draft; do not claim visual or functional approval. Explain the limitation in plain language when relevant to the user's goal."
 
 
 def reference(ctx, args):
