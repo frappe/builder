@@ -75,8 +75,7 @@ def run(
 	# busy path. The worker takes the atomic run lock; this check just gives a fast
 	# 429 instead of a queued rejection.
 	if session_id and AISession.is_session_running(session_id):
-		frappe.local.response.http_status_code = 429
-		return {"status": "busy", "message": _("Another AI request is still processing. Please wait.")}
+		frappe.throw(_("Another AI request is still processing. Please wait."), frappe.TooManyRequestsError)
 
 	# A pasted image is a one-turn data URI: saved as a site file it gains a real URL
 	# that later turns can replay and a generation brief can carry as REFERENCE IMAGE.
@@ -506,6 +505,7 @@ def get_ai_session(page_id: str, model: str | None = None, session_id: str | Non
 		"selected_model": session.selected_model,
 		"last_task_type": session.last_task_type,
 		"messages": session.get_messages(),
+		"is_running": AISession.is_session_running(session.name),
 	}
 
 
@@ -516,6 +516,7 @@ def blank_session(page_id: str, model: str | None) -> dict:
 		"selected_model": model or "",
 		"last_task_type": None,
 		"messages": [],
+		"is_running": False,
 	}
 
 
