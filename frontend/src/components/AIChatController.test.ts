@@ -154,6 +154,23 @@ async function hydrate(active = run()) {
 }
 
 describe("session ownership", () => {
+	it("retains generated next steps through completion and session refresh", async () => {
+		await hydrate();
+		const read = deferred<AISession>();
+		const nextSteps = [{ label: "Add visit hours", prompt: "Ask for my studio's real opening hours." }];
+		mocks.api.get_ai_session.mockReturnValueOnce(read.promise);
+		await chat.onComplete({ ...event(5), message: "Ready", next_steps: nextSteps });
+		expect(chat.messages.value.at(-1)?.metadata?.nextSteps).toEqual(nextSteps);
+		read.resolve({
+			session_id: "A",
+			active_run: null,
+			messages: [{ ...message("reply", "Ready", "assistant"), metadata: { status: "complete", nextSteps } }],
+		});
+		await settle();
+		expect(chat.messages.value.at(-1)?.metadata?.nextSteps).toEqual(nextSteps);
+		expect(mocks.api.run).not.toHaveBeenCalled();
+	});
+
 	it("blocks sends during an explicit session switch", async () => {
 		const read = deferred<AISession>();
 		mocks.api.get_ai_session.mockReturnValueOnce(read.promise);

@@ -53,6 +53,7 @@ CORE_TOOLS = {
 	"read_artifact",
 	"load_tools",
 	"present_ui",
+	"finish_response",
 	"update_design_brief",
 	"query_blocks",
 	"read_block",

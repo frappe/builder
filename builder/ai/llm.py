@@ -52,7 +52,9 @@ TRANSIENT_ERROR_NAMES = frozenset(
 # Fixed wording only: the provider's own message can carry keys or internal ids.
 USER_FIXABLE_ERRORS = {
 	"RepairLimitError": "Several repair attempts failed. Your saved changes are intact; review the issue and continue with a different approach.",
-	"ContextBudgetError": "This turn reached the selected model or turn budget. Review the saved work, select a smaller section, or continue in another turn.",
+	"TurnBudgetError": "This turn reached Bob's token budget. Your saved work is intact; reply 'continue' to pick up in another turn.",
+	"ContextBudgetError": "The current page and request exceed the selected model's context. Select a smaller section or choose a model with a larger context.",
+	"ModelCapabilityError": "The selected model isn't configured with the tool or streaming support Bob needs. Choose another model with /model, or check its capabilities in /providers.",
 	"AuthenticationError": "The AI provider rejected the API key. Change it with /providers.",
 	"PermissionDeniedError": "The AI provider refused this request for your account. Check the key's access with /providers.",
 	"NotFoundError": "The selected model isn't available from its provider. Pick another with /model.",

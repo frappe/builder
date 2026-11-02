@@ -1,6 +1,6 @@
 """Conversational UI primitive — the agent's way of pausing the loop to talk.
 
-One terminal tool, `present_ui`: instead of hardcoded cards (a clarify card, a
+The terminal tool `present_ui`: instead of hardcoded cards (a clarify card, a
 plan card, …) the agent composes whatever the moment needs from a small set of
 UI atoms — text, heading, list, swatches, image, choices, input, actions — and
 the frontend has ONE generic renderer for them. The user's interaction comes
@@ -40,6 +40,38 @@ MAX_ELEMENTS = 30
 # A card is text, options and colours now, so this is a sanity bound rather than a
 # real constraint — big enough that no honest multi-step card ever hits it.
 MAX_UI_JSON = 24000
+
+
+def run_finish_response(ctx, args: dict) -> str | None:
+	message = (args.get("message") or "").strip()
+	if not message:
+		return "FAILED: provide the reply in message before finishing."
+	ctx.next_steps = sanitize_next_steps(args.get("next_steps"))
+	ctx.stop_reason = "model_finished"
+	ctx.finish_turn(message, ctx.started)
+
+
+def sanitize_next_steps(raw) -> list[dict]:
+	if not isinstance(raw, list):
+		return []
+	steps, labels, prompts = [], set(), set()
+	for item in raw[:12]:
+		if not isinstance(item, dict):
+			continue
+		label, prompt = item.get("label"), item.get("prompt")
+		if not isinstance(label, str) or not isinstance(prompt, str):
+			continue
+		label, prompt = " ".join(label.split()), prompt.strip()
+		if not (0 < len(label) <= 60 and 0 < len(prompt) <= 600):
+			continue
+		if label.casefold() in labels or prompt.casefold() in prompts:
+			continue
+		steps.append({"label": label, "prompt": prompt})
+		labels.add(label.casefold())
+		prompts.add(prompt.casefold())
+		if len(steps) == 3:
+			break
+	return steps
 
 
 def run_present_ui(ctx, args: dict) -> str | None:
@@ -229,7 +261,7 @@ present_ui = Tool(
 	handler=run_present_ui,
 	description=(
 		"Show the user an interactive card composed from UI atoms, then end your turn and "
-		"wait. This is your only conversational UI: a question with tappable options, a "
+		"wait. Use this for a question with tappable options, a "
 		"confirmation, a small form, or several questions as one multi-step card. Their "
 		"interaction (option tapped, button clicked, text typed) arrives as their next "
 		"ordinary message; free-typed text is an equally valid reply. Elements render in "
@@ -295,4 +327,44 @@ present_ui = Tool(
 	},
 )
 
-TOOLS = [present_ui]
+finish_response = Tool(
+	name="finish_response",
+	side="terminal",
+	handler=run_finish_response,
+	description=(
+		"Finish your ordinary reply with optional next-step chips, in this same response. "
+		"Call only after the work and checks are done; use as the sole tool in your final round. "
+		"Put the reply in message. The user can edit a chip's prompt before sending; nothing runs on tap. "
+		"Use present_ui instead when you need an answer or confirmation."
+	),
+	parameters={
+		"type": "object",
+		"properties": {
+			"message": {"type": "string", "description": "Your concise reply or result summary."},
+			"next_steps": {
+				"type": "array",
+				"description": (
+					"0–3 distinct, useful follow-ups based on this conversation and the actual page. "
+					"Avoid completed/rejected tasks, invented facts and generic filler. Empty when none help."
+				),
+				"items": {
+					"type": "object",
+					"properties": {
+						"label": {
+							"type": "string",
+							"description": "Short action label, at most 60 characters.",
+						},
+						"prompt": {
+							"type": "string",
+							"description": "An editable user request, at most 600 characters. Ask for missing real details.",
+						},
+					},
+					"required": ["label", "prompt"],
+				},
+			},
+		},
+		"required": ["message"],
+	},
+)
+
+TOOLS = [present_ui, finish_response]

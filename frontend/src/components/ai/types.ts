@@ -83,6 +83,11 @@ export interface AITurnStep {
 	ms?: number;
 }
 
+export interface NextStep {
+	label: string;
+	prompt: string;
+}
+
 export interface ChatMessage {
 	id: string;
 	role: "user" | "assistant";

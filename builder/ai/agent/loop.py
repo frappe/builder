@@ -408,6 +408,7 @@ class AgentRunner:
 		# since the last round was committed. finish_turn compares against it so a
 		# summary already on screen isn't said twice.
 		self.live_text = ""
+		self.next_steps: list[dict] = []
 		# preview_page calls this turn — hard-capped so a screenshot loop can't run up cost.
 		self.preview_count = 0
 		self.image_views = 0
@@ -1580,6 +1581,7 @@ class AgentRunner:
 			"operations": len(self.applied_operations),
 			"deferredOperations": getattr(self, "deferred_operations", []),
 			"revisionAfter": self.expected_revision,
+			"nextSteps": self.next_steps,
 			"debug": {
 				"stopReason": self.stop_reason or self.terminal_status,
 				"loopModel": self.loop_model,
@@ -1674,6 +1676,7 @@ class AgentRunner:
 			"operations": len(self.applied_operations),
 			"deferredOperations": getattr(self, "deferred_operations", []),
 			"revisionAfter": self.expected_revision,
+			"nextSteps": self.next_steps,
 			# Trace for the agent debugger: why the turn ended + what the model did each
 			# round. Explains cases like "only 2 blocks updated" at a glance.
 			"debug": {
@@ -1709,7 +1712,7 @@ class AgentRunner:
 			metadata=final_metadata,
 		)
 		self.maybe_name_session()
-		self.emit("complete", message=summary_text or "Done", after_commit=True)
+		self.emit("complete", message=summary_text or "Done", next_steps=self.next_steps, after_commit=True)
 
 	def maybe_name_session(self) -> None:
 		"""The first completed turn names the chat: a short generated title reads

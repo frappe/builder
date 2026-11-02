@@ -44,6 +44,10 @@ Only adjacent allowlisted independent reads overlap, up to four: document/schema
 - Ambiguous external actions require reconciliation from the actual result before retry. Purchases, DDL and arbitrary external effects cannot be undone as one database transaction.
 - Graceful shutdown persists cancellation. Synchronous slices must settle. Crash recovery uses committed state and marks stale runs interrupted; it does not restore a Python stack or interrupted provider stream. Retry continues from saved page/chat state.
 
-The runtime enforces a ten-minute run limit and defaults to a 300,000-token conservative reservation budget (`bob_run_token_budget`). Models declare context/output limits and vision/tool/streaming capabilities. `bob_model_prices` maps model IDs to `input_per_million`/`output_per_million` rates for estimates. Unknown prices or usage remain unknown. Images use separate [media budgets](STOCK_ASSETS.md).
+The runtime enforces a ten-minute run limit and defaults to a 1,000,000-token conservative reservation budget (`bob_run_token_budget`). Each call reserves estimated input plus its output ceiling; these cumulative reservations can exceed actual reported usage. Explicit site overrides still apply. Models declare context/output limits and vision/tool/streaming capabilities; raising the turn budget does not expand a model's context. Budget, context and capability failures have distinct user messages.
+
+Bob automatically abbreviates older tool rounds, retaining the latest three, and drops older context messages when needed to fit a model request. Current marked instructions and paired tool calls/results are protected. This is deterministic context trimming, not a model-written conversation summary. Saved briefs and decisions remain durable. Compaction reduces future input but does not refund earlier reservations or reset the turn budget.
+
+`bob_model_prices` maps model IDs to `input_per_million`/`output_per_million` rates for estimates. Unknown prices or usage remain unknown. Images use separate [media budgets](STOCK_ASSETS.md).
 
 The daemon adds no public port or unauthenticated mutation callback. Protect normal site configuration/backups and use run IDs rather than credentials/full transcripts in operational logs.

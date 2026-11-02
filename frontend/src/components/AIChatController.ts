@@ -11,6 +11,7 @@ import type {
 	AISession,
 	AITurnStep,
 	ChatMessage,
+	NextStep,
 } from "@/components/ai/types";
 import { buildLocalMessage } from "@/components/ai/yaml";
 import type BuilderCanvas from "@/components/BuilderCanvas.vue";
@@ -1096,9 +1097,9 @@ export class AIChatController {
 		this.requestReconciliation(true);
 	}
 
-	onComplete = async (data: AIRunEvent & { message?: string }) => {
+	onComplete = async (data: AIRunEvent & { message?: string; next_steps?: NextStep[] }) => {
 		if (!this.acceptEvent(data, () => this.onComplete(data), true)) return;
-		const metadata: Record<string, any> = { status: "complete" };
+		const metadata: Record<string, any> = { status: "complete", nextSteps: data.next_steps || [] };
 		if (!this.isForeignSession(data)) {
 			metadata.affectedBlocks = [...this.dispatcher.pendingAffectedBlocks.value];
 			metadata.affectedScripts = [...this.dispatcher.pendingAffectedScripts.value];

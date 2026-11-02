@@ -8,12 +8,22 @@ import frappe
 
 from builder.ai.models import ModelRegistry
 
+DEFAULT_RUN_TOKEN_BUDGET = 1_000_000
+
 
 class RepairLimitError(ValueError):
 	pass
 
 
 class ContextBudgetError(ValueError):
+	pass
+
+
+class TurnBudgetError(ContextBudgetError):
+	pass
+
+
+class ModelCapabilityError(ContextBudgetError):
 	pass
 
 
@@ -76,19 +86,20 @@ def fit_request(request, window, output_limit=None):
 def begin_attempt(ctx, request, purpose):
 	contract = ModelRegistry.capabilities(request.model)
 	if request.tools and not contract["tools"]:
-		raise ContextBudgetError(
+		raise ModelCapabilityError(
 			"This model is configured without tool support. Choose a tool-capable model."
 		)
 	if request.stream and not contract["streaming"]:
-		raise ContextBudgetError(
+		raise ModelCapabilityError(
 			"This model is configured without streaming support. Choose a streaming-capable model."
 		)
 	budget = fit_request(request, contract["context"], contract["output"])
 	reserved = budget["estimated_input_tokens"] + budget["output_reserve"]
-	maximum = int(frappe.conf.get("bob_run_token_budget") or 300000)
+	maximum = int(frappe.conf.get("bob_run_token_budget") or DEFAULT_RUN_TOKEN_BUDGET)
+	ctx.usage["token_budget"] = maximum
 	used = ctx.usage.get("reserved_tokens", 0)
 	if used + reserved > maximum:
-		raise ContextBudgetError(
+		raise TurnBudgetError(
 			"This turn reached its token budget. Review the saved work and continue in another turn."
 		)
 	ctx.usage["reserved_tokens"] = used + reserved

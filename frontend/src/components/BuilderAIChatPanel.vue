@@ -240,7 +240,6 @@
 								isEditingPage
 							"
 							:message="message"
-							:has-content="pageHasContent"
 							@select="useSuggestion" />
 					</div>
 					<!-- Block + image chips below the bubble -->
