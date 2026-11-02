@@ -2,6 +2,8 @@
 
 Historical deployment report from 2026-11-01. See the [2026-11-02 implementation and evidence](implementation-2026-11-02.md) for the current raster previews, user-configured models and async service. The SVG/no-provider statements below describe the earlier deployment.
 
+The thumbnail route added in this deployment also intercepted dynamic token stylesheets. The [2026-11-02 stylesheet correction](published-tokens-2026-11-02.md) restores published fonts and colours; use the corrected image-only route below.
+
 Live URL: https://slight-max-printed-worthy.trycloudflare.com/
 
 Login: https://slight-max-printed-worthy.trycloudflare.com/login?redirect-to=%2Fbuilder
@@ -32,11 +34,12 @@ The initial cache-clear command used `../env/bin/python` from the same sites dir
 
 ## Deployment issue fixed
 
-The editor initially requested 21 distinct standard block thumbnails under `/builder_assets/`, all returning 404. Files already existed under the deployment app's `www/builder_assets`; nginx had no static route for them. Added only to `/home/t3run/bob-test-deploy/nginx.conf`:
+The editor initially requested 21 distinct standard block thumbnails under `/builder_assets/`, all returning 404. Files already existed under the deployment app's `www/builder_assets`; nginx had no static route for them. The original broad static alias also served the Jinja source of `tokens.css` and `variables.css`, which was missed by the thumbnail smoke. Corrected on 2026-11-02 in `/home/t3run/bob-test-deploy/nginx.conf`:
 
 ```nginx
-location /builder_assets/ {
-    alias /home/t3run/bob-test-deploy/bench/apps/builder/builder/www/builder_assets/;
+# CSS in builder_assets is rendered by Frappe; only images are static.
+location ~* ^/builder_assets/.*\.(?:png|jpe?g|webp|svg|gif|avif|ico)$ {
+    root /home/t3run/bob-test-deploy/bench/apps/builder/builder/www;
     expires 1h;
 }
 ```

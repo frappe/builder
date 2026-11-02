@@ -19,3 +19,7 @@ node reviews/bob/probes/viewport.cjs
 ```
 
 Run the capability Python probe before its JavaScript companion: it creates the rejected-operation and form-script fixtures the latter reads. The session checks and backend tests are separate harnesses. Their test selections overlap with the capability selection; do not add their counts as unique tests.
+
+## Public deployment regression
+
+`published-tokens.cjs` is a separate, read-only live regression added on 2026-11-02. Its assertions pass for the corrected deployment. It checks rendered token stylesheets, static thumbnails, and the engagement page's six known design tokens, loaded fonts, colours, images and overflow at three widths. It does not submit forms or start model runs. The page/token expectations intentionally describe this experiment's existing sample page; this is not an offline fixture or a general site validator. See [the report](../published-tokens-2026-11-02.md) for the exact command and evidence.

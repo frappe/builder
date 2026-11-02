@@ -4,6 +4,8 @@ Start with the [current coverage matrix](pr-1023-coverage.md), which maps the or
 
 The [UI follow-up](ui-2026-11-02.md) adds desktop-only direction cards, optional section details and tweaks, and next-step chips, with screenshots and focused validation.
 
+The [published stylesheet correction](published-tokens-2026-11-02.md) fixes the experiment's nginx routing of dynamic token CSS, with a public Chromium regression across three viewport widths.
+
 The [budget and suggestion follow-up](budget-and-next-steps-2026-11-02.md) raises the cumulative turn reservation to one million tokens and replaces keyword chips with suggestions generated in the normal response. It also explains the existing automatic context compaction.
 
 The [Flow LOC investigation](flow-loc-2026-11-02.md) measures current Bob and estimates gross deletions, replacement adapters and net savings for three migration boundaries. It distinguishes today's async runtime from the older review and includes a [file-level LOC inventory](flow-loc-2026-11-02.csv).
