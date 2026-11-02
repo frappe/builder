@@ -68,6 +68,18 @@ describe("canonical accepted block operations", () => {
 		expect(block.tabletStyles).toEqual({ width: "80px" });
 	});
 
+	it("keeps font stacks and state-scoped custom properties intact", () => {
+		expect(
+			normalizeStyles({
+				fontFamily: "var(--DisplayFont, 'Open Sans'), serif",
+				"hover:--BrandFont": "'Newsreader', serif",
+			}),
+		).toEqual({
+			fontFamily: "var(--DisplayFont, 'Open Sans'), serif",
+			"hover:--BrandFont": "'Newsreader', serif",
+		});
+	});
+
 	it("clears both attribute stores before setting or unsetting each canonical key", () => {
 		block.attributes = { id: "legacy", href: "/old", "aria-label": "stale" };
 		block.customAttributes = { id: "current", href: "/also-old", "aria-label": "current" };

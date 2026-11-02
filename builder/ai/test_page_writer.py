@@ -18,10 +18,11 @@ class TestNormalizeStyles(unittest.TestCase):
 				"padding": 40,  # bare number → px
 				"fontSize": "16",  # bare numeric string → px
 				"lineHeight": 1.5,  # unitless — untouched
-				"fontFamily": "'Inter', sans-serif",  # bare family only
+				"fontFamily": "'Inter', sans-serif",
 				"background": "linear-gradient(90deg,#000,#fff)",  # → backgroundImage
 				"hover:boxShadow": "0 1px 2px #000",  # state prefix preserved
 				"--brand": "#fff",  # custom prop passthrough
+				"hover:--BrandFont": "'Newsreader', serif",
 				"opacity": None,  # dropped
 			}
 		)
@@ -29,12 +30,17 @@ class TestNormalizeStyles(unittest.TestCase):
 		self.assertEqual(out["padding"], "40px")
 		self.assertEqual(out["fontSize"], "16px")
 		self.assertEqual(out["lineHeight"], 1.5)
-		self.assertEqual(out["fontFamily"], "Inter")
+		self.assertEqual(out["fontFamily"], "'Inter', sans-serif")
 		self.assertNotIn("background", out)
 		self.assertEqual(out["backgroundImage"], "linear-gradient(90deg,#000,#fff)")
 		self.assertEqual(out["hover:boxShadow"], "0 1px 2px #000")
 		self.assertEqual(out["--brand"], "#fff")
+		self.assertEqual(out["hover:--BrandFont"], "'Newsreader', serif")
 		self.assertNotIn("opacity", out)
+
+	def test_preserves_font_token_fallback(self):
+		out = pw.normalize_styles({"fontFamily": "var(--DisplayFont, 'Open Sans'), serif"})
+		self.assertEqual(out["fontFamily"], "var(--DisplayFont, 'Open Sans'), serif")
 
 
 class TestConvertYamlBlock(unittest.TestCase):

@@ -137,6 +137,7 @@
 
 <script lang="ts" setup>
 import { __ } from "@/translation";
+import { parseBackgroundValue } from "@/components/backgroundValue";
 import Autocomplete from "@/components/Controls/Autocomplete.vue";
 import ColorPicker from "@/components/Controls/ColorPicker.vue";
 import GradientEditor from "@/components/Controls/GradientEditor.vue";
@@ -220,12 +221,16 @@ const hasImage = (state: string | null) =>
 	Boolean(blockController.getStyle(getStyleKey("backgroundImage", state)));
 
 const getColorToken = (state: string | null) => {
+	if (blockController.getStyle(getStyleKey("background", state))) return null;
 	const color = blockController.getStyle(getStyleKey("backgroundColor", state)) as string;
 	return !hasImage(state) && color?.startsWith("var(--") ? color : null;
 };
 
 // the var() value, not the name, so the dropdown marks it as selected
-const getValue = (state: string | null) => getColorToken(state) ?? getDisplayValue(state);
+const getValue = (state: string | null) =>
+	(blockController.getStyle(getStyleKey("background", state)) as string) ||
+	getColorToken(state) ||
+	getDisplayValue(state);
 
 const getControlAttrs = (state: string | null) => ({
 	displayValue: getDisplayValue(state),
@@ -236,6 +241,8 @@ const getColorOptions = async (query: string) =>
 	getColorVariableOptions(query, variables.value, resolveVariableValue, builderStore.canvasDarkMode);
 
 const getDisplayValue = (state: string | null) => {
+	const shorthand = blockController.getStyle(getStyleKey("background", state)) as string;
+	if (shorthand) return getVariableName(shorthand) ?? shorthand;
 	const bg = blockController.getStyle(getStyleKey("backgroundImage", state)) as string;
 	const color = blockController.getStyle(getStyleKey("backgroundColor", state)) as string;
 
@@ -271,12 +278,15 @@ const isTextBlock = computed(() => blockController.isText());
 
 const getHasBackground = (state: string | null) => {
 	return Boolean(
+		blockController.getStyle(getStyleKey("background", state)) ||
 		blockController.getStyle(getStyleKey("backgroundImage", state)) ||
-			blockController.getStyle(getStyleKey("backgroundColor", state)),
+		blockController.getStyle(getStyleKey("backgroundColor", state)),
 	);
 };
 
 const getPreviewStyle = (state: string | null) => {
+	const shorthand = blockController.getStyle(getStyleKey("background", state)) as string;
+	if (shorthand) return { background: shorthand };
 	const bgValue = blockController.getStyle(getStyleKey("backgroundImage", state)) as string;
 	const colorValue = blockController.getStyle(getStyleKey("backgroundColor", state)) as string;
 	const size = blockController.getStyle(getStyleKey("backgroundSize", state)) as string;
@@ -315,6 +325,7 @@ const repeatTabOptions = [
 ];
 
 const setBGImage = (file: { file_url: string }) => {
+	blockController.setStyle(getStyleKey("background"), null);
 	blockController.setStyle(getStyleKey("backgroundImage"), cssUrl(file.file_url));
 	blockController.setStyle(getStyleKey("backgroundColor"), null);
 	if (!blockController.getStyle(getStyleKey("backgroundSize"))) {
@@ -328,26 +339,24 @@ const setBGImage = (file: { file_url: string }) => {
 	}
 };
 
-const parseBackground = (value: string) => {
-	const color = /^([0-9A-F]{3}){1,2}$/i.test(value) ? `#${value}` : value;
-	if (CSS.supports("color", color)) return { color };
-	if (/^(url\(|https?:\/\/|\/|data:)/.test(value)) {
-		return { image: cssUrl(value.replace(/^url\(['"]?|['"]?\)$/g, "")) };
-	}
-	return null;
-};
-
-const setBackground = (bgKey: string, colorKey: string, value: string | null) => {
-	const parsed = value ? parseBackground(value) : null;
+const setBackground = (shorthandKey: string, bgKey: string, colorKey: string, value: string | null) => {
+	const parsed = value ? parseBackgroundValue(value, resolveVariableValue(value)) : null;
 	if (value && !parsed) return;
+	blockController.setStyle(shorthandKey, parsed?.background ?? null);
 	blockController.setStyle(colorKey, parsed?.color ?? null);
 	blockController.setStyle(bgKey, parsed?.image ?? null);
 };
 
 const setBGValue = (value: string | null) =>
-	setBackground(getStyleKey("backgroundImage"), getStyleKey("backgroundColor"), value);
+	setBackground(
+		getStyleKey("background"),
+		getStyleKey("backgroundImage"),
+		getStyleKey("backgroundColor"),
+		value,
+	);
 
 const setBGColor = (color: string | null) => {
+	blockController.setStyle(getStyleKey("background"), null);
 	blockController.setStyle(getStyleKey("backgroundColor"), color);
 	if (color) {
 		blockController.setStyle(getStyleKey("backgroundImage"), null);
@@ -355,6 +364,7 @@ const setBGColor = (color: string | null) => {
 };
 
 const setGradient = (gradient: string) => {
+	blockController.setStyle(getStyleKey("background"), null);
 	blockController.setStyle(getStyleKey("backgroundImage"), gradient);
 	blockController.setStyle(getStyleKey("backgroundColor"), null);
 };
@@ -372,6 +382,7 @@ const setBGRepeat = (value: TabButtonValue) => {
 };
 
 const clearBGImage = () => {
+	blockController.setStyle(getStyleKey("background"), null);
 	blockController.setStyle(getStyleKey("backgroundImage"), null);
 	blockController.setStyle(getStyleKey("backgroundSize"), null);
 	blockController.setStyle(getStyleKey("backgroundPosition"), null);
@@ -389,10 +400,12 @@ const setBGClip = (value: boolean) => {
 };
 
 const handleSetVariant = (variantName: string, value: string | number | boolean | null) => {
+	const shorthandKey = `${variantName}:background`;
 	const bgKey = `${variantName}:backgroundImage`;
 	const colorKey = `${variantName}:backgroundColor`;
 
 	if (!value) {
+		blockController.setStyle(shorthandKey, null);
 		blockController.setStyle(bgKey, null);
 		blockController.setStyle(colorKey, null);
 		return;
@@ -407,9 +420,11 @@ const handleSetVariant = (variantName: string, value: string | number | boolean 
 		}
 	});
 
-	if (typeof value === "string" && parseBackground(value)) return setBackground(bgKey, colorKey, value);
+	if (typeof value === "string" && parseBackgroundValue(value, resolveVariableValue(value)))
+		return setBackground(shorthandKey, bgKey, colorKey, value);
 
 	// display text from the "copy current value to state" dropdown: copy the real base styles
+	blockController.setStyle(shorthandKey, (blockController.getStyle("background") as string) ?? null);
 	blockController.setStyle(bgKey, (blockController.getStyle("backgroundImage") as string) ?? null);
 	blockController.setStyle(colorKey, (blockController.getStyle("backgroundColor") as string) ?? null);
 };

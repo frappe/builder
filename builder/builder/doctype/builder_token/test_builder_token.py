@@ -8,7 +8,13 @@ import tempfile
 import frappe
 from frappe.tests.utils import FrappeTestCase
 
-from builder.builder.doctype.builder_page.builder_page import get_font_family, resolve_font_token
+from builder.ai.agent.tools.settings import set_design_token
+from builder.builder.doctype.builder_page.builder_page import (
+	get_block_html,
+	get_font_family,
+	get_style,
+	resolve_font_token,
+)
 from builder.builder.doctype.builder_token.builder_token import get_css_variables, get_variables_css
 from builder.builder.patches.refactor_builder_variables import build_maps, rewrite_doctype_blocks
 from builder.utils import import_fixture_record, normalize_renamed_doc, sync_builder_tokens
@@ -54,6 +60,17 @@ class TestBuilderToken(FrappeTestCase):
 		token.save()
 		self.assertIn("#222222", get_variables_css())
 
+	def test_explicit_id_does_not_update_another_token_with_the_same_label(self):
+		original = make_token(token_name="shared-label", value="#111111")
+		wanted_id = f"test-{frappe.generate_hash(length=10)}"
+		result = set_design_token(
+			None,
+			{"id": wanted_id, "token_name": "shared-label", "value": "#222222"},
+		)
+		self.assertIn(f"var(--{wanted_id})", result)
+		self.assertEqual(frappe.db.get_value("Builder Token", original.name, "value"), "#111111")
+		self.assertEqual(frappe.db.get_value("Builder Token", wanted_id, "value"), "#222222")
+
 
 class TestFontToken(FrappeTestCase):
 	def setUp(self):
@@ -70,6 +87,54 @@ class TestFontToken(FrappeTestCase):
 
 	def test_plain_font_stack_is_left_alone(self):
 		self.assertEqual(get_font_family("Inter, sans-serif"), "Inter")
+
+	def test_missing_font_token_uses_css_fallback(self):
+		self.assertEqual(get_font_family("var(--missing-font, 'Open Sans'), sans-serif"), "Open Sans")
+
+	def test_font_links_include_block_local_variable_values(self):
+		blocks = [
+			{
+				"element": "div",
+				"baseStyles": {"--DisplayFont": "Fraunces"},
+				"children": [
+					{
+						"element": "h1",
+						"baseStyles": {"fontFamily": "var(--DisplayFont)", "fontWeight": "700"},
+						"tabletStyles": {"--DisplayFont": "Newsreader"},
+						"innerHTML": "Headline",
+					}
+				],
+			}
+		]
+		_, css, font_map, _ = get_block_html(blocks)
+		self.assertIn("--DisplayFont: Fraunces;", css)
+		self.assertIn("--DisplayFont: Newsreader;", css)
+		self.assertEqual(font_map["Fraunces"]["weights"], [700])
+		self.assertEqual(font_map["Newsreader"]["weights"], [700])
+
+	def test_font_fallback_is_loaded_when_variable_only_exists_at_one_breakpoint(self):
+		blocks = [
+			{
+				"element": "h1",
+				"baseStyles": {"fontFamily": "var(--DisplayFont, 'Open Sans'), serif"},
+				"mobileStyles": {"--DisplayFont": "Fraunces"},
+				"innerHTML": "A <em>responsive</em> headline",
+			}
+		]
+		_, _, font_map, _ = get_block_html(blocks)
+		self.assertIn("Open Sans", font_map)
+		self.assertIn("Fraunces", font_map)
+		self.assertEqual(font_map["Open Sans"]["italics"], [400])
+		self.assertEqual(font_map["Fraunces"]["italics"], [400])
+
+	def test_font_stack_and_custom_property_case_survive_css_generation(self):
+		css = get_style({"--BrandFont": "'Open Sans'", "fontFamily": "var(--BrandFont, 'Open Sans'), serif"})
+		self.assertIn("--BrandFont: 'Open Sans';", css)
+		self.assertIn("font-family: var(--BrandFont, 'Open Sans'), serif;", css)
+		_, state_css, _, _ = get_block_html(
+			[{"element": "div", "baseStyles": {"hover:--BrandFont": "Fraunces"}}]
+		)
+		self.assertIn("--BrandFont: Fraunces;", state_css)
 
 
 class TestRenamedFixtures(FrappeTestCase):

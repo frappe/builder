@@ -907,6 +907,7 @@ def build_tag(
 	data_key: dict | None = None,
 	ancestor_font: str | None = None,
 	ancestor_italic: bool = False,
+	font_variables: dict[str, set[str]] | None = None,
 ) -> bs.Tag:
 	"""
 	Transforms a single block to an HTML tag.
@@ -922,6 +923,7 @@ def build_tag(
 		block.get("mobileStyles") or {},
 		block.get("tabletStyles") or {},
 	]
+	font_variables = collect_font_variables(all_styles, font_variables)
 	resolved_font = (
 		next(
 			(s.get("fontFamily", "").strip("'\"") for s in all_styles if s.get("fontFamily")),
@@ -936,19 +938,32 @@ def build_tag(
 		ancestor_italic,
 	)
 
-	tag = create_html_tag(block, state, ancestor_font=resolved_font)
+	tag = create_html_tag(block, state, ancestor_font=resolved_font, font_variables=font_variables)
 
 	if resolved_italic and resolved_font:
 		weight = next((s.get("fontWeight") for s in all_styles if s.get("fontWeight")), 400)
-		register_italic_font(state["font_map"], get_font_family(resolved_font), weight)
+		for family in get_font_families(resolved_font, font_variables):
+			register_italic_font(state["font_map"], family, weight)
 
 	if is_repeater_block(block):
 		render_repeater_children(
-			tag, block, data_key, state, ancestor_font=resolved_font, ancestor_italic=resolved_italic
+			tag,
+			block,
+			data_key,
+			state,
+			ancestor_font=resolved_font,
+			ancestor_italic=resolved_italic,
+			font_variables=font_variables,
 		)
 	else:
 		render_children(
-			tag, block, data_key, state, ancestor_font=resolved_font, ancestor_italic=resolved_italic
+			tag,
+			block,
+			data_key,
+			state,
+			ancestor_font=resolved_font,
+			ancestor_italic=resolved_italic,
+			font_variables=font_variables,
 		)
 
 	attach_client_script(tag, block, state)
@@ -1075,7 +1090,12 @@ def quote_url(url: str | None) -> str | None:
 	return frappe.utils.quote(url, safe=safe)
 
 
-def create_html_tag(block: dict, state: dict, ancestor_font: str | None = None) -> bs.Tag:
+def create_html_tag(
+	block: dict,
+	state: dict,
+	ancestor_font: str | None = None,
+	font_variables: dict[str, set[str]] | None = None,
+) -> bs.Tag:
 	"""Create HTML tag element with attributes, classes, and styling."""
 	soup = state["soup"]
 
@@ -1124,10 +1144,10 @@ def create_html_tag(block: dict, state: dict, ancestor_font: str | None = None) 
 	if tag.get("data-track") and block.get("blockId"):
 		tag["data-track"] = block.get("blockId")
 
-	classes = build_tag_classes(block, state, ancestor_font=ancestor_font)
+	classes = build_tag_classes(block, state, ancestor_font=ancestor_font, font_variables=font_variables)
 	tag.attrs["class"] = " ".join(classes)
 
-	add_inner_html_content(tag, block, state, ancestor_font=ancestor_font)
+	add_inner_html_content(tag, block, state, ancestor_font=ancestor_font, font_variables=font_variables)
 
 	if picture_tag is not None:
 		picture_tag.append(tag)
@@ -1136,7 +1156,12 @@ def create_html_tag(block: dict, state: dict, ancestor_font: str | None = None) 
 	return tag
 
 
-def build_tag_classes(block: dict, state: dict, ancestor_font: str | None = None) -> list[str]:
+def build_tag_classes(
+	block: dict,
+	state: dict,
+	ancestor_font: str | None = None,
+	font_variables: dict[str, set[str]] | None = None,
+) -> list[str]:
 	"""Build list of CSS classes for the tag."""
 	classes = block.get("classes", [])
 	if isinstance(classes, str):
@@ -1150,13 +1175,20 @@ def build_tag_classes(block: dict, state: dict, ancestor_font: str | None = None
 		classes.insert(0, "__text_block__")
 
 	if block.get("baseStyles") or block.get("tabletStyles") or block.get("mobileStyles"):
-		style_class = generate_and_apply_styles(block, state, ancestor_font=ancestor_font)
+		style_class = generate_and_apply_styles(
+			block, state, ancestor_font=ancestor_font, font_variables=font_variables
+		)
 		classes.insert(0, style_class)
 
 	return classes
 
 
-def generate_and_apply_styles(block: dict, state: dict, ancestor_font: str | None = None) -> str:
+def generate_and_apply_styles(
+	block: dict,
+	state: dict,
+	ancestor_font: str | None = None,
+	font_variables: dict[str, set[str]] | None = None,
+) -> str:
 	"""Generate a unique style class and append all styles to the style tag."""
 	style_class = f"fb-{frappe.generate_hash(length=8)}"
 	style_tag = state["style_tag"]
@@ -1173,7 +1205,7 @@ def generate_and_apply_styles(block: dict, state: dict, ancestor_font: str | Non
 		styles["mobile"]["regular"],
 		styles["tablet"]["regular"],
 	]
-	set_fonts(style_list, font_map, inherited_font=ancestor_font)
+	set_fonts(style_list, font_map, inherited_font=ancestor_font, variables=font_variables)
 
 	# Append styles for different states and devices
 	# Base
@@ -1191,7 +1223,13 @@ def generate_and_apply_styles(block: dict, state: dict, ancestor_font: str | Non
 	return style_class
 
 
-def add_inner_html_content(tag: bs.Tag, block: dict, state: dict, ancestor_font: str | None = None):
+def add_inner_html_content(
+	tag: bs.Tag,
+	block: dict,
+	state: dict,
+	ancestor_font: str | None = None,
+	font_variables: dict[str, set[str]] | None = None,
+):
 	"""Add inner HTML content to the tag."""
 	inner_content = block.get("innerHTML")
 	if inner_content:
@@ -1199,27 +1237,29 @@ def add_inner_html_content(tag: bs.Tag, block: dict, state: dict, ancestor_font:
 		if not isinstance(inner_content, (str, bytes)):
 			inner_content = str(inner_content)
 		inner_soup = bs.BeautifulSoup(inner_content, "html.parser")
-		set_fonts_from_html(inner_soup, state["font_map"])
-		set_italics_from_html(inner_soup, state["font_map"], ancestor_font)
+		set_fonts_from_html(inner_soup, state["font_map"], font_variables)
+		set_italics_from_html(inner_soup, state["font_map"], ancestor_font, font_variables)
 		if inner_soup.contents:
 			tag.append(inner_soup)
 
 
-def set_italics_from_html(soup, font_map, ancestor_font: str | None = None):
+def set_italics_from_html(soup, font_map, ancestor_font: str | None = None, font_variables=None):
 	"""Register italics used inside a block's inner HTML: <i>/<em> tags or
 	inline font-style spans, which inherit the block's resolved font."""
-	fallback = get_font_family(ancestor_font) if ancestor_font else None
+	fallback = get_font_families(ancestor_font, font_variables) if ancestor_font else set()
 	if soup.find(["i", "em"]):
-		register_italic_font(font_map, fallback)
+		for family in fallback:
+			register_italic_font(font_map, family)
 	for tag in soup.find_all(style=True):
 		style = tag.attrs.get("style", "")
 		if not re.search(r"font-style\s*:\s*(italic|oblique)", style):
 			continue
-		family = None
+		families = set()
 		for declaration in style.split(";"):
 			if "font-family" in declaration:
-				family = get_font_family(declaration.split(":", 1)[1])
-		register_italic_font(font_map, family or fallback)
+				families = get_font_families(declaration.split(":", 1)[1], font_variables)
+		for family in families or fallback:
+			register_italic_font(font_map, family)
 
 
 def is_repeater_block(block: dict) -> bool:
@@ -1236,6 +1276,7 @@ def render_children(
 	state: dict,
 	ancestor_font: str | None = None,
 	ancestor_italic: bool = False,
+	font_variables: dict[str, set[str]] | None = None,
 ):
 	"""Render (non-repeater) children."""
 	for child in block.get("children", []) or []:
@@ -1245,7 +1286,12 @@ def render_children(
 		child_context["visibility_key"] = get_visibility_condition_key(child, data_key)
 
 		child_tag = build_tag(
-			child, state, data_key, ancestor_font=ancestor_font, ancestor_italic=ancestor_italic
+			child,
+			state,
+			data_key,
+			ancestor_font=ancestor_font,
+			ancestor_italic=ancestor_italic,
+			font_variables=font_variables,
 		)
 
 		append_child_with_context(tag, child_tag, child_context)
@@ -1259,6 +1305,7 @@ def render_repeater_children(
 	state: dict,
 	ancestor_font: str | None = None,
 	ancestor_italic: bool = False,
+	font_variables: dict[str, set[str]] | None = None,
 ):
 	"""Render children for repeater blocks (with for loops)."""
 	loop_info = get_loop_info(block, data_key, state["standard_props_stack"])
@@ -1276,7 +1323,12 @@ def render_repeater_children(
 		child_context["default_props"] = extract_loop_variables(data_key_key, state["standard_props_stack"])
 
 	child_tag = build_tag(
-		child, state, loop_info["data_key"], ancestor_font=ancestor_font, ancestor_italic=ancestor_italic
+		child,
+		state,
+		loop_info["data_key"],
+		ancestor_font=ancestor_font,
+		ancestor_italic=ancestor_italic,
+		font_variables=font_variables,
 	)
 
 	append_child_with_context(tag, child_tag, child_context)
@@ -1599,14 +1651,9 @@ def wrap_with_media_query(style_string, device):
 
 
 def get_style(style_obj):
-	def _css_value(key, value):
-		if key == "fontFamily" and isinstance(value, str):
-			value = value.strip("'\"").replace(" ", "\\ ")
-		return sanitize_style_value(value)
-
 	return (
 		"".join(
-			f"{camel_case_to_kebab_case(key)}: {_css_value(key, value)};"
+			f"{camel_case_to_kebab_case(key)}: {sanitize_style_value(value)};"
 			for key, value in style_obj.items()
 			if value is not None and value != "" and not key.startswith("__")
 		)
@@ -1632,26 +1679,72 @@ def append_state_style(style_obj, style_tag, style_class, device="desktop"):
 			style_tag.append(wrap_with_media_query(style_string, device))
 
 
-def get_font_family(font: str) -> str:
+def get_font_family(font: str, variables: dict[str, set[str]] | None = None) -> str:
 	"""Return the first family from a CSS font stack (e.g. 'Inter, sans-serif' -> 'Inter').
 	A Font design token (var(--id)) resolves to its family so the Google Fonts
 	links include tokenized families."""
-	font = resolve_font_token(font)
-	return font.split(",")[0].strip().strip("'\"")
+	return next(iter(sorted(get_font_families(font, variables))), "")
+
+
+def parse_font_variable(font: str) -> tuple[str, str] | None:
+	match = re.match(r"\s*var\(\s*(--[^),\s]+)", font or "")
+	if not match:
+		return None
+	start = font.index("(")
+	depth = 0
+	for index in range(start, len(font)):
+		depth += (font[index] == "(") - (font[index] == ")")
+		if depth == 0:
+			arguments = font[start + 1 : index]
+			_, _, fallback = arguments.partition(",")
+			return match.group(1), fallback.strip()
+	return None
+
+
+def resolve_font_values(
+	font: str, variables: dict[str, set[str]] | None = None, seen: frozenset[str] = frozenset()
+) -> set[str]:
+	parsed = parse_font_variable(font)
+	if not parsed:
+		return {font} if font else set()
+	name, fallback = parsed
+	if name in seen:
+		return set()
+	from builder.builder.doctype.builder_token.builder_token import get_css_variables
+
+	css_variables, _ = get_css_variables()
+	values = set((variables or {}).get(name, set()))
+	if css_variables.get(name):
+		values.add(css_variables[name])
+	if fallback:
+		values.add(fallback)
+	return {resolved for value in values for resolved in resolve_font_values(value, variables, seen | {name})}
 
 
 def resolve_font_token(font: str) -> str:
-	match = re.match(r"\s*var\(\s*(--[^),\s]+)", font or "")
-	if not match:
-		return font
-	from builder.builder.doctype.builder_token.builder_token import get_css_variables
-
-	# the cached token map, so a page full of tokenized fonts is not a query each
-	css_variables, _ = get_css_variables()
-	return css_variables.get(match.group(1), "")
+	return next(iter(sorted(resolve_font_values(font))), "")
 
 
-def set_fonts(styles, font_map, inherited_font=None):
+def get_font_families(font: str, variables: dict[str, set[str]] | None = None) -> set[str]:
+	families = set()
+	for value in resolve_font_values(font, variables):
+		family = value.split(",", 1)[0].strip().strip("'\"")
+		if family:
+			families.add(family)
+	return families
+
+
+def collect_font_variables(styles, inherited=None):
+	variables = {name: set(values) for name, values in (inherited or {}).items()}
+	for style in styles:
+		for key, value in style.items():
+			property_name = key.split(":", 1)[-1]
+			if property_name.startswith("--") and isinstance(value, str) and value:
+				variables.setdefault(property_name, set()).add(value)
+	return variables
+
+
+def set_fonts(styles, font_map, inherited_font=None, variables=None):
 	weight_map = {
 		"thin": "100",
 		"extralight": "200",
@@ -1694,13 +1787,6 @@ def set_fonts(styles, font_map, inherited_font=None):
 			# fontWeight is set but fontFamily is not — use explicitly passed ancestor font
 			font = inherited_font
 		if font:
-			# Use the first family from a fallback list, e.g. "Inter, sans-serif" -> "Inter"
-			font = get_font_family(font)
-
-			# Skip system fonts and unresolvable font tokens
-			if not font or font.lower() in system_fonts:
-				continue
-
 			weight = str(style.get("fontWeight") or "400").lower()
 			weight = weight_map.get(weight, weight)
 
@@ -1710,12 +1796,15 @@ def set_fonts(styles, font_map, inherited_font=None):
 			except (ValueError, TypeError):
 				weight = 400
 
-			if font in font_map:
-				if weight not in font_map[font]["weights"]:
-					font_map[font]["weights"].append(weight)
-					font_map[font]["weights"].sort()
-			else:
-				font_map[font] = {"weights": [weight]}
+			for family in get_font_families(font, variables):
+				if family.lower() in system_fonts:
+					continue
+				if family in font_map:
+					if weight not in font_map[family]["weights"]:
+						font_map[family]["weights"].append(weight)
+						font_map[family]["weights"].sort()
+				else:
+					font_map[family] = {"weights": [weight]}
 
 
 def normalize_font_weights(font_map: dict) -> None:
@@ -1766,15 +1855,14 @@ def get_google_font_urls(font_map: dict) -> list[str]:
 	return urls
 
 
-def set_fonts_from_html(soup, font_map):
+def set_fonts_from_html(soup, font_map, variables=None):
 	# get font-family from inline styles
 	for tag in soup.find_all(style=True):
 		styles = tag.attrs.get("style").split(";")
 		for style in styles:
-			if "font-family" in style:
-				font = get_font_family(style.split(":")[1])
-				if font:
-					font_map[font] = {"weights": [400]}
+			property_name, _, value = style.partition(":")
+			if property_name.strip().lower() == "font-family":
+				set_fonts([{"fontFamily": value}], font_map, variables=variables)
 
 
 def extend_block(block, overridden_block):

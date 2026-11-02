@@ -569,6 +569,8 @@ def camel_case_to_kebab_case(text, remove_spaces=False):
 	# Used to convert camelCase css properties to kebab-case, e.g. backgroundColor → background-color
 	if not text:
 		return ""
+	if text.startswith("--"):
+		return text
 	text = re.sub(r"(?<!^)(?=[A-Z])", "-", text).lower()
 	# Add leading hyphen for vendor-prefixed CSS properties
 	# e.g. WebkitBackgroundClip → -webkit-background-clip
@@ -580,6 +582,8 @@ def camel_case_to_kebab_case(text, remove_spaces=False):
 
 
 def kebab_to_camel_case(text):
+	if text.startswith("--"):
+		return text
 	return re.sub(r"-([a-z])", lambda match: match.group(1).upper(), text)
 
 

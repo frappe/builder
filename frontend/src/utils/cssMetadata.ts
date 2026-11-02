@@ -40,7 +40,7 @@ const metadata = cssPropertyMetadata as Record<string, CSSPropertyMetadata>;
 
 const baselineCSSProperties = Object.keys(metadata).filter((property) => metadata[property].baseline);
 
-const cssPropertyNamePattern = /^-?[a-z][a-z0-9-]*$/;
+const cssPropertyNamePattern = /^(?:-?[a-z][a-z0-9-]*|--[A-Za-z0-9_-]+)$/;
 
 const isValidCSSPropertyName = (property: string) => cssPropertyNamePattern.test(property);
 

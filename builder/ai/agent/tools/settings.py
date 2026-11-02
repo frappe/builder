@@ -121,12 +121,14 @@ def set_design_token(ctx, args: dict) -> str:
 		"dark_value": (args.get("dark_value") or "").strip() if token_type == "Color" else "",
 	}
 	wanted_id = clean_variable_id(args.get("id") or "")
-	# The model may pass the label OR the id/handle it saw in query_records.
-	existing = (
-		(wanted_id and frappe.db.exists("Builder Token", wanted_id))
-		or frappe.db.exists("Builder Token", label)
-		or frappe.db.exists("Builder Token", {"token_name": label})
-	)
+	if args.get("id") and not wanted_id:
+		return "FAILED: id must contain a CSS-compatible letter, digit, hyphen or underscore."
+	if wanted_id:
+		existing = frappe.db.exists("Builder Token", wanted_id)
+	else:
+		existing = frappe.db.exists("Builder Token", label) or frappe.db.exists(
+			"Builder Token", {"token_name": label}
+		)
 	if existing:
 		doc = frappe.get_doc("Builder Token", existing)
 		doc.update(fields)

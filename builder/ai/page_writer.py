@@ -83,20 +83,14 @@ BARE_NUMBER = re.compile(r"^-?\d+(\.\d+)?$")
 
 
 def kebab_to_camel(text: str) -> str:
+	if text.startswith("--"):
+		return text
 	return re.sub(r"-([a-z])", lambda m: m.group(1).upper(), text)
 
 
 def normalize_value(prop: str, value):
 	if prop == "fontFamily" and isinstance(value, str):
-		v = value.replace("'", "").replace('"', "").strip()
-		# A font TOKEN handle: return var(--id) clean. Never split on comma first —
-		# the model sometimes bakes a fallback INSIDE the parens (var(--id, Inter)),
-		# and splitting there truncates the var() and drops its closing ) (invalid
-		# CSS → the family silently falls back to serif on the published page).
-		if match := re.search(r"var\(\s*(--[A-Za-z0-9_-]+)", v):
-			return f"var({match.group(1)})"
-		# Literal family: bare name only — strip any fallback stack.
-		return v.split(",")[0].strip()
+		return value.strip()
 	if isinstance(value, str):
 		v = value.strip()
 		if prop not in QUOTE_MEANINGFUL:
@@ -127,15 +121,15 @@ def normalize_styles(styles, keep_null: bool = False) -> dict:
 	for raw_key, value in styles.items():
 		if value is None and not keep_null:
 			continue
-		# Custom properties (--brand) are arbitrary — pass through untouched.
-		if raw_key.startswith("--"):
-			out[raw_key] = value
-			continue
 		# State-prefixed keys (hover:boxShadow) keep the prefix; only the name after
 		# the colon is a CSS property to normalize.
 		colon = raw_key.find(":")
 		prefix = "" if colon == -1 else raw_key[: colon + 1]
-		prop = kebab_to_camel(raw_key if colon == -1 else raw_key[colon + 1 :])
+		property_name = raw_key if colon == -1 else raw_key[colon + 1 :]
+		if property_name.startswith("--"):
+			out[prefix + property_name] = value
+			continue
+		prop = kebab_to_camel(property_name)
 		# A gradient belongs in backgroundImage, never the `background` shorthand.
 		if prop == "background" and isinstance(value, str) and "gradient(" in value:
 			prop = "backgroundImage"

@@ -116,12 +116,14 @@ function findNearestSiblingIndex(e: MouseEvent) {
 
 // converts border-color to borderColor
 function kebabToCamelCase(str: string) {
+	if (str.startsWith("--")) return str;
 	return str.replace(/-([a-z])/g, function (g) {
 		return g[1].toUpperCase();
 	});
 }
 
 function toKebabCase(str: string) {
+	if (str.startsWith("--")) return str;
 	return str
 		.replace(/([a-z])([A-Z])/g, "$1-$2")
 		.replace(/([A-Z])([A-Z][a-z])/g, "$1-$2")
@@ -130,7 +132,8 @@ function toKebabCase(str: string) {
 }
 
 function normalizeCSSPropertyName(property: string | null | undefined) {
-	return (property || "").trim().toLowerCase();
+	const name = (property || "").trim();
+	return name.startsWith("--") ? name : name.toLowerCase();
 }
 
 const INTERACTIVE_CONTROL_SELECTOR =
