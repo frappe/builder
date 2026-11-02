@@ -107,6 +107,7 @@ class TestWorkflowIntegrations(FrappeTestCase):
 			self.page.name,
 			{
 				"name": f"bob-fixture-{frappe.generate_hash(length=8)}",
+				"description": "Candidate ownership regression fixture",
 				"code": "export default { install() {} }",
 			},
 		)
