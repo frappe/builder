@@ -79,16 +79,13 @@
 				</ItemListRow>
 			</CollapsibleSection>
 
-			<CollapsibleSection section-name="Marketplace">
+			<!-- an unreachable Hub is nothing the user can fix, so the section goes rather than say so -->
+			<CollapsibleSection v-if="!pluginsCatalog.error" section-name="Marketplace">
 				<div
 					v-if="pluginsCatalog.loading && !catalog.length"
 					class="flex items-center gap-2 text-p-sm text-ink-gray-5">
 					<LoadingIndicator class="size-4" />
 					Loading plugins…
-				</div>
-				<div v-else-if="pluginsCatalog.error" class="flex flex-col items-start gap-2">
-					<p class="text-p-sm italic text-ink-gray-5">Could not reach the Builder Hub.</p>
-					<Button variant="subtle" size="sm" label="Try again" @click="pluginsCatalog.reload()" />
 				</div>
 				<p v-else-if="!notInstalled.length" class="text-p-sm italic text-ink-gray-5">
 					{{ emptyMarketplaceText }}
