@@ -1,88 +1,122 @@
 <template>
-	<!-- final step: full-page template selector -->
+	<!-- template picker: full page, reached from the start step -->
 	<div v-if="step === 'templates'" class="flex h-screen flex-col bg-surface-base">
 		<div class="mx-auto w-full max-w-3xl px-8 pt-16">
-			<img src="/builder_logo.png" alt="Builder" class="h-8" />
+			<div class="relative">
+				<Button variant="ghost" class="absolute -left-11 top-0.5" :label="__('Back')" @click="goBack">
+					<template #icon>
+						<LucideChevronLeft class="size-4" />
+					</template>
+				</Button>
+				<img src="/builder_logo.png" alt="Builder" class="h-8" />
+			</div>
 		</div>
 		<div class="flex-1 overflow-hidden">
 			<TemplateGallery
 				class="mx-auto h-full w-full max-w-3xl"
 				:max-groups="8"
-				:heading="templateHeading"
-				:subtitle="__('Choose a template to get a head start, or start from scratch.')" />
+				:heading="__('Pick a template')"
+				:subtitle="__('Choose one to get a head start, or start from scratch.')" />
 		</div>
 	</div>
 
-	<!-- question steps: one question per page -->
+	<!-- one decision per page: the questions, then how to start -->
 	<div v-else class="flex h-screen flex-col items-center overflow-y-auto p-5">
 		<!-- top-anchored so the logo/heading never move between steps -->
-		<div class="mt-[28vh] flex w-full max-w-sm flex-col gap-5">
+		<div class="mt-[28vh] flex w-full max-w-sm flex-col gap-5 pb-24">
 			<img src="/builder_logo.png" alt="Builder" class="h-8 self-start" />
 			<div class="relative flex flex-col gap-1.5">
-				<!-- kept mounted (invisible on step 1) so nothing shifts when it appears -->
+				<!-- kept mounted (invisible when there's nowhere to go back to) so nothing shifts when it appears -->
 				<Button
 					variant="ghost"
 					class="absolute -left-11 top-0"
-					:class="{ invisible: isFirst }"
+					:class="{ invisible: !canGoBack }"
 					:label="__('Back')"
 					@click="goBack">
 					<template #icon>
 						<LucideChevronLeft class="size-4" />
 					</template>
 				</Button>
-				<h1 class="text-xl font-bold text-ink-gray-9">{{ activeQuestion.heading }}</h1>
-				<p class="text-base text-ink-gray-6">{{ activeQuestion.subtitle }}</p>
+				<h1 class="text-xl font-bold text-ink-gray-9">{{ screen.heading }}</h1>
+				<p class="text-base text-ink-gray-6">{{ screen.subtitle }}</p>
 			</div>
 
-			<div class="flex flex-wrap gap-3.5">
-				<Button
-					v-for="opt in activeQuestion.options"
-					:key="opt.value"
-					:variant="answers[activeQuestion.key] === opt.value ? 'subtle' : 'outline'"
-					:label="opt.label"
-					:class="{ 'border border-transparent': answers[activeQuestion.key] === opt.value }"
-					@click="select(opt.value)" />
-			</div>
+			<template v-if="activeQuestion">
+				<div class="flex flex-wrap gap-3.5">
+					<Button
+						v-for="opt in activeQuestion.options"
+						:key="opt.value"
+						:variant="answers[activeQuestion.key] === opt.value ? 'subtle' : 'outline'"
+						:label="opt.label"
+						:class="{ 'border border-transparent': answers[activeQuestion.key] === opt.value }"
+						@click="select(opt.value)" />
+				</div>
 
-			<!-- "Other" free text; -mt-5 + inner mt-5 avoid a double column gap while collapsed -->
-			<div
-				class="-mt-5 grid transition-[grid-template-rows,opacity] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]"
-				:class="isOtherSelected ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'">
-				<div class="overflow-hidden">
-					<div
-						class="transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]"
-						:class="isOtherSelected ? 'translate-y-0' : '-translate-y-full'">
-						<Textarea
-							ref="otherInput"
-							v-model="otherText[activeQuestion.key]"
-							class="mt-5"
-							variant="subtle"
-							:rows="3"
-							:placeholder="activeQuestion.otherPlaceholder"
-							:tabindex="isOtherSelected ? 0 : -1" />
+				<!-- "Other" free text; -mt-5 + inner mt-5 avoid a double column gap while collapsed -->
+				<div
+					class="-mt-5 grid transition-[grid-template-rows,opacity] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]"
+					:class="isOtherSelected ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'">
+					<div class="overflow-hidden">
+						<div
+							class="transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]"
+							:class="isOtherSelected ? 'translate-y-0' : '-translate-y-full'">
+							<Textarea
+								ref="otherInput"
+								v-model="otherText[activeQuestion.key]"
+								class="mt-5"
+								variant="subtle"
+								:rows="3"
+								:placeholder="activeQuestion.otherPlaceholder"
+								:tabindex="isOtherSelected ? 0 : -1" />
+						</div>
 					</div>
 				</div>
-			</div>
 
-			<Button
-				variant="solid"
-				size="md"
-				class="w-full"
-				:label="__('Next')"
-				:disabled="!answers[activeQuestion.key]"
-				@click="goNext" />
+				<Button
+					variant="solid"
+					size="md"
+					class="w-full"
+					:label="__('Next')"
+					:disabled="!answers[activeQuestion.key]"
+					@click="goNext" />
+			</template>
+			<StartChoice v-else-if="step === 'start'" :can-clone="canClone" @choose="choose" />
+			<CloneAddressStep
+				v-else-if="step === 'clone-address'"
+				v-model="cloneAddress"
+				@next="goTo('clone-look')" />
+			<CloneLookStep
+				v-else-if="step === 'clone-look'"
+				v-model="cloneLook"
+				:starting="cloneStarting"
+				:error="cloneError"
+				@start="startCloning" />
+			<CloneProgressStep
+				v-else-if="step === 'clone-progress'"
+				@open="router.push({ name: 'home' })"
+				@retry="retryClone" />
 		</div>
 
-		<Button variant="ghost" :label="__('Skip for now')" class="fixed bottom-8" @click="skip" />
+		<Button
+			v-if="activeQuestion"
+			variant="ghost"
+			:label="__('Skip for now')"
+			class="fixed bottom-8"
+			@click="skip" />
 	</div>
 </template>
 
 <script setup lang="ts">
 import { __ } from "@/translation";
+import CloneAddressStep from "@/components/Onboarding/CloneAddressStep.vue";
+import CloneLookStep from "@/components/Onboarding/CloneLookStep.vue";
+import CloneProgressStep from "@/components/Onboarding/CloneProgressStep.vue";
+import StartChoice from "@/components/Onboarding/StartChoice.vue";
 import TemplateGallery from "@/components/Templates/TemplateGallery.vue";
 import { useDashboardState } from "@/composables/useDashboardState";
+import { type CloneLook, serverMessage, useSiteClone } from "@/composables/useSiteClone";
 import { builderSettings } from "@/data/builderSettings";
-import { sessionUser } from "@/router";
+import router, { sessionUser } from "@/router";
 import { getUserInfo } from "@/usersInfo";
 import { Button, Textarea, call } from "frappe-ui";
 import { useTelemetry } from "@framework/ui/telemetry";
@@ -163,13 +197,29 @@ const otherText = reactive<Record<QuestionKey, string>>({
 	source: "",
 });
 
-// question steps followed by the full-page template selector
-const stepOrder = [...questions.map((q) => q.key), "templates"] as const;
-const stepIndex = ref(0);
-const step = computed(() => stepOrder[stepIndex.value]);
-const isFirst = computed(() => stepIndex.value === 0);
-const activeQuestion = computed(() => questions.find((q) => q.key === step.value)!);
-const isOtherSelected = computed(() => answers[activeQuestion.value.key] === "other");
+type Step = QuestionKey | "start" | "clone-address" | "clone-look" | "clone-progress" | "templates";
+const questionKeys = questions.map((q) => q.key);
+const step = ref<Step>(questionKeys[0]);
+const history = ref<Step[]>([]);
+const activeQuestion = computed(() => questions.find((q) => q.key === step.value));
+const isOtherSelected = computed(
+	() => Boolean(activeQuestion.value) && answers[activeQuestion.value!.key] === "other",
+);
+// a started clone runs on the server, so there's no step to go back to
+const canGoBack = computed(() => history.value.length > 0 && step.value !== "clone-progress");
+
+const {
+	available: canClone,
+	clone,
+	done: cloneDone,
+	failed: cloneFailed,
+	host: cloneHost,
+	start,
+} = useSiteClone();
+const cloneAddress = ref("");
+const cloneLook = ref<CloneLook>("clean_up");
+const cloneStarting = ref(false);
+const cloneError = ref("");
 
 const otherInput = ref<InstanceType<typeof Textarea>>();
 
@@ -181,11 +231,43 @@ const greetingName = computed(() => {
 	if (!fullname || fullname.includes("@") || fullname === "Guest") return "";
 	return `, ${fullname.split(" ")[0]}`;
 });
-const templateHeading = computed(() =>
-	greetingName.value
-		? __("You're all set{0}. Pick a starting point", [greetingName.value])
-		: __("Pick a starting point"),
-);
+const screen = computed(() => {
+	if (activeQuestion.value)
+		return { heading: activeQuestion.value.heading, subtitle: activeQuestion.value.subtitle };
+	if (step.value === "start")
+		return {
+			heading: __("How would you like to start?"),
+			subtitle: __("You're all set{0}. You can add pages any of these ways later too.", [greetingName.value]),
+		};
+	if (step.value === "clone-address")
+		return {
+			heading: __("What's your website?"),
+			subtitle: __("We copy its pages, text and images into Builder. Your current site isn't touched."),
+		};
+	if (step.value === "clone-look")
+		return {
+			heading: __("How should it look?"),
+			subtitle: __("Your words and images come across either way."),
+		};
+	return cloneScreen();
+});
+
+function cloneScreen() {
+	if (cloneDone.value)
+		return {
+			heading: __("{0} is in Builder", [cloneHost.value]),
+			subtitle: __("Its pages, text and images are ready to edit."),
+		};
+	if (cloneFailed.value)
+		return {
+			heading: __("That didn't work"),
+			subtitle: clone.value?.error || __("Something went wrong on our side."),
+		};
+	return {
+		heading: __("Cloning {0}", [cloneHost.value]),
+		subtitle: __("This takes about fifteen minutes. Look around meanwhile; it keeps going."),
+	};
+}
 
 // seeds the gallery's persisted category filter (used by the templates dialog too)
 const useCaseToCategory: Record<string, string> = {
@@ -197,26 +279,60 @@ const useCaseToCategory: Record<string, string> = {
 function select(value: string) {
 	// only highlight the choice; advancing is a deliberate Next click so a
 	// stray double-click can't skip past the following question
-	answers[activeQuestion.value.key] = value;
+	answers[activeQuestion.value!.key] = value;
 	// preventScroll: focusing the still-clipped textarea would scroll-jump the page
 	if (value === "other") nextTick(() => otherInput.value?.focus({ preventScroll: true }));
 }
 
+function goTo(next: Step) {
+	history.value.push(step.value);
+	step.value = next;
+}
+
 function goBack() {
-	stepIndex.value = Math.max(0, stepIndex.value - 1);
+	step.value = history.value.pop() ?? step.value;
 }
 
 function goNext() {
-	const next = stepIndex.value + 1;
-	// entering the template step means the questions are done, persist + capture now
-	// so any exit from the selector (template, blank, or skip) won't re-trigger the survey.
-	if (stepOrder[next] === "templates") finishQuestions();
-	stepIndex.value = next;
+	const next = questionKeys[questionKeys.indexOf(step.value as QuestionKey) + 1];
+	if (next) return goTo(next);
+	// leaving the questions means they're done: persist + capture now, so any way out
+	// of the start step (clone, template, blank, or closing the tab) won't re-trigger the survey
+	finishQuestions();
+	goTo("start");
 }
 
 function skip() {
 	finishQuestions(true);
-	stepIndex.value = stepOrder.indexOf("templates");
+	history.value = [];
+	step.value = "start";
+}
+
+function choose(path: "clone" | "template" | "blank") {
+	if (path === "clone") return goTo("clone-address");
+	if (path === "template") return goTo("templates");
+	telemetry.capture("builder_blank_page_selected", { source: "onboarding" });
+	router.push({ name: "builder", params: { pageId: "new" } });
+}
+
+async function startCloning() {
+	cloneStarting.value = true;
+	cloneError.value = "";
+	try {
+		await start(cloneAddress.value.trim(), cloneLook.value);
+		telemetry.capture("builder_clone_started", { look: cloneLook.value });
+		history.value = [];
+		step.value = "clone-progress";
+	} catch (e) {
+		cloneError.value = serverMessage(e, __("Couldn't start cloning. Try again in a moment."));
+	} finally {
+		cloneStarting.value = false;
+	}
+}
+
+function retryClone() {
+	history.value = ["start"];
+	step.value = "clone-address";
 }
 
 let submitted = false;
