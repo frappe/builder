@@ -639,8 +639,9 @@ class BuilderPage(WebsiteGenerator):
 			context.favicon = frappe.get_cached_value("Builder Settings", "Builder Settings", "favicon")
 
 	def set_language(self, context):
-		# Set page-specific language or fall back to default language from Builder Settings
-		context.language = self.language
+		# Set page-specific language, then one set by the page data script,
+		# or fall back to default language from Builder Settings
+		context.language = self.language or context.get("language")
 		if not context.language:
 			context.default_language = (
 				frappe.get_cached_value("Builder Settings", "Builder Settings", "default_language") or "en"
