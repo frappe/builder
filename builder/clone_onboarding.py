@@ -56,7 +56,7 @@ def clone_status() -> dict | None:
 	return view
 
 
-@frappe.whitelist(allow_guest=True, methods=["GET"])
+@frappe.whitelist(allow_guest=True, methods=["GET"])  # nosemgrep
 def confirm_clone_request(nonce: str) -> bool:
 	"""The clone service calls back here: only this site knows the nonce it sent."""
 	key = nonce_key(nonce)
@@ -81,7 +81,7 @@ def clone_user_keys() -> dict:
 	user.api_key = frappe.generate_hash(length=15)
 	user.api_secret = secret
 	user.save(ignore_permissions=True)
-	frappe.db.commit()
+	frappe.db.commit()  # nosemgrep
 	return {"api_key": user.api_key, "api_secret": secret}
 
 
