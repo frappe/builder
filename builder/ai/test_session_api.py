@@ -52,3 +52,31 @@ class TestLazySessions(FrappeTestCase):
 		self.assertEqual(enqueue.call_args.kwargs["session_id"], session_id)
 		messages = AISession.get(session_id).get_messages()
 		self.assertEqual([(m["role"], m["content"]) for m in messages], [("user", "make it blue")])
+
+
+class TestPluginsWritten(FrappeTestCase):
+	def setUp(self):
+		self.page = frappe.get_doc(
+			{
+				"doctype": "Builder Page",
+				"page_title": "Plugins Written Page",
+				"draft_blocks": Block(element="div", originalElement="body").as_json(wrap_in_array=True),
+			}
+		).insert()
+
+	def test_lists_each_plugin_the_replies_wrote_once_oldest_first(self):
+		session = AISession.create({"page": self.page.name})
+		session.append_message("user", "an icon picker")
+		session.append_message("assistant", "Added Icons.", metadata={"plugins": ["bob/icons"]})
+		session.append_message(
+			"assistant", "Added Stickers.", metadata={"plugins": ["bob/stickers", "bob/icons"]}
+		)
+
+		self.assertEqual(AISession.plugins_written(session.name), ["bob/icons", "bob/stickers"])
+
+	def test_a_chat_that_wrote_no_plugin_has_none(self):
+		session = AISession.create({"page": self.page.name})
+		session.append_message("assistant", "Made the hero blue.", metadata={"operations": 2})
+
+		self.assertEqual(AISession.plugins_written(session.name), [])
+		self.assertEqual(AISession.plugins_written(None), [])

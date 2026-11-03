@@ -645,6 +645,16 @@ class AgentRunner:
 
 		return memory_context()
 
+	def build_plugins_context(self) -> str:
+		"""History replays only the chat text, where a plugin shows by its label. Its id lets a
+		change read_plugin it in the first round instead of listing every plugin first."""
+		if plugins := AISession.plugins_written(self.session_id):
+			return (
+				f"Plugins you wrote in this conversation: {', '.join(plugins)}. To change one, read_plugin "
+				"it by that name in the same round as read_skill('editor-plugin')."
+			)
+		return ""
+
 	def build_messages(self) -> list[dict]:
 		messages: list[dict] = [{"role": "system", "content": self.system_prompt}]
 
@@ -666,6 +676,7 @@ class AgentRunner:
 			self.build_open_page_context(),
 			self.build_initial_page_context(),
 			self.build_memory_context(),
+			self.build_plugins_context(),
 		]
 		context = "\n\n".join(block for block in blocks if block)
 		if context:
