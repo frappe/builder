@@ -1,35 +1,87 @@
+import sys
+from importlib import import_module
+from unittest.mock import patch
+
 import frappe
 from frappe.tests.utils import FrappeTestCase
+from frappe.utils.password import get_decrypted_password
 
-from builder.ai.presets import install_preset
+from builder.ai.presets import sync_site_provider
 
-PRESET = {
-	"name": "Test Preset",
-	"route_prefix": "test-preset",
-	"litellm_provider": "openai",
-	"api_base": "https://preset.test/v1",
-	"models": [
-		("vendor/main", "Main", "", True),
-		("vendor/extra", "Extra", "", False),
-	],
-}
+GATEWAY = "https://grove.test/openai/v1"
+SITE_KEY = {"ai_keys": [{"gateway_url": GATEWAY, "api_key": "grove-key"}]}
 
 
-class TestInstallPreset(FrappeTestCase):
-	def tearDown(self):
-		frappe.db.delete("Builder AI Model", {"provider": PRESET["name"]})
-		frappe.delete_doc("Builder AI Provider", PRESET["name"], force=True, ignore_permissions=True)
+class TestMigrateWithoutLitellm(FrappeTestCase):
+	def test_the_model_upgrade_patch_loads_when_litellm_cannot(self):
+		with patch.dict(sys.modules, {"litellm": None}):
+			for module in (
+				"builder.builder.patches.upgrade_ai_models",
+				"builder.ai.presets",
+				"builder.ai.llm",
+			):
+				sys.modules.pop(module, None)
+			import_module("builder.builder.patches.upgrade_ai_models")
 
-	def enabled(self, model_id: str):
-		return frappe.db.get_value("Builder AI Model", f"test-preset/{model_id}", "enabled")
 
-	def test_the_rest_of_the_shortlist_lands_switched_off(self):
-		install_preset(PRESET, "key", "", ["vendor/main"])
-		self.assertEqual(self.enabled("vendor/main"), 1)
-		self.assertEqual(self.enabled("vendor/extra"), 0)
+class TestSiteProvider(FrappeTestCase):
+	def setUp(self):
+		# a site with a real key already has the row: the class rollback brings it back
+		names = frappe.get_all("Builder AI Provider", filters={"from_site_config": 1}, pluck="name")
+		frappe.db.delete("Builder AI Model", {"provider": ["in", names or [""]]})
+		for name in names:
+			frappe.delete_doc("Builder AI Provider", name, force=True, ignore_permissions=True)
 
-	def test_reconnecting_leaves_a_switched_on_extra_alone(self):
-		install_preset(PRESET, "key", "", ["vendor/main"])
-		frappe.db.set_value("Builder AI Model", "test-preset/vendor/extra", "enabled", 1)
-		install_preset(PRESET, "key", "", ["vendor/main"])
-		self.assertEqual(self.enabled("vendor/extra"), 1)
+	def sync(self, conf: dict):
+		with patch.dict(frappe.local.conf, conf):
+			sync_site_provider()
+			return frappe.get_doc("Builder AI Provider", {"from_site_config": 1})
+
+	def test_a_site_config_key_connects_the_frappe_provider(self):
+		provider = self.sync(SITE_KEY)
+		self.assertEqual((provider.name, provider.api_base, provider.enabled), ("Frappe", GATEWAY, 1))
+
+	def test_the_key_is_read_from_site_config_and_never_stored(self):
+		provider = self.sync(SITE_KEY)
+		with patch.dict(frappe.local.conf, SITE_KEY):
+			self.assertEqual(provider.resolved_key(), "grove-key")
+		stored = get_decrypted_password("Builder AI Provider", "Frappe", "api_key", raise_exception=False)
+		self.assertIsNone(stored)
+
+	def test_a_new_gateway_url_follows_site_config(self):
+		self.sync(SITE_KEY)
+		moved = {"ai_keys": [{"gateway_url": "https://grove.test/openai/v2", "api_key": "grove-key"}]}
+		self.assertEqual(self.sync(moved).api_base, "https://grove.test/openai/v2")
+
+	def test_the_balance_is_read_from_the_gateway_host(self):
+		self.assertEqual(self.sync(SITE_KEY).credits_url, "https://grove.test/v1/credits")
+
+	def test_removing_the_key_turns_the_provider_off(self):
+		self.sync(SITE_KEY)
+		provider = self.sync({"ai_keys": []})
+		self.assertEqual(provider.enabled, 0)
+		with patch.dict(frappe.local.conf, {"ai_keys": []}):
+			self.assertIsNone(provider.resolved_key())
+
+	def test_a_site_config_key_counts_as_configured(self):
+		from builder.ai.api import ai_setup_state
+
+		self.sync(SITE_KEY)
+		frappe.get_doc(
+			{
+				"doctype": "Builder AI Model",
+				"provider": "Frappe",
+				"model_id": "openai/gpt-6-luna",
+				"enabled": 1,
+			}
+		).insert(ignore_permissions=True)
+		with (
+			patch.dict(frappe.local.conf, SITE_KEY),
+			patch("builder.ai.api.settings_api_key", return_value=None),
+		):
+			self.assertTrue(ai_setup_state()["configured"])
+
+	def test_an_entry_without_a_key_connects_nothing(self):
+		with patch.dict(frappe.local.conf, {"ai_keys": [{"gateway_url": GATEWAY}]}):
+			sync_site_provider()
+		self.assertFalse(frappe.db.exists("Builder AI Provider", {"from_site_config": 1}))

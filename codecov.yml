@@ -1,0 +1,4 @@
+# Bob, the AI assistant, and its doctypes stay out of coverage
+ignore:
+  - "builder/ai/**"
+  - "builder/builder/doctype/builder_ai_*/**"

@@ -49,6 +49,10 @@ def is_bulk_import() -> bool:
 	)
 
 
+def get_builder_path() -> str:
+	return frappe.conf.builder_path or "builder"
+
+
 def get_installed_app_path(app_name) -> str | None:
 	"""Path of an installed app, or None if it is unset or not installed.
 

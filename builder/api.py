@@ -29,7 +29,13 @@ from builder.form_submission import (
 	validate_form_doctype,
 )
 from builder.public_fetch import public_session
-from builder.utils import compact_json, has_page_read, has_page_write, normalize_renamed_doc
+from builder.utils import (
+	compact_json,
+	get_builder_path,
+	has_page_read,
+	has_page_write,
+	normalize_renamed_doc,
+)
 
 
 @frappe.whitelist()
@@ -330,6 +336,12 @@ def check_app_permission():
 		return True
 
 	return False
+
+
+@frappe.whitelist()
+def open_editor() -> None:
+	frappe.local.response["type"] = "redirect"
+	frappe.local.response["location"] = f"/{get_builder_path()}"
 
 
 @frappe.whitelist()

@@ -4,12 +4,18 @@
 		class="absolute inset-x-0 bottom-full z-10 mb-1.5 divide-y divide-outline-elevation-2 overflow-hidden rounded-6 bg-surface-elevation-2 shadow-2xl ring-1 ring-black ring-opacity-5">
 		<div v-if="level" class="flex items-center gap-1 p-1.5">
 			<Button
+				v-if="!atRoot"
 				variant="ghost"
 				size="sm"
 				icon="lucide-chevron-left"
 				label="Back"
 				@mousedown.prevent="menu.back()" />
-			<span class="truncate text-sm font-medium text-ink-gray-7">{{ breadcrumb }}</span>
+			<!-- with no Back button, the title keeps its height and lines up with the rows -->
+			<span
+				class="truncate text-sm font-medium text-ink-gray-7"
+				:class="atRoot && 'flex h-7 items-center px-2'">
+				{{ breadcrumb }}
+			</span>
 			<LoadingIndicator v-if="busy" class="ml-auto mr-1 size-4 shrink-0 text-ink-gray-4" />
 		</div>
 
@@ -92,9 +98,15 @@ import { Button, ItemListRow, LoadingIndicator, Password, Switch, TextInput } fr
 import { computed, nextTick, ref, watch } from "vue";
 
 const props = defineProps<{ menu: CommandMenu }>();
-const { stack, level, visibleItems: items, note, noteIsError, busy, activeIndex } = props.menu;
+const { stack, root, level, atRoot, visibleItems: items, note, noteIsError, busy, activeIndex } = props.menu;
 
-const breadcrumb = computed(() => stack.value.map((l) => l.title).join(" › "));
+// the command list heads the trail only when it is the whole trail
+const breadcrumb = computed(() =>
+	stack.value
+		.filter((l, i) => l !== root || i === stack.value.length - 1)
+		.map((l) => l.title)
+		.join(" › "),
+);
 // Enter belongs to the field on a level that has one, so no row may look like it would run
 const highlighted = computed(() => (level.value?.input ? -1 : activeIndex.value));
 

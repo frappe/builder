@@ -31,6 +31,21 @@ export function registerBobCommands(ctx: BobContext): () => void {
 			run: () => chatsLevel(ctx),
 		},
 		{
+			name: "plugin",
+			aliases: ["tool", "extend"],
+			description: "Build a tool for this editor",
+			icon: "lucide-plug",
+			run: (arg) => {
+				const build = (idea: string) => ctx.chat.selectOption(`Build an editor plugin: ${idea.trim()}`);
+				if (arg.trim()) return build(arg);
+				return {
+					title: "New editor plugin",
+					note: "Only you get it, until you share it.",
+					input: { placeholder: "What should it do? e.g. list images without alt text", submit: build },
+				};
+			},
+		},
+		{
 			name: "new",
 			aliases: ["clear"],
 			description: "New chat",

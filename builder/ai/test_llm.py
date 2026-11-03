@@ -159,6 +159,13 @@ class TestProviderTuning(FrappeTestCase):
 	def test_coerces_kimi_to_temperature_one(self):
 		self.assertEqual(patch_params_for_provider("kimi-k2", {"temperature": 0.7})["temperature"], 1)
 
+	def test_thinking_claude_takes_temperature_one_only_from_anthropic_directly(self):
+		thinking = {"temperature": 0.7, "reasoning_effort": "high"}
+		self.assertEqual(patch_params_for_provider("anthropic/claude-sonnet-5", thinking)["temperature"], 1)
+		self.assertEqual(
+			patch_params_for_provider("openrouter/anthropic/claude-sonnet-5", thinking)["temperature"], 0.7
+		)
+
 	def test_leaves_other_temperatures_alone(self):
 		self.assertEqual(patch_params_for_provider(GPT, {"temperature": 0.7})["temperature"], 0.7)
 

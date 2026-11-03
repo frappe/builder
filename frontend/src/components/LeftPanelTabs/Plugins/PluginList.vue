@@ -63,6 +63,20 @@
 						</template>
 					</ItemListRow>
 				</div>
+
+				<ItemListRow
+					v-if="canManagePlugins && builderStore.isAIEnabled && !filter"
+					class="cursor-pointer transition-none hover:bg-surface-gray-2"
+					role="button"
+					tabindex="0"
+					size="md"
+					@click="buildWithBob"
+					@keydown.enter.self="buildWithBob">
+					<template #prefix>
+						<span class="lucide-sparkle size-4 shrink-0 text-ink-gray-6" aria-hidden="true" />
+					</template>
+					<span class="truncate text-ink-gray-6">Build one with Bob</span>
+				</ItemListRow>
 			</CollapsibleSection>
 
 			<CollapsibleSection section-name="Marketplace">
@@ -133,12 +147,21 @@ import {
 	type CatalogPlugin,
 } from "@/data/plugins";
 import { isDevPlugin, showDevPluginDialog, stopDevPlugin } from "@/plugins/devPlugin";
+import useBuilderStore from "@/stores/builderStore";
 import { Badge, Button, ItemListRow, LoadingIndicator, Tooltip } from "frappe-ui";
 import { computed, ref } from "vue";
 
 const emit = defineEmits<{ select: [plugin: string] }>();
 
 const open = (plugin: string) => emit("select", plugin);
+
+const builderStore = useBuilderStore();
+
+/** Opens Bob with the sentence started, so the user only says what the tool does. */
+const buildWithBob = () => {
+	builderStore.leftPanelActiveTab = "Chat";
+	builderStore.aiPromptDraft = "Build an editor plugin that ";
+};
 
 const stop = async () => {
 	await stopDevPlugin();

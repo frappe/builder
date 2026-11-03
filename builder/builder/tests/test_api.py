@@ -16,6 +16,7 @@ from builder.api import (
 	import_remote_fonts,
 	import_template_group,
 	insert_folder,
+	open_editor,
 	save_client_script,
 )
 
@@ -329,3 +330,11 @@ class TestImportTemplateGroup(FrappeTestCase):
 		with patch("builder.api.hub_get", lambda method, page=None: None):
 			self.assertRaises(frappe.ValidationError, import_template_group, "zz-harbour")
 		self.assertFalse(frappe.db.exists("Builder Project Folder", "Zz Harbour"))
+
+
+class TestOpenEditor(FrappeTestCase):
+	def test_redirects_to_the_site_builder_path(self):
+		with patch.dict(frappe.local.conf, builder_path="studio"), patch.dict(frappe.local.response):
+			open_editor()
+			self.assertEqual(frappe.local.response["type"], "redirect")
+			self.assertEqual(frappe.local.response["location"], "/studio")

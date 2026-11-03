@@ -4,6 +4,8 @@
 # import frappe
 from frappe.tests import IntegrationTestCase
 
+from builder.builder.doctype.builder_project_folder.builder_project_folder import is_system_activity
+
 # On IntegrationTestCase, the doctype test records and all
 # link-field test record dependencies are recursively loaded
 # Use these module variables to add/remove to/from that list
@@ -17,4 +19,5 @@ class IntegrationTestBuilderProjectFolder(IntegrationTestCase):
 	Use this class for testing interactions between multiple components.
 	"""
 
-	pass
+	def test_tests_count_as_system_activity(self):
+		self.assertTrue(is_system_activity())

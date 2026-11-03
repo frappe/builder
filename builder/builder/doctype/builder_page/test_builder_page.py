@@ -2,6 +2,8 @@
 # See license.txt
 
 
+from unittest.mock import patch
+
 import bs4 as bs
 import frappe
 from frappe.desk.form.load import getdoc
@@ -10,6 +12,7 @@ from frappe.utils import set_request
 from frappe.website.serve import get_response, get_response_content
 
 from builder.builder.component_versions import ensure_component_version
+from builder.builder.doctype.builder_page.builder_page import resolve_editor_path, resolve_path
 from builder.utils import Block
 
 repeater_page_data_script = """
@@ -152,6 +155,17 @@ class TestBuilderPage(FrappeTestCase):
 	def test_onload(self):
 		getdoc("Builder Page", self.page.name)
 		self.assertEqual(frappe.response.docs[0].get("__onload").get("builder_path"), "builder")
+
+	def test_editor_route_follows_the_current_site_builder_path(self):
+		set_request(method="GET", path="/")
+		for builder_path in ("builder", "studio"):
+			with patch.dict(frappe.local.conf, builder_path=builder_path):
+				self.assertEqual(resolve_path(builder_path), "_builder")
+				self.assertEqual(resolve_path(f"{builder_path}/page/abc"), "_builder")
+				self.assertEqual(frappe.form_dict.app_path, "page/abc")
+
+		with patch.dict(frappe.local.conf, builder_path="studio"):
+			self.assertIsNone(resolve_editor_path("builder/page/abc"))
 
 	def test_blocks_can_be_saved_as_a_list(self):
 		"""Callers that hand over a block tree (paste, AI writes, the API) pass a list.
@@ -396,6 +410,17 @@ class TestBuilderPage(FrappeTestCase):
 			self.assertIn('"at": "2026-01-02 03:04:05"', content)
 			self.assertIn('"on": "2026-01-02"', content)
 			self.assertIn('"price": 9.5', content)
+		finally:
+			page.delete()
+
+	def test_page_data_script_can_set_the_page_language(self):
+		page = insert_page("test-page-language", "Language")
+		page.page_data_script = 'data.language = "ar"'
+		page.save()
+		try:
+			page.publish()
+			content = get_response_content("/test-page-language")
+			self.assertIn('<html lang="ar"', content)
 		finally:
 			page.delete()
 

@@ -1,21 +1,22 @@
-"""Browser sign-in for the ChatGPT (Codex) provider.
+"""Signing in to ChatGPT, for the ChatGPT (Codex) provider.
 
-The Codex OAuth client only ever redirects to http://localhost:1455/auth/callback,
-so the login can't land on the site directly. start() binds a one-shot listener
-on that port, which catches the redirect whenever the server and the browser
-share a machine (any local bench). When they don't, or the port is taken, the
-user pastes the URL the browser ended up on and finish() completes the same
-exchange. Either way the tokens never pass through the browser session: the
-code is exchanged server-side with the PKCE verifier cached at start().
+The main way is a device code: Bob shows a short code, the user enters it on
+ChatGPT's device page and approves, and the server polls OpenAI until the
+approval lands. Nothing redirects back to the site, so it works the same on a
+laptop bench and on a hosted site.
+
+The browser link is the fallback, for a ChatGPT workspace with device codes
+switched off. The Codex OAuth client only ever redirects to localhost:1455,
+which a hosted site can't hear, so the user pastes the address the browser
+ended up on and finish() completes the exchange. Either way the tokens never
+pass through the browser session: the exchange happens server-side.
 """
 
 import base64
 import hashlib
 import json
 import secrets
-import threading
 import time
-from http.server import BaseHTTPRequestHandler, HTTPServer
 from urllib.parse import parse_qs, urlencode, urlparse
 
 import frappe
@@ -23,67 +24,103 @@ import requests
 
 from builder.ai.codex import CLIENT_ID, ORIGINATOR, TOKEN_URL, CodexError, account_id_from_tokens
 
-AUTHORIZE_URL = "https://auth.openai.com/oauth/authorize"
+AUTH_BASE = "https://auth.openai.com"
+DEVICE_CODE_URL = f"{AUTH_BASE}/api/accounts/deviceauth/usercode"
+DEVICE_TOKEN_URL = f"{AUTH_BASE}/api/accounts/deviceauth/token"
+DEVICE_PAGE = f"{AUTH_BASE}/codex/device"
+DEVICE_REDIRECT_URI = f"{AUTH_BASE}/deviceauth/callback"
+AUTHORIZE_URL = f"{AUTH_BASE}/oauth/authorize"
 REDIRECT_URI = "http://localhost:1455/auth/callback"
 SCOPE = "openid profile email offline_access"
-CALLBACK_PORT = 1455
-LOGIN_TTL = 600  # seconds a started login stays completable
+LOGIN_TTL = 900  # a device code lasts 15 minutes
+REQUEST_TIMEOUT = 15
+# what the device token endpoint answers while the user hasn't approved yet
+STILL_WAITING = ("deviceauth_authorization_pending", "slow_down")
 
 
 def start() -> dict:
-	"""A fresh login attempt: PKCE pair and state cached for poll()/finish(),
-	plus the local callback listener when the port allows one."""
-	verifier = secrets.token_urlsafe(64)
+	"""A device code to show the user, the page to enter it on, and the state to poll with."""
+	resp = requests.post(DEVICE_CODE_URL, json={"client_id": CLIENT_ID}, timeout=REQUEST_TIMEOUT)
+	if resp.status_code >= 400:
+		raise CodexError("ChatGPT didn't hand out a sign-in code. Try again, or use a browser link.")
+	data = resp.json()
 	state = secrets.token_urlsafe(32)
-	save_login(state, {"status": "pending", "verifier": verifier})
-	capture = start_listener(frappe.local.site)
-	return {"url": authorize_url(pkce_challenge(verifier), state), "state": state, "capture": capture}
+	save_login(state, {"device_auth_id": data["device_auth_id"], "user_code": data["user_code"]})
+	return {
+		"state": state,
+		"code": data["user_code"],
+		"url": DEVICE_PAGE,
+		"interval": int(data.get("interval") or 5),
+	}
 
 
 def poll(state: str) -> dict:
-	"""Where a started login stands. The listener thread only stashes the
-	exchanged credential; the provider row is created here, in an ordinary
-	authenticated request, never from the unauthenticated callback."""
+	"""Where a device sign-in stands: pending, connected (with the models found), or expired."""
 	login = load_login(state)
-	if not login:
+	if not login or "device_auth_id" not in login:
 		return {"status": "expired"}
-	if login["status"] == "connected":
-		install_provider(login["credential"])
-		clear_login(state)
-		return {"status": "connected"}
-	if login["status"] == "failed":
-		clear_login(state)
-		return {"status": "failed", "message": login.get("message") or "Sign-in failed"}
-	return {"status": "pending"}
+	approval = check_device(login)
+	if approval is None:
+		return {"status": "pending"}
+	clear_login(state)
+	credential = exchange_code(approval["authorization_code"], approval["code_verifier"], DEVICE_REDIRECT_URI)
+	return {"status": "connected", **install_provider(credential)}
+
+
+def start_browser() -> dict:
+	"""The fallback: a sign-in link whose redirect the user pastes back to finish()."""
+	verifier = secrets.token_urlsafe(64)
+	state = secrets.token_urlsafe(32)
+	save_login(state, {"verifier": verifier})
+	return {"url": authorize_url(pkce_challenge(verifier), state), "state": state}
 
 
 def finish(redirect_url: str) -> dict:
-	"""Complete a login from the pasted redirect URL, for when the listener
-	could not see the browser's redirect (remote server, port taken)."""
+	"""Complete a browser-link sign-in from the localhost address it ended on."""
 	query = parse_qs(urlparse(redirect_url or "").query)
 	code = (query.get("code") or [""])[0]
 	state = (query.get("state") or [""])[0]
 	if not code or not state:
 		raise CodexError(
-			"That URL has no sign-in code. Paste the full localhost address the browser was sent to."
+			"That address has no sign-in code. Paste the full localhost address the browser was sent to."
 		)
 	login = load_login(state)
-	if not login:
-		raise CodexError("This sign-in attempt has expired. Click Sign in with ChatGPT and try again.")
-	install_provider(exchange_code(code, login["verifier"]))
+	if not login or "verifier" not in login:
+		raise CodexError("This sign-in has expired. Open a new browser link and try again.")
+	credential = exchange_code(code, login["verifier"], REDIRECT_URI)
 	clear_login(state)
-	return {"status": "connected"}
+	return {"status": "connected", **install_provider(credential)}
 
 
-def install_provider(credential: dict) -> None:
-	# models come later from the setup flow's normal finish step
+def install_provider(credential: dict) -> dict:
 	from builder.ai import presets
 
-	preset = presets.find_preset("codex")
-	presets.install_preset(preset, json.dumps(credential), "", [])
+	return presets.connect(presets.find_preset("codex"), json.dumps(credential))
 
 
 # --- the OAuth exchange ------------------------------------------------------
+
+
+def check_device(login: dict) -> dict | None:
+	"""The approved code and its verifier, or None while the user hasn't approved yet."""
+	resp = requests.post(
+		DEVICE_TOKEN_URL,
+		json={"device_auth_id": login["device_auth_id"], "user_code": login["user_code"]},
+		timeout=REQUEST_TIMEOUT,
+	)
+	if resp.ok:
+		return resp.json()
+	if resp.status_code in (403, 404) or error_code(resp) in STILL_WAITING:
+		return None
+	raise CodexError("ChatGPT turned the sign-in down. Start again from /providers.")
+
+
+def error_code(resp: requests.Response) -> str:
+	try:
+		error = resp.json().get("error")
+	except Exception:
+		return ""
+	return (error.get("code") if isinstance(error, dict) else error) or ""
 
 
 def authorize_url(challenge: str, state: str) -> str:
@@ -107,7 +144,7 @@ def pkce_challenge(verifier: str) -> str:
 	return base64.urlsafe_b64encode(digest).decode("ascii").rstrip("=")
 
 
-def exchange_code(code: str, verifier: str) -> dict:
+def exchange_code(code: str, verifier: str, redirect_uri: str) -> dict:
 	# form-encoded on purpose: the token endpoint doesn't take JSON
 	resp = requests.post(
 		TOKEN_URL,
@@ -116,12 +153,12 @@ def exchange_code(code: str, verifier: str) -> dict:
 			"client_id": CLIENT_ID,
 			"code": code,
 			"code_verifier": verifier,
-			"redirect_uri": REDIRECT_URI,
+			"redirect_uri": redirect_uri,
 		},
 		timeout=30,
 	)
 	if resp.status_code >= 400:
-		raise CodexError("ChatGPT rejected the sign-in code. Click Sign in with ChatGPT and try again.")
+		raise CodexError("ChatGPT rejected the sign-in code. Start the sign-in again.")
 	tokens = resp.json()
 	access = tokens.get("access_token") or ""
 	return {
@@ -132,7 +169,7 @@ def exchange_code(code: str, verifier: str) -> dict:
 	}
 
 
-# --- pending logins, shared across workers via redis -------------------------
+# --- pending sign-ins, shared across workers via redis -----------------------
 
 
 def save_login(state: str, data: dict) -> None:
@@ -150,95 +187,3 @@ def clear_login(state: str) -> None:
 
 def login_key(state: str) -> str:
 	return f"codex_oauth:{state}"
-
-
-# --- the localhost callback listener -----------------------------------------
-
-listener_lock = threading.Lock()
-listener_running = False
-
-
-def start_listener(site: str) -> bool:
-	"""One listener serves every pending login: the redirect carries the state,
-	and the state finds its verifier in the cache. So a retried sign-in reuses
-	the running listener instead of fighting it for the port."""
-	global listener_running
-	with listener_lock:
-		if listener_running:
-			return True
-		try:
-			server = HTTPServer(("127.0.0.1", CALLBACK_PORT), CallbackHandler)
-		except OSError:
-			return False  # someone else holds the port (the codex CLI?): the paste path still works
-		server.site = site
-		listener_running = True
-	threading.Thread(target=serve_logins, args=(server,), daemon=True).start()
-	return True
-
-
-def serve_logins(server: HTTPServer) -> None:
-	global listener_running
-	deadline = time.time() + LOGIN_TTL
-	server.timeout = 5
-	try:
-		while time.time() < deadline and not getattr(server, "done", False):
-			server.handle_request()
-	finally:
-		with listener_lock:
-			listener_running = False
-		server.server_close()
-
-
-class CallbackHandler(BaseHTTPRequestHandler):
-	def do_GET(self):
-		parsed = urlparse(self.path)
-		query = parse_qs(parsed.query)
-		code = (query.get("code") or [""])[0]
-		state = (query.get("state") or [""])[0]
-		if parsed.path != "/auth/callback" or not code or not state:
-			self.respond(404, "Not found")
-			return
-		outcome = complete_captured(self.server.site, state, code)
-		if outcome is None:
-			self.respond(400, "This sign-in attempt is stale. Return to Builder and try again.")
-			return
-		self.server.done = True
-		ok, message = outcome
-		self.respond(200 if ok else 500, message)
-
-	def respond(self, status: int, message: str) -> None:
-		body = PAGE.format(message=message).encode()
-		self.send_response(status)
-		self.send_header("Content-Type", "text/html; charset=utf-8")
-		self.send_header("Content-Length", str(len(body)))
-		self.end_headers()
-		self.wfile.write(body)
-
-	def log_message(self, *args) -> None:
-		pass  # keep the web server's log out of it
-
-
-def complete_captured(site: str, state: str, code: str) -> tuple[bool, str] | None:
-	"""Exchange a captured code and stash the outcome for poll(). Runs on the
-	listener thread, which has no request context; borrow one for redis."""
-	frappe.init(site)
-	try:
-		login = load_login(state)
-		if not login or login.get("status") != "pending":
-			return None
-		try:
-			credential = exchange_code(code, login["verifier"])
-			save_login(state, {"status": "connected", "credential": credential})
-			return True, "Connected. You can close this tab and return to Builder."
-		except Exception as e:
-			save_login(state, {"status": "failed", "message": str(e)})
-			return False, "Sign-in failed. Return to Builder and try again."
-	finally:
-		frappe.destroy()
-
-
-PAGE = """<!doctype html>
-<html><head><meta charset="utf-8"><title>Builder</title></head>
-<body style="font-family: -apple-system, sans-serif; display: grid; place-items: center; height: 100vh; margin: 0; color: #1f272e;">
-<p style="font-size: 15px;">{message}</p>
-</body></html>"""
