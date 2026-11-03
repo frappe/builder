@@ -1,5 +1,5 @@
 """Editor plugins Bob writes for the user: a panel, a toolbar button, a block
-menu action. They extend the editor itself, never the page.
+menu action. They live in the editor, and what they make lands on the page.
 
 `write_plugin` installs the plugin for everyone who edits the site
 (builder.plugins.bob), then has the open editor load it and report back: the
@@ -169,7 +169,7 @@ def plugin_line(row) -> str:
 	return f"- {row.plugin}: {row.label} ({row.source}{off})"
 
 
-WRITE_PLUGIN_DESCRIPTION = """Add a tool to the Builder EDITOR itself: a left bar panel, a toolbar button, a block right-click action, a property panel section, a settings page. Use it when the user asks for something in the editor ("a panel that lists images without alt text"), never for content on their page. Call it again with the same name and the WHOLE file to change a plugin; read_plugin shows the current code.
+WRITE_PLUGIN_DESCRIPTION = """Add a tool to the Builder editor that the user works with themselves: a left bar panel, a toolbar button, a block right-click action, a property panel section, a settings page. It usually acts on their pages, inserting blocks or restyling the selection ("an icon picker", "a duotone for my photos"). When the user wants one change made to this page, make it with the page tools instead. Call it again with the same name and the WHOLE file to change a plugin; read_plugin shows the current code.
 
 It installs the plugin for everyone who edits this site and loads it into this user's open editor at once; the others get it on their next editor load. The result says whether it loaded, what it added, or the error to fix.
 
