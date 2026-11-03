@@ -87,19 +87,18 @@
 <script setup lang="ts">
 import { __ } from "@/translation";
 import { useDomains } from "@/data/domains";
-import { useIntervalFn } from "@vueuse/core";
+import { useIntervalFn, watchDebounced } from "@vueuse/core";
 import { Badge, Dropdown, ErrorMessage, FormControl, toast } from "frappe-ui";
 import { computed, onActivated, onDeactivated, onMounted, ref, watch } from "vue";
 
 const PENDING_STATUSES = ["Pending", "In Progress"];
 
-const currentSite = window.location.hostname;
 const {
 	domains,
-	serverIP,
+	dnsRecordValues,
 	loading,
 	fetchDomains,
-	fetchServerIP,
+	fetchDNSRecords,
 	addDomain,
 	removeDomain,
 	retryDomain,
@@ -138,7 +137,9 @@ onActivated(() => {
 	if (hasPendingDomains.value) startPolling();
 });
 
-onMounted(() => Promise.all([fetchDomains(), fetchServerIP()]));
+onMounted(() => Promise.all([fetchDomains(), fetchDNSRecords()]));
+
+watchDebounced(newDomain, (domain) => fetchDNSRecords(domain.trim().toLowerCase()), { debounce: 400 });
 
 const isSubdomain = computed(() => newDomain.value.split(".").length > 2);
 
@@ -149,13 +150,14 @@ const dnsHostLabel = computed(() => {
 
 const dnsRecords = computed(() => {
 	const host = newDomain.value ? dnsHostLabel.value : "your-domain.com";
+	const { cname, a } = dnsRecordValues.value;
 	const records = [];
-	if (isSubdomain.value) {
+	if (isSubdomain.value && cname) {
 		records.push({
 			type: "CNAME",
 			host,
-			value: currentSite,
-			copyValue: currentSite,
+			value: cname,
+			copyValue: cname,
 			recommended: true,
 			hint: __("Automatically follows server IP changes. Best choice for subdomains."),
 		});
@@ -163,8 +165,9 @@ const dnsRecords = computed(() => {
 	records.push({
 		type: "A",
 		host: isSubdomain.value ? host : "@",
-		value: serverIP.value ?? "loading…",
-		copyValue: serverIP.value ?? "",
+		// Pilot gives the address only once a domain is typed
+		value: a ?? "…",
+		copyValue: a ?? "",
 		recommended: !isSubdomain.value,
 		hint: isSubdomain.value
 			? __("Use this if your DNS provider doesn't support CNAME for subdomains.")

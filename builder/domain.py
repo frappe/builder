@@ -53,24 +53,60 @@ def is_pilot_site() -> bool:
 	return is_v2_site()
 
 
-def domain_call(method: str, **params):
-	"""Send a domain call to Pilot on a v2 site, and to Frappe Cloud on a v1 site."""
-	if is_pilot_site():
-		return getattr(PilotDomains(), method)(**params)
-	return fc_call(method, **params)
+def get_site_domains() -> "FrappeCloudDomains | PilotDomains":
+	frappe.only_for("System Manager")
+	return PilotDomains() if is_pilot_site() else FrappeCloudDomains()
+
+
+class FrappeCloudDomains:
+	"""Domains of a Frappe Cloud v1 site, which Frappe Cloud manages."""
+
+	def get_dns_records(self, domain: str) -> dict:
+		# Every domain points to the same site and server.
+		return {"cname": frappe.local.site, "a": fc_call("get_inbound_ip")}
+
+	def get_domains(self) -> list[dict]:
+		return fc_call("get_domains")
+
+	def check_dns(self, domain: str) -> dict:
+		return fc_call("check_dns", domain=domain)
+
+	def add_domain(self, domain: str) -> str:
+		return fc_call("add_domain", domain=domain)
+
+	def retry_add_domain(self, domain: str) -> str:
+		return fc_call("retry_add_domain", domain=domain)
+
+	def remove_domain(self, domain: str) -> str:
+		return fc_call("remove_domain", domain=domain)
+
+	def set_host_name(self, domain: str) -> str:
+		return fc_call("set_host_name", domain=domain)
+
+	def set_redirect(self, domain: str) -> str:
+		return fc_call("set_redirect", domain=domain)
+
+	def unset_redirect(self, domain: str) -> str:
+		return fc_call("unset_redirect", domain=domain)
 
 
 class PilotDomains:
-	"""Frappe Cloud's domain API, answered by the site's Pilot."""
+	"""Domains of a Frappe Cloud v2 site, which the site's Pilot manages."""
 
 	def __init__(self):
 		from frappe.integrations.frappe_providers.cloud_settings import PilotClient
 
-		frappe.only_for("System Manager")
 		self.client = PilotClient()
 
-	def get_inbound_ip(self) -> str | None:
-		return self.client.get(self.client.site_path("domains/server-ip"))["ip"] or None
+	def get_dns_records(self, domain: str) -> dict:
+		# A domain provider can give each domain its own records, so Pilot needs the domain.
+		if not domain:
+			return {"cname": None, "a": None}
+		records = self.client.get(self.client.domain_path(domain, "dns-records"))
+		return {
+			kind: next((record["value"] for record in records.get(kind) or []), None)
+			for kind in ("cname", "a")
+		}
 
 	def get_domains(self) -> list[dict]:
 		rows = self.client.get(self.client.site_path("domains"))["domains"]
@@ -112,49 +148,49 @@ class PilotDomains:
 
 
 @frappe.whitelist()
-def get_server_ip() -> str | None:
-	return domain_call("get_inbound_ip")
+def get_dns_records(domain: str = "") -> dict:
+	return get_site_domains().get_dns_records(domain)
 
 
 @frappe.whitelist()
 def get_domains() -> list:
-	return domain_call("get_domains")
+	return get_site_domains().get_domains()
 
 
 @frappe.whitelist()
 def check_dns(domain: str) -> dict:
-	return domain_call("check_dns", domain=domain)
+	return get_site_domains().check_dns(domain)
 
 
 @frappe.whitelist()
 def add_domain(domain: str) -> str:
-	result = domain_call("add_domain", domain=domain)
+	result = get_site_domains().add_domain(domain)
 	capture("builder_custom_domain_added", "builder")
 	return result
 
 
 @frappe.whitelist()
 def remove_domain(domain: str) -> str:
-	return domain_call("remove_domain", domain=domain)
+	return get_site_domains().remove_domain(domain)
 
 
 @frappe.whitelist()
 def retry_add_domain(domain: str) -> str:
-	return domain_call("retry_add_domain", domain=domain)
+	return get_site_domains().retry_add_domain(domain)
 
 
 @frappe.whitelist()
 def set_host_name(domain: str) -> str:
-	result = domain_call("set_host_name", domain=domain)
+	result = get_site_domains().set_host_name(domain)
 	capture("builder_custom_domain_set_primary", "builder")
 	return result
 
 
 @frappe.whitelist()
 def set_redirect(domain: str) -> str:
-	return domain_call("set_redirect", domain=domain)
+	return get_site_domains().set_redirect(domain)
 
 
 @frappe.whitelist()
 def unset_redirect(domain: str) -> str:
-	return domain_call("unset_redirect", domain=domain)
+	return get_site_domains().unset_redirect(domain)

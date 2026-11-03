@@ -97,18 +97,45 @@ class TestPilotDomains(FrappeTestCase):
 			[{"primary": True}, {"redirect_to_primary": True}, {"redirect_to_primary": False}],
 		)
 
-	def test_the_server_ip_comes_from_pilot(self):
-		self.client.get.return_value = {"ip": "203.0.113.10"}
+	def test_dns_records_come_from_pilot_for_the_typed_domain(self):
+		self.client.get.return_value = {
+			"cname": [{"type": "CNAME", "host": "shop.example.com", "value": "site.local"}],
+			"a": [{"type": "A", "host": "shop.example.com", "value": "203.0.113.10"}],
+		}
 
-		self.assertEqual(domain.get_server_ip(), "203.0.113.10")
+		self.assertEqual(
+			domain.get_dns_records("shop.example.com"), {"cname": "site.local", "a": "203.0.113.10"}
+		)
+		self.client.get.assert_called_once_with("sites/site.local/domains/shop.example.com/dns-records")
+
+	def test_dns_records_wait_for_a_domain(self):
+		self.assertEqual(domain.get_dns_records(), {"cname": None, "a": None})
+		self.client.get.assert_not_called()
+
+	def test_a_missing_record_set_has_no_value(self):
+		self.client.get.return_value = {
+			"cname": [{"type": "CNAME", "host": "x", "value": "edge.example.net"}]
+		}
+
+		self.assertEqual(domain.get_dns_records("shop.example.com"), {"cname": "edge.example.net", "a": None})
 
 
 class TestFrappeCloudDomains(FrappeTestCase):
-	def test_a_frappe_cloud_v1_site_keeps_using_frappe_cloud(self):
-		with (
+	def setUp(self):
+		for patcher in (
 			patch.object(domain, "is_pilot_site", return_value=False),
-			patch.object(domain, "fc_call", return_value=[]) as fc_call,
+			patch.object(domain, "fc_call", return_value=[]),
 		):
-			self.assertEqual(domain.get_domains(), [])
+			self.fc_call = patcher.start()
+			self.addCleanup(patcher.stop)
 
-		fc_call.assert_called_once_with("get_domains")
+	def test_a_frappe_cloud_v1_site_keeps_using_frappe_cloud(self):
+		self.assertEqual(domain.get_domains(), [])
+
+		self.fc_call.assert_called_once_with("get_domains")
+
+	def test_dns_records_point_to_the_site_and_its_server(self):
+		self.fc_call.return_value = "203.0.113.20"
+
+		self.assertEqual(domain.get_dns_records(), {"cname": frappe.local.site, "a": "203.0.113.20"})
+		self.fc_call.assert_called_once_with("get_inbound_ip")

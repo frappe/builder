@@ -8,14 +8,18 @@ const API = "builder.domain";
 
 export function useDomains() {
 	const domains = ref<any[]>([]);
-	const serverIP = ref<string | null>(null);
+	const dnsRecordValues = ref<{ cname: string | null; a: string | null }>({ cname: null, a: null });
 	const loading = ref(false);
+	let dnsRecordValuesDomain = "";
 
-	async function fetchServerIP() {
+	async function fetchDNSRecords(domain = "") {
+		dnsRecordValuesDomain = domain;
 		try {
-			serverIP.value = (await createResource({ url: `${API}.get_server_ip` }).submit()) as string;
+			const records = await createResource({ url: `${API}.get_dns_records` }).submit({ domain });
+			// a slower answer for an earlier domain must not replace the current one
+			if (domain === dnsRecordValuesDomain) dnsRecordValues.value = records;
 		} catch {
-			// non-critical
+			// non-critical: adding the domain reports the real error
 		}
 	}
 
@@ -94,10 +98,10 @@ export function useDomains() {
 
 	return {
 		domains,
-		serverIP,
+		dnsRecordValues,
 		loading,
 		fetchDomains,
-		fetchServerIP,
+		fetchDNSRecords,
 		addDomain,
 		removeDomain,
 		retryDomain,
