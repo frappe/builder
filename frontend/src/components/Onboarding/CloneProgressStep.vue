@@ -44,6 +44,6 @@ import LucideCheck from "~icons/lucide/check";
 
 const SHOWN_STEPS = 5;
 const emit = defineEmits<{ open: []; retry: [] }>();
-const { clone, done, failed, running } = useSiteClone();
-const steps = computed(() => (clone.value?.events ?? []).map((event) => event.text).slice(-SHOWN_STEPS));
+const { progress, done, failed, running } = useSiteClone();
+const steps = computed(() => progress.value.slice(-SHOWN_STEPS));
 </script>

@@ -2,17 +2,19 @@ import { isCloudBillingAvailable, useCloudBilling } from "@/composables/useCloud
 import { call } from "frappe-ui";
 import { computed, ref, watch } from "vue";
 
-// module-level so onboarding and the dashboard sidebar share one copy of the server's clone state
 export type SiteClone = {
 	status: string;
 	source_url: string;
-	events?: { text: string }[];
+	events?: { text: string; kind: string }[];
 	error?: string;
 };
 
 export type CloneLook = "clean_up" | "as_is" | "redesign";
 
 const POLL_MS = 5000;
+// the service also logs each file its agent reads; those mean nothing to the site owner
+const PROGRESS_KINDS = new Set(["stage", "info", "page", "done", "error"]);
+// module-level so onboarding and the dashboard sidebar share one copy of the server's clone state
 const clone = ref<SiteClone | null>(null);
 let timer: ReturnType<typeof setTimeout> | undefined;
 let watching = false;
@@ -21,7 +23,10 @@ const done = computed(() => clone.value?.status === "Done");
 const failed = computed(() => ["Failed", "Expired"].includes(clone.value?.status ?? ""));
 const running = computed(() => Boolean(clone.value) && !done.value && !failed.value);
 const host = computed(() => (clone.value ? new URL(clone.value.source_url).host : ""));
-const latestStep = computed(() => clone.value?.events?.at(-1)?.text ?? "");
+const progress = computed(() =>
+	(clone.value?.events ?? []).filter((event) => PROGRESS_KINDS.has(event.kind)).map((event) => event.text),
+);
+const latestStep = computed(() => progress.value.at(-1) ?? "");
 
 async function refresh() {
 	clearTimeout(timer);
@@ -48,5 +53,16 @@ export function useSiteClone() {
 		watching = true;
 		watch(isCloudBillingAvailable, (available) => available && refresh(), { immediate: true });
 	}
-	return { available: isCloudBillingAvailable, clone, done, failed, running, host, latestStep, start, refresh };
+	return {
+		available: isCloudBillingAvailable,
+		clone,
+		done,
+		failed,
+		running,
+		host,
+		progress,
+		latestStep,
+		start,
+		refresh,
+	};
 }
