@@ -48,7 +48,7 @@
 							}
 						"
 						@blur="renamingFolder = ''"
-						class="w-full truncate text-sm capitalize">
+						class="w-full truncate text-sm">
 						{{ project.folder_name }}
 					</EditableSpan>
 					<template #suffix>
