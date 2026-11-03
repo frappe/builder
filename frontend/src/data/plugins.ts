@@ -209,6 +209,16 @@ const setPluginEnabled = async (plugin: string, enabled: boolean) => {
 /** Left bar tabs a plugin added while the editor ran, which the user has not opened yet. */
 const unseenTabs = reactive(new Set<string>());
 
+/** Plugins whose left bar tabs this user keeps out of the bar, in this browser. Open still shows them. */
+const hiddenPluginTabs = useStorage("builderHiddenPluginTabs", new Set<string>());
+
+const setPluginTabHidden = (plugin: string, hidden: boolean) => {
+	const next = new Set(hiddenPluginTabs.value);
+	if (hidden) next.add(plugin);
+	else next.delete(plugin);
+	hiddenPluginTabs.value = next;
+};
+
 /** A plugin Bob wrote registers its items in install(), so they come off in place. Others may hold more, so they ask for a reload. */
 const uninstallPlugin = async (plugin: string) => {
 	const wasRunning = runningPlugins.has(plugin);
@@ -338,6 +348,8 @@ const listenForPluginJobs = (realtime: { on: (event: string, handler: (data: any
 export {
 	canManagePlugins,
 	unseenTabs,
+	hiddenPluginTabs,
+	setPluginTabHidden,
 	pluginsDisabled,
 	getPluginsCatalog,
 	getPluginUpdate,

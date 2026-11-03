@@ -8,7 +8,7 @@
 			label="Open"
 			@click="emit('open')" />
 
-		<span v-if="canManage" class="ml-auto inline-flex shrink-0">
+		<span v-if="moreActions.length" class="ml-auto inline-flex shrink-0">
 			<Dropdown :options="moreActions" align="end">
 				<template #trigger>
 					<Button
@@ -32,25 +32,47 @@ const props = defineProps<{
 	canManage: boolean;
 	enabled: boolean;
 	working: boolean;
+	/** Unset when the plugin has no left bar tab. */
+	tabHidden?: boolean;
 }>();
 
 const emit = defineEmits<{
 	open: [];
 	setEnabled: [enabled: boolean];
+	setTabHidden: [hidden: boolean];
 	uninstall: [];
 }>();
 
-const moreActions = computed<DropdownOptions>(() => [
-	{
-		label: props.enabled ? "Disable" : "Enable",
-		icon: props.enabled ? "lucide-power-off" : "lucide-power",
-		onClick: () => emit("setEnabled", !props.enabled),
-	},
-	{
-		label: "Uninstall",
-		icon: "lucide-trash-2",
-		theme: "red",
-		onClick: () => emit("uninstall"),
-	},
-]);
+// hiding a tab is this user's own choice, so it shows for everyone; the rest changes the site
+const tabActions = computed<DropdownOptions>(() =>
+	props.tabHidden === undefined
+		? []
+		: [
+				{
+					label: props.tabHidden ? "Show in left bar" : "Hide from left bar",
+					icon: props.tabHidden ? "lucide-eye" : "lucide-eye-off",
+					onClick: () => emit("setTabHidden", !props.tabHidden),
+				},
+			],
+);
+
+const managerActions = computed<DropdownOptions>(() =>
+	props.canManage
+		? [
+				{
+					label: props.enabled ? "Disable" : "Enable",
+					icon: props.enabled ? "lucide-power-off" : "lucide-power",
+					onClick: () => emit("setEnabled", !props.enabled),
+				},
+				{
+					label: "Uninstall",
+					icon: "lucide-trash-2",
+					theme: "red",
+					onClick: () => emit("uninstall"),
+				},
+			]
+		: [],
+);
+
+const moreActions = computed<DropdownOptions>(() => [...tabActions.value, ...managerActions.value]);
 </script>

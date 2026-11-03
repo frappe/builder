@@ -4,7 +4,7 @@ description: create, change or suggest an editor plugin (a panel, toolbar button
 # Editor plugins
 
 ## What a good plugin is
-A plugin is a shortcut the user reaches for while making a page: open it, put something on the page in a few seconds, carry on. It should feel like the best Figma and Framer plugins. Most good ones take one of these shapes:
+A plugin is a shortcut the user reaches for while making a page: open it, put something on the page in a few seconds, carry on. Most good ones take one of these shapes:
 - Insert: a grid of visual things to add (icons, photos, illustrations, shapes, patterns, embeds, the site's own records). Click or drag one and it lands on the page as ordinary blocks.
 - Restyle the selection: select a block, see your own content in a range of looks, click one. Image treatments, text styles, backgrounds, borders, motion.
 - Generate: a small input becomes a block: a link becomes a QR code, numbers become a chart, a photo becomes a palette.
