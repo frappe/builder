@@ -21,6 +21,8 @@
 <script setup lang="ts">
 import LucideChevronRight from "~icons/lucide/chevron-right";
 
-// `selected` left out makes this a navigation row with a chevron; set, it is one radio of a group
-defineProps<{ title: string; description: string; selected?: boolean }>();
+// `selected` left out makes a navigation row with a chevron; without this default Vue turns a missing boolean into false
+withDefaults(defineProps<{ title: string; description: string; selected?: boolean }>(), {
+	selected: undefined,
+});
 </script>

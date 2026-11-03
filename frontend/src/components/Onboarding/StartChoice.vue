@@ -3,7 +3,7 @@
 		<OnboardingChoice
 			v-if="canClone"
 			:title="__('Bring your website')"
-			:description="__('Copy your pages, text and images from your current site.')"
+			:description="__('Copy pages, text and images from your website.')"
 			@click="emit('choose', 'clone')">
 			<template #icon><LucideGlobe class="size-4" /></template>
 		</OnboardingChoice>
