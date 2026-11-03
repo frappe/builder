@@ -116,8 +116,9 @@ const panes: SettingsPane[] = [
 		icon: "lucide-globe",
 		group: "Global",
 		load: () => import("@/components/Settings/GlobalDomains.vue"),
-		// the boot data renders the Python bool, so "False" is a truthy string
-		condition: () => window.is_fc_site === "True",
+		// the boot data renders the Python bool, so "False" is a truthy string.
+		// Cloud Settings is available on Frappe Cloud v2 sites, where Pilot owns the domains.
+		condition: () => window.is_fc_site === "True" || isCloudBillingAvailable.value,
 	},
 	{
 		name: "global_billing",
