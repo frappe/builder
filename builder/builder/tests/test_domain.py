@@ -120,7 +120,7 @@ class TestPilotDomains(FrappeTestCase):
 		self.assertEqual(domain.get_dns_records("shop.example.com"), {"cname": "edge.example.net", "a": None})
 
 
-class TestFrappeCloudDomains(FrappeTestCase):
+class TestFrappeCloudV1Site(FrappeTestCase):
 	def setUp(self):
 		for patcher in (
 			patch.object(domain, "is_pilot_site", return_value=False),

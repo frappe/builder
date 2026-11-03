@@ -53,41 +53,11 @@ def is_pilot_site() -> bool:
 	return is_v2_site()
 
 
-def get_site_domains() -> "FrappeCloudDomains | PilotDomains":
-	frappe.only_for("System Manager")
-	return PilotDomains() if is_pilot_site() else FrappeCloudDomains()
-
-
-class FrappeCloudDomains:
-	"""Domains of a Frappe Cloud v1 site, which Frappe Cloud manages."""
-
-	def get_dns_records(self, domain: str) -> dict:
-		# Every domain points to the same site and server.
-		return {"cname": frappe.local.site, "a": fc_call("get_inbound_ip")}
-
-	def get_domains(self) -> list[dict]:
-		return fc_call("get_domains")
-
-	def check_dns(self, domain: str) -> dict:
-		return fc_call("check_dns", domain=domain)
-
-	def add_domain(self, domain: str) -> str:
-		return fc_call("add_domain", domain=domain)
-
-	def retry_add_domain(self, domain: str) -> str:
-		return fc_call("retry_add_domain", domain=domain)
-
-	def remove_domain(self, domain: str) -> str:
-		return fc_call("remove_domain", domain=domain)
-
-	def set_host_name(self, domain: str) -> str:
-		return fc_call("set_host_name", domain=domain)
-
-	def set_redirect(self, domain: str) -> str:
-		return fc_call("set_redirect", domain=domain)
-
-	def unset_redirect(self, domain: str) -> str:
-		return fc_call("unset_redirect", domain=domain)
+def call_domain_api(method: str, **params):
+	"""Call Frappe Cloud's domain API on a v1 site, and its Pilot equivalent on a v2 site."""
+	if is_pilot_site():
+		return getattr(PilotDomains(), method)(**params)
+	return fc_call(method, **params)
 
 
 class PilotDomains:
@@ -96,6 +66,7 @@ class PilotDomains:
 	def __init__(self):
 		from frappe.integrations.frappe_providers.cloud_settings import PilotClient
 
+		frappe.only_for("System Manager")
 		self.client = PilotClient()
 
 	def get_dns_records(self, domain: str) -> dict:
@@ -149,48 +120,51 @@ class PilotDomains:
 
 @frappe.whitelist()
 def get_dns_records(domain: str = "") -> dict:
-	return get_site_domains().get_dns_records(domain)
+	if is_pilot_site():
+		return PilotDomains().get_dns_records(domain)
+	# Every domain of a Frappe Cloud v1 site points to the same site and server.
+	return {"cname": frappe.local.site, "a": fc_call("get_inbound_ip")}
 
 
 @frappe.whitelist()
 def get_domains() -> list:
-	return get_site_domains().get_domains()
+	return call_domain_api("get_domains")
 
 
 @frappe.whitelist()
 def check_dns(domain: str) -> dict:
-	return get_site_domains().check_dns(domain)
+	return call_domain_api("check_dns", domain=domain)
 
 
 @frappe.whitelist()
 def add_domain(domain: str) -> str:
-	result = get_site_domains().add_domain(domain)
+	result = call_domain_api("add_domain", domain=domain)
 	capture("builder_custom_domain_added", "builder")
 	return result
 
 
 @frappe.whitelist()
 def remove_domain(domain: str) -> str:
-	return get_site_domains().remove_domain(domain)
+	return call_domain_api("remove_domain", domain=domain)
 
 
 @frappe.whitelist()
 def retry_add_domain(domain: str) -> str:
-	return get_site_domains().retry_add_domain(domain)
+	return call_domain_api("retry_add_domain", domain=domain)
 
 
 @frappe.whitelist()
 def set_host_name(domain: str) -> str:
-	result = get_site_domains().set_host_name(domain)
+	result = call_domain_api("set_host_name", domain=domain)
 	capture("builder_custom_domain_set_primary", "builder")
 	return result
 
 
 @frappe.whitelist()
 def set_redirect(domain: str) -> str:
-	return get_site_domains().set_redirect(domain)
+	return call_domain_api("set_redirect", domain=domain)
 
 
 @frappe.whitelist()
 def unset_redirect(domain: str) -> str:
-	return get_site_domains().unset_redirect(domain)
+	return call_domain_api("unset_redirect", domain=domain)
