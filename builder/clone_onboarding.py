@@ -14,6 +14,8 @@ from builder.www._builder import get_cloud_settings
 
 SERVICE_URL = "https://move.surajshetty.tech"
 CLONE_USER = "clone-service@example.com"
+# Website Settings and the Builder doctypes need Website Manager; the rest of the copy needs System Manager
+CLONE_ROLES = ("System Manager", "Website Manager")
 STATE_KEY = "builder_clone"
 NONCE_SECONDS = 10 * 60
 LOOKS = {"clean_up", "as_is", "redesign"}
@@ -74,6 +76,7 @@ def clone_user_keys() -> dict:
 	"""A fresh key for the clone service user. Committed now, since the service starts writing before this request ends."""
 	user = frappe.get_doc("User", CLONE_USER) if frappe.db.exists("User", CLONE_USER) else new_clone_user()
 	secret = frappe.generate_hash(length=15)
+	user.append_roles(*CLONE_ROLES)
 	user.enabled = 1
 	user.api_key = frappe.generate_hash(length=15)
 	user.api_secret = secret
@@ -90,7 +93,6 @@ def new_clone_user():
 			"first_name": "Clone service",
 			"user_type": "System User",
 			"send_welcome_email": 0,
-			"roles": [{"role": "System Manager"}],
 		}
 	).insert(ignore_permissions=True)
 
