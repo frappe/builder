@@ -12,7 +12,7 @@ from frappe.utils.password import remove_encrypted_password
 from builder.public_fetch import public_session
 from builder.www._builder import get_cloud_settings
 
-SERVICE_URL = "https://move.surajshetty.tech"
+SERVICE_URL = "https://clone.frappe.page"
 CLONE_USER = "clone-service@example.com"
 # Website Settings and the Builder doctypes need Website Manager; the rest of the copy needs System Manager
 CLONE_ROLES = ("System Manager", "Website Manager")
