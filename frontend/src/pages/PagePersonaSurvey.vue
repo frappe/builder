@@ -4,6 +4,9 @@
 		<div class="mx-auto w-full max-w-3xl px-8 pt-16">
 			<img src="/builder_logo.png" alt="Builder" class="h-8" />
 		</div>
+		<div class="mx-auto w-full max-w-3xl px-8 pt-8">
+			<CloneExistingSite />
+		</div>
 		<div class="flex-1 overflow-hidden">
 			<TemplateGallery
 				class="mx-auto h-full w-full max-w-3xl"
@@ -79,6 +82,7 @@
 
 <script setup lang="ts">
 import { __ } from "@/translation";
+import CloneExistingSite from "@/components/CloneExistingSite.vue";
 import TemplateGallery from "@/components/Templates/TemplateGallery.vue";
 import { useDashboardState } from "@/composables/useDashboardState";
 import { builderSettings } from "@/data/builderSettings";
