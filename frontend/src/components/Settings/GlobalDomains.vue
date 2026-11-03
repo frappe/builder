@@ -165,7 +165,7 @@ const dnsRecords = computed(() => {
 	records.push({
 		type: "A",
 		host: isSubdomain.value ? host : "@",
-		// Pilot gives the address only once a domain is typed
+		// Pilot gives the address only for the domain being added
 		value: a ?? "…",
 		copyValue: a ?? "",
 		recommended: !isSubdomain.value,

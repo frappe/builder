@@ -97,7 +97,7 @@ class TestPilotDomains(FrappeTestCase):
 			[{"primary": True}, {"redirect_to_primary": True}, {"redirect_to_primary": False}],
 		)
 
-	def test_dns_records_come_from_pilot_for_the_typed_domain(self):
+	def test_dns_records_come_from_pilot_for_the_domain_being_added(self):
 		self.client.get.return_value = {
 			"cname": [{"type": "CNAME", "host": "shop.example.com", "value": "site.local"}],
 			"a": [{"type": "A", "host": "shop.example.com", "value": "203.0.113.10"}],
