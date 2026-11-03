@@ -28,33 +28,66 @@
 
 ## Frappe Builder
 
-Frappe Builder is a low-code website builder designed for simplicity, speed, and flexibility. Craft beautiful websites effortlessly with an intuitive visual builder. Whether you're a designer looking for ease or a developer seeking customization, Frappe Builder empowers you. It also features a click-to-publish option that gives you the complete end-to-end website creation experience.
+Frappe Builder is an open-source website builder. You design pages on a visual canvas, fill them with content from your Frappe database when you need to, and publish with one click.
 
 ### Motivation
 
 Most existing solutions were either too complex, too restrictive, or difficult to integrate with the Frappe ecosystem. Additionally, pages built with these tools were often bloated with unnecessary scripts and styles. I wanted to take a stab at solving this problem while prioritising performance from day one. I aimed to address two major issues with this project: providing an intuitive way to design a web page and enabling one-click publishing. As a web developer, it helps me scratch my own itch, and I hope it helps others too.
 
-### What Sets It Apart
+### Key Features
 
-- **Bob, an AI builder that reads your site first.** Ask for a page or a change in plain words. Before it edits, Bob reads your existing pages, theme tokens and components, so new work follows your design language and fits your routes. It wires forms and data sections to real doctypes and looks facts up online instead of inventing them. Sensitive changes wait for your approval, and every AI edit can be reverted.
+#### Visual editor
 
-- **Your Frappe database is the CMS.** A page or component can run a Python data script that fetches from any doctype, then loop over the results and bind them to any property or style. A dynamic route like `/blog/:slug` turns one design into a page for every record, with no separate CMS or API to maintain.
+Drag blocks onto the canvas and style them from the properties panel, much like you would in Figma. Desktop, tablet and mobile views sit side by side, and a change you make in the tablet or mobile view applies only to that screen size.
 
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset=".github/assets/data-script-dark.webp">
-    <img alt="The data script behind a byculla/colour/:colour route, with the Paint Colour record it returns" src=".github/assets/data-script.webp">
-  </picture>
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset=".github/assets/responsive-dark.webp">
+  <img alt="A page open in the desktop, tablet and mobile views side by side" src=".github/assets/responsive.webp">
+</picture>
 
-- **Components with props and scripts.** Turn any group of blocks into a reusable component with typed props, its own data script and its own client script. Bind its props to page data to repeat it over your records. Change it once and every page that uses it follows.
+#### Bob, the AI assistant
 
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset=".github/assets/components-dark.webp">
-    <img alt="A colour chip component repeated over Paint Colour records, its props bound to fields from the page data" src=".github/assets/components.webp">
-  </picture>
+Describe the page you want and Bob builds it on the canvas, using the colours, fonts and components your site already has, so new pages match the rest of your site. Ask for changes the same way: a shorter headline, warmer colours, an enquiry form. If a form needs somewhere to store submissions, Bob asks before creating it, and the entries show up in Desk, Frappe's admin. You can revert anything Bob changes.
 
-- **Fast by default.** Published pages are lean HTML and CSS with no front-end framework to load before they render. [frappe.io](https://frappe.io) runs on Builder.
+<img alt="Bob building a page for a jewellery shop from a short description, with an enquiry form that saves to the database" src=".github/assets/bob.webp">
 
-- **Works with your coding agent.** The [`frappe-builder`](skills/frappe-builder/SKILL.md) skill lets Claude Code, Codex, OpenCode and other agents build, edit and publish pages on any Frappe site. See [With a Coding Agent](#with-a-coding-agent).
+#### Pages from your data
+
+Builder runs on the Frappe Framework, so a page can show records straight from your database. A few lines of Python in the page's data script fetch them, and a block can repeat once per record to make a blog index, a product grid or a team page. With a route like `/blog/:slug`, one design gives every post its own page.
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset=".github/assets/data-script-dark.webp">
+  <img alt="A three-line data script that fetches products, and the product cards it fills" src=".github/assets/data-script.webp">
+</picture>
+
+#### Reusable components
+
+Save a header, a card or any group of blocks as a component and use it on as many pages as you like. Edit it once and every page that uses it updates. Props let each copy show different content.
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset=".github/assets/components-dark.webp">
+  <img alt="A header component selected on a page, with its props in the right panel and the component list on the left" src=".github/assets/components.webp">
+</picture>
+
+#### Fast pages
+
+Published pages are plain HTML and CSS. No JavaScript runs unless you add some, and there is no framework to download before the page appears. [frappe.io](https://frappe.io) is built with Builder.
+
+<img alt="Lighthouse scores for similar pages built with Builder, Framer, Webflow and Wix" src=".github/assets/lighthouse.webp">
+
+<sub>Google Lighthouse (mobile) on nearly identical pages built with each tool, as published on [frappe.io/builder](https://frappe.io/builder).</sub>
+
+#### Also included
+
+- One-click publishing, with version history for every page
+- Page analytics: views, visitors and referrers, without a third-party script
+- Colour and font tokens, each with a light and a dark value
+- Hover, focus and active styles, set without writing CSS
+- Pages that only signed-in users can see
+- Uploaded images converted to WebP automatically
+- Client scripts and global scripts for custom behaviour
+- A [Figma plugin](https://www.figma.com/community/plugin/1417835732014419099/figma-to-frappe-builder) to bring in designs from Figma
+- A [skill](skills/frappe-builder/SKILL.md) that lets Claude Code, Codex and other coding agents build and publish pages for you ([setup](#with-a-coding-agent))
 
 ### Under the Hood
 
@@ -80,7 +113,7 @@ Get started with your personal or business site with a few clicks on Frappe Clou
 
 ### Self Hosting
 
-[Pilot](https://github.com/frappe/pilot) is Frappe's tool for running benches and sites on your own server. It installs Frappe, manages sites and backups, and sets up production with nginx and TLS. Production runs on Linux (macOS works for local development), it needs Frappe v16 or later, and it is still in pre-release.
+[Pilot](https://github.com/frappe/pilot) is Frappe's tool for running benches and sites on your own server. It installs Frappe, manages sites and backups, and sets up production with nginx and TLS. Pilot needs Frappe v16 or later and is still in pre-release. Production servers need Linux; macOS works for local development.
 
 **Step 1**: Install Pilot
 
@@ -121,7 +154,7 @@ Add the [`frappe-builder`](skills/frappe-builder/SKILL.md) skill to Claude Code,
 npx skills add frappe/builder
 ```
 
-Then ask it to set up a local Builder site. The skill reuses a bench you already have or creates one, connects through [frappectl](https://github.com/frappe/frappectl), and from there edits, builds and publishes pages for you, locally or on any Frappe site you sign in to.
+Then ask it to set up a local Builder site. It uses your existing bench if you have one and creates one if you don't. After that it can build, edit and publish pages for you, on your local site or on any Frappe site you sign in to through [frappectl](https://github.com/frappe/frappectl).
 
 ### Pilot
 
