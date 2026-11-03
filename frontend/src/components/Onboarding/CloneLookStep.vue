@@ -1,6 +1,6 @@
 <template>
 	<div class="flex flex-col gap-5">
-		<div class="flex flex-col gap-2.5" role="radiogroup">
+		<div class="flex flex-col gap-1" role="radiogroup">
 			<OnboardingChoice
 				v-for="option in looks"
 				:key="option.value"

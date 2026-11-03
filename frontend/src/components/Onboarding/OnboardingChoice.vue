@@ -1,12 +1,9 @@
 <template>
+	<!-- the row's padding is pulled back out with -mx, so its icon and text line up with the heading above -->
 	<button
 		type="button"
-		class="flex w-full items-center gap-3 rounded-6 border p-3 text-left transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-outline-gray-3"
-		:class="
-			selected
-				? 'border-outline-gray-4 bg-surface-gray-2'
-				: 'border-outline-gray-2 hover:border-outline-gray-3 hover:bg-surface-gray-1'
-		"
+		class="-mx-2.5 flex items-start gap-3 rounded-6 p-2.5 text-left transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-outline-gray-3"
+		:class="selected ? 'bg-surface-gray-2' : 'hover:bg-surface-gray-1'"
 		v-bind="selected === undefined ? {} : { role: 'radio', 'aria-checked': selected }">
 		<span
 			v-if="$slots.icon"
@@ -17,7 +14,7 @@
 			<span class="text-base font-medium text-ink-gray-8">{{ title }}</span>
 			<span class="text-p-sm text-ink-gray-5">{{ description }}</span>
 		</span>
-		<LucideChevronRight v-if="selected === undefined" class="size-4 shrink-0 text-ink-gray-4" />
+		<LucideChevronRight v-if="selected === undefined" class="size-4 shrink-0 self-center text-ink-gray-4" />
 	</button>
 </template>
 

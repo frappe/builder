@@ -1,5 +1,5 @@
 <template>
-	<div class="flex flex-col gap-2.5">
+	<div class="flex flex-col gap-1">
 		<OnboardingChoice
 			v-if="canClone"
 			:title="__('Bring your website')"
