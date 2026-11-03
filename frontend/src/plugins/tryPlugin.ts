@@ -221,14 +221,22 @@ function nativeControls(elements: HTMLElement[], name: string): string[] {
 	];
 }
 
+/**
+ * Inside `data-preview` the plugin shows what it puts on the page (a swatch, a tile
+ * in a style), so its colors are the page's and stay the same in either theme.
+ */
+const isPreview = (element: Element) => Boolean(element.closest("[data-preview]"));
+
 /** A color written into a style attribute stays the same when the editor switches theme. */
 function fixedColors(elements: HTMLElement[], name: string): string[] {
-	const fixed = elements.flatMap((element) =>
-		COLOR_PROPERTIES.map((property) => element.style.getPropertyValue(property)).filter(isFixedColor),
-	);
+	const fixed = elements
+		.filter((element) => !isPreview(element))
+		.flatMap((element) =>
+			COLOR_PROPERTIES.map((property) => element.style.getPropertyValue(property)).filter(isFixedColor),
+		);
 	if (!fixed.length) return [];
 	return [
-		`${name}: ${fixed.length} inline colors, such as ${fixed[0]}, stay the same in dark mode. Use text-ink-gray-*, bg-surface-* and border-outline-* classes instead.`,
+		`${name}: ${fixed.length} inline colors, such as ${fixed[0]}, stay the same in dark mode. Use text-ink-gray-*, bg-surface-* and border-outline-* classes instead, or put data-preview on the element that shows page content.`,
 	];
 }
 
@@ -240,7 +248,7 @@ function unreadableText(container: HTMLElement, name: string): string[] {
 	const samples: string[] = [];
 	for (const element of container.querySelectorAll<HTMLElement>("*")) {
 		const text = ownText(element);
-		if (!text || !element.getClientRects().length) continue;
+		if (!text || !element.getClientRects().length || isPreview(element)) continue;
 		const ratio = contrast(toRGBA(getComputedStyle(element).color), backgroundOf(element, container));
 		if (ratio < MIN_CONTRAST) samples.push(`"${text.slice(0, 40)}" (contrast ${ratio.toFixed(1)})`);
 	}

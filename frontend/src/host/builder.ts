@@ -17,6 +17,7 @@ export { default as useBuilderStore } from "@/stores/builderStore";
 export { default as blockController } from "@/utils/blockController";
 export { default as Block } from "@/block";
 export { lucideIcon } from "@/plugins/lucideIcon";
+export { insertBlock, startBlockDrag } from "@/plugins/blocks";
 
 // the controls of the property panel, so a plugin's section looks like Builder's own
 export { default as AttributePropertyControl } from "@/components/Controls/AttributePropertyControl.vue";

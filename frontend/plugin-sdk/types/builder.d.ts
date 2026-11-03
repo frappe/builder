@@ -114,6 +114,15 @@ declare module "builder" {
 	export function lucideIcon(name: string): Component;
 
 	/**
+	 * Adds a block inside the selected container, after any other selected block,
+	 * or at the end of the page, and selects it. Cmd+Z takes it out.
+	 */
+	export function insertBlock(options: Record<string, unknown>): Block | undefined;
+
+	/** Call from a draggable element's dragstart; the canvas inserts the block where it is dropped. */
+	export function startBlockDrag(event: DragEvent, options: Record<string, unknown>): void;
+
+	/**
 	 * The controls of the property panel. Give one as a `BlockProperty.component`.
 	 *
 	 * `StylePropertyControl` reads and writes the style named by `propertyKey`, and
