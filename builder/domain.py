@@ -3,7 +3,7 @@ from frappe import _
 from frappe.integrations.frappe_providers.frappecloud_billing import get_base_url, get_headers
 from frappe.utils.telemetry import capture
 
-# The Frappe Cloud domain status that matches each Pilot certificate state.
+# The Frappe Cloud domain status for each Pilot certificate state.
 PILOT_CERTIFICATE_STATUSES = {
 	"not_required": "Active",
 	"issued": "Active",
@@ -54,7 +54,7 @@ def is_pilot_site() -> bool:
 
 
 def domain_call(method: str, **params):
-	"""Pilot owns the domains of a Frappe Cloud v2 site, Frappe Cloud those of a v1 site."""
+	"""Send a domain call to Pilot on a v2 site, and to Frappe Cloud on a v1 site."""
 	if is_pilot_site():
 		return getattr(PilotDomains(), method)(**params)
 	return fc_call(method, **params)
@@ -74,7 +74,7 @@ class PilotDomains:
 
 	def get_domains(self) -> list[dict]:
 		rows = self.client.get(self.client.site_path("domains"))["domains"]
-		# Pilot cannot remove the site name, so it is listed only while it is the primary domain.
+		# Pilot cannot remove the site name, so show it only while it is primary.
 		return [self.get_row(row) for row in rows if row["is_primary"] or not row["is_site"]]
 
 	def get_row(self, row: dict) -> dict:
@@ -95,7 +95,7 @@ class PilotDomains:
 		return self.client.post(self.client.site_path("domains"), {"domain": domain})
 
 	def retry_add_domain(self, domain: str) -> dict:
-		# Pilot queues the setup again when an attached domain is added again.
+		# Pilot retries the setup when an attached domain is added again.
 		return self.add_domain(domain)
 
 	def remove_domain(self, domain: str) -> dict:
