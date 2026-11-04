@@ -104,7 +104,7 @@ TOOLS = [
 		name="prepare_uploaded_asset",
 		side="server",
 		handler=prepare_upload,
-		description="Use an uploaded raster original on the published site only when the user intended it as content, logo, product or team photography. Preserves the original bytes and identity; creates a public page asset. Do not use for reference screenshots or confidential images. The user can correct roles in the Assets workspace.",
+		description="Use an uploaded raster original on the published site only when the user intended it as content, logo, product or team photography. Preserves the original bytes and identity; creates a public page asset. Do not use for reference screenshots or confidential images. Ask in chat when the role is unclear.",
 		parameters={
 			"type": "object",
 			"properties": {

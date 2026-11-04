@@ -692,10 +692,9 @@ class AgentRunner:
 
 			brief = DesignBrief(self.page_id)
 			blocks.append(brief.context())
-			from builder.ai.projects import for_page
+			from builder.ai.projects import context_for_page
 
-			if project := for_page(self.page_id):
-				blocks.append("Project route/task map: " + json.dumps(project))
+			blocks.append(context_for_page(self.page_id))
 			self.found_images = brief.read().get("assets", [])
 		context = "\n\n".join(block for block in blocks if block)
 		if context:

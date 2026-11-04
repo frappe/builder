@@ -5,7 +5,7 @@ import frappe
 from frappe.tests.utils import FrappeTestCase
 from PIL import Image
 
-from builder.ai import api, memory
+from builder.ai import api, memory, workspace
 from builder.ai.artifacts import Artifact
 from builder.ai.brief import DesignBrief
 from builder.ai.media import MediaRequest, crop_asset, raster
@@ -28,6 +28,17 @@ class TestMediaAndScope(FrappeTestCase):
 				MediaRequest(self.page.name, "fixture", {"asset": "same"}, 0.3).reserve()
 			_, receipt = Artifact.get(request.name, self.page.name, "media_request")
 			self.assertIsNone(receipt["actual_cost_usd"])
+
+	def test_pending_media_surface_only_returns_requests_needing_review(self):
+		with patch.dict(frappe.conf, {"bob_media_budget_usd": 1}), patch.object(frappe.db, "commit"):
+			request = MediaRequest(self.page.name, "fixture", {"asset": "same"}, 0.3)
+			request.reserve()
+			Artifact.save(self.page.name, "media_request", {"reserved_usd": "0.2"}, status="complete")
+			result = workspace.get_pending_media_requests(self.page.name)
+		self.assertEqual(
+			result["requests"], [{"id": request.name, "label": "fixture", "reserved_usd": "0.3"}]
+		)
+		self.assertTrue(result["can_reconcile"])
 
 	def test_page_media_budget_is_enforced_before_external_work(self):
 		with patch.dict(frappe.conf, {"bob_media_budget_usd": 0.5}), patch.object(frappe.db, "commit"):

@@ -9,6 +9,8 @@ from frappe.tests.utils import FrappeTestCase
 from jinja2 import TemplateNotFound, UndefinedError
 
 from builder.ai import cards, design, projects
+from builder.ai.agent.tools.design import update_brief
+from builder.ai.agent.tools.projects import update_project as update_project_tool
 from builder.ai.artifacts import Artifact
 from builder.ai.block_codec import BlockCodec
 from builder.ai.brief import DesignBrief
@@ -159,6 +161,61 @@ class TestDesignWorkflow(FrappeTestCase):
 		with self.assertRaisesRegex(ValueError, "user-approved"):
 			update_decisions(brief, {"facts": [{"id": "currency", "value": "USD"}]})
 		self.assertEqual(brief["facts"][0]["value"], "EUR")
+
+	def test_saved_context_includes_choices_without_search_results_or_metadata(self):
+		brief = DesignBrief(self.page.name)
+		brief.update({"project": "Coastal guide", "goal": "Book a tour"})
+		state = brief.read()
+		state["facts"] = [
+			{"value": "Tours start at 9", "status": "accepted", "source_message": "private-id"},
+			{"value": "Maybe a boat", "status": "proposed"},
+			{"value": "No drone photos", "status": "rejected"},
+		]
+		state["assets"] = [
+			{"id": "chosen", "url": "/files/coast.webp", "selected": True, "thumb": "large-thumbnail"},
+			{"id": "unused", "url": "/files/unused.webp", "selected": False},
+		]
+		brief.save(state)
+		context = brief.context()
+		for value in ("Coastal guide", "Book a tour", "Tours start at 9", "No drone photos", "chosen"):
+			self.assertIn(value, context)
+		for value in ("Maybe a boat", "private-id", "large-thumbnail", "unused"):
+			self.assertNotIn(value, context)
+		result = json.loads(update_brief(SimpleNamespace(page_id=self.page.name), {"voice": "Warm"}))
+		self.assertEqual(result, {"updated": ["voice"], "revision": 2})
+
+	def test_project_context_keeps_routes_and_loads_details_on_demand(self):
+		projects.save_project(
+			self.page.name,
+			"Coastal site",
+			brief="A" * 1200 + "private-detail",
+			tasks=[
+				{
+					"id": "home",
+					"title": "Home",
+					"route": "coastal-home",
+					"page": self.page.name,
+					"goal": "Book tours",
+					"status": "done",
+					"evidence": "Long verification transcript",
+				}
+			],
+		)
+		context = projects.context_for_page(self.page.name)
+		for value in ("Coastal site", "coastal-home", "Book tours", "read_project"):
+			self.assertIn(value, context)
+		for value in ("private-detail", "Long verification transcript"):
+			self.assertNotIn(value, context)
+		reply = update_project_tool(
+			SimpleNamespace(page_id=self.page.name),
+			{
+				"title": "Coastal site",
+				"brief": "A" * 1200 + "private-detail",
+				"tasks": projects.for_page(self.page.name)["tasks"],
+				"expected_revision": 1,
+			},
+		)
+		self.assertEqual(json.loads(reply), {"revision": 2, "pages": 1})
 
 	def test_typed_card_rejects_double_answer_and_keeps_canonical_label(self):
 		card = self.session.append_message(

@@ -9,7 +9,8 @@ def read_project(ctx, args):
 
 
 def update_project(ctx, args):
-	return json.dumps(projects.save_project(ctx.page_id, **args))
+	project = projects.save_project(ctx.page_id, **args)
+	return json.dumps({"revision": project["revision"], "pages": len(project["tasks"])})
 
 
 def create_page(ctx, args):
@@ -17,7 +18,7 @@ def create_page(ctx, args):
 	return json.dumps(
 		{
 			**task,
-			"next": "Open this draft to build it. Its chat inherits the shared project brief and task map.",
+			"next": "Open this draft to build it. Its chat has the shared project overview.",
 		}
 	)
 

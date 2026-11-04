@@ -75,11 +75,36 @@ class DesignBrief:
 
 	def context(self) -> str:
 		brief = self.read()
+		context = {field: brief[field] for field in TEXT_FIELDS if brief.get(field)}
+		for field in ("facts", "decisions"):
+			for record in brief.get(field, []):
+				status = record.get("status")
+				if status in ("accepted", "rejected"):
+					key = "confirmed" if status == "accepted" else "avoid"
+					context.setdefault(key, []).append(record.get("value"))
+		assets = [self.context_asset(asset) for asset in brief.get("assets", []) if asset.get("selected")]
+		if assets:
+			context["selected_assets"] = assets
 		return (
-			"Saved page brief (user corrections take precedence):\n" + json.dumps(brief, ensure_ascii=False)
-			if brief
+			"Saved page context (newer user corrections win):\n" + json.dumps(context, ensure_ascii=False)
+			if context
 			else ""
 		)
+
+	@staticmethod
+	def context_asset(asset: dict) -> dict:
+		fields = (
+			"id",
+			"url",
+			"description",
+			"role",
+			"provider",
+			"credit",
+			"source_url",
+			"preview_only",
+			"requires_acquisition",
+		)
+		return {field: asset[field] for field in fields if asset.get(field)}
 
 	def remember_assets(self, assets: list[dict]):
 		frappe.get_doc("Builder Page", self.page_id).check_permission("write")

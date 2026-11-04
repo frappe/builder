@@ -5,6 +5,7 @@ import json
 import frappe
 
 DOCTYPE = "Builder AI Project"
+CONTEXT_BRIEF_CHARS = 1200
 
 
 def validate_tasks(tasks):
@@ -61,6 +62,29 @@ def for_page(page_id):
 		"revision": doc.revision,
 		"tasks": json.loads(doc.tasks_json or "[]"),
 	}
+
+
+def context_for_page(page_id):
+	project = for_page(page_id)
+	if not project:
+		return ""
+	tasks = project["tasks"]
+	shared_brief = project["brief"] or ""
+	current = next((task for task in tasks if task.get("page") == page_id), None)
+	context = {
+		"title": project["title"],
+		"revision": project["revision"],
+		"brief": shared_brief[:CONTEXT_BRIEF_CHARS],
+		"brief_truncated": len(shared_brief) > CONTEXT_BRIEF_CHARS,
+		"pages": [
+			{key: task[key] for key in ("id", "title", "route", "status", "page") if task.get(key)}
+			for task in tasks
+		],
+		"current_page": {key: current[key] for key in ("goal", "depends_on") if current.get(key)}
+		if current
+		else None,
+	}
+	return "Project overview (use read_project for details): " + json.dumps(context, ensure_ascii=False)
 
 
 @frappe.whitelist(methods=["POST"])

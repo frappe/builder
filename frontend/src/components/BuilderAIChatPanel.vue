@@ -17,12 +17,14 @@
 					:disabled="isSubmitting"
 					@click="newSession" />
 				<Button
+					v-if="pendingMediaRequests.length"
 					variant="ghost"
 					size="sm"
-					aria-label="Open project brief, assets and versions"
-					@click="workspaceOpen = true">
-					Project
-				</Button>
+					icon="lucide-alert-triangle"
+					class="text-ink-orange-5"
+					aria-label="Review paid image request"
+					tooltip="Review paid image request"
+					@click="mediaOpen = true" />
 				<Dropdown v-if="sessionOptions.length" :options="sessionOptions" :offset="6">
 					<Button
 						variant="ghost"
@@ -429,22 +431,34 @@
 				</Transition>
 			</div>
 		</div>
-		<Dialog title="Turn debug" size="3xl" v-model="debugOpen">
+		<Dialog v-model="debugOpen" title="Turn debug" size="3xl">
 			<template #default>
 				<AIDebugPanel :debug="debugData" />
 			</template>
 		</Dialog>
-		<AIWorkspace
-			v-model="workspaceOpen"
-			:page-id="chat.pageId.value"
-			:busy="isSubmitting"
-			@select="selectOption" />
+		<Dialog v-model="mediaOpen" title="Paid image request needs review" size="lg">
+			<p class="mb-4 text-p-sm text-ink-gray-6">Check the provider charge before retrying this request.</p>
+			<div
+				v-for="request in pendingMediaRequests"
+				:key="request.id"
+				class="border-t border-outline-gray-2 py-3">
+				<p class="text-p-sm font-medium">{{ request.label }}</p>
+				<p class="text-p-xs text-ink-gray-6">Up to ${{ request.reserved_usd }} reserved</p>
+				<AIMediaRecovery
+					v-if="canReconcileMedia && chat.pageId.value"
+					:page-id="chat.pageId.value"
+					:request-id="request.id"
+					@resolved="refreshPendingMedia" />
+				<p v-else class="mt-2 text-p-sm text-ink-gray-6">Ask a site administrator to verify the charge.</p>
+			</div>
+		</Dialog>
 		<AIChatHistory v-model="chatHistoryOpen" :page-id="chat.pageId.value" @select="switchSession" />
 	</div>
 </template>
 
 <script setup lang="ts">
 import AIActionRecovery from "@/components/ai/AIActionRecovery.vue";
+import AIMediaRecovery from "@/components/ai/AIMediaRecovery.vue";
 import AIAffectedItems from "@/components/AIAffectedItems.vue";
 import AIPluginCard from "@/components/ai/AIPluginCard.vue";
 import AICommandMenu from "@/components/ai/AICommandMenu.vue";
@@ -456,7 +470,6 @@ import { modelSettingsLevel } from "@/components/ai/commands/models";
 import { providersLevel } from "@/components/ai/commands/providers";
 import { type BobContext, creditsLabel, creditsTheme, money } from "@/components/ai/commands/shared";
 import AIUISpec from "@/components/ai/AIUISpec.vue";
-import AIWorkspace from "@/components/ai/AIWorkspace.vue";
 import AINextSteps from "@/components/ai/AINextSteps.vue";
 import AIChatHistory from "@/components/ai/AIChatHistory.vue";
 import BobOrb from "@/components/ai/BobOrb.vue";
@@ -469,7 +482,7 @@ import type { AITurnStep, ChatMessage } from "@/components/ai/types";
 import { reloadAIRegistry } from "@/data/aiModels";
 import useBuilderStore from "@/stores/builderStore";
 import useCanvasStore from "@/stores/canvasStore";
-import { Badge, Button, Dropdown, KeyboardShortcut, Textarea, Tooltip } from "frappe-ui";
+import { Badge, Button, Dropdown, KeyboardShortcut, Textarea, Tooltip, call } from "frappe-ui";
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from "vue";
 
 const chat = new AIChatController();
@@ -482,8 +495,42 @@ const { progressMessage } = chat;
 const currentActivity = computed(() => progressMessage.value || "Thinking…");
 const { revertTurn, selectOption } = chat;
 const { sessions, sessionId, switchSession, newSession, deleteSession, isLoadingSession } = chat;
-const workspaceOpen = ref(false);
 const chatHistoryOpen = ref(false);
+const mediaOpen = ref(false);
+const pendingMediaRequests = ref<Array<{ id: string; label: string; reserved_usd: string }>>([]);
+const canReconcileMedia = ref(false);
+let mediaEpoch = 0;
+const lastPaidAction = computed(() =>
+	[...messages.value].reverse().find((message) => message.metadata?.kind === "acquire_paid_asset"),
+);
+
+async function refreshPendingMedia() {
+	const current = ++mediaEpoch;
+	if (!chat.pageId.value) {
+		pendingMediaRequests.value = [];
+		mediaOpen.value = false;
+		return;
+	}
+	try {
+		const result = await call("builder.ai.workspace.get_pending_media_requests", {
+			page_id: chat.pageId.value,
+		});
+		if (current !== mediaEpoch) return;
+		pendingMediaRequests.value = result.requests;
+		canReconcileMedia.value = result.can_reconcile;
+		if (!result.requests.length) mediaOpen.value = false;
+	} catch {
+		if (current === mediaEpoch) pendingMediaRequests.value = [];
+	}
+}
+
+watch(
+	[chat.pageId, () => lastPaidAction.value?.metadata?.status],
+	() => {
+		void refreshPendingMedia();
+	},
+	{ immediate: true },
+);
 
 const currentSessionTitle = computed(() => {
 	// blank until loaded, not "New chat" flipping to the real title
@@ -517,13 +564,6 @@ const sessionOptions = computed(() => {
 			hideLabel: true,
 			// theme belongs on the item — a group-level one isn't inherited.
 			options: [
-				{
-					label: "Brief, assets and versions",
-					icon: "lucide-panels-top-left",
-					onClick: () => {
-						workspaceOpen.value = true;
-					},
-				},
 				{
 					label: "Search all chats",
 					icon: "lucide-search",

@@ -3,7 +3,7 @@ import json
 import frappe
 
 from builder.ai.agent.registry import Tool
-from builder.ai.brief import STAGES, TEXT_FIELDS, DesignBrief
+from builder.ai.brief import TEXT_FIELDS, DesignBrief
 
 
 def create_directions(ctx, args):
@@ -42,7 +42,8 @@ def update_brief(ctx, args: dict) -> str:
 	source = None
 	if getattr(ctx, "run_id", None):
 		source = frappe.db.get_value("Builder AI Run", ctx.run_id, "user_message")
-	return json.dumps(DesignBrief(ctx.page_id).update(args, source), ensure_ascii=False)
+	updated = DesignBrief(ctx.page_id).update(args, source)
+	return json.dumps({"updated": list(args), "revision": updated["revision"]})
 
 
 TOOLS = [
@@ -119,28 +120,11 @@ TOOLS = [
 		name="update_design_brief",
 		side="server",
 		handler=update_brief,
-		description="Save page-specific user facts and agreed design decisions across chats. Supply only changed fields; an empty string clears a field. Keep hypotheses in open_questions, never invent business facts. Store exact selected asset URLs in visual_direction or content. The brief is included every turn. Facts and decisions are proposed records with source provenance; the user accepts or rejects them in the brief. Never change an accepted user decision implicitly.",
+		description="Save durable page details across chats. Supply only changed fields; an empty string clears a field. Keep hypotheses in open_questions, never invent business facts. Newer user corrections win. Selected assets are saved separately by ID.",
 		parameters={
 			"type": "object",
 			"properties": {
 				**{field: {"type": "string", "maxLength": 1500} for field in TEXT_FIELDS},
-				**{
-					field: {
-						"type": "array",
-						"maxItems": 30,
-						"items": {
-							"type": "object",
-							"properties": {
-								"id": {"type": "string"},
-								"label": {"type": "string"},
-								"value": {"type": "string", "maxLength": 1000},
-							},
-							"required": ["value"],
-						},
-					}
-					for field in ("facts", "decisions")
-				},
-				"stage": {"type": "string", "enum": list(STAGES)},
 			},
 			"additionalProperties": False,
 		},

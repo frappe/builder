@@ -1,10 +1,9 @@
-"""User-editable design state, with explicit decisions instead of transcript guesses."""
+"""Saved design decisions and upload preparation for Bob."""
 
 import json
 
 import frappe
 
-from builder.ai.artifacts import Artifact
 from builder.ai.brief import DesignBrief
 from builder.ai.revisions import digest
 
@@ -57,69 +56,28 @@ def update_decisions(brief, patch, source_message=None, user_edit=False):
 
 
 @frappe.whitelist()
-def get_design_workspace(page_id: str):
-	from builder.ai.design import brief_revision, direction_option
-
+def get_pending_media_requests(page_id: str):
 	frappe.get_doc("Builder Page", page_id).check_permission("read")
-	brief = DesignBrief(page_id).read()
-	variants = []
-	for row in Artifact.list(page_id, "design"):
+	rows = frappe.get_all(
+		"Builder AI Artifact",
+		filters={"page": page_id, "kind": "media_request", "status": "pending"},
+		fields=["name", "label", "payload_json"],
+		limit=50,
+	)
+	requests = []
+	for row in rows:
 		value = json.loads(row.payload_json)
-		variants.append(
-			{
-				**direction_option(row.name, value),
-				"status": row.status,
-				"stale": value["brief_revision"] != brief_revision(brief),
-			}
-		)
-	from builder.ai.projects import for_page
-
-	media = []
-	for row in Artifact.list(page_id, "media_request", limit=50):
-		value = json.loads(row.payload_json)
-		media.append(
+		requests.append(
 			{
 				"id": row.name,
-				"status": row.status,
 				"label": row.label,
 				"reserved_usd": value.get("reserved_usd"),
-				"actual_cost_usd": value.get("actual_cost_usd"),
-				"reconciliation": value.get("reconciliation"),
 			}
 		)
 	return {
-		"brief": brief,
-		"variants": variants,
-		"project": for_page(page_id),
-		"media": media,
-		"media_budget_usd": frappe.conf.get("bob_media_budget_usd") or 0,
-		"can_reconcile_media": "System Manager" in frappe.get_roles(),
+		"requests": requests,
+		"can_reconcile": "System Manager" in frappe.get_roles(),
 	}
-
-
-@frappe.whitelist(methods=["POST"])
-def save_design_brief(page_id: str, patch: dict, expected_revision: int = 0):
-	frappe.get_doc("Builder Page", page_id).check_permission("write")
-	frappe.db.get_value("Builder Page", page_id, "name", for_update=True)
-	brief = DesignBrief(page_id)
-	if int(brief.read().get("revision", 0)) != int(expected_revision):
-		raise ValueError("The brief changed in another tab. Reload it before saving your changes.")
-	return brief.update(patch, user_edit=True)
-
-
-@frappe.whitelist(methods=["POST"])
-def select_asset(page_id: str, asset_id: str, selected: bool):
-	frappe.get_doc("Builder Page", page_id).check_permission("write")
-	frappe.db.get_value("Builder Page", page_id, "name", for_update=True)
-	brief = DesignBrief(page_id)
-	state = brief.read()
-	asset = next((item for item in state.get("assets", []) if brief.asset_key(item) == asset_id), None)
-	if not asset:
-		raise ValueError("The asset is no longer in this project's library")
-	asset["selected"] = bool(frappe.utils.cint(selected))
-	state["revision"] = int(state.get("revision", 0)) + 1
-	brief.save(state)
-	return state
 
 
 @frappe.whitelist(methods=["POST"])
