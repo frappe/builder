@@ -196,8 +196,8 @@ def run_read_page(ctx, args: dict) -> str:
 	page_id, why = resolve_page_reference(args.get("page_id") or "")
 	if page_id is None:
 		return (
-			f"FAILED: {why} — list the site's pages with "
-			"query_records('Builder Page', fields=['name', 'route', 'page_title'])."
+			f"FAILED: {why}. Find it with query_records('Builder Page', fields=['name', "
+			"'route', 'page_title'], filters={'page_title': ['like', '%<word>%']})."
 		)
 	if page_id == ctx.page_id:
 		parts = [ctx.build_page_context(), render_scripts(page_id), ctx.build_skill_context()]
