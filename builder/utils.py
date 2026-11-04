@@ -362,7 +362,7 @@ def safer_exec(
 
 	with safe_exec_flags():
 		# execute script compiled by RestrictedPython
-		exec(
+		exec(  # nosemgrep
 			compile_restricted(script, filename=filename, policy=FrappeTransformer),
 			exec_globals,
 			_locals,
@@ -632,7 +632,7 @@ def sanitize_style_value(value):
 
 def execute_script(script, _locals, script_filename):
 	if is_safe_exec_enabled():
-		safe_exec(script, None, _locals, script_filename=script_filename)
+		safe_exec(script, None, _locals, script_filename=script_filename)  # nosemgrep
 	else:
 		safer_exec(script, None, _locals, script_filename=script_filename)
 

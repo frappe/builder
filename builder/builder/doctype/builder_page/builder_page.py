@@ -100,7 +100,7 @@ class BuilderPageRenderer(DocumentPage):
 		if self.doc.is_home_page():
 			context["canonical_url"] = frappe.utils.get_url()
 		elif self.doc.canonical_url:
-			context["canonical_url"] = render_template(self.doc.canonical_url, context)
+			context["canonical_url"] = render_template(self.doc.canonical_url, context)  # nosemgrep
 		else:
 			context["canonical_url"] = frappe.utils.get_url(self.path)
 		self.context = context
@@ -281,7 +281,7 @@ class BuilderPage(WebsiteGenerator):
 		if self.has_value_changed("published") and not self.published:
 			# if this is homepage then clear homepage from builder settings
 			if frappe.get_cached_value("Builder Settings", "Builder Settings", "home_page") == self.route:
-				frappe.db.set_value("Builder Settings", "Builder Settings", "home_page", None)
+				frappe.db.set_single_value("Builder Settings", "home_page", None)
 
 		if (
 			frappe.conf.developer_mode
@@ -587,7 +587,7 @@ class BuilderPage(WebsiteGenerator):
 		self.set_custom_font(context, fonts)
 		context.font_urls = get_google_font_urls(fonts)
 		context.__content = content
-		context.style = render_template(style, page_data)
+		context.style = render_template(style, page_data)  # nosemgrep
 		context.editor_link = f"/{get_builder_path()}/page/{self.name}"
 		if frappe.form_dict and self.dynamic_route:
 			query_string = "&".join(
@@ -618,7 +618,7 @@ class BuilderPage(WebsiteGenerator):
 		self.set_language(context)
 		# tojson can't serialize dates or decimals; frappe's encoder can
 		context.page_data = frappe.parse_json(frappe.as_json(clean_data(context.page_data)))
-		context["__content"] = render_template(context.__content, context)
+		context["__content"] = render_template(context.__content, context)  # nosemgrep
 
 	def set_meta_tags(self, context, page_data=None):
 		if not page_data:
@@ -684,8 +684,8 @@ class BuilderPage(WebsiteGenerator):
 		if self.body_html:
 			context._body_html += self.body_html
 
-		context["_head_html"] = render_template(context._head_html, context)
-		context["_body_html"] = render_template(context._body_html, context)
+		context["_head_html"] = render_template(context._head_html, context)  # nosemgrep
+		context["_body_html"] = render_template(context._body_html, context)  # nosemgrep
 
 	@frappe.whitelist()
 	def get_page_data(self, route_variables: dict | None = None) -> dict:

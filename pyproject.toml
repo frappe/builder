@@ -14,7 +14,8 @@ dependencies = [
     "csscompressor>=0.9.5",
     "pandas (>=2.3.2,<3.0.0)",
     "duckdb==1.4.3",
-    "litellm==1.100.4",
+    # a range: Frappe develop pins its own litellm, v15's boto3~=1.34 needs <1.98, and 1.104+ caps filelock below its CVE fixes
+    "litellm>=1.95.1,<1.104",
     "json-repair>=0.30",
 ]
 
