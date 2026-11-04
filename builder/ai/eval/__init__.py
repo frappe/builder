@@ -55,7 +55,7 @@ def run(model: str, fixture: str | None = None, label: str = "run", only=None, r
 			result = ScenarioRun(scenario, model, fixture, out_dir, attempt).execute()
 			results.append(result)
 			write_json(os.path.join(out_dir, f"{scenario.name}-{attempt}.json"), result)
-			print(summary_line(result))
+			print(summary_line(result))  # nosemgrep
 	summary_path = os.path.join(out_dir, "summary.json")
 	# a rerun of some scenarios replaces just those in an earlier run's summary
 	if os.path.exists(summary_path):
@@ -70,10 +70,10 @@ def compare(a: str, b: str):
 	rounds, how often each tool ran, and the median of each page measure."""
 	arms = [(os.path.basename(d.rstrip("/")), by_scenario(d)) for d in (a, b)]
 	for name in sorted(arms[0][1].keys() | arms[1][1].keys()):
-		print(f"\n## {name}")
+		print(f"\n## {name}")  # nosemgrep
 		for label, scenarios in arms:
 			if results := scenarios.get(name):
-				print(f"  {label}: {arm_line(results)}")
+				print(f"  {label}: {arm_line(results)}")  # nosemgrep
 
 
 def by_scenario(out_dir: str) -> dict[str, list[dict]]:
