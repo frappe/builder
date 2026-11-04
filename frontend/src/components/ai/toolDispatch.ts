@@ -13,6 +13,7 @@ import {
 	convertYAMLtoBlock,
 	parseBlock,
 	STANDARD_ATTRS,
+	visibilityCondition,
 } from "./yaml";
 
 type PageStore = ReturnType<typeof usePageStore>;
@@ -252,6 +253,10 @@ export class ToolDispatcher {
 		// One entry per property: a re-bind replaces, a null value unbinds.
 		if (args.bind && typeof args.bind === "object" && !Array.isArray(args.bind)) {
 			for (const [rawProp, field] of Object.entries(args.bind as Record<string, string | null>)) {
+				if (rawProp === "visible") {
+					block.visibilityCondition = field == null ? undefined : visibilityCondition(field);
+					continue;
+				}
 				const property = rawProp === "text" ? "innerHTML" : rawProp;
 				const kept = block.dynamicValues.filter((dv: any) => dv.property !== property);
 				block.dynamicValues.splice(0, block.dynamicValues.length, ...kept);

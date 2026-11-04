@@ -94,6 +94,13 @@ export function bindingEntry(property: string, field: string | null | undefined)
 	};
 }
 
+/** A `bind.visible` key → the block's visibilityCondition, the TS twin of
+ * page_writer.visibility_condition. */
+export function visibilityCondition(field: string): BlockVisibilityCondition {
+	const { key, comesFrom } = bindingEntry("visible", field);
+	return { key, comesFrom: comesFrom ?? "dataScript" };
+}
+
 /** Convert the agent's compact block YAML into the editor's BlockOptions shape.
  * `isRoot` marks the top-level block of a generated page as the <body>; the editor
  * then derives blockId="root" from that (Block.isRoot() === originalElement "body").
@@ -123,9 +130,9 @@ export function convertYAMLtoBlock(yamlBlock: Record<string, any>, isRoot = fals
 	// `bind` maps a template field to a loop-item key → dynamicValues. innerHTML/text
 	// bind by content ("key"); anything else binds an HTML attribute (e.g. href, src).
 	if (yamlBlock.bind && typeof yamlBlock.bind === "object" && !Array.isArray(yamlBlock.bind)) {
-		block.dynamicValues = Object.entries(yamlBlock.bind).map(([prop, field]) =>
-			bindingEntry(prop, field as string),
-		);
+		const { visible, ...bind } = yamlBlock.bind as Record<string, string | null>;
+		if (visible != null) block.visibilityCondition = visibilityCondition(visible);
+		block.dynamicValues = Object.entries(bind).map(([prop, field]) => bindingEntry(prop, field as string));
 	}
 	// A value that is EXACTLY one moustache ("{{ item.city }}") would go through Jinja
 	// on the published page and CRASH the route on the undefined variable — absorb it
