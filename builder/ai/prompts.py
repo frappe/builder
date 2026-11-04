@@ -9,16 +9,16 @@ class Prompts:
 	# (builder/ai/markup.py). Both prompts carry it verbatim.
 	MARKUP = """# Page markup
 Blocks are read and written as markup: one block per line, two-space indentation nests a child.
-  $label {font-size:12px;letter-spacing:.08em;color:$acme-muted}
+  $body {font-size:17px;line-height:1.6;color:$acme-muted}
   @k3x9 section.hero [id=menu] {display:flex;gap:24px;padding:120px 48px} m{padding:64px 20px} // Hero
-    p $label "Since 1994"
     h1 "Slow mornings" {font-size:88px;line-height:.95} m{font-size:44px}
+    p $body "Breakfast from seven, in the old bakery on Chapel Road."
     a.btn [href=/book] "Book a table" {padding:14px 32px;transition:all .2s ease} :hover{opacity:.85}
 - @ref is an existing block's editor handle; new blocks have none. It is not an HTML id or a selector: scripts select a class, or an [id=x] you set.
 - A line opens with the tag (a div when left out) and its .classes. The block's text, inline HTML included, goes in double quotes on that same line, with JSON escapes: h1 "Slow mornings" {…}, never on a line of its own.
 - {…} holds real CSS declarations for every screen; t{…} (tablet) and m{…} (mobile) override it. :hover{…}, :focus{…} and other states style that state, also as m:hover{…}. Lengths carry units. $name inside a value is the token var(--name).
 - [attrs]: [href=/menu target=_blank alt="Two words"]; a bare [required] is set empty.
-- `$name {…} m{…}` on its own line defines a style set, and $name on a block spreads it under the block's own declarations. Repeated looks (cards, labels, body copy, buttons) get a set.
+- `$name {…} m{…}` on its own line defines a style set, and $name on a block spreads it under the block's own declarations. Repeated looks (cards, body copy, buttons) get a set.
 - icon(arrow-right) {width:20px;height:20px;color:$acme-ink} is a Lucide icon.
 - div use(<component_id>) embeds a Builder Component (its inner blocks follow by themselves); props(name=value) sets the instance's props; of(<id>) on an instance's child names the component block it mirrors.
 - bind(text=title src=image) binds the text or an attribute to data, if(key) renders the block only when the key is truthy, and repeat(key) repeats the block's one child for each record under that page-data key.
@@ -151,7 +151,7 @@ The open page and selected blocks are identified up front. read_page returns the
 - App shell, the one root exception: when the brief or the reference geometry places this page beside persistent site chrome (a sidebar rail), the root reproduces that shell exactly: {display:flex;flex-direction:row;align-items:stretch} with two children, the rail component embed, then the main column {flex:1;min-width:0px;display:flex;flex-direction:column;overflow-y:auto when the reference scrolls the pane}. The root rules (background, section count, width 100%) then apply to that main column. A sidebar rail stacked above the content in a column root is broken, not a layout.
 - The root's children (the main column's under an app shell) are 4-8 section blocks, each width:100%; composition happens inside them.
 - No @refs (the editor assigns them), and no style, script, link or meta elements (they are stripped). Fonts load from font-family, so no @import. Behaviour is added after generation through page scripts. No entrance animation: no opacity:0 start state, no translateY waiting to be revealed, no @keyframes; the page reads complete the moment it renders. Hover transitions on interactive elements belong in the block's own :hover{} and transition.
-- Style sets: define a $set for every look that repeats (section shell, card, label, body copy, button) above the blocks that use it, and spread it; a block's own {} then holds only what differs. Repeated elements stay identical and the page writes faster.
+- Style sets: define a $set for every look that repeats (section shell, card, body copy, button) above the blocks that use it, and spread it; a block's own {} then holds only what differs. Repeated elements stay identical and the page writes faster.
 - Style values are plain CSS with units on every length. Gradients go in background-image. font-family is a bare family name with no quotes or fallback stack, or the brief's font token: font-family:$acme-font-heading.
 - The brief's token handles are the design system: every brand colour as its $<id> and every font as its font token, so retheming a token restyles the site. Write them as plain handles, never with a baked fallback (var(--acme-ink, #2C2520) drifts when the token is edited). Raw hex is for one-off shades the brief didn't tokenise. Tokens are only colour and type: padding, margin, gap, width, height and radius are literal values (padding:96px 24px).
 - Class contract: when the brief names class hooks ("hero section → class 'auel-hero', every feature card → 'auel-reveal'"), set those exact names as .classes on the matching elements; page scripts target them, and a missing hook silently kills the interaction.

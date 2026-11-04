@@ -100,6 +100,26 @@ class TestRepeaterDataScript(unittest.TestCase):
 		self.assertEqual(script, 'data.stats = [{"n":1}]')
 
 
+class TestBorderBox(unittest.TestCase):
+	def test_a_full_width_block_with_side_padding_gets_border_box(self):
+		block = pw.convert_node({"el": "section", "style": {"width": "100%", "padding": "80px 48px"}})
+		self.assertEqual(block["baseStyles"]["boxSizing"], "border-box")
+
+	def test_vertical_padding_or_a_set_box_sizing_is_left_alone(self):
+		for style in (
+			{"width": "100%", "padding": "80px 0"},
+			{"width": "100%", "padding": "40px", "boxSizing": "content-box"},
+			{"width": "50%", "padding": "40px"},
+		):
+			block = pw.convert_node({"el": "section", "style": style})
+			self.assertEqual(block["baseStyles"].get("boxSizing"), style.get("boxSizing"))
+
+	def test_mobile_side_padding_counts(self):
+		self.assertTrue(
+			pw.needs_border_box({"baseStyles": {"width": "100%"}, "mobileStyles": {"paddingLeft": "20px"}})
+		)
+
+
 class TestExpandPageMarkup(unittest.TestCase):
 	def test_strips_fences_and_marks_the_root(self):
 		blocks, data_script = pw.expand_page_markup('```\ndiv // body\n  p "Hello"\n```')

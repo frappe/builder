@@ -49,6 +49,12 @@ class TestEditScript(FrappeTestCase):
 			ops[0]["args"]["base_styles"], {"padding": "40px", "justifyContent": "space-between"}
 		)
 
+	def test_a_patch_that_pads_a_full_width_block_mirrors_border_box(self):
+		_, ops = self.run_script("@hero {width:100%;padding:40px 48px}")
+
+		self.assertEqual(self.tree.resolve("hero12345")["baseStyles"]["boxSizing"], "border-box")
+		self.assertEqual(ops[0]["args"]["base_styles"]["boxSizing"], "border-box")
+
 	def test_several_refs_take_one_patch(self):
 		_, ops = self.run_script("@hero @foot {color:red}")
 
@@ -150,3 +156,24 @@ class TestCompositionNotes(FrappeTestCase):
 		)
 
 		self.assertEqual(composition_notes(root), "")
+
+	def test_flags_eyebrows_past_the_one_a_page_allows(self):
+		def label(block_id):
+			return {
+				"blockId": block_id,
+				"element": "p",
+				"innerHTML": "THE MENU",
+				"baseStyles": {"textTransform": "uppercase", "fontSize": "11px"},
+			}
+
+		heading = {"blockId": "headline1", "element": "h2", "innerHTML": "Bowls"}
+		root = {
+			"blockId": "root",
+			"children": [{"blockId": "sec11111", "children": [label("eyebrow1"), heading]}],
+		}
+		self.assertEqual(composition_notes(root), "")
+
+		root["children"].append(
+			{"blockId": "sec22222", "children": [label("eyebrow2"), {**heading, "blockId": "headline2"}]}
+		)
+		self.assertIn("AI TELL: 2 headings", composition_notes(root))

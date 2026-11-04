@@ -349,7 +349,37 @@ def convert_node(node, is_root: bool = False) -> dict | None:
 	elif block.get("extendedFromComponent"):
 		block["children"] = component_instance_children(block["extendedFromComponent"])
 	absorb_moustache_bindings(block)
+	if needs_border_box(block):
+		block["baseStyles"]["boxSizing"] = "border-box"
 	return block
+
+
+FULL_WIDTH = frozenset({"100%", "100vw"})
+SIDE_LONGHANDS = ("paddingLeft", "paddingRight", "paddingInline", "borderLeft", "borderRight")
+ZERO = frozenset({"0", "0px", "none"})
+
+
+def needs_border_box(block: dict) -> bool:
+	"""A full-width block with side padding or a side border is wider than its parent
+	under Builder's content-box sizing; centred in a column it overflows both edges and
+	its padding vanishes. border-box is what width:100% with padding means."""
+	base = block.get("baseStyles") or {}
+	if str(base.get("width")) not in FULL_WIDTH or base.get("boxSizing"):
+		return False
+	devices = (base, block.get("tabletStyles") or {}, block.get("mobileStyles") or {})
+	return any(has_side_space(styles) for styles in devices)
+
+
+def has_side_space(styles: dict) -> bool:
+	if any(str(styles.get(key) or "0") not in ZERO for key in SIDE_LONGHANDS):
+		return True
+	for key in ("padding", "borderWidth"):
+		parts = str(styles.get(key) or "0").split()
+		sides = parts[1::2] if len(parts) > 1 else parts
+		if any(side not in ZERO for side in sides):
+			return True
+	border = str(styles.get("border") or "none").split()
+	return bool(border) and border[0] not in ZERO
 
 
 def normalize_component_instances(root: dict | None) -> dict | None:

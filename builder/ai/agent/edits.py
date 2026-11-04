@@ -5,6 +5,9 @@ Each markup op compiles to the internal block ops the tree already applies
 guard in tree.py holds and the canvas mirrors the accepted ops unchanged.
 """
 
+import re
+from itertools import pairwise
+
 from builder.ai import markup
 from builder.ai.agent.selectors import walk_blocks
 
@@ -48,9 +51,16 @@ class EditScript:
 		return True
 
 	def run_patch(self, op: markup.Op) -> None:
+		from builder.ai.page_writer import needs_border_box
+
 		for ref in op.refs:
-			if block := self.resolve(op, ref):
-				self.apply(op, "update_block", {"block_id": block["blockId"], **patch_args(op.fields)})
+			if not (block := self.resolve(op, ref)):
+				continue
+			args = {"block_id": block["blockId"], **patch_args(op.fields)}
+			if self.apply(op, "update_block", args) and needs_border_box(block):
+				# the mirrored args must carry what the tree now holds
+				block["baseStyles"]["boxSizing"] = "border-box"
+				args["base_styles"] = {**(args.get("base_styles") or {}), "boxSizing": "border-box"}
 
 	def run_remove(self, op: markup.Op) -> None:
 		for ref in op.refs:
@@ -149,24 +159,44 @@ POSITIONED = frozenset({"relative", "absolute", "fixed", "sticky"})
 
 
 def composition_notes(root: dict) -> str:
-	"""Geometry the markup can't show at a glance. An absolute block under an
-	unpositioned parent pins to the page, not its section: the hero photo that
-	covers the next section."""
+	"""What a generated page gets wrong that the markup doesn't show at a glance, as
+	refs to act on: absolute blocks pinned to the page instead of their section, and
+	small uppercase labels over headings past the one the page allows."""
 	refs = markup.short_refs(root)
-	notes = []
+	pinned, eyebrows = [], []
 	for block, _ in walk_blocks(root):
-		for child in block.get("children") or []:
+		children = block.get("children") or []
+		for child in children:
 			if (child.get("baseStyles") or {}).get("position") == "absolute" and (
 				(block.get("baseStyles") or {}).get("position") not in POSITIONED
 			):
-				notes.append(f"@{refs.get(child.get('blockId'))}")
-	if not notes:
-		return ""
-	return (
-		f"\nCOMPOSITION CHECK: {', '.join(notes[:8])} are position:absolute under a parent that is not "
-		"positioned, so they pin to the page instead of their section. Move each into the section it "
-		"belongs to, or give its parent position:relative."
-	)
+				pinned.append(f"@{refs.get(child.get('blockId'))}")
+		eyebrows += [
+			f"@{refs.get(first.get('blockId'))}"
+			for first, second in pairwise(children)
+			if is_micro_label(first) and second.get("element") in ("h1", "h2", "h3")
+		]
+	notes = []
+	if pinned:
+		notes.append(
+			f"COMPOSITION CHECK: {', '.join(pinned[:8])} are position:absolute under a parent that is not "
+			"positioned, so they pin to the page instead of their section. Move each into the section it "
+			"belongs to, or give its parent position:relative."
+		)
+	if len(eyebrows) > 1:
+		notes.append(
+			f"AI TELL: {len(eyebrows)} headings carry a small uppercase label above them ({', '.join(eyebrows[:12])}); "
+			"a page allows one at most. Remove the rest, or fold what they say into the heading or its copy."
+		)
+	return "".join(f"\n{note}" for note in notes)
+
+
+def is_micro_label(block: dict) -> bool:
+	styles = block.get("baseStyles") or {}
+	if styles.get("textTransform") != "uppercase" or not (block.get("innerHTML") or "").strip():
+		return False
+	size = re.match(r"([\d.]+)px", str(styles.get("fontSize") or ""))
+	return bool(styles.get("letterSpacing")) or (size is not None and float(size.group(1)) <= 14)
 
 
 def outline_row(block: dict, depth: int, refs: dict) -> str:
