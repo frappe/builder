@@ -50,3 +50,21 @@ class TestQueryRecords(FrappeTestCase):
 
 		self.assertIn(f"read_page('{page.name}')", rows[0]["draft_blocks"])
 		self.assertLessEqual(len(rows[0]["meta_description"]), FIELD_CAP + 1)
+
+
+class TestQueryRecordsPaging(FrappeTestCase):
+	def query(self, **args):
+		filters = {"page_title": ["like", "Paging Probe %"]}
+		return json.loads(query_records(None, {"doctype": "Builder Page", "filters": filters, **args}))
+
+	def test_says_when_more_records_match(self):
+		for n in range(3):
+			frappe.get_doc({"doctype": "Builder Page", "page_title": f"Paging Probe {n}"}).insert()
+
+		first = self.query(limit=2)
+		rest = self.query(limit=2, start=first["next_start"])
+
+		self.assertEqual(len(first["records"]), 2)
+		self.assertEqual(first["next_start"], 2)
+		self.assertIn("More records match", first["more"])
+		self.assertEqual(len(rest), 1)
