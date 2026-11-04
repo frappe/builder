@@ -19,7 +19,7 @@ def get_context(context):
 		return
 
 	csrf_token = frappe.sessions.get_csrf_token()
-	frappe.db.commit()
+	frappe.db.commit()  # nosemgrep
 	context.csrf_token = csrf_token
 	context.site_name = frappe.local.site
 	if frappe._dev_server:

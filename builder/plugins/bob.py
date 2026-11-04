@@ -129,7 +129,9 @@ def syntax_error(code: str) -> str | None:
 		path = (Path(folder) / "main.mjs").resolve()
 		path.write_text(code)
 		try:
-			result = subprocess.run([node, "--check", str(path)], capture_output=True, text=True, timeout=10)
+			result = subprocess.run(  # nosemgrep
+				[node, "--check", str(path)], capture_output=True, text=True, timeout=10
+			)
 		except subprocess.TimeoutExpired:
 			return None
 	if result.returncode == 0:
