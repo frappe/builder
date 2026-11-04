@@ -13,7 +13,7 @@ function schema and a *side* that tells the loop how to handle a call to it:
                 `handler(ctx, args)` to emit the appropriate event and stops.
 
 A tool may additionally produce a large *streamed artifact* (e.g. a full page
-of YAML). Such a tool sets `artifact` + `generator`: when the conversational
+of markup). Such a tool sets `artifact` + `generator`: when the conversational
 model calls it, the loop hands execution to the generator, which produces the
 artifact on the heavy model and streams it to the client as content (reliable),
 then returns the canonical client op(s) to apply. The agent calling the tool is
@@ -39,11 +39,14 @@ class Tool:
 	# Signature: handler(ctx, args: dict) -> str | None
 	handler: Callable | None = None
 	# When set, this tool produces a streamed artifact of the given kind (e.g.
-	# "page_yaml"). The loop runs `generator(ctx, args) -> list[dict]` instead of
+	# "page_markup"). The loop runs `generator(ctx, args) -> list[dict]` instead of
 	# emitting a plain client op; the generator streams the artifact as content
 	# and returns the canonical client op(s) to apply. None = ordinary tool.
 	artifact: str | None = None
 	generator: Callable | None = None
+	# A skill-bound tool is offered only once its skill is in the model's context:
+	# rarely used schemas stay off the rounds that never need them.
+	skill: str | None = None
 
 	def schema(self) -> dict:
 		return {
@@ -75,8 +78,10 @@ class ToolRegistry:
 		tool = self._tools.get(name)
 		return tool.side if tool else "client"
 
-	def schemas(self) -> list[dict]:
-		return [tool.schema() for tool in self._tools.values()]
+	def schemas(self, skills: set[str] | None = None) -> list[dict]:
+		return [
+			tool.schema() for tool in self._tools.values() if not tool.skill or tool.skill in (skills or ())
+		]
 
 	def names(self) -> list[str]:
 		return list(self._tools)
@@ -94,11 +99,13 @@ def build_default_registry() -> ToolRegistry:
 		generate,
 		images,
 		memory,
+		plugins,
 		preview,
 		python,
 		query,
 		scripts,
 		settings,
+		skills,
 		web,
 	)
 
@@ -117,4 +124,6 @@ def build_default_registry() -> ToolRegistry:
 	registry.extend(web.TOOLS)
 	registry.extend(preview.TOOLS)
 	registry.extend(components.TOOLS)
+	registry.extend(skills.TOOLS)
+	registry.extend(plugins.TOOLS)
 	return registry

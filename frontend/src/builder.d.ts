@@ -103,7 +103,7 @@ declare type HashString = `#${string}`;
 
 declare type RGBString = `rgb(${number}, ${number}, ${number})`;
 
-// the literals keep autocomplete; the string widens it for extension tabs
+// the literals keep autocomplete; the string widens it for plugin tabs
 declare type LeftSidebarTabOption =
 	| "Blocks"
 	| "Layers"

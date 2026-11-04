@@ -48,7 +48,7 @@
 							}
 						"
 						@blur="renamingFolder = ''"
-						class="w-full truncate text-sm capitalize">
+						class="w-full truncate text-sm">
 						{{ project.folder_name }}
 					</EditableSpan>
 					<template #suffix>
@@ -87,6 +87,8 @@
 		</ScrollArea>
 
 		<div class="mt-auto">
+			<DashboardCloneCard @open-domains="openSettings('global_cloud_domains')" />
+			<DashboardTrialCard @open-billing="openSettings('global_billing')" />
 			<p class="p-2 text-center text-sm text-ink-gray-4">{{ __("Version") }}: {{ builderVersion }}</p>
 			<TrialBanner v-if="builderStore.isFCSite" />
 		</div>
@@ -104,6 +106,8 @@
 <script lang="ts" setup>
 import { __ } from "@/translation";
 import builderLogo from "/builder_logo.png";
+import DashboardCloneCard from "@/components/DashboardCloneCard.vue";
+import DashboardTrialCard from "@/components/DashboardTrialCard.vue";
 import EditableSpan from "@/components/EditableSpan.vue";
 import FilesIcon from "@/components/Icons/Files.vue";
 import SettingsIcon from "@/components/Icons/SettingsGear.vue";
@@ -247,5 +251,9 @@ const deleteFolder = async (folderName: string) => {
 	setFolderActive("");
 };
 const showSettingsDialog = ref(false);
+const openSettings = (pane: string) => {
+	builderStore.settingsActiveTab = pane;
+	showSettingsDialog.value = true;
+};
 const builderVersion = (window as any).builder_version;
 </script>

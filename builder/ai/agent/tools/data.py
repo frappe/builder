@@ -18,6 +18,7 @@ import frappe
 
 from builder.ai.agent import pending
 from builder.ai.agent.registry import Tool
+from builder.ai.agent.tools.scripts import LIVE_NOTE
 
 logger = frappe.logger("builder.ai.agent.data")
 logger.setLevel(logging.INFO)
@@ -67,13 +68,24 @@ def query_records(ctx, args: dict) -> str:
 	fields = args.get("fields") or ["name"]
 	filters = args.get("filters") if isinstance(args.get("filters"), dict) else {}
 	limit = min(int(args.get("limit") or 20), 100)
+	start = max(int(args.get("start") or 0), 0)
 	try:
 		# get_list, not get_all — reads answer with the session user's permissions.
-		rows = frappe.get_list(dt, filters=filters, fields=fields, limit=limit)
+		rows = frappe.get_list(dt, filters=filters, fields=fields, limit=limit + 1, start=start)
 	except Exception as e:
 		return json.dumps({"error": str(e)})
 	meta = frappe.get_meta(dt)
-	return json.dumps([truncate_record(dt, meta, dict(r)) for r in rows], default=str)
+	records = [truncate_record(dt, meta, dict(r)) for r in rows[:limit]]
+	if len(rows) <= limit:
+		return json.dumps(records, default=str)
+	return json.dumps(
+		{
+			"records": records,
+			"next_start": start + limit,
+			"more": "More records match. Pass start=next_start for the next page, or narrow with filters.",
+		},
+		default=str,
+	)
 
 
 def get_document(ctx, args: dict) -> str:
@@ -118,7 +130,7 @@ def get_document(ctx, args: dict) -> str:
 	# A component's design IS its block tree — render it readable instead of letting
 	# the generic bound shred the raw JSON.
 	if dt == "Builder Component" and data.get("block") and doc.get("block"):
-		data["block"] = component_block_yaml(doc.block)
+		data["block"] = component_block_markup(doc.block)
 	return frappe.as_json(data)
 
 
@@ -149,12 +161,13 @@ def truncate(value, cap: int):
 	return value[:cap] + "…" if isinstance(value, str) and len(value) > cap else value
 
 
-COMPONENT_YAML_LIMIT = 8000
+COMPONENT_MARKUP_LIMIT = 8000
 
 
-def component_block_yaml(raw: str) -> str:
-	from builder.ai.block_codec import BlockCodec
-	from builder.utils import to_compact_yaml
+def component_block_markup(raw: str) -> str:
+	"""A component's tree in markup with FULL refs: they are the of() values its page
+	instances show, so the two join without prefix matching."""
+	from builder.ai import markup
 
 	try:
 		block = json.loads(raw)
@@ -164,9 +177,9 @@ def component_block_yaml(raw: str) -> str:
 		block = block[0] if block else None
 	if not isinstance(block, dict):
 		return "<empty>"
-	rendered = to_compact_yaml(BlockCodec.compress(block, depth=0, task_tier="complex"))
-	if len(rendered) > COMPONENT_YAML_LIMIT:
-		rendered = rendered[:COMPONENT_YAML_LIMIT] + "\n… (truncated — a large component)"
+	rendered = markup.dump_block(block, set_prefix=None)
+	if len(rendered) > COMPONENT_MARKUP_LIMIT:
+		rendered = rendered[:COMPONENT_MARKUP_LIMIT] + "\n… (truncated, a large component)"
 	return rendered
 
 
@@ -281,7 +294,7 @@ def write_page_data_script(ctx, args: dict) -> str:
 	from builder.ai.agent.tools.settings import emit_refetch
 
 	emit_refetch(ctx, "page_data")
-	return "Saved the page data script (runs server-side to populate `data`)."
+	return f"Saved the page data script (runs server-side to populate `data`).{LIVE_NOTE}"
 
 
 # --- writes (terminal, confirm-gated) -----------------------------------
@@ -351,6 +364,7 @@ FIELD_SCHEMA = {
 
 list_doctypes_tool = Tool(
 	name="list_doctypes",
+	skill="forms-and-data",
 	side="server",
 	description="List DocTypes in the site (the data model). Filter by module, custom-only, or a name search. Use this to discover what data already exists before building data-driven pages.",
 	parameters={
@@ -368,6 +382,7 @@ list_doctypes_tool = Tool(
 
 get_doctype_schema_tool = Tool(
 	name="get_doctype_schema",
+	skill="forms-and-data",
 	side="server",
 	description="Return a DocType's fields (name, type, options). Call before writing a page data script or seeding data so you use real field names.",
 	parameters={
@@ -383,7 +398,9 @@ query_records_tool = Tool(
 	side="server",
 	description=(
 		"Fetch records from a DocType (like frappe.get_all) to see real data. Provide fields "
-		"and optional filters. Long values come back cut short and page block trees as a "
+		"and optional filters. At most 100 records come back per call: when more match, the "
+		"result says so with a next_start, so page on or narrow the filters before treating "
+		"a list as the whole site. Long values come back cut short and page block trees as a "
 		"pointer, so to search INSIDE many records' long fields (page blocks, component "
 		"blocks, scripts) use run_python and return only the matches."
 	),
@@ -392,8 +409,15 @@ query_records_tool = Tool(
 		"properties": {
 			"doctype": {"type": "string"},
 			"fields": {"type": "array", "items": {"type": "string"}},
-			"filters": {"type": "object", "description": 'Field→value filters, e.g. {"published": 1}.'},
+			"filters": {
+				"type": "object",
+				"description": (
+					'Field→value filters, e.g. {"published": 1}, {"route": ["like", "%pricing%"]} '
+					'or {"name": ["in", ["id-1", "id-2"]]}.'
+				),
+			},
 			"limit": {"type": "integer"},
+			"start": {"type": "integer", "description": "Skip this many records: a result's next_start."},
 		},
 		"required": ["doctype"],
 	},
@@ -430,6 +454,7 @@ get_document_tool = Tool(
 
 write_page_data_script_tool = Tool(
 	name="write_page_data_script",
+	skill="forms-and-data",
 	side="server",
 	description=(
 		"Set the current page's server-side data script (Python). Use it to populate `data` "
@@ -457,6 +482,7 @@ write_page_data_script_tool = Tool(
 
 create_doctype_tool = Tool(
 	name="create_doctype",
+	skill="forms-and-data",
 	side="terminal",
 	description=(
 		"Propose a NEW DocType (custom, created at runtime) to hold structured site data — e.g. "
@@ -477,6 +503,7 @@ create_doctype_tool = Tool(
 
 seed_sample_data_tool = Tool(
 	name="seed_sample_data",
+	skill="forms-and-data",
 	side="terminal",
 	description=(
 		"Propose inserting sample records into a DocType so data-driven pages render with real "

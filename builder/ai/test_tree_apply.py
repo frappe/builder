@@ -191,9 +191,9 @@ class TestMutatingUpdate(unittest.TestCase):
 		self.assertIn("FAILED", msg)
 
 	def test_generation_absorbs_pure_moustache_values(self):
-		from builder.ai.page_writer import convert_yaml_block
+		from builder.ai.page_writer import convert_node
 
-		block = convert_yaml_block(
+		block = convert_node(
 			{"el": "div", "attrs": {"data-city": "{{ item.city }}"}, "text": "{{ item.title }}"}
 		)
 		self.assertEqual(block["attributes"]["data-city"], "")
@@ -253,6 +253,43 @@ class TestMutatingStructure(unittest.TestCase):
 		self.tree.apply("remove_block", {"block_id": "h1"})
 		self.assertIsNone(self.tree.resolve("h1"))
 		self.assertEqual(self.child_ids("hero"), ["cta"])
+
+
+class TestAddBlockRefs(unittest.TestCase):
+	def setUp(self):
+		self.tree = WorkingTree(sample_root())
+
+	def add(self, block):
+		return self.tree.apply("add_block", {"parent_block_id": "footer", "block": block})
+
+	def test_names_the_new_block(self):
+		self.assertTrue(self.add({"el": "p"}).endswith("under footer."))
+
+
+class TestVisibilityBinding(unittest.TestCase):
+	def setUp(self):
+		self.tree = WorkingTree(sample_root())
+
+	def test_update_sets_and_clears_the_condition(self):
+		self.tree.apply("update_block", {"block_id": "hero", "bind": {"visible": "show_offer"}})
+		hero = self.tree.resolve("hero")
+		self.assertEqual(hero["visibilityCondition"], {"key": "show_offer", "comesFrom": "dataScript"})
+		self.assertFalse(hero.get("dynamicValues"))
+
+		self.tree.apply("update_block", {"block_id": "hero", "bind": {"visible": None}})
+		self.assertNotIn("visibilityCondition", self.tree.resolve("hero"))
+
+	def test_add_reads_a_prop_condition_beside_other_bindings(self):
+		self.tree.apply(
+			"add_block",
+			{
+				"parent_block_id": "footer",
+				"block": {"el": "p", "bind": {"visible": "props.show_note", "innerHTML": "note"}},
+			},
+		)
+		block = self.tree.resolve("footer")["children"][0]
+		self.assertEqual(block["visibilityCondition"], {"key": "show_note", "comesFrom": "props"})
+		self.assertEqual([dv["property"] for dv in block["dynamicValues"]], ["innerHTML"])
 
 
 if __name__ == "__main__":

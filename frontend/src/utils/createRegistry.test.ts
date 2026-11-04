@@ -1,6 +1,6 @@
 import { ref } from "vue";
 import { describe, expect, it } from "vitest";
-import { createRegistry, type RegistryItem } from "./createRegistry";
+import { createRegistry, trackPluginItems, type RegistryItem } from "./createRegistry";
 
 type TestItem = RegistryItem & { label?: string };
 
@@ -122,12 +122,12 @@ describe("createRegistry", () => {
 		const registry = createRegistry<TestItem>();
 		registry.register({ name: "a" });
 		registry.register({ name: "b" });
-		registry.register({ name: "extension" });
+		registry.register({ name: "plugin" });
 
 		registry.register({ name: "a" });
 		registry.register({ name: "b" });
 
-		expect(names(registry.visible.value)).toEqual(["a", "b", "extension"]);
+		expect(names(registry.visible.value)).toEqual(["a", "b", "plugin"]);
 	});
 
 	it("moves an item when it registers again with an anchor", () => {
@@ -147,5 +147,13 @@ describe("createRegistry", () => {
 		removeOld();
 		expect(names(registry.visible.value)).toEqual(["tab"]);
 		expect(registry.visible.value[0].label).toBe("new");
+	});
+
+	it("marks an item with the plugin whose install registered it", () => {
+		const registry = createRegistry<TestItem>();
+		registry.register({ name: "builtin", plugin: "acme/spoof" });
+		trackPluginItems("acme/stickers", () => registry.register({ name: "stickers" }));
+
+		expect(registry.visible.value.map((item) => item.plugin)).toEqual([undefined, "acme/stickers"]);
 	});
 });

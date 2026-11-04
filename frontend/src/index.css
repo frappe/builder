@@ -103,6 +103,11 @@ p:empty::before {
 	background-color: var(--gray-950);
 }
 
+/* Dialogs keep surface-base, so Builder's settings match the Cloud Settings panels shown inside them. */
+[data-theme='dark'] [role='dialog'] .bg-surface-base {
+	background-color: var(--surface-base);
+}
+
 [contenteditable=true]:focus-visible {
 	outline: 1px solid var(--outline-gray-4);
 	outline-offset: 3px;

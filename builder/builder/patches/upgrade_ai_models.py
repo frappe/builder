@@ -85,7 +85,8 @@ def add_successor(provider, model_id: str, creation) -> None:
 
 
 def label_for(litellm_provider: str, model_id: str) -> str:
+	# Presets named models when this patch was written; discovery relabels the row on its first sync.
 	for preset in PRESETS:
-		if preset["litellm_provider"] == litellm_provider:
-			return next((m[1] for m in preset["models"] if m[0] == model_id), model_id)
+		if preset.get("litellm_provider") == litellm_provider:
+			return next((m[1] for m in preset.get("models", []) if m[0] == model_id), model_id)
 	return model_id

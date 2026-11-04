@@ -21,11 +21,9 @@ logger.setLevel(logging.INFO)
 MAX_PREVIEWS_PER_TURN = 2  # hard cost bound — a screenshot loop can't run away
 MAX_IMAGE_VIEWS_PER_TURN = 3
 MAX_IMAGE_BYTES = 3 * 1024 * 1024  # mirrors BlockCodec.validate_image_data's cap
-VIEWPORT_WIDTHS = {"desktop": 1280, "tablet": 768, "mobile": 390}
+VIEWPORTS = {"desktop": (1280, 900), "tablet": (768, 1024), "mobile": (390, 844)}
 COLOR_SCHEMES = ("light", "dark")
-# The viewport we capture into. Chromium screenshots the viewport, not the
-# document, so this has to clear a whole generated page — they run 2500-6000px.
-# Whatever the page doesn't fill is blank, and gets trimmed off below.
+# The tallest document captured; generated pages run 2500-6000px.
 CAPTURE_HEIGHT = 8000
 # One attached image per this many pixels of page. NOT one tall image: a vision
 # model shrinks an image to fit its longest edge (~1568px), so a single
@@ -37,10 +35,11 @@ MAX_TILES = 3
 
 
 def render_page_image(page, viewport: str = "desktop", color_scheme: str | None = None) -> bytes:
-	from builder.html_preview_image import render
+	from builder.html_preview_image import render_full_page
 
 	markup = page.get_preview_html(color_scheme=color_scheme)
-	return render(markup, width=VIEWPORT_WIDTHS[viewport], height=CAPTURE_HEIGHT)
+	width, height = VIEWPORTS[viewport]
+	return render_full_page(markup, width=width, height=height, max_height=CAPTURE_HEIGHT)
 
 
 # How far a pixel may drift from the background before it counts as content. The
@@ -135,7 +134,7 @@ def run_preview_page(ctx, args: dict) -> str:
 		return "Preview limit reached for this turn — proceed with what you have."
 	ctx.preview_count += 1
 	page = frappe.get_doc("Builder Page", page_id)
-	viewport = args.get("viewport") if args.get("viewport") in VIEWPORT_WIDTHS else "desktop"
+	viewport = args.get("viewport") if args.get("viewport") in VIEWPORTS else "desktop"
 	color_scheme = args.get("color_scheme") if args.get("color_scheme") in COLOR_SCHEMES else "light"
 	variant = f"{viewport}, {color_scheme} mode"
 	try:
@@ -185,9 +184,9 @@ def run_preview_page(ctx, args: dict) -> str:
 		"that resolves here (a real Google Fonts name or an installed User Font). Stale "
 		"chrome: an embedded component still showing its default content (a breadcrumb "
 		"reading 'Home', another product's name in the nav); override the instance's "
-		"children (update_block on its child_of refs) so it names this page. Orphaned "
+		"children (edit_page on its instance refs) so it names this page. Orphaned "
 		"content: an empty styled box with its intended content stacked outside it means "
-		"children landed as siblings of their container; move_block them into it.\n"
+		"children landed as siblings of their container; `move` them into it.\n"
 		"2. Generated look, six yes/no checks: (a) is the signature move visible? (b) are "
 		"sections structurally distinct (widths, grids, densities), not one centred column "
 		"with background swaps? (c) does the largest text read at least ~3.5x the body size? "
@@ -195,7 +194,7 @@ def run_preview_page(ctx, args: dict) -> str:
 		"rectangles? (e) does the page look like the brief's named concept? (f) is it free of "
 		"the AI tells in your instructions (an eyebrow over every heading, gradient headline "
 		"text, stock phrases, invented stats or testimonials, an icon tile on every item)?\n"
-		"Fix failures with surgical edits on the specific blocks (update_block, update_blocks, "
+		"Fix failures with surgical edits on the specific blocks (edit_page, "
 		"set_page_script), never by regenerating the page. If a fix changes layout or "
 		"structure, spend your remaining preview confirming it landed before you summarize. "
 		"Motion and hover are invisible in a static screenshot; don't chase them here. If "
@@ -231,7 +230,7 @@ preview_page = Tool(
 			},
 			"viewport": {
 				"type": "string",
-				"enum": list(VIEWPORT_WIDTHS),
+				"enum": list(VIEWPORTS),
 				"description": "Screen width to render at: desktop (1280px, default), tablet (768px) or mobile (390px).",
 			},
 			"color_scheme": {
@@ -300,7 +299,7 @@ def render_block_images(sources: dict[str, str]) -> list[dict] | None:
 		try:
 			image = render(image_view_html(src), width=1024, height=768)
 		except Exception:
-			logger.warning("read_block: image render failed for %s", src[:200], exc_info=True)
+			logger.warning("read_page: image render failed for %s", src[:200], exc_info=True)
 			return None
 		data_url = "data:image/webp;base64," + base64.b64encode(image).decode()
 		attachments.append({"caption": f"The block's {label}, on a grey backdrop:", "data_url": data_url})
@@ -310,7 +309,7 @@ def render_block_images(sources: dict[str, str]) -> list[dict] | None:
 def attach_block_images(ctx, block: dict) -> str:
 	"""Render an image block's picture, and its dark-mode variant, for the model to
 	look at. Goes through the page renderer, so SVG, data: and remote images work
-	too. Returns a line for the read_block result saying what was attached."""
+	too. Returns a line for the read_page result saying what was attached."""
 	from builder.ai.models import ModelRegistry
 
 	attributes = block.get("attributes") or {}

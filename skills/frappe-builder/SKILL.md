@@ -18,7 +18,7 @@ With a shell, read `reference/cli.md` first: `scripts/builder.py` in this skill'
 - Build a section from blocks on the page. Make it a component only when the same tree repeats, on this page or across pages, and no existing one fits. A component gets a prop only for what the editor can't edit on an instance or a script reads (`reference/components.md`).
 - A new page: create a `Builder Page` with `page_title` and `route`.
 - Preview a draft: `builder.api.get_page_preview_html` with `page` renders it with the live data script and scripts. An error there is the error visitors would get.
-- Publish a page with its `publish` method; it returns the route.
+- Publish a page with its `publish` method; it returns the route. Over REST, POST `/api/resource/Builder Page/<name>` with `{"run_method": "publish"}` in the JSON body.
 
 Only a page's block tree has a draft; visitors see it after publish. Everything else is live when saved: a page's data script and fields, client scripts, tokens, Builder Settings, and component saves (unpinned instances change at once; `builder.api.sync_component` then rewrites the live blocks of every page that embeds the component).
 

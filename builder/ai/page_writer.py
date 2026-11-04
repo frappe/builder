@@ -1,18 +1,16 @@
-"""Server-side YAML → blocks apply path — the authoritative one for ALL turns.
+"""Server-side markup -> blocks apply path, the authoritative one for ALL turns.
 
-Generation YAML is expanded to the editor's serialized Block shape and persisted
-to `draft_blocks` here; the editor canvas receives the expanded tree (same block
-ids) and only renders it. The frontend keeps a small port of the conversion
-(frontend/src/components/ai/{yaml.ts, normalizeStyles.ts}) purely for the
-live streaming PREVIEW while the YAML is still being written — the final apply
-always comes from this module.
+Generated markup (builder/ai/markup.py) is expanded to the editor's serialized
+Block shape and persisted to `draft_blocks` here; the editor canvas receives the
+expanded tree (same block ids) and only renders it. While a page is still being
+written, the generation step parses the partial markup here too and streams the
+expanded tree as the live preview, so the frontend carries no parser of its own.
 """
 
 import json
 import re
 
 import frappe
-import yaml
 
 from builder.ai.block_codec import BlockCodec
 from builder.ai.lucide import lucide_svg
@@ -20,7 +18,7 @@ from builder.utils import compact_json
 
 logger = frappe.logger("builder.ai.page_writer")
 
-# --- style normalization — port of frontend/src/components/ai/normalizeStyles.ts ---
+# --- style normalization (frontend twin: components/ai/normalizeStyles.ts) ---
 
 # The model camelCases keyword VALUES too (justifyContent: 'spaceBetween'); map back.
 KEYWORD_VALUE_FIX = {
@@ -105,7 +103,7 @@ def normalize_value(prop: str, value):
 			return KEYWORD_VALUE_FIX[v]
 		if prop in LENGTH_PROPS and BARE_NUMBER.match(v) and v != "0":
 			return f"{v}px"
-		# Unquoted `var(--x, #hex)` in YAML loses everything from " #" on (comment):
+		# A cut-off value (`var(--x, #hex` with its tail lost) arrives unclosed:
 		# the value arrives as "var(--x," — valid as a lenient inline style (the editor
 		# looks right) but dropped by the compiled stylesheet (published page breaks).
 		# Reclose the parens; the lost fallback is redundant (the token itself resolves).
@@ -142,7 +140,7 @@ def normalize_styles(styles) -> dict:
 	return out
 
 
-# --- YAML block → serialized editor Block — port of convertYAMLtoBlock/convertIconBlock ---
+# --- markup node -> serialized editor Block ---
 
 # Defaults the editor injects on an icon svg wrapper (frontend convertIconBlock).
 ICON_WRAPPER_DEFAULTS = {
@@ -257,6 +255,12 @@ def binding_entry(prop: str, field) -> dict:
 	return entry
 
 
+def visibility_condition(field) -> dict:
+	"""A `bind.visible` key → the block's visibilityCondition (rendered only when truthy)."""
+	entry = binding_entry("visible", field)
+	return {"key": entry["key"], "comesFrom": entry.get("comesFrom", "dataScript")}
+
+
 def bind_to_dynamic_values(bind: dict) -> list:
 	"""{property: item_key} → dynamicValues entries (the editor's binding shape).
 	innerHTML/text bind by content ("key"); anything else binds an HTML attribute.
@@ -265,7 +269,7 @@ def bind_to_dynamic_values(bind: dict) -> list:
 	return [binding_entry(prop, field) for prop, field in bind.items()]
 
 
-def convert_yaml_block(node, is_root: bool = False) -> dict | None:
+def convert_node(node, is_root: bool = False) -> dict | None:
 	if not isinstance(node, dict):
 		return node
 	# Icon reference → inline-svg wrapper (see convert_icon_block).
@@ -296,7 +300,7 @@ def convert_yaml_block(node, is_root: bool = False) -> dict | None:
 	if tab:
 		block["tabletStyles"] = tab
 	# Generation dumps every attr into `attributes` (the standard/custom split is a
-	# tool-edit concern, not a generation one — matches convertYAMLtoBlock).
+	# tool-edit concern, not a generation one).
 	if isinstance(node.get("attrs"), dict) and node["attrs"]:
 		block["attributes"] = node["attrs"]
 	if isinstance(node.get("classes"), list) and node["classes"]:
@@ -312,11 +316,15 @@ def convert_yaml_block(node, is_root: bool = False) -> dict | None:
 	# anything else binds an HTML attribute (href, src, …).
 	bind = node.get("bind")
 	if isinstance(bind, dict) and bind:
-		block["dynamicValues"] = bind_to_dynamic_values(bind)
+		bind = dict(bind)
+		if (visible := bind.pop("visible", None)) is not None:
+			block["visibilityCondition"] = visibility_condition(visible)
+		if bind:
+			block["dynamicValues"] = bind_to_dynamic_values(bind)
 
 	children = node.get("c")
 	child_blocks = (
-		[b for c in children if isinstance(c, dict) and (b := convert_yaml_block(c))]
+		[b for c in children if isinstance(c, dict) and (b := convert_node(c))]
 		if isinstance(children, list)
 		else []
 	)
@@ -326,7 +334,7 @@ def convert_yaml_block(node, is_root: bool = False) -> dict | None:
 	# data_script); the block keeps only the loop wiring + template child.
 	repeat = node.get("repeat")
 	if isinstance(repeat, dict) and repeat.get("item"):
-		item = convert_yaml_block(repeat["item"])
+		item = convert_node(repeat["item"])
 		if item:
 			block["isRepeaterBlock"] = True
 			block["dataKey"] = {
@@ -341,7 +349,37 @@ def convert_yaml_block(node, is_root: bool = False) -> dict | None:
 	elif block.get("extendedFromComponent"):
 		block["children"] = component_instance_children(block["extendedFromComponent"])
 	absorb_moustache_bindings(block)
+	if needs_border_box(block):
+		block["baseStyles"]["boxSizing"] = "border-box"
 	return block
+
+
+FULL_WIDTH = frozenset({"100%", "100vw"})
+SIDE_LONGHANDS = ("paddingLeft", "paddingRight", "paddingInline", "borderLeft", "borderRight")
+ZERO = frozenset({"0", "0px", "none"})
+
+
+def needs_border_box(block: dict) -> bool:
+	"""A full-width block with side padding or a side border is wider than its parent
+	under Builder's content-box sizing; centred in a column it overflows both edges and
+	its padding vanishes. border-box is what width:100% with padding means."""
+	base = block.get("baseStyles") or {}
+	if str(base.get("width")) not in FULL_WIDTH or base.get("boxSizing"):
+		return False
+	devices = (base, block.get("tabletStyles") or {}, block.get("mobileStyles") or {})
+	return any(has_side_space(styles) for styles in devices)
+
+
+def has_side_space(styles: dict) -> bool:
+	if any(str(styles.get(key) or "0") not in ZERO for key in SIDE_LONGHANDS):
+		return True
+	for key in ("padding", "borderWidth"):
+		parts = str(styles.get(key) or "0").split()
+		sides = parts[1::2] if len(parts) > 1 else parts
+		if any(side not in ZERO for side in sides):
+			return True
+	border = str(styles.get("border") or "none").split()
+	return bool(border) and border[0] not in ZERO
 
 
 def normalize_component_instances(root: dict | None) -> dict | None:
@@ -429,80 +467,30 @@ def build_repeater_data_script(parsed) -> str:
 # --- top level ---
 
 
-def parse_generation_yaml(yaml_text: str):
-	"""Parse a generation YAML document, tolerating fences and model slips —
-	one bad line in a 30k-char page must not discard the whole (paid) generation.
-	Salvage order: drop the offending line the parser points at (up to 8 times,
-	losing a property or a block instead of the page), then fall back to trimming
-	a truncated tail (a stream cut off by max_tokens still yields its valid prefix)."""
-	text = BlockCodec.strip_fences(yaml_text or "")
-	try:
-		return yaml.safe_load(text)
-	except yaml.YAMLError as exc:
-		first_error = exc
-		lines = text.split("\n")
-		for attempt in range(8):
-			mark = getattr(exc, "problem_mark", None)
-			if mark is None or not (0 <= mark.line < len(lines)):
-				break
-			dropped = lines.pop(mark.line)
-			try:
-				parsed = yaml.safe_load("\n".join(lines))
-			except yaml.YAMLError as next_exc:
-				exc = next_exc
-				continue
-			logger.warning(
-				"generation YAML salvaged by dropping %d line(s); first error: %s; last dropped: %r",
-				attempt + 1,
-				str(first_error).replace("\n", " "),
-				dropped.strip()[:160],
-			)
-			return parsed
-		logger.warning("generation YAML unsalvageable: %s", str(first_error).replace("\n", " "))
-		lines = text.split("\n")
-		for i in range(len(lines) - 1, max(0, len(lines) - 12), -1):
-			try:
-				if parsed := yaml.safe_load("\n".join(lines[:i])):
-					return parsed
-			except yaml.YAMLError:
-				continue
-	return None
+ROOT_STYLE = {"display": "flex", "flexDirection": "column", "alignItems": "center", "width": "100%"}
 
 
-def unwrap_root(parsed) -> dict | None:
-	"""The root block of generated YAML, tolerating the wrappers models emit.
-	Expected: the block itself (or a one-item list). Models sometimes wrap it in a
-	mapping key — `root:` / `page:` — which used to cost a whole failed generation;
-	unwrap one level when the inner value looks like a block."""
-	root = parsed[0] if isinstance(parsed, list) and parsed else parsed
-	if isinstance(root, dict) and not root.get("el"):
-		for key in ("root", "page", "body"):
-			inner = root.get(key)
-			if isinstance(inner, dict) and inner.get("el"):
-				return inner
-		if len(root) == 1:
-			inner = next(iter(root.values()))
-			if isinstance(inner, dict) and inner.get("el"):
-				return inner
-	return root
-
-
-def expand_page_yaml(yaml_text: str, is_root: bool = True) -> tuple[list, str]:
-	"""Return ([root_block_dict], page_data_script). Empty ([], "") if unparseable.
+def expand_page_markup(text: str, is_root: bool = True, errors: list | None = None) -> tuple[list, str]:
+	"""Return ([root_block_dict], page_data_script); ([], "") when nothing parses.
+	A bad line costs that line, never the page: a 30k-character generation is
+	paid-for work. Several top-level blocks are wrapped in one root.
 
 	`is_root=True` marks the block as the page <body> (root); pass False when
 	expanding a reusable component's block tree (it is not a page body)."""
-	parsed = parse_generation_yaml(yaml_text)
-	if parsed is None:
+	from builder.ai import markup
+
+	quiet = errors is not None
+	errors = [] if errors is None else errors
+	roots = markup.load(BlockCodec.strip_fences(text or ""), errors=errors)
+	if errors and not quiet:
+		logger.warning("page markup: dropped %d bad line(s), first: %s", len(errors), errors[0])
+	if not roots:
 		return [], ""
-	root = unwrap_root(parsed)
-	if not isinstance(root, dict) or not root.get("el"):
-		return [], ""
-	block = convert_yaml_block(root, is_root=is_root)
+	root = roots[0] if len(roots) == 1 else {"el": "div", "name": "body", "style": ROOT_STYLE, "c": roots}
+	block = convert_node(root, is_root=is_root)
 	if not block:
 		return [], ""
-	data_script = build_repeater_data_script(parsed)
-	return [block], data_script
+	return [block], build_repeater_data_script(roots)
 
 
 def load_page_root(page_id: str) -> dict | None:
@@ -527,11 +515,12 @@ def save_draft_blocks(page_id: str, root_block: dict) -> None:
 	)
 
 
-def persist_page(page_id: str, yaml_text: str) -> tuple[dict | None, str]:
-	"""Expand generation YAML and write it to a Builder Page's draft_blocks (+ the
+def persist_page(page_id: str, text: str, errors: list | None = None) -> tuple[dict | None, str]:
+	"""Expand generated markup and write it to a Builder Page's draft_blocks (+ the
 	repeater data shim). The page stays a DRAFT (published=0). Returns the expanded
-	root block and data script — (None, "") if the YAML produced no blocks."""
-	blocks, data_script = expand_page_yaml(yaml_text)
+	root block and data script, (None, "") if the markup produced no blocks. Lines
+	that did not parse go to `errors` when given."""
+	blocks, data_script = expand_page_markup(text, errors=errors)
 	if not blocks:
 		return None, ""
 	updates = {"draft_blocks": compact_json(blocks)}

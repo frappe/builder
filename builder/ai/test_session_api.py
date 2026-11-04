@@ -52,3 +52,51 @@ class TestLazySessions(FrappeTestCase):
 		self.assertEqual(enqueue.call_args.kwargs["session_id"], session_id)
 		messages = AISession.get(session_id).get_messages()
 		self.assertEqual([(m["role"], m["content"]) for m in messages], [("user", "make it blue")])
+
+
+class TestPluginsWritten(FrappeTestCase):
+	def setUp(self):
+		self.page = frappe.get_doc(
+			{
+				"doctype": "Builder Page",
+				"page_title": "Plugins Written Page",
+				"draft_blocks": Block(element="div", originalElement="body").as_json(wrap_in_array=True),
+			}
+		).insert()
+
+	def test_lists_each_plugin_the_replies_wrote_once_oldest_first(self):
+		session = AISession.create({"page": self.page.name})
+		session.append_message("user", "an icon picker")
+		session.append_message("assistant", "Added Icons.", metadata={"plugins": ["bob/icons"]})
+		session.append_message(
+			"assistant", "Added Stickers.", metadata={"plugins": ["bob/stickers", "bob/icons"]}
+		)
+
+		self.assertEqual(AISession.plugins_written(session.name), ["bob/icons", "bob/stickers"])
+
+	def test_a_chat_that_wrote_no_plugin_has_none(self):
+		session = AISession.create({"page": self.page.name})
+		session.append_message("assistant", "Made the hero blue.", metadata={"operations": 2})
+
+		self.assertEqual(AISession.plugins_written(session.name), [])
+		self.assertEqual(AISession.plugins_written(None), [])
+
+
+class TestMessageContent(FrappeTestCase):
+	def test_keeps_markup_in_messages_as_written(self):
+		page = frappe.get_doc(
+			{
+				"doctype": "Builder Page",
+				"page_title": "Markup Message Page",
+				"draft_blocks": Block(element="div", originalElement="body").as_json(wrap_in_array=True),
+			}
+		).insert()
+		session = AISession.create({"page": page.name})
+		svg = '<svg viewBox="0 0 18 18"><path d="M9 1a8 8 0 1 0 8 8"></path></svg>'
+		reply = 'Use `<a target="_blank" href="mailto:security@frappe.io">` for the link.'
+		session.append_message("user", f"swap in this icon {svg}")
+		session.append_message("assistant", reply)
+
+		contents = [m["content"] for m in AISession.get(session.name).get_messages()]
+
+		self.assertEqual(contents, [f"swap in this icon {svg}", reply])

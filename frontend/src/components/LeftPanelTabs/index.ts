@@ -2,7 +2,9 @@ import LayersIcon from "@/components/Icons/Layers.vue";
 import AssetsTab from "@/components/LeftPanelTabs/AssetsTab.vue";
 import BlocksTab from "@/components/LeftPanelTabs/BlocksTab.vue";
 import CodeTab from "@/components/LeftPanelTabs/CodeTab.vue";
+import PluginsTab from "@/components/LeftPanelTabs/PluginsTab.vue";
 import LayersTab from "@/components/LeftPanelTabs/LayersTab.vue";
+import { pluginsDisabled } from "@/data/plugins";
 import useBuilderStore from "@/stores/builderStore";
 import { createRegistry, type RegistryItem } from "@/utils/createRegistry";
 import type { KeyboardShortcutCombo } from "frappe-ui";
@@ -12,6 +14,8 @@ import { __ } from "@/translation";
 export type LeftPanelTab = RegistryItem & {
 	label: string;
 	icon: string | Component;
+	/** selecting a block keeps this tab open, where another tab gives way to the layers */
+	keepOpenOnSelection?: boolean;
 	component?: Component;
 	props?: () => Record<string, unknown>;
 	/** binding that opens the tab; the panel labels the button with it */
@@ -59,6 +63,7 @@ leftPanelTabs.register({
 
 leftPanelTabs.register({
 	name: "Code",
+	keepOpenOnSelection: true,
 	label: __("Code"),
 	icon: "lucide-code",
 	component: CodeTab,
@@ -84,6 +89,7 @@ leftPanelTabs.register({
 
 leftPanelTabs.register({
 	name: "Chat",
+	keepOpenOnSelection: true,
 	label: __("Bob AI"),
 	icon: "lucide-sparkle",
 	// the panel brings its own markdown, yaml and sanitiser stack, so it waits to be opened
@@ -91,4 +97,12 @@ leftPanelTabs.register({
 	shortcut: "Mod+Shift+O",
 	// the composer's controls and the chat bubbles stop fitting below this
 	minWidth: 300,
+});
+
+leftPanelTabs.register({
+	name: "Plugins",
+	label: __("Plugins"),
+	icon: "lucide-plug",
+	component: PluginsTab,
+	condition: () => !pluginsDisabled.value,
 });

@@ -11,16 +11,21 @@ export type BobContext = {
 };
 
 export type Credits = { balance: number; spent: number | null };
-export type KeyCheck = { success: boolean; severity: "ok" | "warn" | "error"; message: string };
 export type ImportResult = { added: string[]; skipped: string[]; found: number };
-export type SignInStart = { url: string; state: string };
-export type SignInStatus = { status: "pending" | "connected" | "failed" | "expired"; message?: string };
 
 /** frappe-ui's call() resolves to unknown; this is the one place a response gets its shape. */
 export const api = <T>(method: string, params?: Record<string, unknown>) =>
 	call(method, params) as Promise<T>;
 
-const money = (value: number) => `$${value.toFixed(2)}`;
+export const money = (value: number) => `$${value.toFixed(2)}`;
+// below this, a turn can run out of credit halfway through
+const LOW_BALANCE = 1;
+
+/** Amber when the balance runs low, red once it is gone. */
+export function creditsTheme(credits: Credits): "gray" | "amber" | "red" {
+	if (credits.balance <= 0) return "red";
+	return credits.balance < LOW_BALANCE ? "amber" : "gray";
+}
 
 /** Balances for the providers that report one, keyed by provider. One failing never hides the rest. */
 export async function creditsFor(providers: string[]): Promise<Record<string, Credits | null>> {

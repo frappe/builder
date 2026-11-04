@@ -283,6 +283,10 @@ class TestPayload(unittest.TestCase):
 		self.assertFalse(payload["store"])
 		self.assertEqual(payload["reasoning"], {"summary": "auto"})
 
+	def test_the_tier_reasoning_effort_is_sent(self):
+		payload = codex.build_payload("gpt-5.6-terra", [{"role": "user", "content": "hi"}], None, "high")
+		self.assertEqual(payload["reasoning"], {"summary": "auto", "effort": "high"})
+
 
 if __name__ == "__main__":
 	unittest.main()

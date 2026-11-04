@@ -12,6 +12,10 @@ import translationPlugin, { ensureTranslations } from "./translation";
 import App from "@/App.vue";
 import Input from "@/components/Controls/Input.vue";
 import { editorDemo } from "@/utils/editorDemo";
+import { pluginsDisabled, getStartupPlugins, listenForPluginJobs } from "@/data/plugins";
+import { restoreDevPlugin } from "@/plugins/devPlugin";
+import { importPlugins, installPlugins } from "@/plugins/loader";
+import useBuilderStore from "@/stores/builderStore";
 
 const app = createApp(App);
 const pinia = createPinia();
@@ -20,7 +24,17 @@ const pinia = createPinia();
 // chunk looks up stores as it loads
 app.use(pinia);
 
-ensureTranslations().then(() => {
+// the demo runs no plugins. Elsewhere they load while the translations do
+const plugins = editorDemo
+	? Promise.resolve([])
+	: getStartupPlugins()
+			.then(importPlugins)
+			.catch((error) => {
+				console.error("[builder] the plugins did not load", error);
+				return [];
+			});
+
+Promise.all([ensureTranslations(), plugins]).then(([, loaded]) => {
 	app.use(router);
 	app.use(FrappeUI);
 	if (!editorDemo) {
@@ -36,7 +50,11 @@ ensureTranslations().then(() => {
 	app.component("FormControl", FormControl);
 	app.component("BuilderInput", Input);
 
+	// before the first render, so a plugin's items show from the start
+	installPlugins(app, loaded);
 	app.mount("#app");
+	if (!editorDemo) listenForPluginJobs(useBuilderStore().realtime);
+	if (!editorDemo && window.is_developer_mode && !pluginsDisabled.value) void restoreDevPlugin();
 });
 
 declare global {

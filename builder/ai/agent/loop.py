@@ -15,15 +15,16 @@ suffixed with the CHANNEL — the page id for the in-editor chat, or the session
 id when page-less (dashboard chat + sub-agents), e.g. `ai_chat_stream_<channel>`:
 
     ai_chat_progress       {message}
-    ai_chat_stream         {chunk, kind?, replace?}  kind="page_yaml" → live canvas
-                                            preview; kind="reasoning" → append to the
+    ai_chat_stream         {chunk, kind?, replace?}  kind="page_blocks" {blocks} → live
+                                            canvas preview frame of a page still being
+                                            generated; kind="reasoning" → append to the
                                             open thinking step; absent → append to the
                                             live answer text. replace=True means this
                                             chunk REPLACES the live answer (a guard
                                             rewrote it, or a retry is re-sending).
     ai_chat_tool_batch     {operations: [{tool_name, args}]}
                            (generate_page args carry the expanded {blocks, data_script};
-                           add_block args carry block_json — the canvas applies those
+                           add_block args carry block_json; the canvas applies those
                            verbatim so both sides share block ids)
     ai_chat_step           {id, kind: "thinking"|"tool"|"text", status: "running"|"done",
                             summary?, text?, ms?, tool?}
@@ -48,15 +49,17 @@ import time
 
 import frappe
 
-from builder.ai import llm, locks
+from builder.ai import llm, locks, markup
+from builder.ai.agent.edits import EditScript, composition_notes
 from builder.ai.agent.registry import ToolRegistry, build_default_registry
+from builder.ai.agent.selectors import walk_blocks
 from builder.ai.agent.tree import WorkingTree
 from builder.ai.block_codec import BlockCodec
 from builder.ai.models import ModelRegistry
 from builder.ai.prompts import Prompts
 from builder.ai.session import AISession
+from builder.ai.skills import Skills
 from builder.ai.snapshots import capture_page_state, save_revert_snapshot
-from builder.utils import to_compact_yaml
 
 logger = frappe.logger("builder.ai.agent.loop")
 logger.setLevel(logging.INFO)
@@ -79,15 +82,14 @@ STREAM_BACKOFF_BASE = 1.0
 # plan, no-op) creates no snapshot and gets no Revert button.
 SNAPSHOT_TOOLS = frozenset(
 	{
-		"add_block",
-		"update_block",
-		"update_blocks",
-		"remove_block",
-		"move_block",
+		"edit_page",
 		"set_page_blocks",
 		"generate_page",
 		"set_page_script",
 		"update_script",
+		"attach_page_script",
+		"detach_page_script",
+		"write_page_data_script",
 	}
 )
 
@@ -96,20 +98,29 @@ SNAPSHOT_TOOLS = frozenset(
 # silently — two parallel attaches in one round raced and .catch(() => null) ate the
 # failure; a page then published with its reveal CSS but not the JS that fires it.
 # The server apply is atomic and verified; the canvas just mirrors the result.
-SCRIPT_TWIN_TOOLS = frozenset({"set_page_script", "attach_page_script", "update_script"})
+SCRIPT_TWIN_TOOLS = frozenset(
+	{"set_page_script", "attach_page_script", "update_script", "detach_page_script"}
+)
+
+
+# name, = or :, an opening quote (JSON-escaped in dumped args), then the value
+SECRET_RE = re.compile(
+	r"""(?i)\b(api[_-]?key|api[_-]?secret|client[_-]?secret|secret|password|passwd|"""
+	r"""access[_-]?token|auth[_-]?token|authorization)(\\?["']?\s*[:=]\s*\\?["'])([^"'\\]{4,})"""
+)
+
+
+def redact_secrets(text: str) -> str:
+	return SECRET_RE.sub(lambda m: f"{m.group(1)}{m.group(2)}[redacted]", text)
 
 
 class CancelledError(Exception):
 	"""Raised inside the stream loops when the user cancels the turn."""
 
 
-# Above this many chars of compact-YAML page structure, switch the page context
-# from the full tree to a compact outline (read_block pulls detail on demand).
 # Skeletonising a page the model just wrote costs whole rounds re-reading its own
-# work, so the threshold has to clear a real generated page. Measured across four
-# models: eleven landed between 15.4k and 30.9k chars, one ran to 48.6k. 45k keeps
-# the normal spread whole (~11k tokens, once per turn, behind a cache marker) and
-# still lets a runaway page fall back to the outline, which is what it is for.
+# work, so the threshold has to clear a real generated page: a full read is once
+# per turn, behind a cache marker, and an outline is what a runaway page falls back to.
 FULL_CONTEXT_LIMIT = 45_000
 
 # Tools that already surface as their own card in the chat (clarify question, plan,
@@ -122,8 +133,6 @@ ACTIVITY_SILENT = frozenset({"present_ui"})
 # dashboard's normal mode) gets its truthful summary replaced with "I didn't apply it".
 READ_ONLY_SERVER_TOOLS = frozenset(
 	{
-		"query_blocks",
-		"read_block",
 		"read_page",
 		"run_python",
 		"read_url",
@@ -134,6 +143,9 @@ READ_ONLY_SERVER_TOOLS = frozenset(
 		"get_doctype_schema",
 		"get_page_scripts",
 		"preview_page",
+		"read_plugin",
+		"read_editor_source",
+		"read_skill",
 	}
 )
 
@@ -164,26 +176,34 @@ def marker_position(messages: list[dict], pos: int) -> int:
 	return pos
 
 
-def render_page_context(root: dict | None, selected_block_ids: tuple | list = ()) -> str:
-	"""Render a page's block tree as model-readable context: the full compact YAML
-	for a normal page, or an outline (+ full detail for selected blocks) past
-	FULL_CONTEXT_LIMIT. Shared by the turn's page-context message and the page
-	tools."""
+PAGE_PREAMBLE = "The open page in markup (@ref is each block's handle for edit_page):"
+
+OUTLINE_PREAMBLE = (
+	"This page is large, so it is shown as an OUTLINE: every block with its @ref, tag, "
+	"classes and full text, styles omitted. read_page(ref=@x) shows a block's styles."
+)
+
+
+def render_page_context(
+	root: dict | None, selected_block_ids: tuple | list = (), sets: dict | None = None
+) -> str:
+	"""A page's block tree as model-readable markup: the whole page with its style
+	sets ($s1…, collected into `sets` so edits can reuse them), or past
+	FULL_CONTEXT_LIMIT an outline plus the selected blocks in full."""
 	if root is None:
 		return ""
-	full = to_compact_yaml(BlockCodec.compress(root, depth=0, task_tier="complex"))
-	# Most pages: ship the full structure — cheapest path is no extra read_block
-	# round-trips, and the model can match existing styles directly. Big pages: ship
-	# a compact outline instead (styles/attrs omitted) and let the model pull detail
-	# on demand with read_block. The threshold is on the full serialisation length,
-	# which tracks token cost closely.
+	refs = markup.short_refs(root)
+	found: dict = {}
+	full = markup.dump_block(root, refs=refs, sets=found)
 	if len(full) <= FULL_CONTEXT_LIMIT:
-		context = (
-			f"Current page structure (YAML — pass a block's 'ref' value as block_id to edit it):\n{full}"
-		)
+		if sets is not None:
+			sets.update(found)
+		context = f"{PAGE_PREAMBLE}\n{full}"
 	else:
-		context = render_skeleton_context(root, selected_block_ids)
-	# THIS page's component contracts — without them an instance advertises nothing
+		outline = markup.dump_block(root, refs=refs, styles=False)
+		selected = render_selected_context(root, selected_block_ids, include_components=False)
+		context = "\n\n".join(part for part in (OUTLINE_PREAMBLE, outline, selected) if part)
+	# THIS page's component contracts: without them an instance advertises nothing
 	# (declared props were unreachable from the open page).
 	from builder.ai.agent.tools.query import render_components
 
@@ -192,28 +212,22 @@ def render_page_context(root: dict | None, selected_block_ids: tuple | list = ()
 	return context
 
 
-OUTLINE_PREAMBLE = (
-	"This page is large, so you're given a compact OUTLINE (one line per block: "
-	"indentation = nesting, then ref, element, optional name, and a short text "
-	"preview). Styles and attributes are omitted. Pass a block's ref as block_id to "
-	"edit it. To see a block's full styles/attributes/text before editing, call "
-	"read_block(ref); to act on many blocks at once, call query_blocks then update_blocks."
-)
+def render_selected_context(
+	root: dict | None, selected_block_ids: tuple | list, *, include_components: bool = True
+) -> str:
+	from builder.ai.agent.selectors import find_block
+	from builder.ai.agent.tools.query import render_components
 
-
-def render_skeleton_context(root: dict, selected_block_ids: tuple | list = ()) -> str:
-	"""Outline + full detail for any blocks the user has selected (so the common
-	targeted-edit case needs no read_block round-trip)."""
-	from builder.ai.agent.selectors import find_block, render_skeleton
-
-	outline = render_skeleton(root)
-	parts = [OUTLINE_PREAMBLE, outline]
+	refs = markup.short_refs(root) if root else {}
+	parts = []
 	for ref in selected_block_ids:
-		block = find_block(root, ref)
+		block = find_block(root, ref) if root else None
 		if block is None:
 			continue
-		detail = to_compact_yaml(BlockCodec.compress(block, depth=0, task_tier="complex"))
-		parts.append(f"Full detail for selected block {ref}:\n{detail}")
+		detail = markup.dump_block(block, refs=refs, set_prefix=None)
+		parts.append(f"Selected block @{refs.get(ref, ref)}:\n{detail}")
+		if include_components and (contract := render_components(block, on_open_page=True)):
+			parts.append(contract)
 	return "\n\n".join(parts)
 
 
@@ -238,7 +252,6 @@ BUILDER_DOCTYPE_LABELS = {
 TOOL_LABELS = {
 	"generate_page": ("Building the page", "Built the page"),
 	"preview_page": ("Checking how it looks", "Checked how it looks"),
-	"query_blocks": ("Searching the page", "Searched the page"),
 	"search_images": ("Searching for photos", "Searched for photos"),
 	"extract_component": ("Making a reusable component", "Made a reusable component"),
 	"edit_component": ("Updating a shared component", "Updated a shared component"),
@@ -256,6 +269,8 @@ TOOL_LABELS = {
 	"connect_form": ("Connecting the form", "Connected the form"),
 	"edit_global_settings": ("Updating site settings", "Updated site settings"),
 	"set_home_page": ("Setting the home page", "Set the home page"),
+	"read_plugin": ("Reading the editor plugins", "Read the editor plugins"),
+	"read_editor_source": ("Reading the editor's code", "Read the editor's code"),
 }
 
 
@@ -284,8 +299,8 @@ def activity_summary(tool_name: str, args: dict, tree=None, done: bool = True) -
 
 	if pair := TOOL_LABELS.get(tool_name):
 		return voice(*pair)
-	if tool_name == "read_block":
-		return f"{voice('Reading', 'Read')} block: {resolved_label(args.get('block_id'))}".rstrip(": ")
+	if tool_name == "read_page" and args.get("ref"):
+		return f"{voice('Reading', 'Read')} block: {resolved_label(args.get('ref'))}"
 	if tool_name == "read_page":
 		title = args.get("page_id") and frappe.db.get_value("Builder Page", args["page_id"], "page_title")
 		if title:
@@ -302,8 +317,15 @@ def activity_summary(tool_name: str, args: dict, tree=None, done: bool = True) -
 		return f"{voice('Adding', 'Added')} script: {args.get('name') or ''}".rstrip(": ")
 	if tool_name == "update_script":
 		return f"{voice('Updating', 'Updated')} script: {args.get('script_name') or ''}".rstrip(": ")
-	if tool_name == "create_component":
-		return f"{voice('Creating', 'Created')} component: {args.get('name') or ''}".strip()
+	if tool_name == "detach_page_script":
+		return f"{voice('Removing', 'Removed')} script: {args.get('script_name') or ''}".rstrip(": ")
+	if tool_name == "write_plugin":
+		label = args.get("label") or args.get("name")
+		return (
+			f"{voice('Building', 'Built')} plugin: {label}"
+			if label
+			else voice("Building a plugin", "Built a plugin")
+		)
 	if tool_name == "get_doctype_schema":
 		checking = voice("Checking", "Checked")
 		return (
@@ -346,6 +368,9 @@ class AgentRunner:
 		self.image_file_url = image_file_url
 		self.canvas_theme = canvas_theme
 		self.registry = registry or build_default_registry()
+		# Skills in context, including read_skill results; reset on every turn.
+		self.attached_skills: set[str] = set()
+		self.round_skills: set[str] = set()
 		# The editor-URL prefix is site-configurable; resolve it so the links the
 		# agent writes (e.g. to a page it built off-canvas) actually work here.
 		self.system_prompt = (system_prompt or Prompts.AGENT_SYSTEM).replace(
@@ -384,6 +409,15 @@ class AgentRunner:
 		self.image_views = 0
 		# read_page calls this turn — same idea, a reference sweep can't run up context.
 		self.page_read_count = 0
+		# A page generated this turn that no preview has looked at yet: a closing
+		# `reply` waits until it has been (the self-review catches empty rows and
+		# fonts that never loaded). generation_errors: lines the generator wrote that
+		# did not parse.
+		self.unreviewed_build = False
+		self.generation_errors: list[str] = []
+		# Style sets the model was shown this turn ($s1 on the open page, $a1… on
+		# references), so an edit script can spread them by name.
+		self.style_sets: dict[str, dict] = {}
 		# Web tools this turn — bounded like every other read that costs context/latency.
 		self.web_read_count = 0
 		self.research_count = 0
@@ -416,6 +450,8 @@ class AgentRunner:
 		# Client ops a server tool queued mid-call (extract_component rewriting the
 		# page). Drained right after the handler returns — see drain_queued_ops.
 		self.pending_client_ops: list[dict] = []
+		# The plugins write_plugin saved this turn, for the chat's plugin cards.
+		self.plugins_written: list[str] = []
 		# Tiered model selection: resolved in run() once we know the scenario.
 		self.loop_model = self.model
 		# Cache-breakpoint anchors, set by build_messages (see refresh_cache_markers).
@@ -534,7 +570,7 @@ class AgentRunner:
 					{
 						"name": op["tool_name"],
 						"args": BlockCodec.truncate_for_log(
-							json.dumps(op.get("args", {}), ensure_ascii=False), 300
+							redact_secrets(json.dumps(op.get("args", {}), ensure_ascii=False)), 300
 						),
 					}
 					for op in tool_operations
@@ -546,7 +582,27 @@ class AgentRunner:
 	# --- message construction --------------------------------------------
 
 	def build_page_context(self) -> str:
-		return render_page_context(self.page_root(), self.selected_block_ids)
+		return render_page_context(self.page_root(), self.selected_block_ids, self.style_sets)
+
+	def build_initial_page_context(self) -> str:
+		"""The open page rides in with the request: nearly every turn reads it first, and
+		a read costs a whole round. An empty page brings the new-page skill instead; a
+		page past the full-render limit only says where to read it."""
+		if not self.page_id:
+			return ""
+		root = self.page_root()
+		if not (root and root.get("children")):
+			return "The open page is empty.\n\n" + self.build_skill_context()
+		context = render_page_context(root, self.selected_block_ids, self.style_sets)
+		if any(block.get("extendedFromComponent") for block, _ in walk_blocks(root)):
+			context += "\n\n" + self.attach_skill("components", "This page embeds components")
+		if context.startswith(PAGE_PREAMBLE):
+			return f"{context}\n\nThis is the page as the turn starts; your edits apply live, and read_page re-reads it."
+		return (
+			f"The open page is large; read_page('{self.page_id}') returns its outline. Editor plugins "
+			"can use the page API at runtime without reading this page's blocks.\n\n"
+			+ render_selected_context(root, self.selected_block_ids)
+		)
 
 	def build_open_page_context(self) -> str:
 		"""The facts the agent cannot discover for itself: WHICH page the user has
@@ -572,12 +628,45 @@ class AgentRunner:
 			)
 		return context
 
+	def build_skill_context(self) -> str:
+		"""Include the build guide when the model asks to inspect an empty page."""
+		root = self.page_root()
+		if not self.page_id or (root and root.get("children")):
+			return ""
+		return self.attach_skill("new-page", "For building on this empty page")
+
+	def attach_skill(self, name: str, reason: str) -> str:
+		"""A skill the open page's state calls for, put in context before the model asks."""
+		if name in self.attached_skills:
+			return ""
+		self.attached_skills.add(name)
+		return f"{reason}, here is the {name} skill in full; no read_skill needed this turn:\n\n{Skills.read(name)}"
+
+	def require_skill(self, name: str) -> str | None:
+		# A read alongside a write has not reached the model that authored that write.
+		if name not in self.round_skills:
+			return (
+				f"FAILED: read_skill('{name}') before authoring this work, then retry in the next round "
+				"using its guidance. Nothing was changed. Read it again on each continuation turn."
+			)
+		return None
+
 	def build_memory_context(self) -> str:
 		"""Facts the agent saved in past conversations (see tools/memory.py) — part of
 		the cached context block, so remembering costs nothing per-round."""
 		from builder.ai.agent.tools.memory import memory_context
 
 		return memory_context()
+
+	def build_plugins_context(self) -> str:
+		"""History replays only the chat text, where a plugin shows by its label. Its id lets a
+		change read_plugin it in the first round instead of listing every plugin first."""
+		if plugins := AISession.plugins_written(self.session_id):
+			return (
+				f"Plugins you wrote in this conversation: {', '.join(plugins)}. To change one, read_plugin "
+				"it by that name in the same round as read_skill('editor-plugin')."
+			)
+		return ""
 
 	def build_messages(self) -> list[dict]:
 		messages: list[dict] = [{"role": "system", "content": self.system_prompt}]
@@ -593,10 +682,15 @@ class AgentRunner:
 		)
 		self.history_end_index = len(messages) - 1
 
-		# The page structure. It's resent on every round of a multi-round turn, so a
-		# cache marker on the prompt right after it cuts both latency and input cost
-		# across the loop.
-		blocks = [self.build_open_page_context(), self.build_page_context(), self.build_memory_context()]
+		# The page identity and selections stay useful across tasks. Load the full
+		# tree on demand: this context is cached across rounds, but changed history
+		# ahead of it generally prevents reuse across turns.
+		blocks = [
+			self.build_open_page_context(),
+			self.build_initial_page_context(),
+			self.build_memory_context(),
+			self.build_plugins_context(),
+		]
 		context = "\n\n".join(block for block in blocks if block)
 		if context:
 			messages.append({"role": "user", "content": context})
@@ -665,6 +759,7 @@ class AgentRunner:
 		after this returns, so a failed attempt leaves no partial state; we just re-issue the
 		identical completion (the cached prefix makes the retry cheap). litellm can't fall
 		back mid-stream (fallbacks are off while streaming), so this is the retry layer."""
+		self.round_skills = self.attached_skills.copy()
 		for attempt in range(STREAM_MAX_ATTEMPTS):
 			try:
 				return self.stream_tool_round(messages)
@@ -699,7 +794,7 @@ class AgentRunner:
 		stream = llm.complete_with_tools(
 			self.loop_model,
 			messages,
-			self.registry.schemas(),
+			self.registry.schemas(self.round_skills),
 			llm.TASK_PARAMS["agent"],
 			api_key=self.api_key,
 			stream=True,
@@ -921,7 +1016,7 @@ class AgentRunner:
 			"ATTACHED BLOCKS — the user explicitly attached these blocks to this request: "
 			f"{', '.join(labelled)}. They are the SUBJECT and SCOPE of the request: interpret "
 			"it as being about them, and make your changes on or within them. Look at their "
-			"current styles first (page context or read_block). Touch other blocks only when "
+			"current styles first (page context or read_page). Touch other blocks only when "
 			"the request itself plainly requires it, and say so if you do."
 		)
 
@@ -959,20 +1054,10 @@ class AgentRunner:
 		def blk(n: int) -> str:
 			return "block" if n == 1 else "blocks"
 
-		# update_blocks edits many blocks in one op — count the blocks it touched,
-		# not the single call, so the summary reads "updated 12 blocks" not "1".
-		batched = 0
-		for op in operations:
-			if op.get("tool_name") != "update_blocks":
-				continue
-			args = op.get("args") or {}
-			patches = args.get("patches")
-			batched += len(patches) if isinstance(patches, list) else len(args.get("block_ids") or [])
-
 		parts: list[str] = []
 		if n := counts.get("add_block"):
 			parts.append(f"added {n} {blk(n)}")
-		if n := (counts.get("update_block", 0) + batched):
+		if n := counts.get("update_block"):
 			parts.append(f"updated {n} {blk(n)}")
 		if n := counts.get("remove_block"):
 			parts.append(f"removed {n} {blk(n)}")
@@ -984,6 +1069,8 @@ class AgentRunner:
 			parts.append("added a script")
 		if counts.get("update_script"):
 			parts.append("updated a script")
+		if counts.get("detach_page_script"):
+			parts.append("removed a script")
 
 		if not parts:
 			n = len(operations)
@@ -1010,24 +1097,27 @@ class AgentRunner:
 		return side
 
 	def apply_client_ops(self, ops: list[dict]) -> tuple[dict[int, str], list[dict]]:
-		"""Apply this round's client ops to the working tree — the source of truth —
+		"""Apply this round's client ops to the working tree, the source of truth,
 		then mirror the ACCEPTED ones to the canvas and persist the draft. Rejected
 		ops are never emitted, so the canvas can't apply an edit the server refused.
+		An edit_page script expands into the internal block ops it compiled to.
 		Returns (tool-result per op, accepted ops)."""
 		results: dict[int, str] = {}
 		applied: list[dict] = []
 		for op in ops:
 			if op["tool_name"] in SNAPSHOT_TOOLS:
 				self.ensure_revert_snapshot()
-			content = self.tree.apply(op["tool_name"], op["args"])
+			if op["tool_name"] == "edit_page":
+				content, accepted = EditScript(self.tree, self.style_sets).run(op["args"].get("ops") or "")
+			else:
+				content = self.tree.apply(op["tool_name"], op["args"])
+				accepted = [] if content.startswith("FAILED") else [op]
 			results[id(op)] = content
-			# "FAILED" (hard miss) or "NOT FOUND" (partial bulk miss) — a correction
-			# the model is now being asked to make. Record + log so it's not invisible.
+			# A correction the model is now being asked to make: record + log it.
 			if "FAILED" in content or "NOT FOUND" in content:
 				self.tool_failures.append(f"{op['tool_name']}: {content}")
 				logger.warning("Client op rejected — %s: %s", op["tool_name"], content)
-			if not content.startswith("FAILED"):
-				applied.append(op)
+			applied.extend(accepted)
 		if applied:
 			self.applied_operations.extend(applied)
 			# after_commit: an op can reference a doc this round created (a component
@@ -1042,6 +1132,11 @@ class AgentRunner:
 				page_writer.save_draft_blocks(self.page_id, self.tree.root)
 		return results, applied
 
+	def skill_missing(self, tool) -> str | None:
+		"""A skill-bound tool called before its skill reached the model (it named one
+		it was never offered)."""
+		return self.require_skill(tool.skill) if tool and tool.skill else None
+
 	def run_handler(self, tool, op: dict) -> str:
 		"""Run a server tool's handler, turning a crash into a tool result.
 
@@ -1051,6 +1146,8 @@ class AgentRunner:
 		provider could not fetch. Reported as FAILED instead, which the tools already
 		use for expected failures, so the model can adjust and carry on. The savepoint
 		keeps a half-applied write from riding along."""
+		if missing := self.skill_missing(tool):
+			return missing
 		savepoint = f"tool_{self.server_mutations}"
 		frappe.db.savepoint(savepoint)
 		try:
@@ -1076,10 +1173,11 @@ class AgentRunner:
 			# continues. None = the card was emitted and the turn is over.
 			return self.handle_terminal(op)
 		if kind == "artifact":
-			# Generation is a STEP of the turn: the generator streams YAML live (the
+			# Generation is a STEP of the turn: the generator streams the page live (the
 			# canvas preview), persists the page, and the loop continues — so the model
 			# can add scripts, verify, and refine in the same turn.
 			content, ops = self.run_generation_step(tool, op)
+			self.unreviewed_build = self.unreviewed_build or bool(ops)
 			self.applied_operations.extend(ops)
 			if ops:
 				# The authoritative op replaces the throwaway streamed preview with
@@ -1090,6 +1188,8 @@ class AgentRunner:
 		if op["tool_name"] in SNAPSHOT_TOOLS:
 			self.ensure_revert_snapshot()
 		content = self.run_handler(tool, op)
+		if op["tool_name"] == "preview_page" and not str(content).startswith("FAILED"):
+			self.unreviewed_build = False
 		self.end_activity(entry)
 		self.drain_queued_ops()
 		if op["tool_name"] not in READ_ONLY_SERVER_TOOLS and not str(content).startswith("FAILED"):
@@ -1231,6 +1331,12 @@ class AgentRunner:
 					messages.append({"role": "tool", "tool_call_id": tc["id"], "content": content})
 				if turn_over:
 					return
+				results = [m["content"] for m in messages[-len(raw_tool_calls) :]]
+				if reply := self.turn_reply(tool_operations, results):
+					summary_text = reply
+					self.stop_reason = "model_finished"
+					self.checkpoint()
+					break
 				self.flush_pending_images(messages)
 				self.checkpoint()
 			else:
@@ -1250,6 +1356,25 @@ class AgentRunner:
 			return
 
 		self.finish_turn(summary_text, started)
+
+	def turn_reply(self, ops: list[dict], results: list[str]) -> str:
+		"""The reply that ends the turn now, if any: never while a page generated this
+		turn is still unreviewed."""
+		return "" if self.unreviewed_build else self.closing_reply(ops, results)
+
+	@staticmethod
+	def closing_reply(ops: list[dict], results: list[str]) -> str:
+		"""An edit_page `reply` ends the turn without another round when nothing in the
+		round still needs a look: every call landed, and none was a read (a preview, a
+		page) whose result the model has yet to see."""
+		replies = [
+			reply
+			for op in ops
+			if op["tool_name"] == "edit_page" and (reply := str(op["args"].get("reply") or "").strip())
+		]
+		if not replies or any(op["tool_name"] in READ_ONLY_SERVER_TOOLS for op in ops):
+			return ""
+		return "" if any("FAILED" in str(result) for result in results) else replies[-1]
 
 	def checkpoint(self) -> None:
 		"""Make this round's work durable. A turn runs as a background job, and a job
@@ -1289,7 +1414,7 @@ class AgentRunner:
 		generated = any(op["tool_name"] == "generate_page" for op in self.applied_operations)
 		if not summary_text:
 			if generated:
-				# Skip a summary call after generation (the YAML arg would bloat its
+				# Skip a summary call after generation (the page arg would bloat its
 				# context); send a fixed nudge instead.
 				summary_text = "Created the page. Ask me to refine it — adjust styles, add sections, or change the layout."
 			else:
@@ -1351,6 +1476,8 @@ class AgentRunner:
 		}
 		if self.revert_snapshot:
 			final_metadata["revertSnapshot"] = self.revert_snapshot
+		if self.plugins_written:
+			final_metadata["plugins"] = self.plugins_written
 		if timeline := self.timeline():
 			# The turn's timeline — rendered live from step events, rehydrated from
 			# here on a session reload.
@@ -1409,6 +1536,8 @@ class AgentRunner:
 		is over (question/plan/confirm card emitted); a string = the handler DECLINED
 		(invalid proposal) and the loop should continue with that as the tool result."""
 		tool = self.registry.get(op["tool_name"])
+		if missing := self.skill_missing(tool):
+			return missing
 		if tool and tool.handler:
 			return tool.handler(self, op["args"])
 		return None
@@ -1419,6 +1548,8 @@ class AgentRunner:
 		and build on — what it just made (scripts, surgical fixes, one verify pass)."""
 		if not self.page_id:
 			return ("FAILED: no page is open.", [])
+		if missing := self.require_skill("new-page"):
+			return missing, []
 		entry = self.begin_activity(op["tool_name"], op["args"])
 		self.ensure_revert_snapshot()  # generation replaces the block tree
 		ops = tool.generator(self, op["args"])
@@ -1429,11 +1560,20 @@ class AgentRunner:
 		self.tree = WorkingTree(root)
 		return (
 			"Page generated and saved. Now finish the build: add the client scripts the plan "
-			"calls for (set_page_script), fix obvious breakage with the block tools, verify "
+			"calls for (set_page_script), fix obvious breakage with edit_page, verify "
 			"with preview_page at most once, then finish with a short summary."
-			f"{self.script_hook_gap_note(root)}\n"
-			f"{render_page_context(root)}",
+			f"{self.script_hook_gap_note(root)}{composition_notes(root)}{self.dropped_lines_note()}\n"
+			f"{render_page_context(root, sets=self.style_sets)}",
 			ops,
+		)
+
+	def dropped_lines_note(self) -> str:
+		if not (errors := self.generation_errors):
+			return ""
+		listed = "; ".join(errors[:6])
+		return (
+			f"\nDROPPED LINES: {len(errors)} line(s) of the generated page did not parse ({listed}). "
+			"Whatever they held is missing: put it back with edit_page."
 		)
 
 	def script_hook_gap_note(self, root: dict) -> str:
@@ -1442,7 +1582,7 @@ class AgentRunner:
 		kills the behaviour (seen live: scripts selecting .suraj-project-card on a
 		page whose blocks only carried .suraj-reveal). Compare the attached scripts'
 		querySelector targets and CSS class selectors against the blocks' classes
-		and tell the model NOW, while it can still patch with update_blocks."""
+		and tell the model NOW, while it can still patch with edit_page."""
 		if not self.page_id:
 			return ""
 		names = frappe.db.get_all(
@@ -1477,8 +1617,8 @@ class AgentRunner:
 		if missing_js:
 			parts.append(
 				f"your JS selects {', '.join('.' + c for c in missing_js)} but NO block carries "
-				"those classes — that behaviour will never fire. Add each class to the intended "
-				"blocks (update_blocks) or rewrite the script."
+				"those classes, so that behaviour will never fire. Add each class to the intended "
+				"blocks (edit_page) or rewrite the script."
 			)
 		if missing_css:
 			parts.append(

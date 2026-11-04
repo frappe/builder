@@ -1,4 +1,5 @@
 import type Block from "@/block";
+import { addBeside, freshBlock, PLUGIN_BLOCK_TYPE } from "@/plugins/blocks";
 import useBlockTemplateStore from "@/stores/blockTemplateStore";
 import useBuilderStore from "@/stores/builderStore";
 import useCanvasStore from "@/stores/canvasStore";
@@ -201,8 +202,11 @@ export function useCanvasDropZone(
 		let { parentBlock, index } = canvasStore.dropTarget;
 		const componentName = ev.dataTransfer?.getData("componentName");
 		const blockTemplate = ev.dataTransfer?.getData("blockTemplate");
+		const pluginBlock = ev.dataTransfer?.getData(PLUGIN_BLOCK_TYPE);
 
-		if (componentName) {
+		if (pluginBlock) {
+			if (parentBlock) addBeside(parentBlock, freshBlock(pluginBlock), index);
+		} else if (componentName) {
 			await componentStore.loadComponent(componentName);
 			const component = componentStore.componentMap.get(componentName) as Block;
 			const newBlock = getBlockCopy(component);

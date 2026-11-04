@@ -56,7 +56,7 @@ class TestReadPage(FrappeTestCase):
 		self.assertIn("READ-ONLY", out)
 		self.assertIn("fonts: Libre Baskerville x1 (div), Cinzel x1 (h1)", out)
 		self.assertIn("colors: #E6DECA x1, #161412 x1", out)
-		self.assertIn("el: h1", out)
+		self.assertIn('h1 "Ravens" {color:#161412;font-family:Cinzel}', out)
 
 	def test_includes_the_pages_attached_scripts(self):
 		out = run_read_page(self.ctx(), {"page_id": self.page.name})
@@ -64,10 +64,59 @@ class TestReadPage(FrappeTestCase):
 		self.assertIn("Attached page scripts", out)
 		self.assertIn(".raven { letter-spacing: 0.08em; }", out)
 
-	def test_points_back_to_context_for_the_open_page(self):
-		out = run_read_page(self.ctx(page_id=self.page.name), {"page_id": self.page.name})
+	def test_reads_the_current_working_tree_for_the_open_page(self):
+		from builder.ai.agent.loop import AgentRunner
+		from builder.ai.agent.tree import WorkingTree
 
-		self.assertIn("already in your context", out)
+		runner = AgentRunner("edit this", model="m", api_key="k", page_id=self.page.name)
+		runner.tree = WorkingTree(
+			{"blockId": "root", "element": "div", "children": [{"blockId": "live", "innerHTML": "Updated"}]}
+		)
+		out = run_read_page(runner, {"page_id": self.page.name})
+
+		self.assertIn("Updated", out)
+		self.assertIn('@live "Updated"', out)
+		self.assertIn(".raven { letter-spacing: 0.08em; }", out)
+		self.assertNotIn("READ-ONLY", out)
+		self.assertNotIn("Ravens", out)
+
+	def test_reads_one_open_page_block_by_its_short_ref(self):
+		from builder.ai.agent.loop import AgentRunner
+		from builder.ai.agent.tree import WorkingTree
+
+		runner = AgentRunner("edit this", model="m", api_key="k", page_id=self.page.name)
+		runner.tree = WorkingTree(
+			{"blockId": "root", "children": [{"blockId": "k3x9abcde", "element": "h2", "innerHTML": "Hi"}]}
+		)
+		out = run_read_page(runner, {"ref": "@k3x9"})
+
+		self.assertIn('@k3x9 h2 "Hi"', out)
+
+	def test_a_reference_reads_its_style_sets_under_its_own_prefix(self):
+		sets = {}
+		ctx = SimpleNamespace(page_id="other", page_read_count=0, style_sets=sets)
+		page = frappe.get_doc(
+			{
+				"doctype": "Builder Page",
+				"page_title": "Sets Reference",
+				"draft_blocks": Block(
+					element="div",
+					children=[
+						Block(
+							element="p",
+							innerHTML=t,
+							baseStyles={"fontSize": "12px", "color": "#333", "letterSpacing": "0.1em"},
+						)
+						for t in ("one", "two", "three")
+					],
+				).as_json(wrap_in_array=True),
+			}
+		).insert()
+
+		out = run_read_page(ctx, {"page_id": page.name})
+
+		self.assertIn('p $a1 "one"', out)
+		self.assertEqual(sets["a1"]["style"]["fontSize"], "12px")
 
 	def test_fails_with_a_pointer_for_an_unknown_page(self):
 		out = run_read_page(self.ctx(), {"page_id": "no-such-page"})
@@ -162,6 +211,46 @@ class TestOpenPageContext(FrappeTestCase):
 		# The site's URL and structure are DISCOVERED via the read tools, never pre-baked.
 		self.assertNotIn(frappe.utils.get_url(), out)
 		self.assertNotIn("mode in the editor", out)
+
+	def runner_on(self, root):
+		from builder.ai.agent.loop import AgentRunner
+		from builder.ai.agent.tree import WorkingTree
+
+		runner = AgentRunner("hi", model="m", api_key="k", page_id="page-x")
+		runner.tree = WorkingTree(root)
+		return runner
+
+	def test_the_open_page_rides_in_with_the_request(self):
+		root = {
+			"blockId": "root",
+			"element": "div",
+			"children": [{"blockId": "k3x9abcde", "element": "h1", "innerHTML": "Hi"}],
+		}
+		runner = self.runner_on(root)
+
+		out = runner.build_initial_page_context()
+
+		self.assertIn('@k3x9 h1 "Hi"', out)
+		self.assertNotIn("read_page('page-x') returns", out)
+
+	def test_an_empty_page_brings_the_new_page_skill(self):
+		runner = self.runner_on({"blockId": "root", "element": "div", "children": []})
+
+		out = runner.build_initial_page_context()
+
+		self.assertIn("new-page skill in full", out)
+		self.assertIn("new-page", runner.attached_skills)
+
+	def test_a_page_past_the_full_render_limit_is_only_a_pointer(self):
+		from builder.ai.agent import loop
+
+		children = [{"blockId": f"b{i:08d}", "element": "p", "innerHTML": "x" * 400} for i in range(150)]
+		runner = self.runner_on({"blockId": "root", "element": "div", "children": children})
+
+		out = runner.build_initial_page_context()
+
+		self.assertLess(len(out), loop.FULL_CONTEXT_LIMIT)
+		self.assertIn("read_page('page-x') returns its outline", out)
 
 	def test_says_which_theme_the_editor_shows(self):
 		from builder.ai.agent.loop import AgentRunner
