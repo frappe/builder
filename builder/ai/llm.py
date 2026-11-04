@@ -114,7 +114,9 @@ TASK_PARAMS = {
 	# (layout directions, font pairings) — at 0.3 every session got the same
 	# three flat options and the same famous fonts. Matches the "complex"
 	# generation tier, which already proves 0.7 is safe for structured output.
-	"agent": {"max_tokens": 16000, "temperature": 0.7, "reasoning_effort": "high"},
+	# medium, not high: high added ~10s to every round, mechanical ones included,
+	# with no page-quality gain the eval could see (low broke 2 of 3 builds)
+	"agent": {"max_tokens": 16000, "temperature": 0.7, "reasoning_effort": "medium"},
 }
 
 
