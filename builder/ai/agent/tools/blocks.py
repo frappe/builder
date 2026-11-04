@@ -32,9 +32,10 @@ edit_page = Tool(
 			"reply": {
 				"type": "string",
 				"description": (
-					"When this script finishes the request: your reply to the user. The turn ends here "
-					"if every op applies (any failure comes back to you instead). Leave it out when you "
-					"still need to look at the result."
+					"Your final reply, only when this script is the last thing the request needs: the "
+					"turn ends here if every op applies (a failure comes back to you instead). Leave it "
+					"out while anything is left (another tool, a preview, a next step); it is never a "
+					"progress note like 'next I'll wire the form'."
 				),
 			},
 		},
