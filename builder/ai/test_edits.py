@@ -177,3 +177,6 @@ class TestCompositionNotes(FrappeTestCase):
 			{"blockId": "sec22222", "children": [label("eyebrow2"), {**heading, "blockId": "headline2"}]}
 		)
 		self.assertIn("AI TELL: 2 headings", composition_notes(root))
+
+		root["children"][1]["children"][0]["baseStyles"]["display"] = "none"
+		self.assertEqual(composition_notes(root), "")

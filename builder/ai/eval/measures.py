@@ -251,6 +251,8 @@ def photo_src(block: dict) -> str | None:
 
 def is_micro_label(block: dict) -> bool:
 	style = styles(block)
+	if style.get("display") == "none":
+		return False
 	if style.get("textTransform") != "uppercase" or not block_text(block).strip():
 		return False
 	size = re.match(r"([\d.]+)px", str(style.get("fontSize") or ""))

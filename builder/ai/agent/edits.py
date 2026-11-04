@@ -174,7 +174,7 @@ def composition_notes(root: dict) -> str:
 		eyebrows += [
 			f"@{refs.get(first.get('blockId'))}"
 			for first, second in pairwise(children)
-			if is_micro_label(first) and second.get("element") in ("h1", "h2", "h3")
+			if is_micro_label(first) and second.get("element") in ("h1", "h2", "h3") and not is_hidden(first)
 		]
 	notes = []
 	if pinned:
@@ -186,9 +186,14 @@ def composition_notes(root: dict) -> str:
 	if len(eyebrows) > 1:
 		notes.append(
 			f"AI TELL: {len(eyebrows)} headings carry a small uppercase label above them ({', '.join(eyebrows[:12])}); "
-			"a page allows one at most. Remove the rest, or fold what they say into the heading or its copy."
+			"a page allows one at most. `remove` the rest (hiding leaves dead blocks), or fold what they say "
+			"into the heading or its copy."
 		)
 	return "".join(f"\n{note}" for note in notes)
+
+
+def is_hidden(block: dict) -> bool:
+	return (block.get("baseStyles") or {}).get("display") == "none"
 
 
 def is_micro_label(block: dict) -> bool:

@@ -66,6 +66,7 @@ MISPLACED_ATTRS = frozenset(
 	{"src", "href", "alt", "id", "title", "target", "rel", "placeholder", "type", "name", "value"}
 )
 MISPLACED_CLASSES = frozenset({"class", "classes", "className"})
+FIELD = re.compile(r"([A-Za-z]+):(?=[\"'\w/#.])")
 VAR_TOKEN = re.compile(r"var\(\s*--([\w-]+)\s*\)")
 DOLLAR_TOKEN = re.compile(r"(\"[^\"]*\"|'[^']*')|(?<![\w$])\$([\w-]+)")
 
@@ -623,13 +624,32 @@ class LineParser:
 			self.node["icon"] = scan.group().strip()
 			return
 		match = HEAD.match(scan.rest())
-		if not match.group(0) or self.is_call(match.group(1)):
+		if not match.group(0) or self.is_call(match.group(1)) or self.field(scan.rest()):
 			return
 		if match.group(1):
 			self.node["el"] = match.group(1).lower()
 		if match.group(2):
 			self.node["classes"] = [c for c in match.group(2).split(".") if c]
 		scan.pos += match.end()
+
+	def field(self, rest: str):
+		"""`text:"Hi"` or `href:/menu` on the line: a block field in key:value form."""
+		match = FIELD.match(rest)
+		return (
+			match
+			if match and match.group(1) in MISPLACED_TEXT | MISPLACED_ATTRS | MISPLACED_CLASSES
+			else None
+		)
+
+	def assign(self, match) -> None:
+		scan = self.scan
+		scan.pos += match.end()
+		if scan.rest()[:1] in "\"'":
+			value = scan.string()
+		else:
+			value = re.match(r"\S*", scan.rest()).group(0)
+			scan.pos += len(value)
+		self.put(match.group(1), value)
 
 	def is_call(self, word: str | None) -> bool:
 		return bool(word) and word in CALLS and self.scan.rest()[len(word) : len(word) + 1] == "("
@@ -642,6 +662,8 @@ class LineParser:
 			scan.pos = len(scan.text)
 		elif rest[0] in "\"'":
 			self.node["text"] = scan.string()
+		elif match := self.field(rest):
+			self.assign(match)
 		elif rest[0] == "[":
 			self.node.setdefault("attrs", {}).update(parse_pairs(scan.group()))
 		elif rest[0] == "$":
@@ -668,14 +690,16 @@ class LineParser:
 		for key in [
 			k for k in styles if split_state(k)[1] in MISPLACED_TEXT | MISPLACED_ATTRS | MISPLACED_CLASSES
 		]:
-			field, value = split_state(key)[1], styles.pop(key)
-			value = parse_value(value) if value else ""
-			if field in MISPLACED_TEXT:
-				self.node["text"] = str(value)
-			elif field in MISPLACED_CLASSES:
-				self.node["classes"] = str(value).split()
-			else:
-				self.node.setdefault("attrs", {})[field] = str(value)
+			value = styles.pop(key)
+			self.put(split_state(key)[1], parse_value(value) if value else "")
+
+	def put(self, field: str, value) -> None:
+		if field in MISPLACED_TEXT:
+			self.node["text"] = str(value)
+		elif field in MISPLACED_CLASSES:
+			self.node["classes"] = str(value).split()
+		else:
+			self.node.setdefault("attrs", {})[field] = str(value)
 
 	def use_set(self, rest: str) -> None:
 		match = WORD.match(rest, 1)

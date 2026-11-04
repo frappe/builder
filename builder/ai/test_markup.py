@@ -58,6 +58,15 @@ class TestLines(unittest.TestCase):
 		self.assertEqual(node["classes"], ["btn", "primary"])
 		self.assertEqual(node["style"], {"color": "red"})
 
+	def test_block_fields_written_as_key_value_on_the_line(self):
+		node = self.node('a text:"Book: now" href:/book {color:red}')
+
+		self.assertEqual((node["el"], node["text"], node["attrs"]), ("a", "Book: now", {"href": "/book"}))
+		self.assertEqual(
+			markup.parse_ops('@a1b2 text:"" {display:none}')[0].fields,
+			{"text": "", "style": {"display": "none"}},
+		)
+
 	def test_a_property_that_is_not_css_is_an_error(self):
 		with self.assertRaises(markup.MarkupError):
 			self.node("p {font size:12px}")
