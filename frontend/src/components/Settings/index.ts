@@ -116,8 +116,19 @@ const panes: SettingsPane[] = [
 		icon: "lucide-globe",
 		group: "Global",
 		load: () => import("@/components/Settings/GlobalDomains.vue"),
-		// the boot data renders the Python bool, so "False" is a truthy string
-		condition: () => window.is_fc_site === "True",
+		// the boot data renders the Python bool, so "False" is a truthy string.
+		// v2 sites show Cloud Settings' Domains panel below instead.
+		condition: () => window.is_fc_site === "True" && !isCloudBillingAvailable.value,
+	},
+	{
+		name: "global_cloud_domains",
+		label: __("Domains"),
+		title: __("Custom Domains"),
+		icon: "lucide-globe",
+		group: "Global",
+		load: () => import("@/components/Settings/GlobalCloudDomains.vue"),
+		condition: () => isCloudBillingAvailable.value,
+		bare: true,
 	},
 	{
 		name: "global_billing",
