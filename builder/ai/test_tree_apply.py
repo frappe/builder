@@ -255,6 +255,28 @@ class TestMutatingStructure(unittest.TestCase):
 		self.assertEqual(self.child_ids("hero"), ["cta"])
 
 
+class TestAddBlockRefs(unittest.TestCase):
+	def setUp(self):
+		self.tree = WorkingTree(sample_root())
+
+	def add(self, block):
+		return self.tree.apply("add_block", {"parent_block_id": "footer", "block": block})
+
+	def test_names_the_refs_inside_the_new_block(self):
+		msg = self.add({"el": "section", "c": [{"el": "h2", "name": "Title"}, {"el": "p"}]})
+
+		title, body = self.tree.resolve("footer")["children"][0]["children"]
+		self.assertIn(f"Inside it: {title['blockId']} <h2> 'Title', {body['blockId']} <p>.", msg)
+
+	def test_caps_a_large_subtree(self):
+		msg = self.add({"el": "ul", "c": [{"el": "li"} for _ in range(45)]})
+
+		self.assertIn("and 5 more (query_blocks within this block)", msg)
+
+	def test_a_leaf_needs_no_list(self):
+		self.assertTrue(self.add({"el": "p"}).endswith("under footer."))
+
+
 class TestVisibilityBinding(unittest.TestCase):
 	def setUp(self):
 		self.tree = WorkingTree(sample_root())
