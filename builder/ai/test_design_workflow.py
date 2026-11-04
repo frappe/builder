@@ -167,7 +167,12 @@ class TestDesignWorkflow(FrappeTestCase):
 		brief.update({"project": "Coastal guide", "goal": "Book a tour"})
 		state = brief.read()
 		state["facts"] = [
-			{"value": "Tours start at 9", "status": "accepted", "source_message": "private-id"},
+			{
+				"label": "Schedule",
+				"value": "Tours start at 9",
+				"status": "accepted",
+				"source_message": "private-id",
+			},
 			{"value": "Maybe a boat", "status": "proposed"},
 			{"value": "No drone photos", "status": "rejected"},
 		]
@@ -177,7 +182,13 @@ class TestDesignWorkflow(FrappeTestCase):
 		]
 		brief.save(state)
 		context = brief.context()
-		for value in ("Coastal guide", "Book a tour", "Tours start at 9", "No drone photos", "chosen"):
+		for value in (
+			"Coastal guide",
+			"Book a tour",
+			"Schedule: Tours start at 9",
+			"No drone photos",
+			"chosen",
+		):
 			self.assertIn(value, context)
 		for value in ("Maybe a boat", "private-id", "large-thumbnail", "unused"):
 			self.assertNotIn(value, context)

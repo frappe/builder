@@ -81,7 +81,9 @@ class DesignBrief:
 				status = record.get("status")
 				if status in ("accepted", "rejected"):
 					key = "confirmed" if status == "accepted" else "avoid"
-					context.setdefault(key, []).append(record.get("value"))
+					label = record.get("label")
+					value = record.get("value")
+					context.setdefault(key, []).append(f"{label}: {value}" if label else value)
 		assets = [self.context_asset(asset) for asset in brief.get("assets", []) if asset.get("selected")]
 		if assets:
 			context["selected_assets"] = assets
