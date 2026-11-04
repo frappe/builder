@@ -67,13 +67,24 @@ def query_records(ctx, args: dict) -> str:
 	fields = args.get("fields") or ["name"]
 	filters = args.get("filters") if isinstance(args.get("filters"), dict) else {}
 	limit = min(int(args.get("limit") or 20), 100)
+	start = max(int(args.get("start") or 0), 0)
 	try:
 		# get_list, not get_all — reads answer with the session user's permissions.
-		rows = frappe.get_list(dt, filters=filters, fields=fields, limit=limit)
+		rows = frappe.get_list(dt, filters=filters, fields=fields, limit=limit + 1, start=start)
 	except Exception as e:
 		return json.dumps({"error": str(e)})
 	meta = frappe.get_meta(dt)
-	return json.dumps([truncate_record(dt, meta, dict(r)) for r in rows], default=str)
+	records = [truncate_record(dt, meta, dict(r)) for r in rows[:limit]]
+	if len(rows) <= limit:
+		return json.dumps(records, default=str)
+	return json.dumps(
+		{
+			"records": records,
+			"next_start": start + limit,
+			"more": "More records match. Pass start=next_start for the next page, or narrow with filters.",
+		},
+		default=str,
+	)
 
 
 def get_document(ctx, args: dict) -> str:
@@ -383,7 +394,9 @@ query_records_tool = Tool(
 	side="server",
 	description=(
 		"Fetch records from a DocType (like frappe.get_all) to see real data. Provide fields "
-		"and optional filters. Long values come back cut short and page block trees as a "
+		"and optional filters. At most 100 records come back per call: when more match, the "
+		"result says so with a next_start, so page on or narrow the filters before treating "
+		"a list as the whole site. Long values come back cut short and page block trees as a "
 		"pointer, so to search INSIDE many records' long fields (page blocks, component "
 		"blocks, scripts) use run_python and return only the matches."
 	),
@@ -392,8 +405,15 @@ query_records_tool = Tool(
 		"properties": {
 			"doctype": {"type": "string"},
 			"fields": {"type": "array", "items": {"type": "string"}},
-			"filters": {"type": "object", "description": 'Field→value filters, e.g. {"published": 1}.'},
+			"filters": {
+				"type": "object",
+				"description": (
+					'Field→value filters, e.g. {"published": 1}, {"route": ["like", "%pricing%"]} '
+					'or {"name": ["in", ["id-1", "id-2"]]}.'
+				),
+			},
 			"limit": {"type": "integer"},
+			"start": {"type": "integer", "description": "Skip this many records: a result's next_start."},
 		},
 		"required": ["doctype"],
 	},

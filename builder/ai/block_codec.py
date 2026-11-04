@@ -132,6 +132,8 @@ class BlockCodec:
 			if isinstance(dv, dict) and dv.get("property") and dv.get("key")
 		}:
 			out["bind"] = bind
+		if visible := BlockCodec.visible_key(block.get("visibilityCondition")):
+			out["bind"] = {**out.get("bind", {}), "visible": visible}
 		if block.get("classes"):
 			out["classes"] = block["classes"]
 		if block.get("innerHTML"):
@@ -154,6 +156,16 @@ class BlockCodec:
 			out["c"] = children
 
 		return out
+
+	@staticmethod
+	def visible_key(condition) -> str | None:
+		"""A visibilityCondition in the `bind` vocabulary: 'key', 'props.x' or 'component.x'."""
+		if isinstance(condition, str):
+			return condition or None
+		if not isinstance(condition, dict) or not condition.get("key"):
+			return None
+		prefix = {"props": "props.", "componentData": "component."}.get(condition.get("comesFrom"), "")
+		return prefix + condition["key"]
 
 	@staticmethod
 	def expand(node: dict) -> dict:

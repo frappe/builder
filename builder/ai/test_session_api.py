@@ -80,3 +80,23 @@ class TestPluginsWritten(FrappeTestCase):
 
 		self.assertEqual(AISession.plugins_written(session.name), [])
 		self.assertEqual(AISession.plugins_written(None), [])
+
+
+class TestMessageContent(FrappeTestCase):
+	def test_keeps_markup_in_messages_as_written(self):
+		page = frappe.get_doc(
+			{
+				"doctype": "Builder Page",
+				"page_title": "Markup Message Page",
+				"draft_blocks": Block(element="div", originalElement="body").as_json(wrap_in_array=True),
+			}
+		).insert()
+		session = AISession.create({"page": page.name})
+		svg = '<svg viewBox="0 0 18 18"><path d="M9 1a8 8 0 1 0 8 8"></path></svg>'
+		reply = 'Use `<a target="_blank" href="mailto:security@frappe.io">` for the link.'
+		session.append_message("user", f"swap in this icon {svg}")
+		session.append_message("assistant", reply)
+
+		contents = [m["content"] for m in AISession.get(session.name).get_messages()]
+
+		self.assertEqual(contents, [f"swap in this icon {svg}", reply])

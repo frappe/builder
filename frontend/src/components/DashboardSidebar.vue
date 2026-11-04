@@ -87,8 +87,8 @@
 		</ScrollArea>
 
 		<div class="mt-auto">
-			<DashboardCloneCard />
-			<DashboardTrialCard @open-billing="openBillingSettings" />
+			<DashboardCloneCard @open-domains="openSettings('global_cloud_domains')" />
+			<DashboardTrialCard @open-billing="openSettings('global_billing')" />
 			<p class="p-2 text-center text-sm text-ink-gray-4">{{ __("Version") }}: {{ builderVersion }}</p>
 			<TrialBanner v-if="builderStore.isFCSite" />
 		</div>
@@ -251,8 +251,8 @@ const deleteFolder = async (folderName: string) => {
 	setFolderActive("");
 };
 const showSettingsDialog = ref(false);
-const openBillingSettings = () => {
-	builderStore.settingsActiveTab = "global_billing";
+const openSettings = (pane: string) => {
+	builderStore.settingsActiveTab = pane;
 	showSettingsDialog.value = true;
 };
 const builderVersion = (window as any).builder_version;

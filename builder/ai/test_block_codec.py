@@ -74,6 +74,19 @@ class TestCompress(FrappeTestCase):
 		self.assertEqual(out["repeat"], {"data": "products"})
 		self.assertEqual(out["bind"], {"innerHTML": "title", "src": "image"})
 
+	def test_surfaces_a_visibility_condition_as_a_visible_binding(self):
+		cases = [
+			({"key": "show_offer", "comesFrom": "dataScript"}, "show_offer"),
+			({"key": "open", "comesFrom": "props"}, "props.open"),
+			({"key": "live", "comesFrom": "componentData"}, "component.live"),
+			("legacy_key", "legacy_key"),
+		]
+		for condition, visible in cases:
+			out = BlockCodec.compress(block(visibilityCondition=condition))
+
+			self.assertEqual(out["bind"]["visible"], visible)
+		self.assertNotIn("bind", BlockCodec.compress(block(visibilityCondition={"key": ""})))
+
 	def test_tolerates_null_children(self):
 		self.assertEqual(BlockCodec.compress({"element": "p", "children": None}), {"el": "p"})
 
