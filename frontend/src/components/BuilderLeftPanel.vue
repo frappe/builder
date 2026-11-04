@@ -9,27 +9,31 @@
 		<div
 			class="flex min-h-full flex-col items-center gap-2 border-r border-outline-gray-1 p-3"
 			ref="miniSidebar">
-			<Tooltip v-for="tab of tabs" :key="tab.name" side="right">
-				<template #content>
-					<span class="flex items-center gap-1.5">
-						{{ tab.label }}
-						<KeyboardShortcut v-if="tab.shortcut" :combo="tab.shortcut" class="!text-xs !text-ink-gray-4" />
+			<template v-for="tab of barTabs" :key="tab.name">
+				<div v-if="tab.name === firstPluginTab" class="w-6 border-t border-outline-gray-2" role="separator" />
+				<Tooltip side="right">
+					<template #content>
+						<span class="flex items-center gap-1.5">
+							{{ tab.label }}
+							<KeyboardShortcut v-if="tab.shortcut" :combo="tab.shortcut" class="!text-xs !text-ink-gray-4" />
+						</span>
+					</template>
+					<span class="relative inline-flex" @contextmenu="tab.plugin && openTabMenu($event, tab)">
+						<Button
+							:icon="tab.icon"
+							size="md"
+							:class="{ '!text-ink-gray-6': !isActive(tab) }"
+							:variant="isActive(tab) ? 'subtle' : 'ghost'"
+							@click.stop="select(tab)"></Button>
+						<!-- a tab a plugin added while the editor ran, until the user opens it -->
+						<span
+							v-if="unseenTabs.has(tab.name)"
+							class="pointer-events-none absolute right-1 top-1 size-2 animate-pulse rounded-full bg-surface-blue-6" />
 					</span>
-				</template>
-				<span class="relative inline-flex">
-					<Button
-						:icon="tab.icon"
-						size="md"
-						:class="{ '!text-ink-gray-6': !isActive(tab) }"
-						:variant="isActive(tab) ? 'subtle' : 'ghost'"
-						@click.stop="select(tab)"></Button>
-					<!-- a tab a plugin added while the editor ran, until the user opens it -->
-					<span
-						v-if="unseenTabs.has(tab.name)"
-						class="pointer-events-none absolute right-1 top-1 size-2 animate-pulse rounded-full bg-surface-blue-6" />
-				</span>
-			</Tooltip>
+				</Tooltip>
+			</template>
 		</div>
+		<ContextMenu ref="tabMenu" :options="tabMenuOptions" :context="menuTab" />
 		<div
 			class="no-scrollbar relative min-h-full overflow-auto"
 			:style="{
@@ -52,9 +56,11 @@
 	</div>
 </template>
 <script setup lang="ts">
+import ContextMenu from "@/components/ContextMenu.vue";
 import { leftPanelTabs, type LeftPanelTab } from "@/components/LeftPanelTabs";
-import { unseenTabs } from "@/data/plugins";
+import { hiddenPluginTabs, setPluginTabHidden, unseenTabs } from "@/data/plugins";
 import TokenManager from "@/components/Modals/TokenManager.vue";
+import { __ } from "@/translation";
 import { editorDemo } from "@/utils/editorDemo";
 import useBuilderStore from "@/stores/builderStore";
 import { KeyboardShortcut, Tooltip, useKeyboardShortcut } from "frappe-ui";
@@ -84,6 +90,23 @@ const miniSidebar = ref(null) as Ref<HTMLElement | null>;
 const mountedTabs = reactive(new Set<string>());
 
 const isActive = (tab: LeftPanelTab) => tab.isActive?.() ?? builderStore.leftPanelActiveTab === tab.name;
+
+// plugin tabs sit below the editor's own; a hidden one still shows while open, so Open has somewhere to land
+const pluginTabs = computed(() =>
+	tabs.value.filter((tab) => tab.plugin && (!hiddenPluginTabs.value.has(tab.plugin) || isActive(tab))),
+);
+const barTabs = computed(() => [...tabs.value.filter((tab) => !tab.plugin), ...pluginTabs.value]);
+const firstPluginTab = computed(() => pluginTabs.value[0]?.name);
+
+const tabMenu = ref<InstanceType<typeof ContextMenu> | null>(null);
+const menuTab = ref<LeftPanelTab | null>(null);
+const tabMenuOptions = [
+	{ label: __("Hide from left bar"), action: (tab: LeftPanelTab) => setPluginTabHidden(tab.plugin!, true) },
+];
+const openTabMenu = (event: MouseEvent, tab: LeftPanelTab) => {
+	menuTab.value = tab;
+	tabMenu.value?.show(event);
+};
 
 watch(
 	() => builderStore.leftPanelActiveTab,

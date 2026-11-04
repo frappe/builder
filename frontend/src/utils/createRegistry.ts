@@ -50,6 +50,8 @@ export type RegistryEntry = {
 	name: string;
 	before?: string;
 	after?: string;
+	/** Set by the registry: the plugin whose install() registered the item. */
+	plugin?: string;
 };
 
 /** The common case: the surface itself decides whether an item shows. */
@@ -99,7 +101,7 @@ export function createRegistry<T extends RegistryEntry>() {
 
 	// returns its own unregister, so a caller never has to track names
 	const register = (item: T) => {
-		const registered = withRawComponents({ ...item });
+		const registered = withRawComponents({ ...item, plugin: installingPlugin ?? undefined });
 		items.set(item.name, registered);
 		place(registered);
 		// a later registration under the same name owns the entry, so this must not delete it

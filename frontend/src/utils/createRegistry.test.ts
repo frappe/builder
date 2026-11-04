@@ -1,6 +1,6 @@
 import { ref } from "vue";
 import { describe, expect, it } from "vitest";
-import { createRegistry, type RegistryItem } from "./createRegistry";
+import { createRegistry, trackPluginItems, type RegistryItem } from "./createRegistry";
 
 type TestItem = RegistryItem & { label?: string };
 
@@ -147,5 +147,13 @@ describe("createRegistry", () => {
 		removeOld();
 		expect(names(registry.visible.value)).toEqual(["tab"]);
 		expect(registry.visible.value[0].label).toBe("new");
+	});
+
+	it("marks an item with the plugin whose install registered it", () => {
+		const registry = createRegistry<TestItem>();
+		registry.register({ name: "builtin", plugin: "acme/spoof" });
+		trackPluginItems("acme/stickers", () => registry.register({ name: "stickers" }));
+
+		expect(registry.visible.value.map((item) => item.plugin)).toEqual([undefined, "acme/stickers"]);
 	});
 });

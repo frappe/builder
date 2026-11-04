@@ -389,11 +389,12 @@ export class AIChatController {
 				}),
 			}).submit();
 			if (epoch !== this.loadSessionEpoch || this.pageId.value !== pageId) return;
-			const session = result as { session_id: string; messages: ChatMessage[] };
+			const session = result as { session_id: string; messages: ChatMessage[]; is_running?: boolean };
 			this.sessionId.value = session.session_id;
 			this.messages.value = (session.messages || []).map(
 				(m) => ({ ...m, role: m.role === "user" ? "user" : "assistant" }) as ChatMessage,
 			);
+			if (session.is_running) this.beginResumedTurn();
 			this.scrollToBottom();
 			this.loadSessions();
 		} finally {
@@ -806,7 +807,7 @@ export class AIChatController {
 			}).submit({ message_id: message.id, decision });
 			await this.loadSession();
 			if (decision === "apply") toast.success(res?.message || "Applied");
-			if (res?.resumed) this.beginResumedTurn();
+			if (res?.resumed && !this.isSubmitting.value) this.beginResumedTurn();
 		} catch (e: any) {
 			toast.error(e?.messages?.[0] || "Could not apply the change");
 		}

@@ -200,7 +200,8 @@ def run_read_page(ctx, args: dict) -> str:
 			"query_records('Builder Page', fields=['name', 'route', 'page_title'])."
 		)
 	if page_id == ctx.page_id:
-		return "That's the page you have open — its structure is already in your context."
+		parts = [ctx.build_page_context(), render_scripts(page_id), ctx.build_skill_context()]
+		return "\n\n".join(part for part in parts if part) or "The open page has no blocks yet."
 	if ctx.page_read_count >= MAX_PAGE_READS_PER_TURN:
 		return "Page-read limit reached for this turn — work with the references you have."
 	ctx.page_read_count += 1
@@ -631,6 +632,8 @@ read_page = Tool(
 	side="server",
 	handler=run_read_page,
 	description=(
+		"Read the OPEN page's current editable structure and attached scripts when you need "
+		"page context beyond the selected blocks. An empty open page includes the new-page skill. "
 		"Read ANOTHER page of this site as a read-only reference: its design digest "
 		"(fonts, colours, radii, section rhythm) plus its block structure. THE way to "
 		"understand the site's existing design language before matching it — when the "

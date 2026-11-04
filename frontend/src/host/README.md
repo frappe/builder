@@ -2,12 +2,12 @@
 
 A trusted plugin imports `builder`, `vue`, `pinia` and `frappe-ui` by their bare names. The editor page's import map resolves each name to one of these modules, so a plugin shares the editor's own instances.
 
-| File                             | Bare name   | What it gives                                                                                   |
-| -------------------------------- | ----------- | ----------------------------------------------------------------------------------------------- |
-| [`builder.ts`](./builder.ts)     | `builder`   | The editor API: the surface registries, the stores, `blockController`, `Block` and `lucideIcon` |
-| [`vue.ts`](./vue.ts)             | `vue`       | The editor's Vue                                                                                |
-| [`pinia.ts`](./pinia.ts)         | `pinia`     | The editor's pinia                                                                              |
-| [`frappe-ui.ts`](./frappe-ui.ts) | `frappe-ui` | The editor's frappe-ui                                                                          |
+| File                             | Bare name   | What it gives                                                                                                        |
+| -------------------------------- | ----------- | -------------------------------------------------------------------------------------------------------------------- |
+| [`builder.ts`](./builder.ts)     | `builder`   | The editor API: the surface registries, the stores, `blockController`, `Block`, `lucideIcon` and the block inserters |
+| [`vue.ts`](./vue.ts)             | `vue`       | The editor's Vue                                                                                                     |
+| [`pinia.ts`](./pinia.ts)         | `pinia`     | The editor's pinia                                                                                                   |
+| [`frappe-ui.ts`](./frappe-ui.ts) | `frappe-ui` | The editor's frappe-ui                                                                                               |
 
 Every other module under `src/` is reachable as `builder/internal/<path>`, with no promise: a `.ts` module drops its suffix, and a `.vue` module keeps it. `main.ts` is left out, because it would start a second app.
 

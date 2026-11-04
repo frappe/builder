@@ -116,6 +116,20 @@ class AISession:
 		return meta if isinstance(meta, dict) else {}
 
 	@classmethod
+	def plugins_written(cls, session_id: str | None) -> list[str]:
+		"""Every plugin this conversation's replies wrote, oldest first."""
+		if not session_id:
+			return []
+		rows = frappe.db.get_all(
+			cls.MESSAGE_DOCTYPE,
+			filters={"session": session_id, "role": "assistant", "metadata_json": ["like", '%"plugins"%']},
+			pluck="metadata_json",
+			order_by="creation asc",
+		)
+		written = [plugin for row in rows for plugin in cls.load_metadata(row).get("plugins") or []]
+		return list(dict.fromkeys(written))
+
+	@classmethod
 	def latest_canvas_theme(cls, session_id: str) -> str | None:
 		"""The editor theme the user's latest message was sent from."""
 		metadata_json = frappe.db.get_value(

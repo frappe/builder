@@ -53,6 +53,10 @@ def run_extract_component(ctx, args: dict) -> str:
 	}
 	children = parent["children"]
 	children[next(i for i, c in enumerate(children) if c.get("blockId") == block_id)] = instance
+	# The open editor fetches the new component in its own request as soon as it gets the
+	# instance, and keeps "Component Missing" for good if the row isn't committed yet.
+	# Nothing after this may raise: the loop's savepoint is gone.
+	frappe.db.commit()  # nosemgrep
 	ctx.queue_client_op({"tool_name": "set_page_blocks", "args": {"blocks": tree}})
 	return (
 		f"Extracted '{name}' as Builder Component {component_id}; the block is now an instance of it. "

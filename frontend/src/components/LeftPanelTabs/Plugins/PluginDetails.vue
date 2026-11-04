@@ -101,8 +101,10 @@
 					:can-manage="canManagePlugins"
 					:enabled="details.enabled"
 					:working="working"
+					:tab-hidden="tabHidden"
 					@open="openHandler?.()"
 					@set-enabled="setEnabled"
+					@set-tab-hidden="(hidden: boolean) => setPluginTabHidden(plugin, hidden)"
 					@uninstall="uninstall" />
 
 				<Button
@@ -151,14 +153,17 @@ import PluginActions from "@/components/LeftPanelTabs/Plugins/PluginActions.vue"
 import PluginInstallDialog from "@/components/LeftPanelTabs/Plugins/PluginInstallDialog.vue";
 import PluginUpdate from "@/components/LeftPanelTabs/Plugins/PluginUpdate.vue";
 import { renderMarkdown } from "@/components/ai/markdown";
+import { leftPanelTabs } from "@/components/LeftPanelTabs";
 import {
 	canManagePlugins,
 	getHubPlugin,
+	hiddenPluginTabs,
 	installations,
 	installFromHub,
 	promptReload,
 	reloadInstallations,
 	setPluginEnabled,
+	setPluginTabHidden,
 	uninstallPlugin,
 	useInstallationDetails,
 	type InstallationDetails,
@@ -189,6 +194,13 @@ const isReady = computed(() => !isPending.value && !isFailed.value);
 
 /** What the running plugin registered for its Open button. A disabled plugin registers nothing. */
 const openHandler = computed(() => openHandlers.get(props.plugin));
+
+/** Unset for a plugin with no left bar tab, so the menu offers nothing to hide. */
+const tabHidden = computed(() =>
+	leftPanelTabs.all.value.some((tab) => tab.plugin === props.plugin)
+		? hiddenPluginTabs.value.has(props.plugin)
+		: undefined,
+);
 
 const stop = async () => {
 	await stopDevPlugin();

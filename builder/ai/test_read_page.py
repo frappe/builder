@@ -64,10 +64,21 @@ class TestReadPage(FrappeTestCase):
 		self.assertIn("Attached page scripts", out)
 		self.assertIn(".raven { letter-spacing: 0.08em; }", out)
 
-	def test_points_back_to_context_for_the_open_page(self):
-		out = run_read_page(self.ctx(page_id=self.page.name), {"page_id": self.page.name})
+	def test_reads_the_current_working_tree_for_the_open_page(self):
+		from builder.ai.agent.loop import AgentRunner
+		from builder.ai.agent.tree import WorkingTree
 
-		self.assertIn("already in your context", out)
+		runner = AgentRunner("edit this", model="m", api_key="k", page_id=self.page.name)
+		runner.tree = WorkingTree(
+			{"blockId": "root", "element": "div", "children": [{"blockId": "live", "innerHTML": "Updated"}]}
+		)
+		out = run_read_page(runner, {"page_id": self.page.name})
+
+		self.assertIn("Updated", out)
+		self.assertIn("ref: live", out)
+		self.assertIn(".raven { letter-spacing: 0.08em; }", out)
+		self.assertNotIn("READ-ONLY", out)
+		self.assertNotIn("Ravens", out)
 
 	def test_fails_with_a_pointer_for_an_unknown_page(self):
 		out = run_read_page(self.ctx(), {"page_id": "no-such-page"})

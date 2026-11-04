@@ -49,6 +49,7 @@ export default {
 | `usePageStore`, `useCanvasStore`, `useBuilderStore`                                             | The editor's stores                                                                |
 | `blockController`, `Block`                                                                      | The selected blocks, and the block tree                                            |
 | `lucideIcon(name)`                                                                              | Any lucide icon, as a component for an `icon` field                                |
+| `insertBlock(options)`, `startBlockDrag(event, options)`                                        | Put a new block on the page, on click or by dragging it onto the canvas            |
 | `StylePropertyControl`, `AttributePropertyControl`, `BasePropertyControl`                       | The controls of the property panel, for a plugin's section                     |
 | `OptionToggle`, `ColorInput`, `RangeInput`                                                      | The widgets those controls draw instead of a text input                            |
 
