@@ -255,5 +255,31 @@ class TestMutatingStructure(unittest.TestCase):
 		self.assertEqual(self.child_ids("hero"), ["cta"])
 
 
+class TestVisibilityBinding(unittest.TestCase):
+	def setUp(self):
+		self.tree = WorkingTree(sample_root())
+
+	def test_update_sets_and_clears_the_condition(self):
+		self.tree.apply("update_block", {"block_id": "hero", "bind": {"visible": "show_offer"}})
+		hero = self.tree.resolve("hero")
+		self.assertEqual(hero["visibilityCondition"], {"key": "show_offer", "comesFrom": "dataScript"})
+		self.assertFalse(hero.get("dynamicValues"))
+
+		self.tree.apply("update_block", {"block_id": "hero", "bind": {"visible": None}})
+		self.assertNotIn("visibilityCondition", self.tree.resolve("hero"))
+
+	def test_add_reads_a_prop_condition_beside_other_bindings(self):
+		self.tree.apply(
+			"add_block",
+			{
+				"parent_block_id": "footer",
+				"block": {"el": "p", "bind": {"visible": "props.show_note", "innerHTML": "note"}},
+			},
+		)
+		block = self.tree.resolve("footer")["children"][0]
+		self.assertEqual(block["visibilityCondition"], {"key": "show_note", "comesFrom": "props"})
+		self.assertEqual([dv["property"] for dv in block["dynamicValues"]], ["innerHTML"])
+
+
 if __name__ == "__main__":
 	unittest.main()

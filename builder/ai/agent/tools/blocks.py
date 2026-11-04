@@ -63,8 +63,11 @@ update_block = Tool(
 					"script's output — a props binding shows the prop's value live in the editor "
 					"canvas too, so text that mirrors a prop should be BOUND to it, not hardcoded. "
 					"This is the ONLY way to render dynamic data — NEVER write '{{ item.title }}' "
-					"moustache text into inner_text/attributes (it renders literally). A null "
-					"value unbinds."
+					"moustache text into inner_text/attributes (it renders literally). "
+					"visible: '<key>' renders the block only when that key is truthy, decided on "
+					"the server so nothing flashes: set the key in the page data script (e.g. "
+					"data.show_offer from frappe.form_dict) and bind it, instead of hiding the "
+					"block from a page script. A null value unbinds."
 				),
 			},
 			"props": {
@@ -172,7 +175,8 @@ add_block = Tool(
 						"description": (
 							"Data bindings {property: data_key} (e.g. {innerHTML: 'title', src: 'image'}). "
 							"Inside a repeat item the key is a record field. NEVER put '{{ … }}' "
-							"moustache text in text/attrs — bindings are the only dynamic mechanism."
+							"moustache text in text/attrs: bindings are the only dynamic mechanism. "
+							"visible: '<key>' renders the block only when the key is truthy."
 						),
 					},
 					"repeat": {

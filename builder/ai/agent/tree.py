@@ -259,8 +259,14 @@ def update_definition(component: str, mutate) -> None:
 def merge_bindings(block: dict, bind: dict) -> None:
 	"""Merge {property: item_key} bindings into dynamicValues — one entry per bound
 	property (a re-bind replaces, a None value unbinds)."""
-	from builder.ai.page_writer import bind_to_dynamic_values
+	from builder.ai.page_writer import bind_to_dynamic_values, visibility_condition
 
+	if "visible" in bind:
+		bind = dict(bind)
+		if (visible := bind.pop("visible")) is None:
+			block.pop("visibilityCondition", None)
+		else:
+			block["visibilityCondition"] = visibility_condition(visible)
 	incoming = {prop: field for prop, field in bind.items() if field is not None}
 	dropped = {("innerHTML" if p in ("innerHTML", "text") else p) for p in bind}
 	kept = [dv for dv in block.get("dynamicValues") or [] if dv.get("property") not in dropped]

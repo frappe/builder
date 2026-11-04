@@ -257,6 +257,12 @@ def binding_entry(prop: str, field) -> dict:
 	return entry
 
 
+def visibility_condition(field) -> dict:
+	"""A `bind.visible` key → the block's visibilityCondition (rendered only when truthy)."""
+	entry = binding_entry("visible", field)
+	return {"key": entry["key"], "comesFrom": entry.get("comesFrom", "dataScript")}
+
+
 def bind_to_dynamic_values(bind: dict) -> list:
 	"""{property: item_key} → dynamicValues entries (the editor's binding shape).
 	innerHTML/text bind by content ("key"); anything else binds an HTML attribute.
@@ -312,7 +318,11 @@ def convert_yaml_block(node, is_root: bool = False) -> dict | None:
 	# anything else binds an HTML attribute (href, src, …).
 	bind = node.get("bind")
 	if isinstance(bind, dict) and bind:
-		block["dynamicValues"] = bind_to_dynamic_values(bind)
+		bind = dict(bind)
+		if (visible := bind.pop("visible", None)) is not None:
+			block["visibilityCondition"] = visibility_condition(visible)
+		if bind:
+			block["dynamicValues"] = bind_to_dynamic_values(bind)
 
 	children = node.get("c")
 	child_blocks = (
