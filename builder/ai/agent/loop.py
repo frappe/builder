@@ -89,6 +89,9 @@ SNAPSHOT_TOOLS = frozenset(
 		"generate_page",
 		"set_page_script",
 		"update_script",
+		"attach_page_script",
+		"detach_page_script",
+		"write_page_data_script",
 	}
 )
 
@@ -97,7 +100,9 @@ SNAPSHOT_TOOLS = frozenset(
 # silently — two parallel attaches in one round raced and .catch(() => null) ate the
 # failure; a page then published with its reveal CSS but not the JS that fires it.
 # The server apply is atomic and verified; the canvas just mirrors the result.
-SCRIPT_TWIN_TOOLS = frozenset({"set_page_script", "attach_page_script", "update_script"})
+SCRIPT_TWIN_TOOLS = frozenset(
+	{"set_page_script", "attach_page_script", "update_script", "detach_page_script"}
+)
 
 
 class CancelledError(Exception):
@@ -325,6 +330,8 @@ def activity_summary(tool_name: str, args: dict, tree=None, done: bool = True) -
 		return f"{voice('Adding', 'Added')} script: {args.get('name') or ''}".rstrip(": ")
 	if tool_name == "update_script":
 		return f"{voice('Updating', 'Updated')} script: {args.get('script_name') or ''}".rstrip(": ")
+	if tool_name == "detach_page_script":
+		return f"{voice('Removing', 'Removed')} script: {args.get('script_name') or ''}".rstrip(": ")
 	if tool_name == "write_plugin":
 		label = args.get("label") or args.get("name")
 		return (
@@ -1066,6 +1073,8 @@ class AgentRunner:
 			parts.append("added a script")
 		if counts.get("update_script"):
 			parts.append("updated a script")
+		if counts.get("detach_page_script"):
+			parts.append("removed a script")
 
 		if not parts:
 			n = len(operations)

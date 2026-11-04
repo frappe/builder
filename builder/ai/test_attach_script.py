@@ -3,7 +3,12 @@ from types import SimpleNamespace
 import frappe
 from frappe.tests.utils import FrappeTestCase
 
-from builder.ai.agent.tools.scripts import apply_attach_page_script, apply_update_script
+from builder.ai.agent.loop import AgentRunner, activity_summary
+from builder.ai.agent.tools.scripts import (
+	apply_attach_page_script,
+	apply_detach_page_script,
+	apply_update_script,
+)
 
 
 def make_page():
@@ -62,7 +67,8 @@ class TestUpdateScript(FrappeTestCase):
 
 		out = apply_update_script(ctx, {"script_name": script.name, "script": ".hero { opacity: 0; }"})
 
-		self.assertEqual(out, f"Updated script '{script.name}'.")
+		self.assertTrue(out.startswith(f"Updated script '{script.name}'."), out)
+		self.assertIn("live", out)
 		self.assertEqual(
 			frappe.db.get_value("Builder Client Script", script.name, "script"), ".hero { opacity: 0; }"
 		)
@@ -76,3 +82,32 @@ class TestUpdateScript(FrappeTestCase):
 
 			self.assertTrue(out.startswith("FAILED"), page_id)
 		self.assertEqual(frappe.db.get_value("Builder Client Script", script.name, "script"), script.script)
+
+
+class TestDetachPageScript(FrappeTestCase):
+	def test_unlinks_the_script_and_keeps_the_doc(self):
+		page, script = make_page(), make_script()
+		ctx = SimpleNamespace(page_id=page.name)
+		apply_attach_page_script(ctx, {"script_name": script.name})
+
+		out = apply_detach_page_script(ctx, {"script_name": script.name})
+
+		self.assertTrue(out.startswith(f"Removed script '{script.name}'"), out)
+		self.assertEqual(attached_scripts(page.name), [])
+		self.assertTrue(frappe.db.exists("Builder Client Script", script.name))
+
+	def test_refuses_a_script_the_page_does_not_carry(self):
+		page, script = make_page(), make_script()
+		for page_id in (page.name, None):
+			out = apply_detach_page_script(SimpleNamespace(page_id=page_id), {"script_name": script.name})
+
+			self.assertTrue(out.startswith("FAILED"), page_id)
+
+	def test_reads_as_a_removal_in_the_chat(self):
+		self.assertEqual(
+			activity_summary("detach_page_script", {"script_name": "Hero Motion"}),
+			"Removed script: Hero Motion",
+		)
+		self.assertEqual(
+			AgentRunner.describe_operations([{"tool_name": "detach_page_script"}]), "Removed a script"
+		)

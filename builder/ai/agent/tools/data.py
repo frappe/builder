@@ -18,6 +18,7 @@ import frappe
 
 from builder.ai.agent import pending
 from builder.ai.agent.registry import Tool
+from builder.ai.agent.tools.scripts import LIVE_NOTE
 
 logger = frappe.logger("builder.ai.agent.data")
 logger.setLevel(logging.INFO)
@@ -281,7 +282,7 @@ def write_page_data_script(ctx, args: dict) -> str:
 	from builder.ai.agent.tools.settings import emit_refetch
 
 	emit_refetch(ctx, "page_data")
-	return "Saved the page data script (runs server-side to populate `data`)."
+	return f"Saved the page data script (runs server-side to populate `data`).{LIVE_NOTE}"
 
 
 # --- writes (terminal, confirm-gated) -----------------------------------
