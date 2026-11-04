@@ -141,7 +141,7 @@ class ScenarioRun:
 				"draft_blocks": blocks,
 			}
 		).insert(ignore_permissions=True)
-		frappe.db.commit()
+		frappe.db.commit()  # nosemgrep
 		return page
 
 	def run_turn(self, page):
@@ -151,7 +151,7 @@ class ScenarioRun:
 
 		session = AISession.create({"page": page.name}, self.model)
 		session.append_message("user", self.scenario.prompt, message_type="chat", task_type="agent")
-		frappe.db.commit()
+		frappe.db.commit()  # nosemgrep
 		runner = AgentRunner(
 			self.scenario.prompt,
 			self.model,
@@ -160,7 +160,7 @@ class ScenarioRun:
 			session_id=session.name,
 		)
 		runner.run()
-		frappe.db.commit()
+		frappe.db.commit()  # nosemgrep
 		return runner
 
 	@staticmethod
@@ -251,4 +251,4 @@ class ScenarioRun:
 		for doctype in MINTED:
 			for name in frappe.get_all(doctype, {"creation": [">=", since]}, pluck="name"):
 				frappe.delete_doc(doctype, name, force=True, ignore_permissions=True)
-		frappe.db.commit()
+		frappe.db.commit()  # nosemgrep

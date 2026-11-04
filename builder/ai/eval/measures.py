@@ -279,5 +279,5 @@ def write_json(path: str, data):
 
 
 def read_json(path: str):
-	with open(path) as f:
+	with open(path) as f:  # nosemgrep
 		return json.load(f)
