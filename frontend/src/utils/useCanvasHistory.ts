@@ -1,5 +1,6 @@
 import type Block from "@/block";
 import { generateId, getBlockInstance, getBlockString } from "@/utils/helpers";
+import { historyTimestamp } from "@/utils/historyTimestamp";
 import { useBuilderToken } from "@/utils/useBuilderToken";
 import { debounceFilter, pausableFilter, watchIgnorable } from "@vueuse/core";
 import { ref, Ref, watch } from "vue";
@@ -27,6 +28,7 @@ export function useCanvasHistory(source: Ref<Block>, selectedBlockIds: Ref<Set<s
 	// caller when the canvas returns to edit mode. Distinct from the transient,
 	// reference-counted pause()/resume() used during drag/resize.
 	const enabled = ref(true);
+	let pendingAt: number | undefined;
 
 	function disable() {
 		enabled.value = false;
@@ -35,12 +37,17 @@ export function useCanvasHistory(source: Ref<Block>, selectedBlockIds: Ref<Set<s
 		enabled.value = true;
 	}
 
+	const debounceCommit = debounceFilter(DEBOUNCE_DELAY);
 	const {
 		eventFilter: blockWatcherFilter,
 		pause: pauseBlockWatcher,
 		resume: resumeBlockWatcher,
 		isActive: isTracking,
-	} = pausableFilter(debounceFilter(DEBOUNCE_DELAY));
+	} = pausableFilter((invoke, options) => {
+		if (!enabled.value) return;
+		pendingAt = historyTimestamp();
+		return debounceCommit(invoke, options);
+	});
 
 	const {
 		eventFilter: selectionWatherFilter,
@@ -54,6 +61,7 @@ export function useCanvasHistory(source: Ref<Block>, selectedBlockIds: Ref<Set<s
 		stop: stopBlockWatcher,
 	} = watchIgnorable(source, commit, {
 		deep: true,
+		flush: "sync",
 		eventFilter: blockWatcherFilter,
 	});
 
@@ -70,10 +78,12 @@ export function useCanvasHistory(source: Ref<Block>, selectedBlockIds: Ref<Set<s
 	const stopTokenEditWatcher = watch(tokens.tokenEditVersion, clearRedo, { flush: "sync" });
 
 	function commit() {
-		if (!enabled.value) return;
+		if (!enabled.value || !isTracking.value) return;
 		const record = createHistoryRecord();
+		const at = pendingAt;
+		pendingAt = undefined;
 		if (record.block === last.value.block) return;
-		undoStack.value.unshift(stamp(last.value));
+		undoStack.value.unshift(stamp(last.value, at));
 		last.value = record;
 		trim(undoStack.value);
 		clearRedo();
@@ -100,8 +110,8 @@ export function useCanvasHistory(source: Ref<Block>, selectedBlockIds: Ref<Set<s
 		}
 	}
 
-	function stamp(state: CanvasState) {
-		state.at = Date.now();
+	function stamp(state: CanvasState, at = historyTimestamp()) {
+		state.at = at;
 		return state;
 	}
 
@@ -168,6 +178,7 @@ export function useCanvasHistory(source: Ref<Block>, selectedBlockIds: Ref<Set<s
 	}
 
 	function stop() {
+		disable();
 		stopBlockWatcher();
 		stopSelectedBlockUpdates();
 		stopTokenEditWatcher();
@@ -207,7 +218,10 @@ export function useCanvasHistory(source: Ref<Block>, selectedBlockIds: Ref<Set<s
 		}
 		pauseIdSet.clear();
 		resumeTracking();
-		if (commitNow) commit();
+		if (commitNow) {
+			pendingAt = historyTimestamp();
+			commit();
+		}
 	}
 
 	function batch(callback: () => void) {
@@ -225,6 +239,7 @@ export function useCanvasHistory(source: Ref<Block>, selectedBlockIds: Ref<Set<s
 		pause,
 		resume,
 		batch,
+		flush: commit,
 		canUndo,
 		canRedo,
 		lastUndoAt: () => undoStack.value[0]?.at ?? 0,

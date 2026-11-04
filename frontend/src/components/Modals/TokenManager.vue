@@ -429,6 +429,7 @@ import DraggablePopup from "@/components/Controls/DraggablePopup.vue";
 import FontInput from "@/components/Controls/FontInput.vue";
 import { BuilderToken } from "@/types/doctypes";
 import { confirm } from "@/utils/helpers";
+import { historyTimestamp } from "@/utils/historyTimestamp";
 import { tokenType, useBuilderToken } from "@/utils/useBuilderToken";
 import { Button, Dialog, TabButtons, toast, Tooltip } from "frappe-ui";
 import { computed, nextTick, onBeforeUnmount, reactive, ref, watch, type ComponentPublicInstance } from "vue";
@@ -646,6 +647,7 @@ const exitEdit = (row: Row) => {
 const commitEdit = (row: Row, field: EditableField, e: Event) => {
 	// Esc already closed this editor; ignore the trailing blur
 	if (!isEditing(row, field)) return;
+	flushPendingSave();
 	const value = inputValue(e).trim();
 	exitEdit(row);
 	if ((row[field] || "") === value) return;
@@ -788,6 +790,7 @@ const confirmGroupDialog = async () => {
 const moveSelectedToGroup = async (group: string) => {
 	const rows = selectedRows();
 	if (!rows.length) return;
+	flushPendingSave();
 	recordTokenChange(
 		rows.map((row) => ({
 			name: row.name!,
@@ -795,10 +798,12 @@ const moveSelectedToGroup = async (group: string) => {
 			after: { ...tokenSnapshot(row), group },
 		})),
 	);
-	for (const row of rows) {
-		row.group = group;
-		await saveVariable(row);
-	}
+	await Promise.all(
+		rows.map((row) => {
+			row.group = group;
+			return saveVariable(row);
+		}),
+	);
 	if (group) {
 		toast.success(
 			rows.length === 1
@@ -909,22 +914,22 @@ const updateRowValue = async (row: Row, value: string | null, mode: "light" | "d
 	}
 };
 
-let pendingSave: { row: Row; timer: ReturnType<typeof setTimeout> } | null = null;
+let pendingSave: { row: Row; timer: ReturnType<typeof setTimeout>; at: number } | null = null;
 
 const debouncedSaveVariable = (row: Row) => {
 	if (pendingSave?.row === row) clearTimeout(pendingSave.timer);
 	else flushPendingSave();
-	pendingSave = { row, timer: setTimeout(flushPendingSave, 300) };
+	pendingSave = { row, timer: setTimeout(flushPendingSave, 300), at: historyTimestamp() };
 };
 
 const flushPendingSave = async () => {
 	if (!pendingSave) return;
-	const { row, timer } = pendingSave;
+	const { row, timer, at } = pendingSave;
 	clearTimeout(timer);
 	pendingSave = null;
 	const before = valuesBeforeSave.get(row.name!);
 	valuesBeforeSave.delete(row.name!);
-	if (before) recordTokenChange([{ name: row.name!, before, after: tokenSnapshot(row) }]);
+	if (before) recordTokenChange([{ name: row.name!, before, after: tokenSnapshot(row) }], at);
 	try {
 		await saveVariable(row);
 	} catch (error) {

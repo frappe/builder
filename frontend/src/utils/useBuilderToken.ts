@@ -1,5 +1,6 @@
 import builderTokenStore from "@/data/builderToken";
 import { BuilderToken } from "@/types/doctypes";
+import { historyTimestamp } from "@/utils/historyTimestamp";
 import { toast } from "frappe-ui";
 import { computed, ref } from "vue";
 
@@ -98,11 +99,17 @@ function builderTokenComposable() {
 		});
 	};
 
+	let pendingUpdates: Promise<unknown> = Promise.resolve();
+
 	const updateVariable = async (builderToken: Partial<BuilderToken>) => {
 		if (!builderToken.name || !builderToken.token_name || !builderToken.value) {
 			throw new Error("Variable name, id and value are required");
 		}
-		return await builderTokenStore.setValue.submit(builderToken);
+		const fields = { ...builderToken };
+		// A save already in flight must finish before undo or redo writes its replacement.
+		const update = pendingUpdates.then(() => builderTokenStore.setValue.submit(fields));
+		pendingUpdates = update.catch(() => {});
+		return await update;
 	};
 
 	const deleteVariable = async (name: string) => {
@@ -146,12 +153,12 @@ function builderTokenComposable() {
 		}
 	};
 
-	const recordTokenChange = (changes: TokenChange[]) => {
+	const recordTokenChange = (changes: TokenChange[], at = historyTimestamp()) => {
 		const changed = changes.filter(({ before, after }) =>
 			(Object.keys(after) as (keyof TokenFields)[]).some((key) => before[key] !== after[key]),
 		);
 		if (!changed.length) return;
-		tokenUndoStack.unshift({ changes: changed, at: Date.now() });
+		tokenUndoStack.unshift({ changes: changed, at });
 		clearTokenRedo();
 		tokenEditVersion.value++;
 	};
@@ -159,7 +166,7 @@ function builderTokenComposable() {
 	const moveTokenChange = (from: TokenHistoryEntry[], to: TokenHistoryEntry[], side: "before" | "after") => {
 		const entry = from.shift();
 		if (!entry) return;
-		to.unshift({ ...entry, at: Date.now() });
+		to.unshift({ ...entry, at: historyTimestamp() });
 		const values = new Map(entry.changes.map((change) => [change.name, change[side]]));
 		builderTokenStore.data = (builderTokenStore.data || []).map((token: BuilderToken) =>
 			values.has(token.name) ? { ...token, ...values.get(token.name) } : token,

@@ -311,6 +311,7 @@ commands.register({
 		const canvas = canvasStore.activeCanvas;
 		const tokens = useBuilderToken();
 		tokens.flushPendingEdits();
+		canvas?.history?.flush();
 		if (tokens.lastTokenUndoAt() > (canvas?.history?.lastUndoAt() ?? 0)) tokens.undoTokenChange();
 		else if (canvas?.history?.canUndo) canvas.history.undo();
 	},
@@ -327,6 +328,7 @@ commands.register({
 		const canvas = canvasStore.activeCanvas;
 		const tokens = useBuilderToken();
 		tokens.flushPendingEdits();
+		canvas?.history?.flush();
 		if (tokens.lastTokenRedoAt() > (canvas?.history?.lastRedoAt() ?? 0)) tokens.redoTokenChange();
 		else if (canvas?.history?.canRedo) canvas.history.redo();
 	},
