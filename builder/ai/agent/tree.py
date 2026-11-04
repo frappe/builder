@@ -317,6 +317,22 @@ def merge_block_update(block: dict, args: dict) -> None:
 		merge_client_script(block, args["client_script"])
 
 
+SUBTREE_REFS_LIMIT = 40
+
+
+def subtree_refs(block: dict) -> str:
+	"""The refs a new subtree got, so the next edit can target a child without a read."""
+	descendants = [b for b, depth in walk_blocks(block) if depth]
+	refs = [
+		f"{b.get('blockId')} <{b.get('element') or 'div'}>"
+		+ (f" '{b['blockName']}'" if b.get("blockName") else "")
+		for b in descendants[:SUBTREE_REFS_LIMIT]
+	]
+	if (extra := len(descendants) - SUBTREE_REFS_LIMIT) > 0:
+		refs.append(f"and {extra} more (query_blocks within this block)")
+	return ", ".join(refs)
+
+
 def insert_child(parent: dict, block: dict, after_block_id: str | None, index) -> None:
 	# a generated leaf carries "children": None, which setdefault would keep
 	children = parent["children"] = parent.get("children") or []
@@ -522,7 +538,8 @@ class WorkingTree:
 		# canvas so both sides key the same ids, and name the new ref so the model can
 		# chain edits onto the block it just added.
 		args["block_json"] = block
-		return f"Added block {block.get('blockId')} (<{block.get('element')}>) under {parent_id}."
+		added = f"Added block {block.get('blockId')} (<{block.get('element')}>) under {parent_id}."
+		return f"{added} Inside it: {inside}." if (inside := subtree_refs(block)) else added
 
 
 class ComponentTree(WorkingTree):
