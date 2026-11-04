@@ -292,6 +292,18 @@ class TestBuilderPage(FrappeTestCase):
 		finally:
 			page.delete()
 
+	def test_a_templated_canonical_url_is_rendered(self):
+		from frappe.utils import get_url
+
+		page = insert_page("test-templated-canonical", "Canonical Content")
+		try:
+			page.publish()
+			page.db_set("canonical_url", "{{ frappe.utils.get_url() }}/canonical-target")
+			content = get_response_content("/test-templated-canonical")
+			self.assertIn(f'<link rel="canonical" href="{get_url()}/canonical-target" />', content)
+		finally:
+			page.delete()
+
 	def test_route_is_trimmed_of_whitespace(self):
 		padded, blank = pages = [
 			insert_page(route, "Whitespace Content") for route in (" test-route-whitespace / ", "   ")
@@ -326,6 +338,18 @@ class TestBuilderPage(FrappeTestCase):
 			self.assertFalse(page.staging)
 			self.assertEqual(get_response("/test-staging-unpublish").status_code, 404)
 		finally:
+			page.delete()
+
+	def test_unpublishing_the_home_page_clears_it_from_settings(self):
+		page = insert_page("test-unpublish-home", "Home Content")
+		home_page = frappe.db.get_single_value("Builder Settings", "home_page")
+		try:
+			page.publish()
+			frappe.db.set_single_value("Builder Settings", "home_page", page.route)
+			page.unpublish()
+			self.assertFalse(frappe.db.get_single_value("Builder Settings", "home_page"))
+		finally:
+			frappe.db.set_single_value("Builder Settings", "home_page", home_page)
 			page.delete()
 
 	def test_live_page_keeps_its_route_when_a_staging_page_shares_it(self):

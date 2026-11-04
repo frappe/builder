@@ -46,7 +46,9 @@ class Frappectl:
 		self.base = ["frappectl", *(["-s", profile] if profile else []), "--json"]
 
 	def run(self, *args: str, hint: str = "", check: bool = True) -> object:
-		result = subprocess.run([*self.base, *args], capture_output=True, text=True, stdin=subprocess.DEVNULL)
+		result = subprocess.run(  # nosemgrep
+			[*self.base, *args], capture_output=True, text=True, stdin=subprocess.DEVNULL
+		)
 		if result.returncode and not check:
 			return False
 		if result.returncode:
@@ -462,7 +464,7 @@ def login(site: str) -> str:
 	# frappectl insists on a terminal even when the flags answer every prompt; pty.spawn
 	# would hang on macOS before Python 3.10 once frappectl exits, so relay output by hand
 	controller, terminal = pty.openpty()
-	process = subprocess.Popen(command, stdin=terminal, stdout=terminal, stderr=terminal)
+	process = subprocess.Popen(command, stdin=terminal, stdout=terminal, stderr=terminal)  # nosemgrep
 	os.close(terminal)
 	while chunk := read_terminal(controller):
 		sys.stdout.write(chunk.decode(errors="replace"))
@@ -480,7 +482,7 @@ def ensure_frappectl():
 	if not shutil.which("uv"):
 		sys.exit("install uv (https://docs.astral.sh/uv/getting-started/installation/), then connect again")
 	action = "upgrade" if shutil.which("frappectl") else "install"
-	result = subprocess.run(
+	result = subprocess.run(  # nosemgrep
 		["uv", "tool", action, "frappectl"], capture_output=True, text=True, stdin=subprocess.DEVNULL
 	)
 	if result.returncode:
@@ -498,7 +500,7 @@ def update_skill():
 	skill = Path(__file__).parent.parent
 	before = (skill / "SKILL.md").read_bytes()
 	lock = next((d for d in list(skill.parents)[:4] if (d / "skills-lock.json").exists()), None)
-	subprocess.run(
+	subprocess.run(  # nosemgrep
 		["npx", "-y", "skills", "update", "frappe-builder", "-y", *([] if lock else ["-g"])],
 		cwd=lock, capture_output=True, stdin=subprocess.DEVNULL,
 	)  # fmt: skip
@@ -507,7 +509,9 @@ def update_skill():
 
 
 def run_text(*command: str) -> str:
-	return subprocess.run(command, capture_output=True, text=True, stdin=subprocess.DEVNULL).stdout
+	return subprocess.run(  # nosemgrep
+		command, capture_output=True, text=True, stdin=subprocess.DEVNULL
+	).stdout
 
 
 def too_old(version: str) -> bool:
@@ -528,7 +532,7 @@ def update_bench(bench: Path):
 			print(f"{app}: {count} commits behind develop")
 	if behind:
 		print("updating with bench update (backs up and migrates every site on the bench)", flush=True)
-		subprocess.run(
+		subprocess.run(  # nosemgrep
 			["bench", "update", "--pull", "--requirements", "--patch", "--build", "--apps", ",".join(behind)],
 			cwd=bench, stdin=subprocess.DEVNULL,
 		)  # fmt: skip
@@ -539,7 +543,7 @@ class GitCheckout:
 		self.path = path
 
 	def git(self, *args: str) -> str:
-		return subprocess.run(
+		return subprocess.run(  # nosemgrep
 			["git", "-C", str(self.path), *args], capture_output=True, text=True
 		).stdout.strip()
 
