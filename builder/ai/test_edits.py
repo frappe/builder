@@ -180,3 +180,46 @@ class TestCompositionNotes(FrappeTestCase):
 
 		root["children"][1]["children"][0]["baseStyles"]["display"] = "none"
 		self.assertEqual(composition_notes(root), "")
+
+
+class TestClosingReply(FrappeTestCase):
+	def reply(self, ops, results):
+		from builder.ai.agent.loop import AgentRunner
+
+		return AgentRunner.closing_reply(ops, results)
+
+	def edit(self, reply=None):
+		return {
+			"tool_name": "edit_page",
+			"args": {"ops": "@a {color:red}", **({"reply": reply} if reply else {})},
+		}
+
+	def test_a_landed_edit_with_a_reply_ends_the_turn(self):
+		self.assertEqual(self.reply([self.edit("Made it red.")], ["Applied 1 op(s)."]), "Made it red.")
+
+	def test_no_reply_a_failure_or_a_read_in_the_round_keeps_going(self):
+		self.assertEqual(self.reply([self.edit()], ["Applied 1 op(s)."]), "")
+		self.assertEqual(
+			self.reply([self.edit("Done.")], ["Applied 0 of 1 op(s).\nFAILED line 1: @a not found"]), ""
+		)
+		preview = {"tool_name": "preview_page", "args": {}}
+		self.assertEqual(
+			self.reply([self.edit("Done."), preview], ["Applied 1 op(s).", "Screenshot attached"]), ""
+		)
+
+	def test_a_reply_waits_for_a_preview_of_a_page_built_this_turn(self):
+		from builder.ai.agent.loop import AgentRunner
+
+		runner = AgentRunner("hi", model="m", api_key="k")
+		runner.unreviewed_build = True
+		self.assertEqual(runner.turn_reply([self.edit("Done.")], ["Applied 1 op(s)."]), "")
+		runner.unreviewed_build = False
+		self.assertEqual(runner.turn_reply([self.edit("Done.")], ["Applied 1 op(s)."]), "Done.")
+
+	def test_dropped_generation_lines_are_named_to_the_model(self):
+		from builder.ai.agent.loop import AgentRunner
+
+		runner = AgentRunner("hi", model="m", api_key="k")
+		self.assertEqual(runner.dropped_lines_note(), "")
+		runner.generation_errors = ["line 45: unexpected text at `Morning`"]
+		self.assertIn("DROPPED LINES: 1 line(s)", runner.dropped_lines_note())

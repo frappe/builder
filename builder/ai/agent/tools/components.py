@@ -126,6 +126,7 @@ def refresh_open_page(ctx, synced_pages: list[str]) -> None:
 
 edit_component_tool = Tool(
 	name="edit_component",
+	skill="components",
 	side="server",
 	description=(
 		"Change a Builder Component's OWN definition and sync it to every page that embeds it. This "

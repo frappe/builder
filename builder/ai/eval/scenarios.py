@@ -77,6 +77,22 @@ SCENARIOS = (
 		expect_any=("present_ui", "generate_page"),
 	),
 	Scenario(
+		"contact-form",
+		"Add a contact form near the bottom where visitors leave their name, email and a message, "
+		"and make sure the submissions are saved somewhere I can see them.",
+		on_fixture=True,
+		expect_any=("connect_form",),
+		forbid=("generate_page",),
+	),
+	Scenario(
+		"data-list",
+		"Add a section listing this site's published Builder Pages (title and route), pulled live from "
+		"the database so it stays current.",
+		on_fixture=True,
+		expect_any=("write_page_data_script",),
+		forbid=("generate_page",),
+	),
+	Scenario(
 		"opinion",
 		"Should I use Comic Sans for the headings?",
 		on_fixture=True,

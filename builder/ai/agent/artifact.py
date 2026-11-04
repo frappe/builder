@@ -323,16 +323,20 @@ def generate_page_markup(ctx, args: dict) -> list[dict]:
 
 	from builder.ai import page_writer
 
-	root, data_script = page_writer.persist_page(ctx.page_id, text)
+	errors: list[str] = []
+	root, data_script = page_writer.persist_page(ctx.page_id, text, errors)
+	ctx.generation_errors = errors
 	log_generation_quality(ctx.model, finish_reason, text, root)
+	# The raw output, for diagnosing a page that came out thin or missing pieces.
+	dump = frappe.get_site_path("private", "files", f"ai-generation-{ctx.page_id}.txt")
+	try:
+		with open(dump, "w") as f:  # nosemgrep
+			f.write(text)
+	except OSError:
+		dump = "<unwritable>"
+	if errors:
+		logger.warning("generate_page: %d line(s) dropped, first: %s (raw: %s)", len(errors), errors[0], dump)
 	if root is None:
-		# A discarded generation is paid-for work: keep the raw text for diagnosis.
-		dump = frappe.get_site_path("private", "files", f"ai-failed-generation-{ctx.page_id}.txt")
-		try:
-			with open(dump, "w") as f:  # nosemgrep
-				f.write(text)
-		except OSError:
-			dump = "<unwritable>"
 		logger.warning(
 			"generate_page: markup produced no blocks (model=%s), raw saved to %s", ctx.model, dump
 		)

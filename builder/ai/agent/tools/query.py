@@ -510,9 +510,9 @@ read_page = Tool(
 	side="server",
 	handler=run_read_page,
 	description=(
-		"Read a page as markup. No arguments: the OPEN page's current structure (every "
-		"block with its @ref, styles and full text) and attached scripts; an empty open page "
-		"includes the new-page skill. `ref`: one open-page block and its subtree, and with "
+		"Read a page as markup. No arguments: the OPEN page as it is now, with its attached "
+		"scripts (it already came with the request; re-read after big changes or for a large "
+		"page's outline). `ref`: one open-page block and its subtree, and with "
 		"show_image the picture itself (and its dark-mode version): look before you describe, "
 		"judge, recreate or vary an existing image, never work from its file name. `page_id`: "
 		"ANOTHER page of this site as a read-only reference, with its design digest (fonts, "

@@ -27,7 +27,18 @@ edit_page = Tool(
 	),
 	parameters={
 		"type": "object",
-		"properties": {"ops": {"type": "string", "description": "The edit script."}},
+		"properties": {
+			"ops": {"type": "string", "description": "The edit script."},
+			"reply": {
+				"type": "string",
+				"description": (
+					"Your final reply, only when this script is the last thing the request needs: the "
+					"turn ends here if every op applies (a failure comes back to you instead). Leave it "
+					"out while anything is left (another tool, a preview, a next step); it is never a "
+					"progress note like 'next I'll wire the form'."
+				),
+			},
+		},
 		"required": ["ops"],
 	},
 )

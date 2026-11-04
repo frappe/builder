@@ -212,6 +212,46 @@ class TestOpenPageContext(FrappeTestCase):
 		self.assertNotIn(frappe.utils.get_url(), out)
 		self.assertNotIn("mode in the editor", out)
 
+	def runner_on(self, root):
+		from builder.ai.agent.loop import AgentRunner
+		from builder.ai.agent.tree import WorkingTree
+
+		runner = AgentRunner("hi", model="m", api_key="k", page_id="page-x")
+		runner.tree = WorkingTree(root)
+		return runner
+
+	def test_the_open_page_rides_in_with_the_request(self):
+		root = {
+			"blockId": "root",
+			"element": "div",
+			"children": [{"blockId": "k3x9abcde", "element": "h1", "innerHTML": "Hi"}],
+		}
+		runner = self.runner_on(root)
+
+		out = runner.build_initial_page_context()
+
+		self.assertIn('@k3x9 h1 "Hi"', out)
+		self.assertNotIn("read_page('page-x') returns", out)
+
+	def test_an_empty_page_brings_the_new_page_skill(self):
+		runner = self.runner_on({"blockId": "root", "element": "div", "children": []})
+
+		out = runner.build_initial_page_context()
+
+		self.assertIn("new-page skill in full", out)
+		self.assertIn("new-page", runner.attached_skills)
+
+	def test_a_page_past_the_full_render_limit_is_only_a_pointer(self):
+		from builder.ai.agent import loop
+
+		children = [{"blockId": f"b{i:08d}", "element": "p", "innerHTML": "x" * 400} for i in range(150)]
+		runner = self.runner_on({"blockId": "root", "element": "div", "children": children})
+
+		out = runner.build_initial_page_context()
+
+		self.assertLess(len(out), loop.FULL_CONTEXT_LIMIT)
+		self.assertIn("read_page('page-x') returns its outline", out)
+
 	def test_says_which_theme_the_editor_shows(self):
 		from builder.ai.agent.loop import AgentRunner
 
