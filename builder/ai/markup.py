@@ -52,7 +52,7 @@ STATES = frozenset(
 CALLS = ("icon", "use", "of", "in", "bind", "if", "repeat", "props")
 DEVICES = (("", "style"), ("t", "t_style"), ("m", "m_style"))
 DEVICE_KEYS = dict(DEVICES)
-STYLE_GROUP = re.compile(r"([tm])?(?::([a-z-]+))?\{")
+STYLE_GROUP = re.compile(r"([tm])?(?::([a-z-]+))?\s*\{")
 WORD = re.compile(r"[A-Za-z_][\w-]*")
 HEAD = re.compile(r"([a-z][a-z0-9-]*)?((?:\.[\w:/-]+)*)", re.I)
 BARE_VALUE = re.compile(r"^[^\s\[\]{}()\"'=;]+$")
@@ -591,9 +591,12 @@ class LineParser:
 	"""One markup line -> (refs, node). Patch lines may omit the tag; `$set` uses
 	spread from `sets` before the line's own declarations."""
 
-	def __init__(self, text: str, number: int, sets: dict):
+	def __init__(self, text: str, number: int, sets: dict, problems: list | None = None):
 		self.scan = Scanner(text, number)
 		self.sets = sets
+		# A generated page passes `problems`: a bad segment is noted and skipped, and
+		# the rest of the line (its text, its other styles) still lands.
+		self.problems = problems
 		self.node: dict = {}
 		self.refs: list[str] = []
 		self.used: list[str] = []
@@ -609,7 +612,13 @@ class LineParser:
 			scan.pos += match.end()
 		self.head()
 		while not scan.done():
-			self.segment()
+			try:
+				self.segment()
+			except MarkupError as e:
+				if self.problems is None:
+					raise
+				self.problems.append(str(e))
+				self.salvage(str(e))
 		for name in self.used:
 			merge_styles(self.node, self.sets[name])
 		merge_styles(self.node, self.own)
@@ -686,6 +695,17 @@ class LineParser:
 		else:
 			raise scan.fail("unexpected text")
 
+	def salvage(self, error: str) -> None:
+		"""Step past a bad segment. A text with no closing quote is the rest of the line."""
+		scan = self.scan
+		if "unclosed string" in error:
+			self.node["text"] = scan.rest()[1:].strip()
+		if "unclosed" in error:
+			scan.pos = len(scan.text)
+			return
+		end = re.search(r"\s", scan.text[scan.pos + 1 :])
+		scan.pos = scan.pos + 1 + end.start() if end else len(scan.text)
+
 	def rehome(self, styles: dict) -> None:
 		for key in [
 			k for k in styles if split_state(k)[1] in MISPLACED_TEXT | MISPLACED_ATTRS | MISPLACED_CLASSES
@@ -736,15 +756,16 @@ class LineParser:
 			raise self.scan.fail(f"unknown call {name}()")
 
 
-def define_set(body: str, number: int, sets: dict) -> None:
+def define_set(body: str, number: int, sets: dict, problems: list | None = None) -> None:
+	"""`$name {css}`, or `$name:hover {css}` adding a state to a set defined above."""
 	match = re.match(r"\$([A-Za-z_][\w-]*)\s*", body)
 	if not match:
 		raise MarkupError(f"line {number}: a style set is `$name {{css}}`")
-	parser = LineParser(body[match.end() :], number, sets)
+	parser = LineParser(body[match.end() :], number, sets, problems)
 	refs, node = parser.parse()
 	if refs or set(node) - {"style", "t_style", "m_style"}:
 		raise MarkupError(f"line {number}: a style set holds only {{css}}, t{{css}} and m{{css}} groups")
-	sets[match.group(1)] = node
+	merge_styles(sets.setdefault(match.group(1), {}), node)
 
 
 def parse_lines(
@@ -772,10 +793,14 @@ def parse_lines(
 					raise MarkupError(f"line {number}: `{body}` has no block above it")
 				owner.node.setdefault("client_script", {})[raw.group(1)] = code
 			elif body.startswith("$"):
-				define_set(body, number, sets)
+				define_set(body, number, sets, errors)
+			elif body.startswith("|"):
+				# Pug's text line: the text of the block above
+				lines.append(Line(indent=indent, number=number, node={"text": body[1:].strip()}))
 			else:
-				refs, node = LineParser(body, number, sets).parse()
-				lines.append(Line(indent=indent, number=number, refs=refs, node=node))
+				refs, node = LineParser(body, number, sets, errors).parse()
+				if refs or node:
+					lines.append(Line(indent=indent, number=number, refs=refs, node=node))
 		except MarkupError as e:
 			if errors is None:
 				raise

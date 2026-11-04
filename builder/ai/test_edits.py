@@ -206,3 +206,20 @@ class TestClosingReply(FrappeTestCase):
 		self.assertEqual(
 			self.reply([self.edit("Done."), preview], ["Applied 1 op(s).", "Screenshot attached"]), ""
 		)
+
+	def test_a_reply_waits_for_a_preview_of_a_page_built_this_turn(self):
+		from builder.ai.agent.loop import AgentRunner
+
+		runner = AgentRunner("hi", model="m", api_key="k")
+		runner.unreviewed_build = True
+		self.assertEqual(runner.turn_reply([self.edit("Done.")], ["Applied 1 op(s)."]), "")
+		runner.unreviewed_build = False
+		self.assertEqual(runner.turn_reply([self.edit("Done.")], ["Applied 1 op(s)."]), "Done.")
+
+	def test_dropped_generation_lines_are_named_to_the_model(self):
+		from builder.ai.agent.loop import AgentRunner
+
+		runner = AgentRunner("hi", model="m", api_key="k")
+		self.assertEqual(runner.dropped_lines_note(), "")
+		runner.generation_errors = ["line 45: unexpected text at `Morning`"]
+		self.assertIn("DROPPED LINES: 1 line(s)", runner.dropped_lines_note())

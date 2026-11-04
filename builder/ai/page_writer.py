@@ -515,11 +515,12 @@ def save_draft_blocks(page_id: str, root_block: dict) -> None:
 	)
 
 
-def persist_page(page_id: str, text: str) -> tuple[dict | None, str]:
+def persist_page(page_id: str, text: str, errors: list | None = None) -> tuple[dict | None, str]:
 	"""Expand generated markup and write it to a Builder Page's draft_blocks (+ the
 	repeater data shim). The page stays a DRAFT (published=0). Returns the expanded
-	root block and data script, (None, "") if the markup produced no blocks."""
-	blocks, data_script = expand_page_markup(text)
+	root block and data script, (None, "") if the markup produced no blocks. Lines
+	that did not parse go to `errors` when given."""
+	blocks, data_script = expand_page_markup(text, errors=errors)
 	if not blocks:
 		return None, ""
 	updates = {"draft_blocks": compact_json(blocks)}

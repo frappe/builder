@@ -108,6 +108,23 @@ class TestLines(unittest.TestCase):
 		self.assertNotIn("c", h1)
 		self.assertEqual((p["text"], [c["el"] for c in p["c"]]), ("One two", ["span"]))
 
+	def test_a_pug_text_line_folds_into_the_block_above(self):
+		root = self.node("div\n  h3 {font-size:25px}\n    | Morning Hatha")
+
+		self.assertEqual(root["c"][0]["text"], "Morning Hatha")
+
+	def test_a_generated_line_keeps_its_text_past_a_bad_segment(self):
+		errors = []
+		node = markup.load('div\n  p $nope "A four-week introduction"} {color:red}', errors=errors)[0]["c"][0]
+
+		self.assertEqual((node["text"], node["style"]), ("A four-week introduction", {"color": "red"}))
+		self.assertEqual(len(errors), 2)
+
+	def test_a_set_takes_a_state_and_a_space_before_the_brace(self):
+		root = self.node("$btn {color:red}\n$btn:hover {color:blue}\na $btn :hover {opacity:.9}")
+
+		self.assertEqual(root["style"], {"color": "red", "hover:color": "blue", "hover:opacity": ".9"})
+
 	def test_a_comment_line_is_skipped(self):
 		root = self.node('div\n  // the hero\n  h1 "A" // Title')
 
@@ -122,7 +139,8 @@ class TestLines(unittest.TestCase):
 		with self.assertRaises(markup.MarkupError):
 			markup.load('p "unclosed')
 		errors = []
-		self.assertEqual(markup.load('p "unclosed\np "ok"', errors=errors)[0]["text"], "ok")
+		roots = markup.load('p "unclosed\np "ok"', errors=errors)
+		self.assertEqual([r["text"] for r in roots], ["unclosed", "ok"])
 		self.assertIn("unclosed string", errors[0])
 
 

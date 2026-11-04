@@ -409,6 +409,12 @@ class AgentRunner:
 		self.image_views = 0
 		# read_page calls this turn — same idea, a reference sweep can't run up context.
 		self.page_read_count = 0
+		# A page generated this turn that no preview has looked at yet: a closing
+		# `reply` waits until it has been (the self-review catches empty rows and
+		# fonts that never loaded). generation_errors: lines the generator wrote that
+		# did not parse.
+		self.unreviewed_build = False
+		self.generation_errors: list[str] = []
 		# Style sets the model was shown this turn ($s1 on the open page, $a1… on
 		# references), so an edit script can spread them by name.
 		self.style_sets: dict[str, dict] = {}
@@ -1171,6 +1177,7 @@ class AgentRunner:
 			# canvas preview), persists the page, and the loop continues — so the model
 			# can add scripts, verify, and refine in the same turn.
 			content, ops = self.run_generation_step(tool, op)
+			self.unreviewed_build = self.unreviewed_build or bool(ops)
 			self.applied_operations.extend(ops)
 			if ops:
 				# The authoritative op replaces the throwaway streamed preview with
@@ -1181,6 +1188,8 @@ class AgentRunner:
 		if op["tool_name"] in SNAPSHOT_TOOLS:
 			self.ensure_revert_snapshot()
 		content = self.run_handler(tool, op)
+		if op["tool_name"] == "preview_page" and not str(content).startswith("FAILED"):
+			self.unreviewed_build = False
 		self.end_activity(entry)
 		self.drain_queued_ops()
 		if op["tool_name"] not in READ_ONLY_SERVER_TOOLS and not str(content).startswith("FAILED"):
@@ -1322,9 +1331,8 @@ class AgentRunner:
 					messages.append({"role": "tool", "tool_call_id": tc["id"], "content": content})
 				if turn_over:
 					return
-				if reply := self.closing_reply(
-					tool_operations, [m["content"] for m in messages[-len(raw_tool_calls) :]]
-				):
+				results = [m["content"] for m in messages[-len(raw_tool_calls) :]]
+				if reply := self.turn_reply(tool_operations, results):
 					summary_text = reply
 					self.stop_reason = "model_finished"
 					self.checkpoint()
@@ -1348,6 +1356,11 @@ class AgentRunner:
 			return
 
 		self.finish_turn(summary_text, started)
+
+	def turn_reply(self, ops: list[dict], results: list[str]) -> str:
+		"""The reply that ends the turn now, if any: never while a page generated this
+		turn is still unreviewed."""
+		return "" if self.unreviewed_build else self.closing_reply(ops, results)
 
 	@staticmethod
 	def closing_reply(ops: list[dict], results: list[str]) -> str:
@@ -1549,9 +1562,18 @@ class AgentRunner:
 			"Page generated and saved. Now finish the build: add the client scripts the plan "
 			"calls for (set_page_script), fix obvious breakage with edit_page, verify "
 			"with preview_page at most once, then finish with a short summary."
-			f"{self.script_hook_gap_note(root)}{composition_notes(root)}\n"
+			f"{self.script_hook_gap_note(root)}{composition_notes(root)}{self.dropped_lines_note()}\n"
 			f"{render_page_context(root, sets=self.style_sets)}",
 			ops,
+		)
+
+	def dropped_lines_note(self) -> str:
+		if not (errors := self.generation_errors):
+			return ""
+		listed = "; ".join(errors[:6])
+		return (
+			f"\nDROPPED LINES: {len(errors)} line(s) of the generated page did not parse ({listed}). "
+			"Whatever they held is missing: put it back with edit_page."
 		)
 
 	def script_hook_gap_note(self, root: dict) -> str:

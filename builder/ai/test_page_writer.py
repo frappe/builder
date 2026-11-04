@@ -132,10 +132,10 @@ class TestExpandPageMarkup(unittest.TestCase):
 		self.assertEqual(pw.expand_page_markup(""), ([], ""))
 		self.assertEqual(pw.expand_page_markup("!!!"), ([], ""))
 
-	def test_a_bad_line_costs_only_that_line(self):
+	def test_a_bad_segment_costs_only_that_segment(self):
 		errors = []
 		blocks, _ = pw.expand_page_markup('div\n  p "Hello"\n  h1 "unclosed\n  p "Bye"', errors=errors)
-		self.assertEqual([c["innerHTML"] for c in blocks[0]["children"]], ["Hello", "Bye"])
+		self.assertEqual([c["innerHTML"] for c in blocks[0]["children"]], ["Hello", "unclosed", "Bye"])
 		self.assertEqual(len(errors), 1)
 
 	def test_wraps_several_top_level_blocks_in_one_root(self):

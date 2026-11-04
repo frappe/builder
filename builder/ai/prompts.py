@@ -23,7 +23,8 @@ Blocks are read and written as markup: one block per line, two-space indentation
 - div use(<component_id>) embeds a Builder Component (its inner blocks follow by themselves); props(name=value) sets the instance's props; of(<id>) on an instance's child names the component block it mirrors.
 - bind(text=title src=image) binds the text or an attribute to data, if(key) renders the block only when the key is truthy, and repeat(key) repeats the block's one child for each record under that page-data key.
 - A `js |` or `css |` line under a component block opens its client script, indented below.
-- A closing // Name labels the block in the layers panel."""
+- A closing // Name labels the block in the layers panel.
+- There are no selectors or stylesheet rules: every line is one block, and a block's own t{…}/m{…} overrides go on that block's line."""
 
 	STYLING_RULES = """# Styling rules
 - Gradients go in background-image, never the background shorthand.
