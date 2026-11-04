@@ -240,7 +240,7 @@ class FormSubmission:
 			label = _(doc.meta.get_label(missing[0]))
 			return {"name": missing[0], "message": _("{0} is required").format(label)}
 		message = strip_html(cstr(frappe.message_log[-1].get("message"))) if frappe.message_log else ""
-		fields = [df for df in map(doc.meta.get_field, fieldnames) if df]
+		fields = [doc.meta.get_field(f) for f in fieldnames if doc.meta.has_field(f)]
 		# a refused value's message names its field or label, or else quotes the value
 		named = [df for df in fields if mentions(message, df.fieldname, df.label)]
 		quoted = [df for df in fields if mentions(message, self.data.get(df.fieldname))]

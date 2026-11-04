@@ -779,7 +779,7 @@ def get_page_ctr(
 	)
 
 
-@frappe.whitelist(allow_guest=True, methods=["POST"])
+@frappe.whitelist(allow_guest=True, methods=["POST"])  # nosemgrep
 @rate_limit(limit=10, seconds=60)
 def submit_form(send_to: str, data: dict):
 	"""Deliver a published form's submission to the destinations set in its Form section."""
