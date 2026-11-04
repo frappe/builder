@@ -105,6 +105,17 @@ SCRIPT_TWIN_TOOLS = frozenset(
 )
 
 
+# name, = or :, an opening quote (JSON-escaped in dumped args), then the value
+SECRET_RE = re.compile(
+	r"""(?i)\b(api[_-]?key|api[_-]?secret|client[_-]?secret|secret|password|passwd|"""
+	r"""access[_-]?token|auth[_-]?token|authorization)(\\?["']?\s*[:=]\s*\\?["'])([^"'\\]{4,})"""
+)
+
+
+def redact_secrets(text: str) -> str:
+	return SECRET_RE.sub(lambda m: f"{m.group(1)}{m.group(2)}[redacted]", text)
+
+
 class CancelledError(Exception):
 	"""Raised inside the stream loops when the user cancels the turn."""
 
@@ -576,7 +587,7 @@ class AgentRunner:
 					{
 						"name": op["tool_name"],
 						"args": BlockCodec.truncate_for_log(
-							json.dumps(op.get("args", {}), ensure_ascii=False), 300
+							redact_secrets(json.dumps(op.get("args", {}), ensure_ascii=False)), 300
 						),
 					}
 					for op in tool_operations
