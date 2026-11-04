@@ -4,7 +4,7 @@ import { type AIChatHandlers, attachAIChatListeners, detachAIChatListeners } fro
 import { type AffectedItems, type PageCanvas, ToolDispatcher } from "@/components/ai/toolDispatch";
 import { type Credits, creditsFor } from "@/components/ai/commands/shared";
 import type { AIProvider, AITurnStep, ChatMessage } from "@/components/ai/types";
-import { buildLocalMessage } from "@/components/ai/yaml";
+import { buildLocalMessage } from "@/components/ai/blockFields";
 import type BuilderCanvas from "@/components/BuilderCanvas.vue";
 import useBuilderStore from "@/stores/builderStore";
 import useCanvasStore from "@/stores/canvasStore";
@@ -99,25 +99,18 @@ export class AIChatController {
 		}
 	}
 
-	/** Accept one page_yaml chunk for the canvas. Dedupes replayed chunks by stream
-	 * offset, and refetches the server buffer when a gap shows we missed some. */
-	private acceptPageYamlChunk(data: { chunk?: string; offset?: number }): void {
-		if (typeof data.offset === "number") {
-			const have = this.pageStreamContent.value.length;
-			if (data.offset < have) return;
-			if (data.offset > have) {
-				this.syncActiveBuild();
-				return;
-			}
-		}
+	/** Accept one preview frame: the server expands the page written so far and
+	 * sends the whole tree, so a missed frame needs no replay. */
+	private acceptPageFrame(blocks: BlockOptions[] | undefined): void {
+		if (!blocks?.length) return;
 		this.beginCanvasBuild();
 		this.previewUnconfirmed = true;
-		this.pageStreamContent.value += data.chunk!;
+		this.previewBlocks.value = blocks;
 		this.scheduleStreamRender();
 	}
 
-	/** A mid-build page load: replay the in-flight generation stream from the
-	 * server's buffer so the canvas shows the live build, not the stale draft. */
+	/** A mid-build page load: show the server's latest preview frame so the canvas
+	 * shows the live build, not the stale draft. */
 	private async syncActiveBuild() {
 		const pid = this.pageId.value;
 		if (!pid || pid === "new") return;
@@ -125,17 +118,13 @@ export class AIChatController {
 			.submit({ page_id: pid })
 			.catch(() => null);
 		if (this.pageId.value !== pid) return;
-		if (!build?.yaml) return;
-		if (build.yaml.length <= this.pageStreamContent.value.length) return;
-		this.beginCanvasBuild();
-		this.pageStreamContent.value = build.yaml;
-		this.scheduleStreamRender();
+		this.acceptPageFrame(build?.blocks);
 	}
 
 	// Compact display line for a card-composed reply (set by selectOption).
 	private pendingDisplayText: string | null = null;
 
-	private readonly pageStreamContent = ref(""); // accumulates kind="page_yaml" chunks
+	private readonly previewBlocks = ref<BlockOptions[] | null>(null); // latest kind="page_blocks" frame
 	// True while the canvas shows a streamed preview that no authoritative
 	// tool_batch has replaced — if the turn ends in that state (failed generation,
 	// cancel), the preview is dead weight and the canvas must resync to the draft.
@@ -144,9 +133,9 @@ export class AIChatController {
 	/** The in-flight turn's timeline, mirrored onto the pending message as it grows. */
 	private readonly liveSteps = ref<AITurnStep[]>([]);
 	private readonly pendingAssistantId = ref<string | null>(null);
-	// Streaming re-render is throttled: re-parsing + rebuilding the whole block tree
-	// on every chunk pegs the CPU. The final generate_page op re-applies the
-	// authoritative document, so this preview can render at a coarse cadence.
+	// Preview re-render is throttled: rebuilding the whole block tree per frame pegs
+	// the CPU. The final generate_page op re-applies the authoritative tree, so this
+	// preview can render at a coarse cadence.
 	private static readonly STREAM_RENDER_MS = 200;
 	private streamRenderTimer: ReturnType<typeof setTimeout> | null = null;
 	private lastStreamRenderAt = 0;
@@ -290,7 +279,7 @@ export class AIChatController {
 		this.cancelOnceKnown = false;
 		this.endCanvasBuild();
 		this.progressMessage.value = "";
-		this.pageStreamContent.value = "";
+		this.previewBlocks.value = null;
 		this.summaryContent.value = "";
 		this.liveSteps.value = [];
 		this.pendingAssistantId.value = null;
@@ -322,7 +311,7 @@ export class AIChatController {
 		this.clearStreamRenderTimer();
 		this.lastStreamRenderAt = Date.now();
 		try {
-			this.dispatcher.applyPageYaml(this.pageStreamContent.value);
+			if (this.previewBlocks.value) this.dispatcher.applyPreview(this.previewBlocks.value[0]);
 			nextTick(() => this.pageCanvas.value?.followBuildEdge());
 		} catch {}
 	}
@@ -537,20 +526,20 @@ export class AIChatController {
 		chunk?: string;
 		kind?: string;
 		session_id?: string;
-		offset?: number;
+		blocks?: BlockOptions[];
 		replace?: boolean;
 	}) => {
-		if (!data.chunk && !data.replace) return;
+		if (!data.chunk && !data.replace && !data.blocks) return;
 		if (this.holdUntilSessionKnown(data, () => this.onStream(data))) return;
 		if (this.isForeignSession(data)) {
 			// Another chat on this page is generating: the canvas is page-level, so
 			// paint its preview, but keep its chat text out of this session.
-			if (data.kind === "page_yaml") this.acceptPageYamlChunk(data);
+			if (data.kind === "page_blocks") this.acceptPageFrame(data.blocks);
 			return;
 		}
 		this.isSubmitting.value = true;
-		if (data.kind === "page_yaml") {
-			this.acceptPageYamlChunk(data);
+		if (data.kind === "page_blocks") {
+			this.acceptPageFrame(data.blocks);
 			return;
 		}
 		if (data.kind === "reasoning") {
@@ -656,12 +645,6 @@ export class AIChatController {
 				return ((args.block_json as Record<string, any>)?.blockId || args.parent_block_id) as string;
 			}
 			if (tool_name === "update_block" || tool_name === "move_block") return args.block_id as string;
-			if (tool_name === "update_blocks") {
-				if (Array.isArray(args.patches)) {
-					return (args.patches as Record<string, any>[]).at(-1)?.block_id as string;
-				}
-				return ((args.block_ids as string[]) || []).at(-1);
-			}
 		}
 		return null;
 	}
@@ -689,7 +672,7 @@ export class AIChatController {
 		if (this.dispatcher.pendingAffectedScripts.value.length)
 			meta.affectedScripts = [...this.dispatcher.pendingAffectedScripts.value];
 		this.replacePendingAssistant(this.progressMessage.value, meta);
-		this.pageStreamContent.value = "";
+		this.previewBlocks.value = null;
 		this.summaryContent.value = "";
 		this.liveSteps.value = [];
 		this.dispatcher.reset();
@@ -739,7 +722,7 @@ export class AIChatController {
 		this.isCancelling.value = false;
 		this.progressMessage.value = "";
 		this.replacePendingAssistant(data.message || "Request failed", { status: "error" });
-		this.pageStreamContent.value = "";
+		this.previewBlocks.value = null;
 		this.summaryContent.value = "";
 		this.liveSteps.value = [];
 		await this.loadSession();
@@ -763,7 +746,7 @@ export class AIChatController {
 		this.isSubmitting.value = false;
 		this.isCancelling.value = false;
 		this.progressMessage.value = "";
-		this.pageStreamContent.value = "";
+		this.previewBlocks.value = null;
 		this.summaryContent.value = "";
 		this.liveSteps.value = [];
 
@@ -823,7 +806,7 @@ export class AIChatController {
 		this.turnCount++;
 		this.clearTurnTimers();
 		this.pendingAssistantId.value = assistantMessage.id;
-		this.pageStreamContent.value = "";
+		this.previewBlocks.value = null;
 		this.summaryContent.value = "";
 		this.liveSteps.value = [];
 		this.dispatcher.reset();
@@ -849,7 +832,7 @@ export class AIChatController {
 		this.replacePendingAssistant("Cancelling…", { status: "running" });
 		const resetStuckCancel = async () => {
 			if (!this.isCancelling.value) return;
-			this.endCanvasBuild(!!this.pageStreamContent.value);
+			this.endCanvasBuild(!!this.previewBlocks.value);
 			this.resetTransientState();
 			await this.loadSession();
 			toast.info("That run is no longer active.");
@@ -908,7 +891,7 @@ export class AIChatController {
 		this.messages.value.push(userMessage, assistantMessage);
 		this.pendingAssistantId.value = assistantMessage.id;
 		this.scrollToBottom();
-		this.pageStreamContent.value = "";
+		this.previewBlocks.value = null;
 		this.summaryContent.value = "";
 		this.liveSteps.value = [];
 		this.dispatcher.reset();

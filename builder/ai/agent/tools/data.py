@@ -130,7 +130,7 @@ def get_document(ctx, args: dict) -> str:
 	# A component's design IS its block tree — render it readable instead of letting
 	# the generic bound shred the raw JSON.
 	if dt == "Builder Component" and data.get("block") and doc.get("block"):
-		data["block"] = component_block_yaml(doc.block)
+		data["block"] = component_block_markup(doc.block)
 	return frappe.as_json(data)
 
 
@@ -161,12 +161,13 @@ def truncate(value, cap: int):
 	return value[:cap] + "…" if isinstance(value, str) and len(value) > cap else value
 
 
-COMPONENT_YAML_LIMIT = 8000
+COMPONENT_MARKUP_LIMIT = 8000
 
 
-def component_block_yaml(raw: str) -> str:
-	from builder.ai.block_codec import BlockCodec
-	from builder.utils import to_compact_yaml
+def component_block_markup(raw: str) -> str:
+	"""A component's tree in markup with FULL refs: they are the of() values its page
+	instances show, so the two join without prefix matching."""
+	from builder.ai import markup
 
 	try:
 		block = json.loads(raw)
@@ -176,9 +177,9 @@ def component_block_yaml(raw: str) -> str:
 		block = block[0] if block else None
 	if not isinstance(block, dict):
 		return "<empty>"
-	rendered = to_compact_yaml(BlockCodec.compress(block, depth=0, task_tier="complex"))
-	if len(rendered) > COMPONENT_YAML_LIMIT:
-		rendered = rendered[:COMPONENT_YAML_LIMIT] + "\n… (truncated — a large component)"
+	rendered = markup.dump_block(block, set_prefix=None)
+	if len(rendered) > COMPONENT_MARKUP_LIMIT:
+		rendered = rendered[:COMPONENT_MARKUP_LIMIT] + "\n… (truncated, a large component)"
 	return rendered
 
 

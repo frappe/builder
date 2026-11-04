@@ -5,16 +5,8 @@ import type { BuilderClientScript } from "@/types/doctypes";
 import { findBlockInTree } from "@/utils/block/tree";
 import { getBlockInstance } from "@/utils/helpers";
 import { ref, type Ref } from "vue";
-import { normalizeStyles } from "./normalizeStyles";
+import { bindingEntry, STANDARD_ATTRS, visibilityCondition } from "./blockFields";
 import type { AffectedBlock, AffectedScript } from "./types";
-import {
-	bindingEntry,
-	buildRepeaterDataScript,
-	convertYAMLtoBlock,
-	parseBlock,
-	STANDARD_ATTRS,
-	visibilityCondition,
-} from "./yaml";
 
 type PageStore = ReturnType<typeof usePageStore>;
 export type PageCanvas = Ref<InstanceType<typeof BuilderCanvas> | null>;
@@ -80,20 +72,11 @@ export class ToolDispatcher {
 		this.pageCanvas.value?.setRootBlock(root, false, resetHistory);
 	}
 
-	/** Replace the entire page with a freshly generated YAML document. `final` is
-	 * true only on the authoritative apply, never while streaming (persisting per
-	 * chunk would fire a network setValue + re-parse on every token). */
-	applyPageYaml(yamlString: string, final = false) {
-		const block = parseBlock(yamlString);
-		if (!block) return;
+	/** Show a preview frame of a page still being generated. The final
+	 * generate_page op replaces it and resets the undo stack once. */
+	applyPreview(root: BlockOptions) {
 		try {
-			this.replaceRoot(block, final);
-			// Repeaters carry static JSON data; persist it as the page_data_script shim
-			// so the loops render. Final apply only, see note above.
-			if (final) {
-				const dataScript = buildRepeaterDataScript(yamlString);
-				if (dataScript) this.pageStore.applyRepeaterDataScript(dataScript);
-			}
+			this.replaceRoot(root, false);
 		} catch {}
 	}
 
@@ -102,6 +85,7 @@ export class ToolDispatcher {
 			case "update_block": {
 				const props: string[] = [];
 				if (args.base_styles) props.push(...Object.keys(args.base_styles));
+				if (args.name !== undefined) props.push("name");
 				if (args.mobile_styles) props.push(...Object.keys(args.mobile_styles).map((k) => `m:${k}`));
 				if (args.tablet_styles) props.push(...Object.keys(args.tablet_styles).map((k) => `t:${k}`));
 				if (args.attributes) props.push(...Object.keys(args.attributes));
@@ -149,20 +133,6 @@ export class ToolDispatcher {
 			});
 		};
 
-		// Batch edit: each block may have changed different props (patches mode), so
-		// derive props per-block rather than once for the whole op.
-		if (toolName === "update_blocks") {
-			if (Array.isArray(args.patches)) {
-				for (const patch of args.patches as Record<string, any>[]) {
-					trackBlock(patch.block_id as string, this.extractChangedProps("update_block", patch));
-				}
-			} else {
-				const props = this.extractChangedProps("update_block", args);
-				for (const id of (args.block_ids as string[]) || []) trackBlock(id, props);
-			}
-			return;
-		}
-
 		const changedProps = this.extractChangedProps(toolName, args);
 		if (!changedProps.length) return;
 
@@ -188,17 +158,20 @@ export class ToolDispatcher {
 	}
 
 	/** Merge one block's worth of changes (styles/attrs/text/element/classes) into
-	 * `block`. Shared by update_block (single) and update_blocks (batch) so the two
-	 * can never drift. Reads the same field names the tools declare. */
+	 * `block`: the canvas twin of tree.merge_block_update, reading the same args. */
 	private applyBlockUpdate(block: Block, args: Record<string, any>) {
-		// Fix the model's mechanical CSS slips (camelCased values, missing units, …) at the
-		// single point styles land — same pass the generation path uses (see normalizeStyles).
-		const baseStyles = normalizeStyles(args.base_styles);
-		const mobileStyles = normalizeStyles(args.mobile_styles);
-		const tabletStyles = normalizeStyles(args.tablet_styles);
-		Object.assign(block.baseStyles, baseStyles);
-		Object.assign(block.mobileStyles, mobileStyles);
-		Object.assign(block.tabletStyles, tabletStyles);
+		// The server normalized these; a null value removes the property.
+		for (const [key, target] of [
+			["base_styles", block.baseStyles],
+			["mobile_styles", block.mobileStyles],
+			["tablet_styles", block.tabletStyles],
+		] as const) {
+			for (const [prop, value] of Object.entries((args[key] as Record<string, any>) || {})) {
+				if (value === null) delete target[prop];
+				else target[prop] = value;
+			}
+		}
+		if (args.name !== undefined) block.blockName = args.name;
 		if (args.attributes) {
 			Object.entries(args.attributes).forEach(([key, value]) => {
 				if (STANDARD_ATTRS.has(key)) {
@@ -256,7 +229,7 @@ export class ToolDispatcher {
 		if (args.inner_html !== undefined) block.setInnerHTML(args.inner_html);
 		if (args.element !== undefined) block.element = args.element;
 		if (args.classes !== undefined) block.classes = args.classes;
-		// `bind` = {property: data_key} → dynamicValues (same mapping as yaml.ts).
+		// `bind` = {property: data_key} → dynamicValues (same mapping as page_writer).
 		// One entry per property: a re-bind replaces, a null value unbinds.
 		if (args.bind && typeof args.bind === "object" && !Array.isArray(args.bind)) {
 			for (const [rawProp, field] of Object.entries(args.bind as Record<string, string | null>)) {
@@ -278,16 +251,12 @@ export class ToolDispatcher {
 		switch (toolName) {
 			case "generate_page": {
 				// Final authoritative apply. The server persisted the page and ships the
-				// expanded block tree (server-assigned ids — the canvas must key the same
-				// refs the agent's later edits target); the YAML streamed earlier was only
-				// the live preview. args.yaml is the legacy fallback (recovered
-				// YAML-as-content turns).
-				if (Array.isArray(args.blocks) && args.blocks.length) {
-					this.replaceRoot(args.blocks[0], true);
-					if (args.data_script) this.pageStore.applyRepeaterDataScript(args.data_script as string);
-					return;
-				}
-				this.applyPageYaml(args.yaml as string, true);
+				// expanded block tree (server-assigned ids: the canvas must key the same
+				// refs the agent's later edits target); the frames streamed earlier were
+				// only the live preview.
+				if (!Array.isArray(args.blocks) || !args.blocks.length) return;
+				this.replaceRoot(args.blocks[0], true);
+				if (args.data_script) this.pageStore.applyRepeaterDataScript(args.data_script as string);
 				return;
 			}
 			case "set_page_blocks": {
@@ -303,30 +272,13 @@ export class ToolDispatcher {
 				this.applyBlockUpdate(block, args);
 				return;
 			}
-			case "update_blocks": {
-				// Per-block mode wins over uniform mode (matches the tool contract).
-				if (Array.isArray(args.patches)) {
-					for (const patch of args.patches as Record<string, any>[]) {
-						const block = this.findBlock(patch.block_id);
-						if (block) this.applyBlockUpdate(block, patch);
-					}
-					return;
-				}
-				const ids = (args.block_ids as string[]) || [];
-				for (const id of ids) {
-					const block = this.findBlock(id);
-					if (block) this.applyBlockUpdate(block, args);
-				}
-				return;
-			}
 			case "add_block": {
 				const parent = this.findBlock(args.parent_block_id);
 				if (!parent) return;
-				// block_json is the server-expanded block, refs (whole subtree) included —
+				// block_json is the server-expanded block, refs (whole subtree) included:
 				// the canvas must use the same ids the agent chains follow-up edits onto.
-				const newBlock = getBlockInstance(
-					(args.block_json as Record<string, any>) ?? convertYAMLtoBlock(args.block as Record<string, any>),
-				);
+				if (!args.block_json) return;
+				const newBlock = getBlockInstance(args.block_json as BlockOptions);
 				if (args.after_block_id) {
 					const sibling = this.findBlock(args.after_block_id, parent);
 					if (sibling) {

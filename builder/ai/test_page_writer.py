@@ -1,9 +1,5 @@
-"""Unit tests for the server-side YAML→blocks expander (builder/ai/page_writer.py).
-
-Pure-function tests (no DB): they pin the port to the frontend behaviour in
-convertYAMLtoBlock / normalizeStyles / buildRepeaterDataScript so the two paths
-can't silently drift.
-"""
+"""Unit tests for the server-side markup -> blocks expander (builder/ai/page_writer.py).
+Pure-function tests, no DB."""
 
 import unittest
 
@@ -37,9 +33,9 @@ class TestNormalizeStyles(unittest.TestCase):
 		self.assertNotIn("opacity", out)
 
 
-class TestConvertYamlBlock(unittest.TestCase):
+class TestConvertNode(unittest.TestCase):
 	def test_root_and_child(self):
-		root = pw.convert_yaml_block(
+		root = pw.convert_node(
 			{"el": "div", "name": "body", "style": {"display": "flex"}, "c": [{"el": "h1", "text": "Hi"}]},
 			is_root=True,
 		)
@@ -54,21 +50,21 @@ class TestConvertYamlBlock(unittest.TestCase):
 		self.assertTrue(child["blockId"])
 
 	def test_icon_block(self):
-		block = pw.convert_yaml_block({"icon": "arrow-right", "style": {"color": "#000"}})
+		block = pw.convert_node({"icon": "arrow-right", "style": {"color": "#000"}})
 		self.assertEqual(block["element"], "svg")
 		self.assertEqual(block["customAttributes"]["data-lucide"], "arrow-right")
 		self.assertEqual(block["baseStyles"]["width"], "24px")
 		self.assertEqual(block["baseStyles"]["color"], "#000")
 
 	def test_component_reference_and_attrs(self):
-		block = pw.convert_yaml_block(
+		block = pw.convert_node(
 			{"el": "div", "component": "Header-1", "attrs": {"href": "/about", "id": "nav"}}
 		)
 		self.assertEqual(block["extendedFromComponent"], "Header-1")
 		self.assertEqual(block["attributes"], {"href": "/about", "id": "nav"})
 
 	def test_repeater_and_bind(self):
-		block = pw.convert_yaml_block(
+		block = pw.convert_node(
 			{
 				"el": "div",
 				"repeat": {
@@ -86,7 +82,7 @@ class TestConvertYamlBlock(unittest.TestCase):
 		self.assertEqual(bound["dynamicValues"], [{"key": "title", "property": "innerHTML", "type": "key"}])
 
 	def test_bind_attribute(self):
-		block = pw.convert_yaml_block({"el": "img", "bind": {"src": "photo"}})
+		block = pw.convert_node({"el": "img", "bind": {"src": "photo"}})
 		self.assertEqual(block["dynamicValues"], [{"key": "photo", "property": "src", "type": "attribute"}])
 
 
@@ -104,26 +100,33 @@ class TestRepeaterDataScript(unittest.TestCase):
 		self.assertEqual(script, 'data.stats = [{"n":1}]')
 
 
-class TestExpandPageYaml(unittest.TestCase):
-	def test_strips_fences_and_requires_el(self):
-		yaml_text = "```yaml\nel: div\nname: body\nc:\n  - el: p\n    text: Hello\n```"
-		blocks, data_script = pw.expand_page_yaml(yaml_text)
+class TestExpandPageMarkup(unittest.TestCase):
+	def test_strips_fences_and_marks_the_root(self):
+		blocks, data_script = pw.expand_page_markup('```\ndiv // body\n  p "Hello"\n```')
 		self.assertEqual(len(blocks), 1)
 		self.assertEqual(blocks[0]["originalElement"], "body")
 		self.assertEqual(blocks[0]["children"][0]["innerHTML"], "Hello")
 		self.assertEqual(data_script, "")
 
-	def test_rejects_non_block(self):
-		self.assertEqual(pw.expand_page_yaml("just a string"), ([], ""))
-		self.assertEqual(pw.expand_page_yaml("- foo: 1"), ([], ""))
+	def test_nothing_parses_to_nothing(self):
+		self.assertEqual(pw.expand_page_markup(""), ([], ""))
+		self.assertEqual(pw.expand_page_markup("!!!"), ([], ""))
 
-	def test_salvages_truncated_tail(self):
-		# A stream cut off mid-line (max_tokens) still yields the valid prefix,
-		# mirroring the frontend's getValidPartialYAML.
-		truncated = "el: div\nname: body\nc:\n  - el: p\n    text: Hello\n  - el: h1\n    text: 'unclosed"
-		blocks, _ = pw.expand_page_yaml(truncated)
-		self.assertEqual(len(blocks), 1)
-		self.assertEqual(blocks[0]["children"][0]["innerHTML"], "Hello")
+	def test_a_bad_line_costs_only_that_line(self):
+		errors = []
+		blocks, _ = pw.expand_page_markup('div\n  p "Hello"\n  h1 "unclosed\n  p "Bye"', errors=errors)
+		self.assertEqual([c["innerHTML"] for c in blocks[0]["children"]], ["Hello", "Bye"])
+		self.assertEqual(len(errors), 1)
+
+	def test_wraps_several_top_level_blocks_in_one_root(self):
+		blocks, _ = pw.expand_page_markup('section "a"\nsection "b"')
+		self.assertEqual(len(blocks[0]["children"]), 2)
+		self.assertEqual(blocks[0]["baseStyles"]["flexDirection"], "column")
+
+	def test_static_repeater_items_become_the_data_shim(self):
+		blocks, data_script = pw.expand_page_markup('div\n  div repeat(stats=[{"n":1}])\n    p bind(text=n)')
+		self.assertTrue(blocks[0]["children"][0]["isRepeaterBlock"])
+		self.assertEqual(data_script, 'data.stats = [{"n":1}]')
 
 
 if __name__ == "__main__":

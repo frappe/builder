@@ -53,7 +53,7 @@ def instance_on(page_id: str, field: str) -> dict:
 
 
 def edit(component, *ops, ctx=None) -> str:
-	return run_edit_component(ctx or make_ctx(), {"component_id": component.name, "ops": list(ops)})
+	return run_edit_component(ctx or make_ctx(), {"component_id": component.name, "ops": "\n".join(ops)})
 
 
 class TestEditComponent(FrappeTestCase):
@@ -62,14 +62,7 @@ class TestEditComponent(FrappeTestCase):
 		open_page, other_page = make_page(component), make_page(component)
 		ctx = make_ctx(open_page.name)
 
-		out = edit(
-			component,
-			{
-				"tool": "update_block",
-				"args": {"block_id": "link", "inner_text": "Legal", "attributes": {"href": "/terms"}},
-			},
-			ctx=ctx,
-		)
+		out = edit(component, '@link "Legal" [href=/terms]', ctx=ctx)
 
 		self.assertIn("synced 2 page(s)", out)
 		self.assertEqual(definition(component.name)["children"][0]["innerHTML"], "Legal")
@@ -82,10 +75,7 @@ class TestEditComponent(FrappeTestCase):
 		component = make_component()
 		page = make_page(component)
 
-		edit(
-			component,
-			{"tool": "add_block", "args": {"parent_block_id": "nav", "block": {"el": "a", "text": "Blog"}}},
-		)
+		edit(component, "add @nav", '  a "Blog"')
 
 		new_ref = definition(component.name)["children"][1]["blockId"]
 		children = instance_on(page.name, "draft_blocks")["children"]
@@ -94,14 +84,7 @@ class TestEditComponent(FrappeTestCase):
 	def test_root_props_declare_and_scripts_land_on_plain_blocks(self):
 		component = make_component()
 
-		out = edit(
-			component,
-			{"tool": "update_block", "args": {"block_id": "nav", "props": {"theme": "dark"}}},
-			{
-				"tool": "update_block",
-				"args": {"block_id": "link", "client_script": {"css": "a { color: red; }"}},
-			},
-		)
+		out = edit(component, "@nav props(theme=dark)", "@link", "  css |", "    a { color: red; }")
 
 		self.assertNotIn("FAILED", out)
 		saved = definition(component.name)
@@ -127,20 +110,14 @@ class TestEditComponent(FrappeTestCase):
 		).insert()
 		before = definition(component.name)
 		for op in (
-			{
-				"tool": "add_block",
-				"args": {"parent_block_id": "nav", "block": {"el": "div", "component": wrapper.name}},
-			},
-			{"tool": "remove_block", "args": {"block_id": "nav"}},
-			{
-				"tool": "add_block",
-				"args": {"parent_block_id": "nav", "block": {"el": "div", "component": component.name}},
-			},
-			{"tool": "generate_page", "args": {}},
+			f"add @nav\n  div use({wrapper.name})",
+			"remove @nav",
+			f"add @nav\n  div use({component.name})",
+			"generate_page",
 		):
 			self.assertTrue(edit(component, op).startswith("FAILED"))
 		self.assertEqual(definition(component.name), before)
 
 	def test_unknown_component_fails(self):
-		out = run_edit_component(make_ctx(), {"component_id": "missing", "ops": [{"tool": "remove_block"}]})
+		out = run_edit_component(make_ctx(), {"component_id": "missing", "ops": "remove @nav"})
 		self.assertTrue(out.startswith("FAILED"))

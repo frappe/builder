@@ -1,37 +1,13 @@
-import json
 import re
 from typing import ClassVar
 
 import frappe
-import yaml
 from frappe import _
-
-from builder.utils import to_compact_yaml
 
 STANDARD_ATTRS = {"src", "darkSrc", "alt", "href", "title", "value", "type", "placeholder"}
 
 
 class BlockCodec:
-	# The generation prompt's block vocabulary, in display order: (codec key, gloss).
-	# Single source for the field list shown in the prompt (via fields_doc), which
-	# used to be a hand-typed sentence. This is the GENERATION vocabulary, so it
-	# intentionally omits keys compress() emits only when showing an existing page
-	# — ref (the editor handle, documented separately) and component/child_of (the
-	# model never authors those). Keep it in sync with compress()/expand() by hand.
-	# A gloss of None means the key is self-explanatory.
-	FIELD_DOCS = (
-		("el", "semantic HTML tag"),
-		("name", None),
-		("style", "CSS-in-JS"),
-		("m_style", "mobile overrides"),
-		("t_style", "tablet overrides"),
-		("attrs", "HTML attrs; HTML id goes in attrs.id"),
-		("text", None),
-		("c", "children"),
-		("classes", None),
-		("icon", "a Lucide icon name — see Icons"),
-	)
-
 	# Defaults the client injects on an icon svg — noise for the model, stripped on re-collapse.
 	ICON_STYLE_DEFAULTS: ClassVar[dict[str, str | int]] = {
 		"display": "inline-flex",
@@ -40,11 +16,6 @@ class BlockCodec:
 		"lineHeight": "0",
 		"flexShrink": 0,
 	}
-
-	@classmethod
-	def fields_doc(cls) -> str:
-		"""Comma-joined field list for the prompt, e.g. `el (semantic HTML tag), name, ...`."""
-		return ", ".join(f"{key} ({gloss})" if gloss else key for key, gloss in cls.FIELD_DOCS)
 
 	@staticmethod
 	def compress(block: dict, depth: int = 0, task_tier: str = "complex") -> dict:
@@ -57,6 +28,8 @@ class BlockCodec:
 		custom = block.get("customAttributes") or {}
 		if custom.get("data-lucide"):
 			icon = {"icon": custom["data-lucide"]}
+			if block.get("blockId"):
+				icon["ref"] = block["blockId"]
 			if block.get("blockName"):
 				icon["name"] = block["blockName"]
 			style = {
@@ -66,6 +39,9 @@ class BlockCodec:
 			}
 			if style:
 				icon["style"] = style
+			for key, field in (("mobileStyles", "m_style"), ("tabletStyles", "t_style")):
+				if block.get(key):
+					icon[field] = block[key]
 			return icon
 
 		out = {}
@@ -168,94 +144,8 @@ class BlockCodec:
 		return prefix + condition["key"]
 
 	@staticmethod
-	def expand(node: dict) -> dict:
-		if not isinstance(node, dict):
-			return node
-
-		# Icon ref: one expansion path — page_writer owns the wrapper defaults and
-		# the baked SVG (lazy import; page_writer imports this module at top level).
-		if node.get("icon"):
-			from builder.ai.page_writer import convert_icon_block
-
-			return convert_icon_block(node)
-
-		attrs = node.get("attrs", {})
-		standard_attrs = {k: v for k, v in attrs.items() if k in STANDARD_ATTRS}
-		custom_attrs = {k: v for k, v in attrs.items() if k not in STANDARD_ATTRS}
-
-		block = {
-			"element": node.get("el", "div"),
-			"blockName": node.get("name", ""),
-			"baseStyles": node.get("style", {}),
-			"attributes": standard_attrs,
-			"customAttributes": custom_attrs,
-			"children": [BlockCodec.expand(c) for c in node.get("c", []) if isinstance(c, dict)],
-		}
-		for yaml_key, block_key in [
-			("id", "blockId"),
-			("text", "innerHTML"),
-			("m_style", "mobileStyles"),
-			("t_style", "tabletStyles"),
-			("classes", "classes"),
-			("component", "extendedFromComponent"),
-			("child_of", "isChildOfComponent"),
-			("client_script", "clientScript"),
-		]:
-			if yaml_key in node:
-				block[block_key] = node[yaml_key]
-
-		return block
-
-	@staticmethod
-	def extract_block_id(block_context: str) -> str | None:
-		try:
-			data = json.loads(block_context)
-			if isinstance(data, list):
-				data = data[0] if data else {}
-			return data.get("blockId") if isinstance(data, dict) else None
-		except Exception:
-			return None
-
-	@staticmethod
-	def strip_context(block_context: str, task_tier: str, task_type: str | None = None) -> str:
-		try:
-			data = json.loads(block_context)
-		except (json.JSONDecodeError, TypeError):
-			return block_context
-
-		if isinstance(data, list):
-			data = data[0] if data else {}
-		if not isinstance(data, dict):
-			return block_context
-
-		if task_type == "rewrite_text":
-			return data.get("innerHTML") or data.get("innerText") or ""
-		if task_type == "replace_image":
-			attrs = data.get("attributes", {})
-			return to_compact_yaml({"src": attrs.get("src", ""), "alt": attrs.get("alt", "")})
-		return to_compact_yaml([BlockCodec.compress(data, 0, task_tier)])
-
-	@staticmethod
-	def parse_blocks(content: str) -> dict:
-		parsed = yaml.safe_load(BlockCodec.strip_fences(content))
-		if isinstance(parsed, dict):
-			block = parsed
-		elif isinstance(parsed, list):
-			block = parsed[0] if parsed else {}
-		else:
-			raise ValueError("Not a valid block object")
-
-		if not block:
-			raise ValueError("No valid blocks in response")
-
-		if isinstance(block, dict) and not block.get("id"):
-			block["id"] = "root"
-
-		return BlockCodec.expand(block)
-
-	@staticmethod
 	def strip_fences(text: str) -> str:
-		text = re.sub(r"^```(?:yaml|json)?\s*\n?", "", text.strip())
+		text = re.sub(r"^```[a-z]*\s*\n?", "", text.strip())
 		return re.sub(r"\n?```\s*$", "", text).strip()
 
 	@staticmethod
