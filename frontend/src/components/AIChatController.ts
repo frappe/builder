@@ -106,6 +106,8 @@ export class AIChatController {
 	readonly sessions = ref<Array<{ name: string; title: string | null }>>([]);
 	readonly availableModels = ref<AIProvider[]>([]);
 	readonly selectedModel = useLocalStorage("ai-selected-model", "");
+	readonly reasoningByModel = useLocalStorage<Record<string, string>>("ai-reasoning-by-model", {});
+	readonly fastByModel = useLocalStorage<Record<string, boolean>>("ai-fast-by-model", {});
 
 	/** While a build stream owns this page's canvas, the editor's autosave stands
 	 * down — persisting the partial preview is how a mid-build refresh (or an
@@ -247,11 +249,30 @@ export class AIChatController {
 	detachBlock = (id: string) => {
 		this.attachedBlocks.value = this.attachedBlocks.value.filter((b) => b.id !== id);
 	};
-	readonly modelLabel = computed(
-		() =>
-			this.currentProviderModels.value.find((m) => m.name === this.selectedModel.value)?.label ||
-			"Select model",
+	readonly selectedModelInfo = computed(() =>
+		this.currentProviderModels.value.find((m) => m.name === this.selectedModel.value),
 	);
+	readonly modelLabel = computed(() => this.selectedModelInfo.value?.label || "Select model");
+	readonly reasoningEfforts = computed(() => this.selectedModelInfo.value?.reasoning_efforts || []);
+	readonly reasoningEffort = computed(() => {
+		const selected = this.reasoningByModel.value[this.selectedModel.value] || "high";
+		return this.reasoningEfforts.value.includes(selected) ? selected : this.reasoningEfforts.value[0] || "";
+	});
+	readonly fastSupported = computed(() => !!this.selectedModelInfo.value?.fast_supported);
+	readonly fastEnabled = computed(
+		() => this.fastSupported.value && !!this.fastByModel.value[this.selectedModel.value],
+	);
+	setReasoningEffort = (effort: string) => {
+		if (!this.reasoningEfforts.value.includes(effort)) return;
+		this.reasoningByModel.value = { ...this.reasoningByModel.value, [this.selectedModel.value]: effort };
+	};
+	toggleFast = () => {
+		if (!this.fastSupported.value) return;
+		this.fastByModel.value = {
+			...this.fastByModel.value,
+			[this.selectedModel.value]: !this.fastEnabled.value,
+		};
+	};
 	/** The provider of the picked model, when it is a gateway that can report credits. */
 	readonly selectedGateway = computed(
 		() =>
@@ -1225,6 +1246,8 @@ export class AIChatController {
 			pageId: this.pageId.value,
 			sessionId: this.sessionId.value,
 			model: this.selectedModel.value,
+			reasoningEffort: this.reasoningEffort.value,
+			fast: this.fastEnabled.value,
 			prompt: this.prompt.value.trim(),
 			blocks: this.attachedBlocks.value.map((block) => ({ ...block })),
 			imageData: this.imageData.value,
@@ -1237,7 +1260,11 @@ export class AIChatController {
 		const previous = this.retryEnvelope.value;
 		if (previous) {
 			const { requestId, attempted, ...original } = previous;
-			if (JSON.stringify(original) === JSON.stringify(content)) return previous;
+			const comparable = { ...content };
+			// A draft from before these controls must keep its original request ID and tuning.
+			if (!("reasoningEffort" in original)) delete (comparable as Partial<SendEnvelope>).reasoningEffort;
+			if (!("fast" in original)) delete (comparable as Partial<SendEnvelope>).fast;
+			if (JSON.stringify(original) === JSON.stringify(comparable)) return previous;
 		}
 		return { ...content, requestId: crypto.randomUUID(), attempted: false };
 	}
@@ -1293,6 +1320,8 @@ export class AIChatController {
 				prompt: envelope.prompt,
 				page_id: envelope.pageId,
 				model: envelope.model,
+				...(envelope.reasoningEffort ? { reasoning_effort: envelope.reasoningEffort } : {}),
+				fast: !!envelope.fast,
 				session_id: envelope.sessionId,
 				selected_block_ids: envelope.blocks.map((block) => block.id),
 				selected_block_context: envelope.blocks,

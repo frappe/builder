@@ -63,6 +63,8 @@ def run(
 	card_answer: dict | None = None,
 	canvas_theme: str | None = None,
 	request_id: str | None = None,
+	reasoning_effort: str | None = None,
+	fast: bool = False,
 ):
 	"""Single entry point: run the agent for one user turn of the in-editor chat.
 
@@ -79,6 +81,13 @@ def run(
 	resolved_model = ModelRegistry.get_default(model or "openrouter")
 	if not ModelRegistry.is_known_model(resolved_model):
 		frappe.throw(_("Unknown AI model: {0}").format(resolved_model))
+	fast = str(fast).lower() in {"true", "1"}
+	if reasoning_effort or fast:
+		controls = ModelRegistry.controls(resolved_model)
+		if reasoning_effort and reasoning_effort not in controls["reasoning_efforts"]:
+			frappe.throw(_("This model does not support that reasoning level."))
+		if fast and not controls["fast_supported"]:
+			frappe.throw(_("Fast processing is not available for this model."))
 	if image_data and not ModelRegistry.supports_vision(resolved_model):
 		frappe.throw(_("This model cannot view images. Choose a vision-capable model."))
 	capabilities = ModelRegistry.capabilities(resolved_model)
@@ -162,6 +171,8 @@ def run(
 			"image_url": image_url,
 			"image_file_url": image_file_url,
 			"canvas_theme": canvas_theme,
+			"reasoning_effort": reasoning_effort,
+			"fast": fast,
 		},
 	)
 	frappe.local.response.http_status_code = 202

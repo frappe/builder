@@ -44,26 +44,65 @@ async def codex_chunks(request):
 				if response.status_code >= 400:
 					await response.aread()
 					raise codex.http_error(response)
-				assembler, data = codex.ChunkAssembler(), []
-				async for line in response.aiter_lines():
-					if line.startswith("data:"):
-						data.append(line[5:].strip())
-					elif not line and data:
-						for chunk in assembler.feed(codex.parse_event("\n".join(data))):
-							yield chunk
-						data = []
-						if assembler.finished:
-							return
-				if data:
-					for chunk in assembler.feed(codex.parse_event("\n".join(data))):
-						yield chunk
+				async for chunk in responses_chunks(response):
+					yield chunk
 				return
+
+
+async def openai_responses_chunks(request):
+	import httpx
+
+	from builder.ai import openai_responses
+
+	prepared = request.prepared
+	async with httpx.AsyncClient(timeout=httpx.Timeout(120, connect=10)) as client:
+		async with client.stream(
+			"POST", prepared["url"], headers=prepared["headers"], json=prepared["payload"]
+		) as response:
+			if response.status_code >= 400:
+				await response.aread()
+				raise openai_responses.http_error(response)
+			async for chunk in responses_chunks(response):
+				yield chunk
+
+
+async def responses_chunks(response):
+	from builder.ai import codex
+
+	assembler, data = codex.ChunkAssembler(), []
+	async for line in response.aiter_lines():
+		if line.startswith("data:"):
+			if line[5:].strip() == "[DONE]":
+				break
+			data.append(line[5:].strip())
+		elif not line and data:
+			for chunk in assembler.feed(codex.parse_event("\n".join(data))):
+				yield chunk
+			data = []
+			if assembler.finished:
+				return
+	if data:
+		for chunk in assembler.feed(codex.parse_event("\n".join(data))):
+			yield chunk
 
 
 async def model_chunks(request):
 	if request.prepared["transport"] == "codex":
 		async for chunk in codex_chunks(request):
 			yield chunk
+		return
+	if request.prepared["transport"] == "openai_responses":
+		if request.stream:
+			async for chunk in openai_responses_chunks(request):
+				yield chunk
+		else:
+			from builder.ai import openai_responses
+
+			chunks = [chunk async for chunk in openai_responses_chunks(request)]
+			if request.tools is not None:
+				yield openai_responses.collect_response(chunks)
+			else:
+				yield "".join(chunk.choices[0].delta.content or "" for chunk in chunks)
 		return
 	import litellm
 

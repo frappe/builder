@@ -15,6 +15,7 @@ export type MenuItem = {
 	switchValue?: boolean;
 	/** choosing it opens another level */
 	submenu?: boolean;
+	disabled?: boolean;
 	theme?: "red";
 	group?: string;
 	/** stays listed whatever the filter, like the way to add what the filter didn't find */
@@ -70,7 +71,7 @@ export function useCommandMenu(prompt: Ref<string>) {
 	const isOpen = computed(() => !!level.value || (!dismissed.value && rootItems.value.length > 0));
 
 	watch(prompt, () => {
-		activeIndex.value = 0;
+		activeIndex.value = visibleItems.value.findIndex((item) => !item.disabled);
 		if (!level.value) dismissed.value = false;
 	});
 
@@ -124,7 +125,10 @@ export function useCommandMenu(prompt: Ref<string>) {
 		busy.value = true;
 		try {
 			const loaded = await current.items();
-			if (level.value === current) items.value = loaded;
+			if (level.value === current) {
+				items.value = loaded;
+				activeIndex.value = visibleItems.value.findIndex((item) => !item.disabled);
+			}
 		} catch (error) {
 			setNote(getErrorMessage(error, "Could not load this list"), true);
 		} finally {
@@ -133,6 +137,7 @@ export function useCommandMenu(prompt: Ref<string>) {
 	}
 
 	async function choose(item: MenuItem) {
+		if (item.disabled) return;
 		await follow(() => item.run());
 	}
 
@@ -165,9 +170,14 @@ export function useCommandMenu(prompt: Ref<string>) {
 	/** Composer keys while the menu is open. Returns true when the menu took the key. */
 	function onKeydown(event: KeyboardEvent) {
 		if (!isOpen.value) return false;
-		const count = visibleItems.value.length;
-		if ((event.key === "ArrowDown" || event.key === "ArrowUp") && count) {
-			activeIndex.value = (activeIndex.value + (event.key === "ArrowDown" ? 1 : -1) + count) % count;
+		const selectable = visibleItems.value.flatMap((item, index) => (item.disabled ? [] : [index]));
+		if ((event.key === "ArrowDown" || event.key === "ArrowUp") && selectable.length) {
+			const delta = event.key === "ArrowDown" ? 1 : -1;
+			const current = selectable.indexOf(activeIndex.value);
+			activeIndex.value =
+				current < 0
+					? selectable[delta > 0 ? 0 : selectable.length - 1]
+					: selectable[(current + delta + selectable.length) % selectable.length];
 		} else if (event.key === "Enter" || event.key === "Tab") {
 			if (event.shiftKey) return false;
 			const item = visibleItems.value[activeIndex.value];

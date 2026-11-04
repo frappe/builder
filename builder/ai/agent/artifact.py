@@ -296,7 +296,12 @@ def iter_page_candidate(ctx, args: dict) -> list[dict]:
 	buffered_at = 0
 	if usage := getattr(ctx, "usage", None):
 		usage["attempts"] = usage.get("attempts", 0) + 1
-	request = ModelRequest(ctx.model, messages, llm.TASK_PARAMS["complex"], api_key=ctx.api_key)
+	request = ModelRequest(
+		ctx.model,
+		messages,
+		llm.selected_params("complex", getattr(ctx, "reasoning_effort", None), getattr(ctx, "fast", False)),
+		api_key=ctx.api_key,
+	)
 
 	from builder.ai.budgets import begin_attempt, finish_attempt
 

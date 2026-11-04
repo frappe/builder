@@ -2,7 +2,7 @@ import asyncio
 import unittest
 from unittest.mock import AsyncMock, Mock, patch
 
-from builder.ai.runtime import RunWorkflow, codex_chunks, model_batches
+from builder.ai.runtime import RunWorkflow, codex_chunks, model_batches, model_chunks
 from builder.ai.workflow import ModelRequest, consume_stream, drive_sync
 
 
@@ -73,6 +73,36 @@ class TestAsyncTransport(unittest.IsolatedAsyncioTestCase):
 		self.assertTrue(refresh.call_args.kwargs["force"])
 		self.assertIn("Ready", "".join(chunk.choices[0].delta.content or "" for chunk in chunks))
 		self.assertFalse(responses)
+
+	async def test_direct_openai_responses_streams_into_the_agent_shape(self):
+		import httpx
+
+		seen = []
+
+		def respond(request):
+			seen.append(request)
+			return httpx.Response(
+				200,
+				text='data: {"type":"response.output_text.delta","delta":"Ready"}\n\ndata: {"type":"response.completed","response":{}}\n\n',
+			)
+
+		client = httpx.AsyncClient(transport=httpx.MockTransport(respond))
+		request = ModelRequest(
+			"openai/gpt-6.1-sol",
+			[],
+			{},
+			prepared={
+				"transport": "openai_responses",
+				"url": "https://api.openai.com/v1/responses",
+				"headers": {"Authorization": "Bearer test-key"},
+				"payload": {"model": "gpt-6.1-sol", "service_tier": "fast"},
+			},
+		)
+		with patch("httpx.AsyncClient", return_value=client):
+			chunks = [chunk async for chunk in model_chunks(request)]
+		self.assertEqual("".join(chunk.choices[0].delta.content or "" for chunk in chunks), "Ready")
+		self.assertEqual(seen[0].headers["authorization"], "Bearer test-key")
+		self.assertIn(b'"service_tier":"fast"', seen[0].content)
 
 	async def test_shutdown_closes_suspended_workflow(self):
 		from builder.ai.agent.loop import CancelledError

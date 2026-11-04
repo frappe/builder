@@ -389,7 +389,7 @@
 						icon-right="lucide-chevron-down"
 						:label="modelLabel"
 						class="min-w-0 !shrink"
-						@click="menu.open(modelLevel(bob))" />
+						@click="menu.open(modelSettingsLevel(bob))" />
 					<Tooltip v-if="credits" :text="credits.spent === null ? '' : `${money(credits.spent)} spent`">
 						<Badge variant="subtle" :theme="creditsTheme(credits)" :label="creditsLabel(credits)" />
 					</Tooltip>
@@ -452,7 +452,7 @@ import AITurnTimeline from "@/components/ai/AITurnTimeline.vue";
 import { registerBobCommands } from "@/components/ai/bobCommands";
 import { useCommandMenu } from "@/components/ai/commandMenu";
 import { connectLevel } from "@/components/ai/commands/connect";
-import { modelLevel } from "@/components/ai/commands/models";
+import { modelSettingsLevel } from "@/components/ai/commands/models";
 import { providersLevel } from "@/components/ai/commands/providers";
 import { type BobContext, creditsLabel, creditsTheme, money } from "@/components/ai/commands/shared";
 import AIUISpec from "@/components/ai/AIUISpec.vue";

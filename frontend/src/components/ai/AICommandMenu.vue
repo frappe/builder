@@ -48,10 +48,11 @@
 					v-for="{ item, index } in section.rows"
 					:key="item.key"
 					role="option"
-					class="cursor-pointer"
+					:class="item.disabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'"
+					:aria-disabled="item.disabled || undefined"
 					:aria-selected="index === highlighted"
-					:active="index === highlighted"
-					@mouseenter="hover(index)"
+					:active="!item.disabled && index === highlighted"
+					@mouseenter="!item.disabled && hover(index)"
 					@mousedown.prevent="menu.choose(item)">
 					<!-- the same row frappe-ui's Dropdown draws (MenuItemContent): the icon slot is
 					     kept for the whole section once any row has an icon, so labels line up -->

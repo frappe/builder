@@ -22,7 +22,9 @@ vi.mock("vue-router", () => ({ useRoute: () => mocks.route }));
 vi.mock("@/data/builderToken", () => ({ default: { reload: vi.fn() } }));
 vi.mock("@/utils/helpers", () => ({ confirm: mocks.confirm, getErrorMessage: (e: Error) => e.message }));
 vi.mock("vue", async (original) => ({ ...(await original<any>()), inject: () => ({ value: null }) }));
-vi.mock("@vueuse/core", () => ({ useLocalStorage: () => ref("model") }));
+vi.mock("@vueuse/core", () => ({
+	useLocalStorage: (key: string, initial: unknown) => ref(key === "ai-selected-model" ? "model" : initial),
+}));
 vi.mock("frappe-ui", () => ({
 	createResource: (options: any) => ({
 		submit: (params: any) => mocks.api[options.url.split(".").at(-1)](params || options.makeParams?.() || {}),
@@ -97,7 +99,20 @@ let server: AISession;
 function readyChat() {
 	const controller = new AIChatController();
 	controller.availableModels.value = [
-		{ provider: "Fixture", models: [{ name: "model", label: "Fixture", ready: true, vision: true }] },
+		{
+			provider: "Fixture",
+			models: [
+				{
+					name: "model",
+					label: "Fixture",
+					ready: true,
+					vision: true,
+					reasoning_efforts: ["low", "medium", "high"],
+					fast_supported: true,
+				},
+				{ name: "plain", label: "Plain", ready: true, vision: true },
+			],
+		},
 	];
 	return controller;
 }
@@ -238,6 +253,23 @@ describe("session ownership", () => {
 });
 
 describe("run admission and retry", () => {
+	it("sends selected controls and restores each model's choices", async () => {
+		expect(chat.reasoningEffort.value).toBe("high");
+		chat.setReasoningEffort("low");
+		chat.toggleFast();
+		chat.selectedModel.value = "plain";
+		expect(chat.reasoningEffort.value).toBe("");
+		expect(chat.fastEnabled.value).toBe(false);
+		chat.selectedModel.value = "model";
+		expect(chat.reasoningEffort.value).toBe("low");
+		expect(chat.fastEnabled.value).toBe(true);
+		chat.prompt.value = "Build a page";
+		await chat.submitPrompt();
+		expect(mocks.api.run).toHaveBeenCalledWith(
+			expect.objectContaining({ reasoning_effort: "low", fast: true }),
+		);
+	});
+
 	it("preserves every attachment and stable request identity after a lost acceptance", async () => {
 		chat.prompt.value = "Use the mock";
 		chat.imageData.value = "data:image/png;base64,abc";

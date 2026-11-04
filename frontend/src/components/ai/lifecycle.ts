@@ -60,6 +60,8 @@ export interface SendEnvelope {
 	pageId: string;
 	sessionId: string;
 	model: string;
+	reasoningEffort?: string;
+	fast?: boolean;
 	prompt: string;
 	blocks: { id: string; label: string }[];
 	imageData: string | null;

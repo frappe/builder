@@ -339,9 +339,13 @@ class ModelRegistry:
 			if not (m.get("api_base") or provider_api_key(m) or (fallback and uses_settings_key(m))):
 				continue
 			grouped.setdefault(m["provider"], []).append(
-				{**m, "ready": True, "default": m["name"] == default}
+				{**m, "ready": True, "default": m["name"] == default, **model_controls(m)}
 			)
 		return [{"provider": provider, "models": models} for provider, models in grouped.items()]
+
+	@classmethod
+	def controls(cls, model: str) -> dict:
+		return model_controls(cls.find(model) or {})
 
 	@staticmethod
 	def still_served(m: dict) -> bool:
@@ -414,3 +418,33 @@ class ModelRegistry:
 def get_configured_default() -> str | None:
 	"""The model Builder Settings names as the default, which may not be available."""
 	return frappe.db.get_single_value("Builder Settings", "default_ai_model")
+
+
+def model_controls(info: dict) -> dict:
+	"""Offer tuning only when the selected model and transport can honor it."""
+	import litellm
+
+	provider = info.get("litellm_provider") or ""
+	prefix = info.get("route_prefix") or ""
+	model_id = info.get("name", "").removeprefix(f"{prefix}/")
+	if not provider or not model_id:
+		return {"reasoning_efforts": [], "fast_supported": False}
+	lookup = model_id.removeprefix("openai/") if provider in {"openai", "codex"} else f"{provider}/{model_id}"
+	try:
+		facts = litellm.get_model_info(lookup)
+		params = (
+			litellm.get_supported_openai_params(model=f"{provider}/{model_id}") if provider != "codex" else []
+		)
+	except Exception:
+		facts, params = {}, []
+	direct_openai = provider == "openai" and not info.get("api_base")
+	native_responses = direct_openai and model_id.startswith("gpt-6")
+	supports_effort = provider == "codex" or native_responses or "reasoning_effort" in (params or [])
+	efforts = ["low", "medium", "high"] if facts.get("supports_reasoning") and supports_effort else []
+	if "low" in efforts and facts.get("supports_low_reasoning_effort") is False:
+		efforts.remove("low")
+	for effort in ("xhigh", "max"):
+		if efforts and facts.get(f"supports_{effort}_reasoning_effort"):
+			efforts.append(effort)
+	fast = direct_openai and model_id.startswith(("gpt-5.6", "gpt-6")) and "service_tier" in (params or [])
+	return {"reasoning_efforts": efforts, "fast_supported": fast}

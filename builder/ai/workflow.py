@@ -45,6 +45,16 @@ class ModelRequest:
 				),
 			}
 			return
+		from builder.ai import openai_responses
+
+		if target := openai_responses.route(self.model):
+			self.prepared = {
+				"transport": "openai_responses",
+				"url": openai_responses.API_URL,
+				"headers": openai_responses.headers(self.api_key or llm.resolve_api_key(self.model)),
+				"payload": openai_responses.build_payload(target, self.messages, self.tools, self.params),
+			}
+			return
 		model, overrides, key = llm.route(self.model, self.api_key)
 		messages = copy.deepcopy(self.messages)
 		llm.patch_messages_for_provider(model, messages)

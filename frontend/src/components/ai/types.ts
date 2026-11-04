@@ -8,6 +8,10 @@ export interface AIModel {
 	api_base?: string | null;
 	/** Builder Settings names this model as the one to start with. */
 	default?: boolean;
+	/** Effort levels this model's transport can send. */
+	reasoning_efforts?: string[];
+	/** Fast processing has a separate API price and is available for direct OpenAI models. */
+	fast_supported?: boolean;
 }
 
 export interface AIProvider {

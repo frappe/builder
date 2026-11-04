@@ -122,6 +122,15 @@ TASK_PARAMS = {
 }
 
 
+def selected_params(tier: str, reasoning_effort: str | None = None, fast: bool = False) -> dict:
+	params = dict(TASK_PARAMS[tier])
+	if reasoning_effort:
+		params["reasoning_effort"] = reasoning_effort
+	if fast:
+		params["service_tier"] = "fast"
+	return params
+
+
 def patch_messages_for_provider(model: str, messages: list[dict]) -> None:
 	"""Anthropic via OpenRouter reads cache_control from INSIDE a content block, not
 	from the message level (a message-level marker is silently ignored → full input
@@ -247,6 +256,12 @@ def complete(model: str, messages: list, params: dict, *, stream: bool, api_key:
 		from builder.ai import codex
 
 		return codex.complete(target[1], messages, params, provider=target[0], stream=stream)
+	from builder.ai import openai_responses
+
+	if target := openai_responses.route(model):
+		return openai_responses.complete(
+			target, messages, params, api_key or resolve_api_key(model), None, stream
+		)
 	model, overrides, api_key = route(model, api_key)
 	patch_messages_for_provider(model, messages)
 	params = patch_params_for_provider(model, params)
@@ -289,6 +304,12 @@ def complete_with_tools(
 		from builder.ai import codex
 
 		return codex.complete(target[1], messages, params, provider=target[0], tools=tools, stream=stream)
+	from builder.ai import openai_responses
+
+	if target := openai_responses.route(model):
+		return openai_responses.complete(
+			target, messages, params, api_key or resolve_api_key(model), tools, stream
+		)
 	model, overrides, api_key = route(model, api_key)
 	patch_messages_for_provider(model, messages)
 	params = patch_params_for_provider(model, params)

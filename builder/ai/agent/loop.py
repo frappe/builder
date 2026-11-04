@@ -351,6 +351,8 @@ class AgentRunner:
 		image_url: str | None = None,
 		image_file_url: str | None = None,
 		canvas_theme: str | None = None,
+		reasoning_effort: str | None = None,
+		fast: bool = False,
 		registry: ToolRegistry | None = None,
 		system_prompt: str | None = None,
 	):
@@ -374,6 +376,8 @@ class AgentRunner:
 		self.image_url = image_url
 		self.image_file_url = image_file_url
 		self.canvas_theme = canvas_theme
+		self.reasoning_effort = reasoning_effort
+		self.fast = fast
 		self.registry = registry or build_default_registry()
 		# The editor-URL prefix is site-configurable; resolve it so the links the
 		# agent writes (e.g. to a page it built off-canvas) actually work here.
@@ -803,7 +807,7 @@ class AgentRunner:
 		request = ModelRequest(
 			self.loop_model,
 			messages,
-			llm.TASK_PARAMS["agent"],
+			llm.selected_params("agent", self.reasoning_effort, self.fast),
 			api_key=self.api_key,
 			tools=self.registry.schemas(),
 		)

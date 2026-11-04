@@ -52,3 +52,24 @@ class TestLazySessions(FrappeTestCase):
 		self.assertEqual(enqueue.call_args.args[1]["session_id"], session_id)
 		messages = AISession.get(session_id).get_messages()
 		self.assertEqual([(m["role"], m["content"]) for m in messages], [("user", "make it blue")])
+
+	def test_turn_tuning_is_validated_and_queued(self):
+		controls = {"reasoning_efforts": ["low", "medium", "high"], "fast_supported": True}
+		with (
+			patch.object(api.ModelRegistry, "get_default", return_value="test/model"),
+			patch.object(api.ModelRegistry, "is_known_model", return_value=True),
+			patch.object(api.ModelRegistry, "controls", return_value=controls),
+			patch.object(api, "resolve_api_key", return_value="key"),
+			patch.object(api.AIRun, "enqueue") as enqueue,
+		):
+			with self.assertRaises(frappe.ValidationError):
+				api.run("make it blue", self.page.name, model="test/model", reasoning_effort="max")
+			controls["fast_supported"] = False
+			with self.assertRaises(frappe.ValidationError):
+				api.run("make it blue", self.page.name, model="test/model", fast=True)
+			self.assertEqual(self.page_sessions(), [])
+			controls["fast_supported"] = True
+			api.run("make it blue", self.page.name, model="test/model", reasoning_effort="medium", fast=True)
+			payload = enqueue.call_args.args[1]
+			self.assertEqual(payload["reasoning_effort"], "medium")
+			self.assertTrue(payload["fast"])
