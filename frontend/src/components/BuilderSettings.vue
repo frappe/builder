@@ -21,20 +21,23 @@
 				</Button>
 			</div>
 		</div>
-		<div
-			class="flex flex-1 flex-col gap-5 overflow-hidden bg-surface-base"
-			:class="{ 'p-14 px-16 pb-0': !selectedItemDoc?.bare }">
-			<h2 v-if="!selectedItemDoc?.bare" class="text-xl-semibold leading-none text-ink-gray-9">
-				{{ selectedItemDoc?.title }}
-			</h2>
+		<div class="flex flex-1 flex-col overflow-hidden bg-surface-base">
+			<!-- the same header and spacing as the Cloud Settings panels shown inline here -->
+			<SettingsHeader
+				v-if="!selectedItemDoc?.bare"
+				class="!px-4 !pt-6 pb-5 sm:!px-10 sm:!pt-9"
+				:title="selectedItemDoc?.title" />
 			<Button
 				icon="lucide-x"
 				variant="subtle"
 				@click="$emit('close')"
 				class="absolute right-5 top-5 z-10"></Button>
-			<div v-if="settingsLoaded" class="no-scrollbar min-h-0 flex-1 overflow-y-auto overscroll-contain">
+			<div
+				v-if="settingsLoaded"
+				class="no-scrollbar min-h-0 flex-1 overflow-y-auto overscroll-contain"
+				:class="{ 'px-4 pb-10 pt-1 sm:px-10 sm:pb-16': !selectedItemDoc?.bare }">
 				<KeepAlive>
-					<component :is="selectedItemDoc?.component" :class="{ 'pb-16': !selectedItemDoc?.bare }" />
+					<component :is="selectedItemDoc?.component" />
 				</KeepAlive>
 			</div>
 			<div v-else class="flex items-center justify-center">
@@ -50,6 +53,7 @@ import { builderSettings } from "@/data/builderSettings";
 import useBuilderStore from "@/stores/builderStore";
 import usePageStore from "@/stores/pageStore";
 import { __ } from "@/translation";
+import { SettingsHeader } from "frappe-ui";
 import { computed, onActivated, onMounted, ref, watch } from "vue";
 import { useRoute } from "vue-router";
 
