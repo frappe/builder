@@ -57,3 +57,15 @@ jobs:
       ref: ${{ needs.release.outputs.commit }}
     permissions:
       contents: write
+
+  marketplace:
+    name: Open the marketplace release PR
+    needs: [release, assets]
+    uses: frappe/marketplace/.github/workflows/publish-release.yml@main
+    with:
+      app: builder
+      branch: master
+      commit: ${{ needs.release.outputs.commit }}
+      channel: stable
+    secrets:
+      registry_token: ${{ secrets.MARKETPLACE_PR_TOKEN }}
