@@ -105,7 +105,7 @@ def run_search_images(ctx, args: dict) -> str:
 			frappe.logger("builder.ai").warning(f"search_images via {name} failed: {e}")
 			continue
 		if results:
-			# Hand the generator the results directly (see artifact.generate_page_yaml).
+			# Hand the generator the results directly (see artifact.generate_page_markup).
 			# Copying urls into the brief by hand is how photos went missing — and how
 			# one arrived with two digits transposed, 404ing the whole turn.
 			remember_for_generation(ctx, query, results)

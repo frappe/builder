@@ -7,7 +7,8 @@ not found", "parent not found" — and a wrong ref drives a self-correcting roun
 Ops the tree accepts are then mirrored to the canvas (the editor's live view);
 ops it rejects are never emitted, so the two sides can't diverge.
 
-Kept in lockstep with the frontend applier (toolDispatch.applyBlockUpdate /
+The model edits through markup (agent/edits.py compiles it to these ops). Kept in
+lockstep with the frontend applier (toolDispatch.applyBlockUpdate /
 applyToolOperation), which replays the same accepted ops on the canvas.
 """
 
@@ -96,8 +97,11 @@ def merge_styles(block: dict, args: dict) -> None:
 		("mobile_styles", "mobileStyles"),
 		("tablet_styles", "tabletStyles"),
 	):
-		if styles := normalize_styles(args.get(arg_key)):
+		raw = args.get(arg_key)
+		if styles := normalize_styles(raw):
 			block.setdefault(block_key, {}).update(styles)
+		for key in [k for k, v in (raw or {}).items() if v is None]:
+			(block.get(block_key) or {}).pop(key, None)
 
 
 def merge_attributes(block: dict, attrs: dict) -> None:
@@ -315,28 +319,14 @@ def merge_block_update(block: dict, args: dict) -> None:
 			block["element"] = args["element"]
 	if args.get("classes") is not None:
 		block["classes"] = args["classes"]
+	if args.get("name") is not None:
+		block["blockName"] = args["name"]
 	if isinstance(args.get("bind"), dict):
 		merge_bindings(block, args["bind"])
 	# props never reach here: WorkingTree.route_props validates and applies them
 	# on the owning instance root before this merge runs.
 	if isinstance(args.get("client_script"), dict):
 		merge_client_script(block, args["client_script"])
-
-
-SUBTREE_REFS_LIMIT = 40
-
-
-def subtree_refs(block: dict) -> str:
-	"""The refs a new subtree got, so the next edit can target a child without a read."""
-	descendants = [b for b, depth in walk_blocks(block) if depth]
-	refs = [
-		f"{b.get('blockId')} <{b.get('element') or 'div'}>"
-		+ (f" '{b['blockName']}'" if b.get("blockName") else "")
-		for b in descendants[:SUBTREE_REFS_LIMIT]
-	]
-	if (extra := len(descendants) - SUBTREE_REFS_LIMIT) > 0:
-		refs.append(f"and {extra} more (query_blocks within this block)")
-	return ", ".join(refs)
 
 
 def insert_child(parent: dict, block: dict, after_block_id: str | None, index) -> None:
@@ -373,12 +363,22 @@ class WorkingTree:
 
 	def id_hint(self, block_id: str | None) -> str:
 		"""The model often passes a block's HTML id (attrs.id) instead of its editor
-		ref — the most common miss. When the id matches a real block, name its ref."""
+		ref, the most common miss. When the id matches a real block, name its ref."""
+		ref = (block_id or "").lstrip("@")
 		for block, _ in walk_blocks(self.root or {}):
 			attrs = {**(block.get("attributes") or {}), **(block.get("customAttributes") or {})}
-			if block_id and attrs.get("id") == block_id:
-				return f" — that's the HTML id; this block's ref is '{block.get('blockId')}'. Use the ref."
-		return " — not a valid ref. Call query_blocks or re-read the page outline for real refs."
+			if ref and attrs.get("id") == ref:
+				return f": that's the HTML id; this block's ref is @{block.get('blockId')}. Use the ref."
+		if (
+			len(
+				matches := [
+					b for b, _ in walk_blocks(self.root or {}) if (b.get("blockId") or "").startswith(ref)
+				]
+			)
+			> 1
+		):
+			return f": @{ref} matches {len(matches)} blocks; use more of the ref ({', '.join('@' + b['blockId'] for b in matches[:3])})."
+		return ": not a valid ref. Re-read the page (read_page) for real refs."
 
 	def apply(self, tool_name: str, args: dict) -> str:
 		args = args or {}
@@ -531,9 +531,9 @@ class WorkingTree:
 			return f"FAILED: {fields} — {MOUSTACHE_HINT}"
 		if not isinstance(args.get("block"), dict):
 			return "FAILED: no block definition supplied."
-		from builder.ai.page_writer import convert_yaml_block
+		from builder.ai.page_writer import convert_node
 
-		block = convert_yaml_block(args["block"], is_root=False)
+		block = convert_node(args["block"], is_root=False)
 		if not block:
 			return (
 				"FAILED: style/script/document elements are not blocks — JS/CSS goes through "
@@ -541,11 +541,9 @@ class WorkingTree:
 			)
 		insert_child(parent, block, args.get("after_block_id"), args.get("index"))
 		# Ship the expanded block (with its assigned refs, children included) to the
-		# canvas so both sides key the same ids, and name the new ref so the model can
-		# chain edits onto the block it just added.
+		# canvas so both sides key the same ids.
 		args["block_json"] = block
-		added = f"Added block {block.get('blockId')} (<{block.get('element')}>) under {parent_id}."
-		return f"{added} Inside it: {inside}." if (inside := subtree_refs(block)) else added
+		return f"Added block {block.get('blockId')} (<{block.get('element')}>) under {parent_id}."
 
 
 class ComponentTree(WorkingTree):

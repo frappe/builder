@@ -3,9 +3,7 @@
 The agent emits a compact `icon: <name>` reference; the AUTHORITATIVE tree must
 carry the baked SVG, because draft_blocks is what the canvas reloads and the
 published page renders — an unbaked icon block is an empty square everywhere.
-Bakes exactly like the frontend's lucideSVG (components/ai/lucideIcon.ts); keep
-the two transforms in lockstep. The set ships as lucide_icons.json.gz, generated
-from the same lucide-static package the frontend uses.
+The set ships as lucide_icons.json.gz, generated from the lucide-static package.
 """
 
 import gzip

@@ -16,11 +16,11 @@ hands off here. No DB status or out-of-band heuristic gates generation.
 import base64
 import logging
 import re
+import time
 
 import frappe
 
 from builder.ai import llm
-from builder.ai.block_codec import BlockCodec
 from builder.ai.models import ModelRegistry
 from builder.ai.prompts import Prompts
 from builder.ai.session import AISession
@@ -163,50 +163,34 @@ def reference_geometry(ctx) -> str:
 	return preamble + "\n\n" + "\n\n".join(labelled)
 
 
-def log_generation_quality(model: str, finish_reason: str | None, yaml_text: str) -> None:
-	"""Make the generation path debuggable: log model, finish_reason, YAML size, parse
-	result, and top-level section count. A thin/broken page shows up here as a 'length'
-	finish, a parse error, or very few sections — distinguishing a weak model from a
-	pipeline bug."""
-	chars = len(yaml_text)
-	sections = -1  # -1 = did not parse
-	try:
-		from builder.ai.page_writer import parse_generation_yaml, unwrap_root
-
-		# The same salvaging parser persist_page uses — telemetry must agree with
-		# what actually lands on the page (a salvaged parse is not a failed one).
-		root = unwrap_root(parse_generation_yaml(yaml_text))
-		if isinstance(root, dict):
-			sections = len(root.get("c") or [])
-	except Exception as e:
-		logger.warning("generate_page: YAML did not parse (model=%s): %s", model, e)
-
-	level = logging.WARNING if (finish_reason == "length" or sections in (-1, 0, 1)) else logging.INFO
+def log_generation_quality(model: str, finish_reason: str | None, text: str, root: dict | None) -> None:
+	"""Make the generation path debuggable: model, finish_reason, markup size and the
+	top-level section count of what landed. A thin or broken page shows up here as a
+	'length' finish or very few sections, telling a weak model from a pipeline bug."""
+	sections = len(root.get("children") or []) if root else 0
+	level = logging.WARNING if (finish_reason == "length" or sections <= 1) else logging.INFO
 	logger.log(
 		level,
-		"generate_page quality | model=%s finish_reason=%s yaml_chars=%d top_sections=%s",
+		"generate_page quality | model=%s finish_reason=%s chars=%d top_sections=%s",
 		model,
 		finish_reason,
-		chars,
+		len(text),
 		sections,
 	)
-	if sections in (-1, 0):
-		# A no-blocks generation costs a full retry — capture enough of the actual
-		# output to diagnose WHAT didn't parse (bad quoting, prose preamble, …).
-		logger.warning("generate_page unparsed head:\n%s", yaml_text[:800])
-		logger.warning("generate_page unparsed tail:\n%s", yaml_text[-400:])
+	if not root:
+		logger.warning("generate_page unparsed head:\n%s", text[:800])
 
 
 def stream_buffer_key(page_id: str) -> str:
 	return f"builder_ai_page_stream:{page_id}"
 
 
-def save_stream_buffer(ctx, yaml_content: str) -> None:
-	"""Keep the in-flight generation stream in Redis so an editor that loads (or
-	refreshes) mid-build can replay the preview instead of showing a stale draft."""
+def save_stream_buffer(ctx, blocks: list) -> None:
+	"""Keep the latest preview frame in Redis so an editor that loads (or refreshes)
+	mid-build shows the live build instead of a stale draft."""
 	frappe.cache().set_value(
 		stream_buffer_key(ctx.page_id),
-		frappe.as_json({"yaml": yaml_content, "session_id": ctx.session_id}),
+		frappe.as_json({"blocks": blocks, "session_id": ctx.session_id}),
 		expires_in_sec=600,
 	)
 
@@ -216,15 +200,42 @@ def clear_stream_buffer(page_id: str | None) -> None:
 		frappe.cache().delete_value(stream_buffer_key(page_id))
 
 
-def generate_page_yaml(ctx, args: dict) -> list[dict]:
-	"""Stream a complete page of YAML on the heavy model, persist it to the page
+PREVIEW_INTERVAL = 0.5
+
+
+class PagePreview:
+	"""The live canvas preview of a page still being written: the complete lines so
+	far, expanded here (the one parser) and streamed as a block tree, at most every
+	PREVIEW_INTERVAL seconds."""
+
+	def __init__(self, ctx):
+		self.ctx = ctx
+		self.sent_at = 0.0
+		self.sent_upto = 0
+
+	def update(self, text: str) -> None:
+		cut = text.rfind("\n")
+		if cut <= self.sent_upto or time.monotonic() - self.sent_at < PREVIEW_INTERVAL:
+			return
+		from builder.ai.page_writer import expand_page_markup
+
+		blocks, _ = expand_page_markup(text[:cut], errors=[])
+		if not blocks:
+			return
+		self.sent_at, self.sent_upto = time.monotonic(), cut
+		self.ctx.emit("stream", kind="page_blocks", blocks=blocks)
+		save_stream_buffer(self.ctx, blocks)
+
+
+def generate_page_markup(ctx, args: dict) -> list[dict]:
+	"""Stream a complete page of markup on the heavy model, persist it to the page
 	(the server is authoritative), and return a `generate_page` client op carrying
 	the expanded block tree — the canvas applies that, so both sides share block ids.
 
 	`ctx` is the AgentRunner. `args["brief"]` is the concise spec the
 	conversational model assembled from the approved plan / conversation.
-	Streams `kind="page_yaml"` chunks to the canvas as the model writes them
-	(live preview only — the returned op is the final word).
+	Streams `kind="page_blocks"` frames to the canvas as the model writes
+	(live preview only; the returned op is the final word).
 	Returns [] if the model produced nothing usable.
 	"""
 	brief = (args.get("brief") or "").strip()
@@ -234,7 +245,7 @@ def generate_page_yaml(ctx, args: dict) -> list[dict]:
 		# the site, so it stays a cache read from one page build to the next.
 		{
 			"role": "system",
-			"content": Prompts.GENERATION_YAML,
+			"content": Prompts.GENERATION,
 			"cache_control": {"type": "ephemeral", "ttl": "1h"},
 		},
 	]
@@ -271,9 +282,9 @@ def generate_page_yaml(ctx, args: dict) -> list[dict]:
 
 	ctx.emit("progress", message="Building the page…")
 
-	yaml_content = ""
+	text = ""
 	finish_reason = None
-	buffered_at = 0
+	preview = PagePreview(ctx)
 	stream = llm.complete(
 		ctx.model,  # heavy model — generation quality
 		messages,
@@ -291,51 +302,39 @@ def generate_page_yaml(ctx, args: dict) -> list[dict]:
 					stream.close()
 				except Exception:
 					pass
-				logger.info("generate_page_yaml: cancelled mid-stream, keeping the partial page")
+				logger.info("generate_page: cancelled mid-stream, keeping the partial page")
 				break
 			ctx.record_usage(chunk, model=ctx.model)  # generation streams on the heavy model
 			if not chunk.choices:
 				continue
 			if fr := chunk.choices[0].finish_reason:
 				finish_reason = fr
-			delta = chunk.choices[0].delta.content
-			if delta:
-				# offset = position of this chunk in the full stream, so a client that
-				# replayed the buffer (mid-build refresh) can drop duplicates / detect gaps.
-				offset = len(yaml_content)
-				yaml_content += delta
-				ctx.emit("stream", chunk=delta, kind="page_yaml", offset=offset)
-				if len(yaml_content) - buffered_at >= 512:
-					buffered_at = len(yaml_content)
-					save_stream_buffer(ctx, yaml_content)
+			if delta := chunk.choices[0].delta.content:
+				text += delta
+				preview.update(text)
 	finally:
 		# The buffer only serves mid-build refreshes; once this function returns the
 		# draft is persisted (or the turn failed/cancelled) and the DB is the truth.
 		clear_stream_buffer(ctx.page_id)
 
-	yaml_text = BlockCodec.strip_fences(yaml_content)
-	# Generation was a blind spot — log enough to explain a thin/broken/truncated page:
-	# the model, finish_reason (="length" → ran out of tokens mid-page), the YAML size,
-	# whether it parses, and how many top-level sections (root.c) it actually produced.
-	log_generation_quality(ctx.model, finish_reason, yaml_text)
-	if not yaml_text or not ctx.page_id:
-		logger.warning("generate_page_yaml: nothing to persist (model=%s, page=%s)", ctx.model, ctx.page_id)
+	if not text.strip() or not ctx.page_id:
+		logger.warning("generate_page: nothing to persist (model=%s, page=%s)", ctx.model, ctx.page_id)
 		return []
 
 	from builder.ai import page_writer
 
-	root, data_script = page_writer.persist_page(ctx.page_id, yaml_text)
+	root, data_script = page_writer.persist_page(ctx.page_id, text)
+	log_generation_quality(ctx.model, finish_reason, text, root)
 	if root is None:
-		# A discarded generation is paid-for work — keep the raw text for diagnosis
-		# (the parse error itself is logged by parse_generation_yaml with line info).
-		dump = frappe.get_site_path("private", "files", f"ai-failed-generation-{ctx.page_id}.yaml")
+		# A discarded generation is paid-for work: keep the raw text for diagnosis.
+		dump = frappe.get_site_path("private", "files", f"ai-failed-generation-{ctx.page_id}.txt")
 		try:
 			with open(dump, "w") as f:  # nosemgrep
-				f.write(yaml_text)
+				f.write(text)
 		except OSError:
 			dump = "<unwritable>"
 		logger.warning(
-			"generate_page_yaml: YAML produced no blocks (model=%s), raw saved to %s", ctx.model, dump
+			"generate_page: markup produced no blocks (model=%s), raw saved to %s", ctx.model, dump
 		)
 		return []
 	return [{"tool_name": "generate_page", "args": {"blocks": [root], "data_script": data_script}}]
