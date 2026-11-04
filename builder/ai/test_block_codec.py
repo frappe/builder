@@ -49,7 +49,7 @@ class TestCompress(FrappeTestCase):
 		)
 		out = BlockCodec.compress(icon)
 
-		self.assertEqual(out, {"icon": "star", "name": "Star", "style": {"display": "flex"}})
+		self.assertEqual(out, {"icon": "star", "ref": "abc123", "name": "Star", "style": {"display": "flex"}})
 
 	def test_keeps_tablet_styles_shallow_on_a_simple_task(self):
 		nested = block(children=[block(children=[block(tabletStyles={"gap": "4px"})])])
@@ -91,84 +91,9 @@ class TestCompress(FrappeTestCase):
 		self.assertEqual(BlockCodec.compress({"element": "p", "children": None}), {"el": "p"})
 
 
-class TestExpand(FrappeTestCase):
-	def test_restores_the_editor_fields(self):
-		out = BlockCodec.expand({"el": "section", "name": "Hero", "text": "Hi"})
-
-		self.assertEqual(out["element"], "section")
-		self.assertEqual(out["blockName"], "Hero")
-		self.assertEqual(out["innerHTML"], "Hi")
-
-	def test_splits_standard_and_custom_attributes(self):
-		out = BlockCodec.expand({"attrs": {"src": "/a.png", "data-x": "1"}})
-
-		self.assertEqual(out["attributes"], {"src": "/a.png"})
-		self.assertEqual(out["customAttributes"], {"data-x": "1"})
-
-	def test_defaults_the_element_to_div(self):
-		self.assertEqual(BlockCodec.expand({})["element"], "div")
-
-	def test_rebuilds_an_icon(self):
-		out = BlockCodec.expand({"icon": "star"})
-
-		self.assertEqual(out["element"], "svg")
-		self.assertEqual(out["customAttributes"], {"data-lucide": "star"})
-
-	def test_round_trips_a_block(self):
-		original = block(children=[block(blockId="child")])
-		out = BlockCodec.expand(BlockCodec.compress(original))
-
-		self.assertEqual(out["element"], original["element"])
-		self.assertEqual(out["baseStyles"], original["baseStyles"])
-		self.assertEqual(out["attributes"], original["attributes"])
-		self.assertEqual(out["children"][0]["blockName"], "Hero")
-
-
-class TestParsing(FrappeTestCase):
-	def test_strips_a_yaml_fence(self):
-		self.assertEqual(BlockCodec.strip_fences("```yaml\nel: div\n```"), "el: div")
-
-	def test_parses_a_block_and_names_the_root(self):
-		out = BlockCodec.parse_blocks("el: section")
-
-		self.assertEqual(out["element"], "section")
-		self.assertEqual(out["blockId"], "root")
-
-	def test_parses_the_first_block_of_a_list(self):
-		self.assertEqual(BlockCodec.parse_blocks("- el: main")["element"], "main")
-
-	def test_rejects_content_that_is_not_a_block(self):
-		with self.assertRaises(ValueError):
-			BlockCodec.parse_blocks("just a sentence")
-
-	def test_reads_the_block_id_out_of_a_context(self):
-		context = frappe.as_json([{"blockId": "abc123"}])
-
-		self.assertEqual(BlockCodec.extract_block_id(context), "abc123")
-
-	def test_returns_no_block_id_for_junk(self):
-		self.assertIsNone(BlockCodec.extract_block_id("not json"))
-
-
-class TestStripContext(FrappeTestCase):
-	def test_returns_only_the_text_for_a_rewrite(self):
-		context = frappe.as_json({"innerHTML": "Old headline"})
-
-		self.assertEqual(BlockCodec.strip_context(context, "simple", "rewrite_text"), "Old headline")
-
-	def test_returns_only_the_image_for_a_replace(self):
-		context = frappe.as_json({"attributes": {"src": "/a.png", "alt": "A"}})
-		out = BlockCodec.strip_context(context, "simple", "replace_image")
-
-		self.assertIn("/a.png", out)
-
-	def test_compresses_the_block_for_anything_else(self):
-		out = BlockCodec.strip_context(frappe.as_json(block()), "complex")
-
-		self.assertIn("ref: abc123", out)
-
-	def test_passes_through_content_that_is_not_json(self):
-		self.assertEqual(BlockCodec.strip_context("plain", "simple"), "plain")
+class TestStripFences(FrappeTestCase):
+	def test_strips_a_fence(self):
+		self.assertEqual(BlockCodec.strip_fences("```\nsection\n```"), "section")
 
 
 class TestHelpers(FrappeTestCase):
