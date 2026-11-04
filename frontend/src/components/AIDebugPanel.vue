@@ -260,6 +260,7 @@ const TOOL_TONES: Record<string, string> = {
 	move_block: AMBER,
 	set_page_settings: AMBER,
 	remove_block: RED,
+	detach_page_script: RED,
 	present_ui: GRAY,
 };
 const toolTone = (name: string) => TOOL_TONES[name] || GRAY;

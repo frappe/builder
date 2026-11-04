@@ -19,7 +19,12 @@ import {
 type PageStore = ReturnType<typeof usePageStore>;
 export type PageCanvas = Ref<InstanceType<typeof BuilderCanvas> | null>;
 
-const SCRIPT_TOOLS = new Set(["update_script", "set_page_script", "attach_page_script"]);
+const SCRIPT_TOOLS = new Set([
+	"update_script",
+	"set_page_script",
+	"attach_page_script",
+	"detach_page_script",
+]);
 
 /** The store keeps what the page fetches for each script: its name, type and code. */
 const scriptDoc = (name: string, scriptType: unknown, script: unknown): BuilderClientScript => ({
@@ -123,6 +128,8 @@ export class ToolDispatcher {
 				return ["created"];
 			case "attach_page_script":
 				return ["attached"];
+			case "detach_page_script":
+				return ["removed"];
 			default:
 				return [];
 		}
@@ -369,6 +376,14 @@ export class ToolDispatcher {
 				const name = args.script_name;
 				if (!name || this.pageStore.activePageScripts.some((s) => s.name === name)) return;
 				this.pageStore.activePageScripts.push(scriptDoc(name, args.script_type, args.script));
+				this.pageStore.scriptsVersion++;
+				return;
+			}
+			case "detach_page_script": {
+				const scripts = this.pageStore.activePageScripts;
+				const index = scripts.findIndex((s) => s.name === args.script_name);
+				if (index === -1) return;
+				scripts.splice(index, 1);
 				this.pageStore.scriptsVersion++;
 				return;
 			}

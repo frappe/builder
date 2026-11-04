@@ -18,6 +18,11 @@ from builder.ai.agent.registry import Tool
 logger = frappe.logger("builder.ai.agent.scripts")
 logger.setLevel(logging.INFO)
 
+LIVE_NOTE = (
+	" This is live: the published page runs it now, while block edits wait for Publish, "
+	"so tell the user it is already live."
+)
+
 
 def page_scripts(page_id: str, script_type: str | None = None) -> list[dict]:
 	"""The client scripts attached to a page — shared by get_page_scripts (this
@@ -76,7 +81,7 @@ def apply_set_page_script(ctx, args: dict) -> str:
 	# The created name rides the op back to the canvas (see SCRIPT_TWIN_TOOLS
 	# mirroring in the loop) so its script list / undo tracking pick it up.
 	args["script_name"] = doc.name
-	return f"Created {script_type} script '{doc.name}' and attached it to the page."
+	return f"Created {script_type} script '{doc.name}' and attached it to the page.{LIVE_NOTE}"
 
 
 def apply_attach_page_script(ctx, args: dict) -> str:
@@ -103,7 +108,7 @@ def apply_attach_page_script(ctx, args: dict) -> str:
 	return (
 		f"Attached shared {doc.script_type} script '{name}'. It is the SAME doc the other page "
 		"uses — editing it changes every page it is attached to; to diverge later, create a "
-		"copy with set_page_script instead."
+		f"copy with set_page_script instead.{LIVE_NOTE}"
 	)
 
 
@@ -129,7 +134,24 @@ def apply_update_script(ctx, args: dict) -> str:
 	# the published page serves and bumps its cache-busting URL — a bare column
 	# write leaves every published page running the OLD script.
 	doc.save(ignore_permissions=True)
-	return f"Updated script '{name}'."
+	return f"Updated script '{name}'.{LIVE_NOTE}"
+
+
+def apply_detach_page_script(ctx, args: dict) -> str:
+	"""Unlink a script from the open page, like the editor's Remove: the doc stays, so
+	other pages using it keep working and the turn's revert can link it back."""
+	name = (args.get("script_name") or "").strip()
+	page = frappe.get_doc("Builder Page", ctx.page_id) if ctx.page_id else None
+	rows = [row for row in (page.get("client_scripts") or []) if row.builder_script == name] if page else []
+	if not rows:
+		return (
+			f"FAILED: script '{name}' is not attached to this page. Call get_page_scripts and use "
+			"its exact script_name."
+		)
+	for row in rows:
+		page.remove(row)
+	page.save(ignore_permissions=True)
+	return f"Removed script '{name}' from this page; the script itself is kept.{LIVE_NOTE}"
 
 
 set_page_script = Tool(
@@ -235,6 +257,28 @@ update_script = Tool(
 	},
 )
 
+detach_page_script = Tool(
+	name="detach_page_script",
+	side="client",
+	handler=apply_detach_page_script,  # the loop applies script ops server-side
+	description=(
+		"Remove a script from this page, like the editor's Remove action: it stops running here "
+		"and the script doc is kept for any other page using it. This is how a script comes off "
+		"a page; never blank one with update_script. Remove only scripts you added in this chat "
+		"or ones the user named."
+	),
+	parameters={
+		"type": "object",
+		"properties": {
+			"script_name": {
+				"type": "string",
+				"description": "The exact 'script_name' value returned by get_page_scripts. Never invent this value.",
+			},
+		},
+		"required": ["script_name"],
+	},
+)
+
 get_page_scripts = Tool(
 	name="get_page_scripts",
 	side="server",
@@ -257,4 +301,4 @@ get_page_scripts = Tool(
 	handler=fetch_page_scripts,
 )
 
-TOOLS = [set_page_script, attach_page_script, update_script, get_page_scripts]
+TOOLS = [set_page_script, attach_page_script, update_script, detach_page_script, get_page_scripts]

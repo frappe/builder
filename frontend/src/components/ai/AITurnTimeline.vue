@@ -133,6 +133,7 @@ const TOOL_ICONS: Record<string, string> = {
 	set_design_token: "lucide-palette",
 	set_page_script: "lucide-code",
 	update_script: "lucide-code",
+	detach_page_script: "lucide-code",
 	create_component: "lucide-box",
 	extract_component: "lucide-box",
 	edit_component: "lucide-box",
