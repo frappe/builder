@@ -52,6 +52,7 @@ import frappe
 from builder.ai import llm, locks, markup
 from builder.ai.agent.edits import EditScript, composition_notes
 from builder.ai.agent.registry import ToolRegistry, build_default_registry
+from builder.ai.agent.selectors import walk_blocks
 from builder.ai.agent.tree import WorkingTree
 from builder.ai.block_codec import BlockCodec
 from builder.ai.models import ModelRegistry
@@ -408,6 +409,12 @@ class AgentRunner:
 		self.image_views = 0
 		# read_page calls this turn — same idea, a reference sweep can't run up context.
 		self.page_read_count = 0
+		# A page generated this turn that no preview has looked at yet: a closing
+		# `reply` waits until it has been (the self-review catches empty rows and
+		# fonts that never loaded). generation_errors: lines the generator wrote that
+		# did not parse.
+		self.unreviewed_build = False
+		self.generation_errors: list[str] = []
 		# Style sets the model was shown this turn ($s1 on the open page, $a1… on
 		# references), so an edit script can spread them by name.
 		self.style_sets: dict[str, dict] = {}
@@ -578,14 +585,23 @@ class AgentRunner:
 		return render_page_context(self.page_root(), self.selected_block_ids, self.style_sets)
 
 	def build_initial_page_context(self) -> str:
+		"""The open page rides in with the request: nearly every turn reads it first, and
+		a read costs a whole round. An empty page brings the new-page skill instead; a
+		page past the full-render limit only says where to read it."""
 		if not self.page_id:
 			return ""
 		root = self.page_root()
-		state = "has content" if root and root.get("children") else "is empty"
+		if not (root and root.get("children")):
+			return "The open page is empty.\n\n" + self.build_skill_context()
+		context = render_page_context(root, self.selected_block_ids, self.style_sets)
+		if any(block.get("extendedFromComponent") for block, _ in walk_blocks(root)):
+			context += "\n\n" + self.attach_skill("components", "This page embeds components")
+		if context.startswith(PAGE_PREAMBLE):
+			return f"{context}\n\nThis is the page as the turn starts; your edits apply live, and read_page re-reads it."
 		return (
-			f"The open page {state}. Its full structure is available with read_page('{self.page_id}') "
-			"when you need to inspect or edit the page. Editor plugins can use the page API at runtime "
-			"without reading this page's blocks.\n\n" + render_selected_context(root, self.selected_block_ids)
+			f"The open page is large; read_page('{self.page_id}') returns its outline. Editor plugins "
+			"can use the page API at runtime without reading this page's blocks.\n\n"
+			+ render_selected_context(root, self.selected_block_ids)
 		)
 
 	def build_open_page_context(self) -> str:
@@ -615,13 +631,16 @@ class AgentRunner:
 	def build_skill_context(self) -> str:
 		"""Include the build guide when the model asks to inspect an empty page."""
 		root = self.page_root()
-		if not self.page_id or (root and root.get("children")) or "new-page" in self.attached_skills:
+		if not self.page_id or (root and root.get("children")):
 			return ""
-		self.attached_skills.add("new-page")
-		return (
-			"For building on this empty page, here is the new-page skill in full; "
-			f"no read_skill needed this turn:\n\n{Skills.read('new-page')}"
-		)
+		return self.attach_skill("new-page", "For building on this empty page")
+
+	def attach_skill(self, name: str, reason: str) -> str:
+		"""A skill the open page's state calls for, put in context before the model asks."""
+		if name in self.attached_skills:
+			return ""
+		self.attached_skills.add(name)
+		return f"{reason}, here is the {name} skill in full; no read_skill needed this turn:\n\n{Skills.read(name)}"
 
 	def require_skill(self, name: str) -> str | None:
 		# A read alongside a write has not reached the model that authored that write.
@@ -775,7 +794,7 @@ class AgentRunner:
 		stream = llm.complete_with_tools(
 			self.loop_model,
 			messages,
-			self.registry.schemas(),
+			self.registry.schemas(self.round_skills),
 			llm.TASK_PARAMS["agent"],
 			api_key=self.api_key,
 			stream=True,
@@ -1113,6 +1132,11 @@ class AgentRunner:
 				page_writer.save_draft_blocks(self.page_id, self.tree.root)
 		return results, applied
 
+	def skill_missing(self, tool) -> str | None:
+		"""A skill-bound tool called before its skill reached the model (it named one
+		it was never offered)."""
+		return self.require_skill(tool.skill) if tool and tool.skill else None
+
 	def run_handler(self, tool, op: dict) -> str:
 		"""Run a server tool's handler, turning a crash into a tool result.
 
@@ -1122,6 +1146,8 @@ class AgentRunner:
 		provider could not fetch. Reported as FAILED instead, which the tools already
 		use for expected failures, so the model can adjust and carry on. The savepoint
 		keeps a half-applied write from riding along."""
+		if missing := self.skill_missing(tool):
+			return missing
 		savepoint = f"tool_{self.server_mutations}"
 		frappe.db.savepoint(savepoint)
 		try:
@@ -1151,6 +1177,7 @@ class AgentRunner:
 			# canvas preview), persists the page, and the loop continues — so the model
 			# can add scripts, verify, and refine in the same turn.
 			content, ops = self.run_generation_step(tool, op)
+			self.unreviewed_build = self.unreviewed_build or bool(ops)
 			self.applied_operations.extend(ops)
 			if ops:
 				# The authoritative op replaces the throwaway streamed preview with
@@ -1161,6 +1188,8 @@ class AgentRunner:
 		if op["tool_name"] in SNAPSHOT_TOOLS:
 			self.ensure_revert_snapshot()
 		content = self.run_handler(tool, op)
+		if op["tool_name"] == "preview_page" and not str(content).startswith("FAILED"):
+			self.unreviewed_build = False
 		self.end_activity(entry)
 		self.drain_queued_ops()
 		if op["tool_name"] not in READ_ONLY_SERVER_TOOLS and not str(content).startswith("FAILED"):
@@ -1302,6 +1331,12 @@ class AgentRunner:
 					messages.append({"role": "tool", "tool_call_id": tc["id"], "content": content})
 				if turn_over:
 					return
+				results = [m["content"] for m in messages[-len(raw_tool_calls) :]]
+				if reply := self.turn_reply(tool_operations, results):
+					summary_text = reply
+					self.stop_reason = "model_finished"
+					self.checkpoint()
+					break
 				self.flush_pending_images(messages)
 				self.checkpoint()
 			else:
@@ -1321,6 +1356,25 @@ class AgentRunner:
 			return
 
 		self.finish_turn(summary_text, started)
+
+	def turn_reply(self, ops: list[dict], results: list[str]) -> str:
+		"""The reply that ends the turn now, if any: never while a page generated this
+		turn is still unreviewed."""
+		return "" if self.unreviewed_build else self.closing_reply(ops, results)
+
+	@staticmethod
+	def closing_reply(ops: list[dict], results: list[str]) -> str:
+		"""An edit_page `reply` ends the turn without another round when nothing in the
+		round still needs a look: every call landed, and none was a read (a preview, a
+		page) whose result the model has yet to see."""
+		replies = [
+			reply
+			for op in ops
+			if op["tool_name"] == "edit_page" and (reply := str(op["args"].get("reply") or "").strip())
+		]
+		if not replies or any(op["tool_name"] in READ_ONLY_SERVER_TOOLS for op in ops):
+			return ""
+		return "" if any("FAILED" in str(result) for result in results) else replies[-1]
 
 	def checkpoint(self) -> None:
 		"""Make this round's work durable. A turn runs as a background job, and a job
@@ -1482,6 +1536,8 @@ class AgentRunner:
 		is over (question/plan/confirm card emitted); a string = the handler DECLINED
 		(invalid proposal) and the loop should continue with that as the tool result."""
 		tool = self.registry.get(op["tool_name"])
+		if missing := self.skill_missing(tool):
+			return missing
 		if tool and tool.handler:
 			return tool.handler(self, op["args"])
 		return None
@@ -1506,9 +1562,18 @@ class AgentRunner:
 			"Page generated and saved. Now finish the build: add the client scripts the plan "
 			"calls for (set_page_script), fix obvious breakage with edit_page, verify "
 			"with preview_page at most once, then finish with a short summary."
-			f"{self.script_hook_gap_note(root)}{composition_notes(root)}\n"
+			f"{self.script_hook_gap_note(root)}{composition_notes(root)}{self.dropped_lines_note()}\n"
 			f"{render_page_context(root, sets=self.style_sets)}",
 			ops,
+		)
+
+	def dropped_lines_note(self) -> str:
+		if not (errors := self.generation_errors):
+			return ""
+		listed = "; ".join(errors[:6])
+		return (
+			f"\nDROPPED LINES: {len(errors)} line(s) of the generated page did not parse ({listed}). "
+			"Whatever they held is missing: put it back with edit_page."
 		)
 
 	def script_hook_gap_note(self, root: dict) -> str:

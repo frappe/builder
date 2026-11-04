@@ -364,6 +364,7 @@ FIELD_SCHEMA = {
 
 list_doctypes_tool = Tool(
 	name="list_doctypes",
+	skill="forms-and-data",
 	side="server",
 	description="List DocTypes in the site (the data model). Filter by module, custom-only, or a name search. Use this to discover what data already exists before building data-driven pages.",
 	parameters={
@@ -381,6 +382,7 @@ list_doctypes_tool = Tool(
 
 get_doctype_schema_tool = Tool(
 	name="get_doctype_schema",
+	skill="forms-and-data",
 	side="server",
 	description="Return a DocType's fields (name, type, options). Call before writing a page data script or seeding data so you use real field names.",
 	parameters={
@@ -452,6 +454,7 @@ get_document_tool = Tool(
 
 write_page_data_script_tool = Tool(
 	name="write_page_data_script",
+	skill="forms-and-data",
 	side="server",
 	description=(
 		"Set the current page's server-side data script (Python). Use it to populate `data` "
@@ -479,6 +482,7 @@ write_page_data_script_tool = Tool(
 
 create_doctype_tool = Tool(
 	name="create_doctype",
+	skill="forms-and-data",
 	side="terminal",
 	description=(
 		"Propose a NEW DocType (custom, created at runtime) to hold structured site data — e.g. "
@@ -499,6 +503,7 @@ create_doctype_tool = Tool(
 
 seed_sample_data_tool = Tool(
 	name="seed_sample_data",
+	skill="forms-and-data",
 	side="terminal",
 	description=(
 		"Propose inserting sample records into a DocType so data-driven pages render with real "

@@ -44,6 +44,9 @@ class Tool:
 	# and returns the canonical client op(s) to apply. None = ordinary tool.
 	artifact: str | None = None
 	generator: Callable | None = None
+	# A skill-bound tool is offered only once its skill is in the model's context:
+	# rarely used schemas stay off the rounds that never need them.
+	skill: str | None = None
 
 	def schema(self) -> dict:
 		return {
@@ -75,8 +78,10 @@ class ToolRegistry:
 		tool = self._tools.get(name)
 		return tool.side if tool else "client"
 
-	def schemas(self) -> list[dict]:
-		return [tool.schema() for tool in self._tools.values()]
+	def schemas(self, skills: set[str] | None = None) -> list[dict]:
+		return [
+			tool.schema() for tool in self._tools.values() if not tool.skill or tool.skill in (skills or ())
+		]
 
 	def names(self) -> list[str]:
 		return list(self._tools)
