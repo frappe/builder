@@ -1220,10 +1220,25 @@ class AgentRunner:
 		)
 		self.emit("complete", message=msg, after_commit=True)
 
-	def fail_turn(self, message: str) -> None:
-		"""End the turn with a persisted error message + error event."""
+	def fail_turn(
+		self, message: str, error: Exception | None = None, started: float = 0, error_log: str | None = None
+	) -> None:
+		"""End the turn with a persisted error message + error event. A turn that broke
+		mid-way keeps what it reached (rounds, steps, revert) so it can be debugged and undone."""
+		metadata = {"status": "error"}
+		if error is not None:
+			metadata["debug"] = {
+				**self.debug_metadata(round((time.monotonic() - started) * 1000)),
+				"stopReason": "error",
+				"error": type(error).__name__,
+				"errorLog": error_log,
+			}
+		if self.revert_snapshot:
+			metadata["revertSnapshot"] = self.revert_snapshot
+		if timeline := self.timeline():
+			metadata["steps"] = timeline
 		AISession.try_append_message(
-			self.session_id, "assistant", message, message_type="status", metadata={"status": "error"}
+			self.session_id, "assistant", message, message_type="status", metadata=metadata
 		)
 		self.emit("error", message=message, after_commit=True)
 
@@ -1325,10 +1340,12 @@ class AgentRunner:
 			return
 		except Exception as e:
 			logger.error(f"Agent LLM call failed: {e!s}", exc_info=True)
-			frappe.log_error(f"Agent LLM call failed: {e}", "AgentRunner.run")
+			log = frappe.log_error(f"Agent LLM call failed: {e}", "AgentRunner.run")
 			# Never the raw provider/exception string: it can leak internals (keys, model
 			# ids, stack detail). Full error is logged above.
-			self.fail_turn(llm.user_facing_error(e))
+			self.fail_turn(
+				llm.user_facing_error(e), error=e, started=started, error_log=getattr(log, "name", None)
+			)
 			return
 
 		self.finish_turn(summary_text, started)
@@ -1415,21 +1432,7 @@ class AgentRunner:
 			"operations": len(self.applied_operations),
 			# Trace for the agent debugger: why the turn ended + what the model did each
 			# round. Explains cases like "only 2 blocks updated" at a glance.
-			"debug": {
-				"stopReason": self.stop_reason or "model_finished",
-				"loopModel": self.loop_model,
-				"rounds": len(self.trace),
-				"argsRepaired": self.args_repaired,
-				"finishReasons": self.finish_reasons,
-				"toolFailures": self.tool_failures,
-				"streamRetries": self.stream_retries,
-				"tokens": self.usage,
-				# How much room the conversation has: the loop model's window; the
-				# latest call's prompt_tokens (per_call) is the current context size.
-				"contextWindow": ModelRegistry.context_window(self.loop_model),
-				"elapsedMs": elapsed_ms,
-				"trace": self.trace,
-			},
+			"debug": self.debug_metadata(elapsed_ms),
 		}
 		if self.revert_snapshot:
 			final_metadata["revertSnapshot"] = self.revert_snapshot
@@ -1449,6 +1452,23 @@ class AgentRunner:
 		)
 		self.maybe_name_session()
 		self.emit("complete", message=summary_text or "Done", after_commit=True)
+
+	def debug_metadata(self, elapsed_ms: int) -> dict:
+		return {
+			"stopReason": self.stop_reason or "model_finished",
+			"loopModel": self.loop_model,
+			"rounds": len(self.trace),
+			"argsRepaired": self.args_repaired,
+			"finishReasons": self.finish_reasons,
+			"toolFailures": self.tool_failures,
+			"streamRetries": self.stream_retries,
+			"tokens": self.usage,
+			# How much room the conversation has: the loop model's window; the
+			# latest call's prompt_tokens (per_call) is the current context size.
+			"contextWindow": ModelRegistry.context_window(self.loop_model),
+			"elapsedMs": elapsed_ms,
+			"trace": self.trace,
+		}
 
 	def maybe_name_session(self) -> None:
 		"""The first completed turn names the chat: a short generated title reads
