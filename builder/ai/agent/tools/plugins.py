@@ -177,6 +177,7 @@ Before authoring or changing code, read_skill('editor-plugin') this turn, includ
 
 write_plugin_tool = Tool(
 	name="write_plugin",
+	skill="editor-plugin",
 	side="server",
 	description=WRITE_PLUGIN_DESCRIPTION,
 	parameters={
@@ -278,6 +279,7 @@ def read_module(root: Path, name: str) -> str:
 
 read_editor_source_tool = Tool(
 	name="read_editor_source",
+	skill="editor-plugin",
 	side="server",
 	description=(
 		"Find and read the editor's own modules, to build a plugin from them: the controls its panels use "

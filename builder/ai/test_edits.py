@@ -180,3 +180,29 @@ class TestCompositionNotes(FrappeTestCase):
 
 		root["children"][1]["children"][0]["baseStyles"]["display"] = "none"
 		self.assertEqual(composition_notes(root), "")
+
+
+class TestClosingReply(FrappeTestCase):
+	def reply(self, ops, results):
+		from builder.ai.agent.loop import AgentRunner
+
+		return AgentRunner.closing_reply(ops, results)
+
+	def edit(self, reply=None):
+		return {
+			"tool_name": "edit_page",
+			"args": {"ops": "@a {color:red}", **({"reply": reply} if reply else {})},
+		}
+
+	def test_a_landed_edit_with_a_reply_ends_the_turn(self):
+		self.assertEqual(self.reply([self.edit("Made it red.")], ["Applied 1 op(s)."]), "Made it red.")
+
+	def test_no_reply_a_failure_or_a_read_in_the_round_keeps_going(self):
+		self.assertEqual(self.reply([self.edit()], ["Applied 1 op(s)."]), "")
+		self.assertEqual(
+			self.reply([self.edit("Done.")], ["Applied 0 of 1 op(s).\nFAILED line 1: @a not found"]), ""
+		)
+		preview = {"tool_name": "preview_page", "args": {}}
+		self.assertEqual(
+			self.reply([self.edit("Done."), preview], ["Applied 1 op(s).", "Screenshot attached"]), ""
+		)

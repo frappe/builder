@@ -150,6 +150,7 @@ def desk_slug(doctype: str) -> str:
 
 connect_form_tool = Tool(
 	name="connect_form",
+	skill="forms-and-data",
 	side="terminal",
 	description=(
 		"Make a form on the page actually SAVE its submissions to the database. Use this whenever "

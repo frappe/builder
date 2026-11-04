@@ -27,7 +27,17 @@ edit_page = Tool(
 	),
 	parameters={
 		"type": "object",
-		"properties": {"ops": {"type": "string", "description": "The edit script."}},
+		"properties": {
+			"ops": {"type": "string", "description": "The edit script."},
+			"reply": {
+				"type": "string",
+				"description": (
+					"When this script finishes the request: your reply to the user. The turn ends here "
+					"if every op applies (any failure comes back to you instead). Leave it out when you "
+					"still need to look at the result."
+				),
+			},
+		},
 		"required": ["ops"],
 	},
 )

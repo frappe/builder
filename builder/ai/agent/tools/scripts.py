@@ -159,17 +159,12 @@ set_page_script = Tool(
 	side="client",
 	handler=apply_set_page_script,  # used by HEADLESS turns only; the editor applies client-side
 	description=(
-		"Create a new JavaScript or CSS client script and attach it to the page. "
-		"Use this to add event listeners, animations, dynamic behaviour, fetch calls, "
-		"or any page-level code that cannot be expressed via block styles alone. "
-		"CSS and JS are SEPARATE scripts: put stylesheet content (reveal/hover classes, "
-		"@keyframes, cursors) in a script_type='CSS' script and behaviour in a "
-		"'JavaScript' one — never inject a <style> tag from JS "
-		"(document.createElement('style') is always wrong; make two calls instead). "
-		"To target an element, in the SAME turn give it a hook — a class (preferred) in "
-		"classes, or [id=x] for a single unique element, via edit_page, and "
-		"select that. Do NOT select by a block's 'ref'/blockId "
-		"(editor handle): it is not in the published DOM and matches nothing on the live page."
+		"Create a JavaScript or CSS script and attach it to the page, for page-level behaviour "
+		"block styles can't express. CSS and JS are SEPARATE scripts: stylesheet content "
+		"(reveal/hover classes, @keyframes) goes in a script_type='CSS' script, never a <style> "
+		"tag built from JS. Target elements by a hook you give them in the same turn (a class, "
+		"or [id=x] for one element) via edit_page, never by a block's @ref: it is not in the "
+		"published DOM."
 	),
 	parameters={
 		"type": "object",
@@ -186,9 +181,8 @@ set_page_script = Tool(
 			"name": {
 				"type": "string",
 				"description": (
-					"A short, descriptive name for the script (2–4 words, Title Case) saying what it "
-					"does — e.g. 'Confetti On Load', 'Mobile Nav Toggle', 'Hero Parallax'. Shown in the "
-					"page's script list. Do NOT use generic names like 'Script' or 'JavaScript'."
+					"What it does, 2-4 words in Title Case ('Mobile Nav Toggle'), shown in the page's "
+					"script list; never a generic 'Script'."
 				),
 			},
 		},
