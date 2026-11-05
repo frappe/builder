@@ -1,7 +1,7 @@
 <template>
 	<SidebarCard
 		v-if="available && clone && !dismissed"
-		class="m-2"
+		class="m-2 break-words"
 		:theme="failed ? 'red' : 'gray'"
 		:title="title"
 		:description="description"

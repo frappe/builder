@@ -951,6 +951,11 @@ def parse_patch(header: str, number: int, body: str, sets: dict) -> Op:
 	fields.pop("ref", None)
 	if fields.pop("c", None):
 		raise MarkupError(f"line {number}: a patch takes no child blocks; use `add @ref` for children")
+	if new_kind := [call for key, call in (("repeat", "repeat()"), ("component", "use()")) if key in fields]:
+		raise MarkupError(
+			f"line {number}: {' and '.join(new_kind)} makes a new kind of block, so a patch can't add it: "
+			"`replace @ref` with the new block (a repeater's one child is its item template)"
+		)
 	return Op("patch", number, refs=refs, fields=fields)
 
 

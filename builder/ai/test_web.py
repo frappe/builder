@@ -1,3 +1,4 @@
+import json
 from types import SimpleNamespace
 from unittest.mock import patch
 
@@ -8,6 +9,7 @@ from builder.ai.agent.tools.web import (
 	MAX_URL_READS_PER_TURN,
 	extract_title,
 	html_to_text,
+	pick_fields,
 	run_read_url,
 	run_research,
 )
@@ -17,6 +19,7 @@ def ctx(**overrides):
 	defaults = {
 		"web_read_count": 0,
 		"research_count": 0,
+		"web_sources": [],
 		"loop_model": "openrouter/test-model",
 		"model": "openrouter/test-model",
 		"api_key": "key",
@@ -44,6 +47,46 @@ class TestHtmlToText(FrappeTestCase):
 		self.assertEqual(extract_title("<title>Caf&eacute; Nine</title>"), "Café Nine")
 
 
+def fetched(body: bytes, content_type: str = "text/html", url: str = "https://example.com/"):
+	"""Every fetch answers 200 with `body`, without touching the network."""
+	page = SimpleNamespace(
+		headers={"content-type": content_type},
+		status_code=200,
+		url=url,
+		encoding="utf-8",
+		iter_content=lambda **kwargs: iter([body]),
+	)
+	session = SimpleNamespace(get=lambda *args, **kwargs: page)
+	return patch("builder.ai.agent.tools.web.public_session", return_value=session)
+
+
+SPEAKERS = {
+	"count": 2,
+	"results": [
+		{"fullname": "Ada", "biography": "x" * 9000, "avatar_url": "https://a.png", "answers": []},
+		{"fullname": "Lin", "biography": "y" * 9000, "avatar_url": None, "answers": []},
+	],
+}
+
+
+class TestPickFields(FrappeTestCase):
+	def test_keeps_named_keys_at_any_depth(self):
+		picked = pick_fields(SPEAKERS, {"fullname", "avatar_url"})
+
+		self.assertEqual(
+			picked,
+			{
+				"results": [
+					{"fullname": "Ada", "avatar_url": "https://a.png"},
+					{"fullname": "Lin", "avatar_url": None},
+				]
+			},
+		)
+
+	def test_nothing_matched_is_none(self):
+		self.assertIsNone(pick_fields(SPEAKERS, {"title"}))
+
+
 class TestReadUrl(FrappeTestCase):
 	def test_refuses_private_addresses(self):
 		out = run_read_url(ctx(), {"url": "http://127.0.0.1:8000/admin"})
@@ -52,22 +95,77 @@ class TestReadUrl(FrappeTestCase):
 		self.assertIn("private or internal", out)
 
 	def test_reads_a_public_page(self):
-		page = SimpleNamespace(
-			headers={"content-type": "text/html"},
-			status_code=200,
-			url="https://example.com/",
-			encoding="utf-8",
-			iter_content=lambda **kwargs: iter([b"<title>Example</title><p>Hello there</p>"]),
-		)
-		with patch("builder.ai.agent.tools.web.public_session") as session:
-			session.return_value.get.return_value = page
+		with fetched(b"<title>Example</title><p>Hello there</p>"):
 			out = run_read_url(ctx(), {"url": "https://example.com"})
 
 		self.assertTrue(out.startswith("Read https://example.com/"))
 		self.assertIn("Hello there", out)
 
+	def test_lists_the_data_links_a_page_declares(self):
+		markup = (
+			b'<link rel="alternate" hreflang="de" href="/de/">'
+			b'<link rel="alternate" type="application/json" title="Event API" href="/api/v1/events/x/">'
+			b"<p>Speakers</p>"
+		)
+		with fetched(markup, url="https://events.example.com/x/speakers/"):
+			out = run_read_url(ctx(), {"url": "https://events.example.com/x/speakers/"})
+
+		self.assertIn(
+			"Data links the page declares:\n- application/json 'Event API': https://events.example.com/api/v1/events/x/",
+			out,
+		)
+		self.assertNotIn("/de/", out)
+
 	def test_refuses_non_http_schemes(self):
 		self.assertIn("FAILED", run_read_url(ctx(), {"url": "ftp://example.com/file"}))
+
+	def test_fields_fit_a_long_json_list_in_one_read(self):
+		context = ctx()
+		url = "https://api.example.com/speakers"
+		with fetched(json.dumps(SPEAKERS).encode(), "application/json", url):
+			out = run_read_url(context, {"url": url, "fields": "fullname, avatar_url"})
+
+		self.assertIn('{"results":[{"fullname":"Ada","avatar_url":"https://a.png"}', out)
+		self.assertNotIn("truncated", out)
+		self.assertEqual(context.web_sources, [{"url": url, "fields": ["fullname", "avatar_url"]}])
+
+	def test_truncated_json_points_at_fields(self):
+		with fetched(json.dumps(SPEAKERS).encode(), "application/json"):
+			out = run_read_url(ctx(), {"url": "https://example.com"})
+
+		self.assertIn("(truncated; pass `fields` to keep only the keys you need)", out)
+
+	def test_rows_point_at_a_repeater(self):
+		with fetched(json.dumps(SPEAKERS).encode(), "application/json"):
+			out = run_read_url(ctx(), {"url": "https://example.com", "fields": ["fullname"]})
+
+		self.assertIn("read_skill('forms-and-data')", out)
+
+	def test_a_single_record_is_not_rows(self):
+		with fetched(json.dumps(SPEAKERS["results"][0]).encode(), "application/json"):
+			out = run_read_url(ctx(), {"url": "https://example.com"})
+
+		self.assertNotIn("forms-and-data", out)
+
+	def test_fields_that_match_nothing_say_so(self):
+		with fetched(json.dumps(SPEAKERS).encode(), "application/json"):
+			out = run_read_url(ctx(), {"url": "https://example.com", "fields": ["title"]})
+
+		self.assertIn("no title key in this JSON", out)
+
+	def test_fields_on_broken_json_return_the_body(self):
+		with fetched(b'{"results": [', "application/json"):
+			out = run_read_url(ctx(), {"url": "https://example.com", "fields": ["title"]})
+
+		self.assertIn('{"results": [', out)
+
+	def test_rereading_a_source_records_it_once(self):
+		context = ctx()
+		with fetched(b"<p>Hello</p>"):
+			run_read_url(context, {"url": "https://example.com"})
+			run_read_url(context, {"url": "https://example.com"})
+
+		self.assertEqual(context.web_sources, [{"url": "https://example.com/"}])
 
 	def test_caps_reads_per_turn(self):
 		out = run_read_url(ctx(web_read_count=MAX_URL_READS_PER_TURN), {"url": "https://example.com"})
