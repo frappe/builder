@@ -9,10 +9,12 @@ released tomorrow shows up without a change here.
 Everything a preset creates is an ordinary Builder AI Provider row.
 """
 
+from urllib.parse import urlsplit
+
 import frappe
 from frappe import _
 
-from builder.ai.models import ModelRegistry
+from builder.ai.models import DEFAULT_AI_MODEL, ModelRegistry
 
 PRESETS = [
 	{
@@ -82,6 +84,7 @@ PRESETS = [
 
 
 SITE_PROVIDER = {"provider_name": "Frappe", "route_prefix": "frappe"}
+GATEWAY_BASE_PATH = "/openai/v1"
 
 logger = frappe.logger("builder.ai.presets")
 
@@ -100,15 +103,32 @@ def get_site_ai_key() -> dict | None:
 
 def sync_site_provider() -> None:
 	"""Keep the Frappe provider in step with site config: on with its gateway while
-	`ai_keys` has a key, off when it has none. Site config keeps the key itself."""
+	`ai_keys` has a key, off when it has none. Site config keeps the key itself.
+	A newly registered provider also sets the default model."""
 	entry = get_site_ai_key()
 	doc = get_site_provider(create=bool(entry))
 	if not doc:
 		return
-	fields = {"api_base": entry["gateway_url"] if entry else doc.api_base, "enabled": int(bool(entry))}
-	if doc.is_new() or any(doc.get(field) != value for field, value in fields.items()):
+	api_base = get_gateway_base(entry["gateway_url"]) if entry else doc.api_base
+	fields = {"api_base": api_base, "enabled": int(bool(entry))}
+	is_registering = not doc.name
+	if is_registering or any(doc.get(field) != value for field, value in fields.items()):
 		doc.update(fields)
 		doc.save(ignore_permissions=True)
+	if is_registering:
+		set_default_model()
+
+
+def set_default_model() -> None:
+	"""Make the Frappe gateway model the default, unless Builder Settings already names one."""
+	if not frappe.db.get_single_value("Builder Settings", "default_ai_model"):
+		frappe.db.set_single_value("Builder Settings", "default_ai_model", DEFAULT_AI_MODEL)
+
+
+def get_gateway_base(gateway_url: str) -> str:
+	"""Frappe Cloud writes the gateway host. Its OpenAI-compatible API sits under GATEWAY_BASE_PATH."""
+	parts = urlsplit(gateway_url)
+	return f"{parts.scheme}://{parts.netloc}{GATEWAY_BASE_PATH}"
 
 
 def get_site_provider(create: bool):
