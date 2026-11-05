@@ -421,6 +421,7 @@ class AgentRunner:
 		# Web tools this turn — bounded like every other read that costs context/latency.
 		self.web_read_count = 0
 		self.research_count = 0
+		self.web_sources: list[dict] = []
 		# Successful WRITE-side server-tool calls this turn (settings, scripts, data,
 		# page creation…) — counts as real work for the no-op-claim guards.
 		self.server_mutations = 0
@@ -1478,6 +1479,8 @@ class AgentRunner:
 			final_metadata["revertSnapshot"] = self.revert_snapshot
 		if self.plugins_written:
 			final_metadata["plugins"] = self.plugins_written
+		if self.web_sources:
+			final_metadata["sources"] = self.web_sources
 		if timeline := self.timeline():
 			# The turn's timeline — rendered live from step events, rehydrated from
 			# here on a session reload.
