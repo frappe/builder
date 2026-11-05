@@ -82,13 +82,6 @@ class TestSiteProvider(FrappeTestCase):
 		):
 			self.assertTrue(ai_setup_state()["configured"])
 
-	def test_the_credits_call_connects_the_provider(self):
-		from builder.ai.api import get_site_ai_credits
-
-		with patch.dict(frappe.local.conf, SITE_KEY), patch("builder.ai.api.get_provider_credits") as credits:
-			get_site_ai_credits()
-		credits.assert_called_once_with("Frappe")
-
 	def test_install_and_migrate_connect_the_provider(self):
 		from builder.install import after_install, after_migrate
 

@@ -16,7 +16,6 @@ from builder.ai.block_codec import BlockCodec
 from builder.ai.discovery import Discovery
 from builder.ai.llm import resolve_api_key, settings_api_key
 from builder.ai.models import GatewayListing, ModelRegistry
-from builder.ai.presets import sync_site_provider
 from builder.ai.session import AISession
 from builder.utils import has_page_write
 
@@ -346,7 +345,6 @@ def get_provider_credits(provider: str) -> dict | None:
 @frappe.whitelist()
 def get_site_ai_credits() -> dict | None:
 	"""The balance of the AI credits Frappe Cloud gives this site, or None when it gives none."""
-	sync_site_provider()
 	provider = frappe.db.get_value("Builder AI Provider", {"from_site_config": 1, "enabled": 1})
 	return get_provider_credits(provider) if provider else None
 
@@ -354,7 +352,6 @@ def get_site_ai_credits() -> dict | None:
 @frappe.whitelist()
 @has_page_write()
 def get_ai_models():
-	sync_site_provider()
 	# a stale list is refreshed behind the picker, which shows what is stored meanwhile
 	GatewayListing.refresh_in_background()
 	Discovery.refresh_in_background()
@@ -373,7 +370,6 @@ def ai_setup_state():
 	if not frappe.db.exists("DocType", "Builder AI Provider"):
 		return {"configured": False, "models": 0, "providers": 0, "needs_migrate": True, "presets": []}
 
-	presets.sync_site_provider()
 	providers = frappe.get_all("Builder AI Provider", filters={"enabled": 1}, pluck="name")
 	settings_key = settings_api_key()
 	# A provider carrying its own key is enough on its own — a self-hosted gateway
