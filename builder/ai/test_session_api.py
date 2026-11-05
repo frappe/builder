@@ -100,3 +100,39 @@ class TestMessageContent(FrappeTestCase):
 		contents = [m["content"] for m in AISession.get(session.name).get_messages()]
 
 		self.assertEqual(contents, [f"swap in this icon {svg}", reply])
+
+
+class TestReadSourcesInHistory(FrappeTestCase):
+	def test_a_later_turn_sees_the_addresses_an_earlier_one_read(self):
+		page = frappe.get_doc(
+			{
+				"doctype": "Builder Page",
+				"page_title": "Read Sources Page",
+				"draft_blocks": Block(element="div", originalElement="body").as_json(wrap_in_array=True),
+			}
+		).insert()
+		session = AISession.create({"page": page.name})
+		session.append_message("user", "make it blue")
+		session.append_message("assistant", "Made it blue.")
+		session.append_message("user", "fill the cards from eventyay")
+		sources = [
+			{"url": "https://e.com/api/speakers/", "fields": ["fullname", "avatar_url"]},
+			{"url": "https://e.com/"},
+		]
+		session.append_message("assistant", "Filled three cards.", metadata={"sources": sources})
+		session.append_message("user", "now all of them")
+
+		replies = [
+			m["content"]
+			for m in AISession.get(session.name).build_context_messages()
+			if m["role"] == "assistant"
+		]
+
+		self.assertEqual(
+			replies,
+			[
+				"Made it blue.",
+				"Filled three cards.\n\n[read_url answered: https://e.com/api/speakers/ "
+				"fields=fullname,avatar_url; https://e.com/]",
+			],
+		)

@@ -9,7 +9,10 @@ second coordination protocol and no second writer on the page tree.
 """
 
 import html
+import json
 import re
+from html.parser import HTMLParser
+from urllib.parse import urljoin
 
 import frappe
 
@@ -43,11 +46,13 @@ def run_read_url(ctx, args: dict) -> str:
 	if response.status_code >= 400:
 		return f"FAILED: {final_url} answered HTTP {response.status_code}."
 	raw = read_bounded(response)
-	text = html_to_text(raw) if "json" not in content_type else raw
-	if len(text) > TEXT_LIMIT:
-		text = text[:TEXT_LIMIT] + "… (truncated)"
+	fields = requested_fields(args)
+	text = page_text(raw, content_type, fields)
+	note_source(ctx, final_url, fields)
 	title = extract_title(raw)
 	head = f"Read {final_url}" + (f" — '{title}'" if title else "")
+	if "html" in content_type:
+		head += data_links_note(raw, final_url)
 	return f"{head}\n\n{text}" if text.strip() else f"{head}\n\n(no readable text on the page)"
 
 
@@ -58,6 +63,78 @@ def fetch_public(url: str):
 		url, timeout=FETCH_TIMEOUT, stream=True, headers={"User-Agent": USER_AGENT}
 	)
 	return response, response.url
+
+
+def requested_fields(args: dict) -> list[str]:
+	fields = args.get("fields") or []
+	if isinstance(fields, str):
+		fields = fields.split(",")
+	return [str(f).strip() for f in fields if str(f).strip()]
+
+
+def page_text(raw: str, content_type: str, fields: list[str]) -> str:
+	is_json = "json" in content_type
+	text = (pick_json_fields(raw, fields) if fields else raw) if is_json else html_to_text(raw)
+	if len(text) <= TEXT_LIMIT:
+		return text
+	hint = "; pass `fields` to keep only the keys you need" if is_json and not fields else ""
+	return f"{text[:TEXT_LIMIT]}… (truncated{hint})"
+
+
+def note_source(ctx, url: str, fields: list[str]) -> None:
+	"""Kept on the turn's message, so a later turn reads what answered instead of guessing."""
+	source = {"url": url, "fields": fields} if fields else {"url": url}
+	if source not in ctx.web_sources:
+		ctx.web_sources.append(source)
+
+
+def pick_json_fields(raw: str, fields: list[str]) -> str:
+	try:
+		picked = pick_fields(json.loads(raw), set(fields))
+	except ValueError:
+		return raw
+	if picked is None:
+		return f"(no {', '.join(fields)} key in this JSON; read it without fields to see its shape)"
+	return json.dumps(picked, ensure_ascii=False, separators=(",", ":"))
+
+
+def pick_fields(value, fields: set[str]):
+	"""`value` keeping only the keys in `fields`, at any depth; None when none matched."""
+	if isinstance(value, dict):
+		kept = {k: v if k in fields else pick_fields(v, fields) for k, v in value.items()}
+		return {k: v for k, v in kept.items() if k in fields or v is not None} or None
+	if isinstance(value, list):
+		kept = [v for v in (pick_fields(item, fields) for item in value) if v is not None]
+		return kept or None
+	return None
+
+
+def data_links_note(markup: str, base_url: str) -> str:
+	"""A list a script builds after load is invisible as text; the API or feed the page
+	declares for it is the way in."""
+	parser = DataLinks()
+	parser.feed(markup)
+	rows = [
+		f"- {link['type']}"
+		+ (f" '{link['title']}'" if link.get("title") else "")
+		+ f": {urljoin(base_url, link['href'])}"
+		for link in parser.links
+	]
+	return "\n\nData links the page declares:\n" + "\n".join(rows) if rows else ""
+
+
+class DataLinks(HTMLParser):
+	"""<link rel="alternate"> tags that carry a type: feeds and APIs, not language versions."""
+
+	def __init__(self):
+		super().__init__()
+		self.links: list[dict] = []
+
+	def handle_starttag(self, tag, attrs):
+		link = dict(attrs)
+		rel = (link.get("rel") or "").lower().split()
+		if tag == "link" and "alternate" in rel and link.get("type") and link.get("href"):
+			self.links.append(link)
 
 
 def read_bounded(response) -> str:
@@ -145,7 +222,17 @@ read_url = Tool(
 	),
 	parameters={
 		"type": "object",
-		"properties": {"url": {"type": "string", "description": "The full http(s) address."}},
+		"properties": {
+			"url": {"type": "string", "description": "The full http(s) address."},
+			"fields": {
+				"type": "array",
+				"items": {"type": "string"},
+				"description": (
+					"JSON responses only: keep just these keys, at any depth (e.g. "
+					'["name", "photo_url"]), so a long API list fits in one read.'
+				),
+			},
+		},
 		"required": ["url"],
 	},
 )
