@@ -128,11 +128,5 @@ class TestReadSourcesInHistory(FrappeTestCase):
 			if m["role"] == "assistant"
 		]
 
-		self.assertEqual(
-			replies,
-			[
-				"Made it blue.",
-				"Filled three cards.\n\n[read_url answered: https://e.com/api/speakers/ "
-				"fields=fullname,avatar_url; https://e.com/]",
-			],
-		)
+		read = "[read_url answered: https://e.com/api/speakers/ fields=fullname,avatar_url; https://e.com/]"
+		self.assertEqual(replies, ["Made it blue.", f"Filled three cards.\n\n{read}"])

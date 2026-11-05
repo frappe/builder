@@ -46,7 +46,7 @@ def run_read_url(ctx, args: dict) -> str:
 	if response.status_code >= 400:
 		return f"FAILED: {final_url} answered HTTP {response.status_code}."
 	raw = read_bounded(response)
-	fields = requested_fields(args)
+	fields = requested_fields(args.get("fields"))
 	text = page_text(raw, content_type, fields)
 	note_source(ctx, final_url, fields)
 	title = extract_title(raw)
@@ -65,8 +65,8 @@ def fetch_public(url: str):
 	return response, response.url
 
 
-def requested_fields(args: dict) -> list[str]:
-	fields = args.get("fields") or []
+def requested_fields(fields) -> list[str]:
+	fields = fields or []
 	if isinstance(fields, str):
 		fields = fields.split(",")
 	return [str(f).strip() for f in fields if str(f).strip()]
