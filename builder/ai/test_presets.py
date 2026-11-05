@@ -8,7 +8,8 @@ from frappe.utils.password import get_decrypted_password
 
 from builder.ai.presets import sync_site_provider
 
-GATEWAY = "https://grove.test/openai/v1"
+GATEWAY = "https://grove.test"
+GATEWAY_BASE = "https://grove.test/openai/v1"
 SITE_KEY = {"ai_keys": [{"gateway_url": GATEWAY, "api_key": "grove-key"}]}
 
 
@@ -39,7 +40,7 @@ class TestSiteProvider(FrappeTestCase):
 
 	def test_a_site_config_key_connects_the_frappe_provider(self):
 		provider = self.sync(SITE_KEY)
-		self.assertEqual((provider.name, provider.api_base, provider.enabled), ("Frappe", GATEWAY, 1))
+		self.assertEqual((provider.name, provider.api_base, provider.enabled), ("Frappe", GATEWAY_BASE, 1))
 
 	def test_the_key_is_read_from_site_config_and_never_stored(self):
 		provider = self.sync(SITE_KEY)
@@ -50,8 +51,8 @@ class TestSiteProvider(FrappeTestCase):
 
 	def test_a_new_gateway_url_follows_site_config(self):
 		self.sync(SITE_KEY)
-		moved = {"ai_keys": [{"gateway_url": "https://grove.test/openai/v2", "api_key": "grove-key"}]}
-		self.assertEqual(self.sync(moved).api_base, "https://grove.test/openai/v2")
+		moved = {"ai_keys": [{"gateway_url": "https://moved.test", "api_key": "grove-key"}]}
+		self.assertEqual(self.sync(moved).api_base, "https://moved.test/openai/v1")
 
 	def test_the_balance_is_read_from_the_gateway_host(self):
 		self.assertEqual(self.sync(SITE_KEY).credits_url, "https://grove.test/v1/credits")

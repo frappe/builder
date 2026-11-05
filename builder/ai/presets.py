@@ -9,6 +9,8 @@ released tomorrow shows up without a change here.
 Everything a preset creates is an ordinary Builder AI Provider row.
 """
 
+from urllib.parse import urlsplit
+
 import frappe
 from frappe import _
 
@@ -82,6 +84,7 @@ PRESETS = [
 
 
 SITE_PROVIDER = {"provider_name": "Frappe", "route_prefix": "frappe"}
+GATEWAY_BASE_PATH = "/openai/v1"
 
 logger = frappe.logger("builder.ai.presets")
 
@@ -105,10 +108,17 @@ def sync_site_provider() -> None:
 	doc = get_site_provider(create=bool(entry))
 	if not doc:
 		return
-	fields = {"api_base": entry["gateway_url"] if entry else doc.api_base, "enabled": int(bool(entry))}
+	api_base = get_gateway_base(entry["gateway_url"]) if entry else doc.api_base
+	fields = {"api_base": api_base, "enabled": int(bool(entry))}
 	if doc.is_new() or any(doc.get(field) != value for field, value in fields.items()):
 		doc.update(fields)
 		doc.save(ignore_permissions=True)
+
+
+def get_gateway_base(gateway_url: str) -> str:
+	"""Frappe Cloud writes the gateway host. Its OpenAI-compatible API sits under GATEWAY_BASE_PATH."""
+	parts = urlsplit(gateway_url)
+	return f"{parts.scheme}://{parts.netloc}{GATEWAY_BASE_PATH}"
 
 
 def get_site_provider(create: bool):
