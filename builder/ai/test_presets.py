@@ -95,6 +95,16 @@ class TestSiteProvider(FrappeTestCase):
 			frappe.db.get_single_value("Builder Settings", "default_ai_model"), "frappe/openai/chosen"
 		)
 
+	def test_registering_the_provider_lists_its_models(self):
+		with patch("builder.ai.models.fetch_listing", return_value=["openai/gpt-6-luna"]):
+			self.sync(SITE_KEY)
+		self.assertTrue(frappe.db.exists("Builder AI Model", "frappe/openai/gpt-6-luna"))
+
+	def test_a_gateway_that_is_down_does_not_stop_the_registration(self):
+		with patch("builder.ai.models.fetch_listing", return_value=OSError("down")):
+			provider = self.sync(SITE_KEY)
+		self.assertEqual(provider.enabled, 1)
+
 	def test_an_entry_without_a_key_connects_nothing(self):
 		with patch.dict(frappe.local.conf, {"ai_keys": [{"gateway_url": GATEWAY}]}):
 			sync_site_provider()

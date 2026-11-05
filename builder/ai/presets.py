@@ -14,7 +14,7 @@ from urllib.parse import urlsplit
 import frappe
 from frappe import _
 
-from builder.ai.models import DEFAULT_AI_MODEL, ModelRegistry
+from builder.ai.models import DEFAULT_AI_MODEL, GatewayListing, ModelRegistry
 
 PRESETS = [
 	{
@@ -104,7 +104,7 @@ def get_site_ai_key() -> dict | None:
 def sync_site_provider() -> None:
 	"""Keep the Frappe provider in step with site config: on with its gateway while
 	`ai_keys` has a key, off when it has none. Site config keeps the key itself.
-	A newly registered provider also sets the default model."""
+	A newly registered provider also lists its models and sets the default model."""
 	entry = get_site_ai_key()
 	doc = get_site_provider(create=bool(entry))
 	if not doc:
@@ -116,7 +116,17 @@ def sync_site_provider() -> None:
 		doc.update(fields)
 		doc.save(ignore_permissions=True)
 	if is_registering:
+		list_models(doc)
 		set_default_model()
+
+
+def list_models(provider) -> None:
+	"""Add the gateway's models now, so the first model list is not empty. A gateway that
+	is down must not fail an install or a migrate: the next model list load retries."""
+	try:
+		GatewayListing(provider).sync()
+	except Exception as error:
+		logger.error(f"could not list the models of {provider.name}: {error}")
 
 
 def set_default_model() -> None:
