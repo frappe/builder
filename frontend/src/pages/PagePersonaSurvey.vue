@@ -118,7 +118,8 @@ import { type CloneLook, serverMessage, useSiteClone } from "@/composables/useSi
 import { builderSettings } from "@/data/builderSettings";
 import router, { sessionUser } from "@/router";
 import { getUserInfo } from "@/usersInfo";
-import { Button, Textarea, call } from "frappe-ui";
+import { submitPersonaSurvey } from "@/utils/personaSurvey";
+import { Button, Textarea } from "frappe-ui";
 import { useTelemetry } from "@framework/ui/telemetry";
 import { computed, nextTick, reactive, ref } from "vue";
 import LucideChevronLeft from "~icons/lucide/chevron-left";
@@ -129,7 +130,7 @@ import LucideChevronLeft from "~icons/lucide/chevron-left";
 // site-level metrics split by persona without a join.
 const telemetry = useTelemetry();
 const { templateCategoryFilter } = useDashboardState();
-// Dev benches have telemetry off; ?persona_survey=test logs the payload instead.
+// ?persona_survey=test shows the survey off Frappe Cloud and logs the payload.
 const devForceShow = new URLSearchParams(window.location.search).get("persona_survey") === "test";
 
 type QuestionKey = "use_case" | "role" | "source";
@@ -362,17 +363,6 @@ function finishQuestions(skipped = false) {
 		skipped,
 	};
 	if (devForceShow) console.log("[persona-survey] capture", props);
-	try {
-		telemetry.capture("builder_persona_submitted", props);
-	} catch (e) {
-		console.error("[persona-survey] failed to capture", e);
-	}
-	call("builder.api.identify_persona", {
-		role: props.role,
-		use_case: props.use_case,
-		source: props.source,
-	}).catch((e: unknown) => {
-		console.error("[persona-survey] failed to identify", e);
-	});
+	submitPersonaSurvey(props);
 }
 </script>

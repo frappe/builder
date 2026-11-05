@@ -20,6 +20,7 @@ import { FrappeUIProvider } from "frappe-ui";
 import { computed, provide } from "vue";
 import { useRoute } from "vue-router";
 import { sessionUser } from "./router";
+import { sendPendingPersonaSurvey } from "@/utils/personaSurvey";
 
 // do not remove this
 const builderStore = useBuilderStore();
@@ -27,6 +28,7 @@ const pageStore = usePageStore();
 const route = useRoute();
 
 provide("sessionUser", sessionUser);
+sendPendingPersonaSurvey();
 
 const title = computed(() => {
 	return pageStore.activePage && route.name !== "home"
