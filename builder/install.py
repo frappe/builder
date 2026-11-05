@@ -1,7 +1,6 @@
 import frappe
 from frappe.core.api.file import create_new_folder
 
-from builder.ai.models import DEFAULT_AI_MODEL
 from builder.ai.presets import sync_site_provider
 from builder.export_import_standard_page import sync_standard_builder_pages
 from builder.utils import (
@@ -20,7 +19,6 @@ def after_install():
 	sync_builder_tokens()
 	add_composite_index_to_web_page_view()
 	sync_standard_builder_pages()
-	frappe.db.set_single_value("Builder Settings", "default_ai_model", DEFAULT_AI_MODEL)
 	sync_site_provider()
 
 

@@ -14,7 +14,7 @@ from urllib.parse import urlsplit
 import frappe
 from frappe import _
 
-from builder.ai.models import ModelRegistry
+from builder.ai.models import DEFAULT_AI_MODEL, ModelRegistry
 
 PRESETS = [
 	{
@@ -110,9 +110,18 @@ def sync_site_provider() -> None:
 		return
 	api_base = get_gateway_base(entry["gateway_url"]) if entry else doc.api_base
 	fields = {"api_base": api_base, "enabled": int(bool(entry))}
-	if doc.is_new() or any(doc.get(field) != value for field, value in fields.items()):
+	is_new = not doc.name
+	if is_new or any(doc.get(field) != value for field, value in fields.items()):
 		doc.update(fields)
 		doc.save(ignore_permissions=True)
+	if is_new:
+		set_default_model()
+
+
+def set_default_model() -> None:
+	"""Make the Frappe gateway model the default, unless Builder Settings already names one."""
+	if not frappe.db.get_single_value("Builder Settings", "default_ai_model"):
+		frappe.db.set_single_value("Builder Settings", "default_ai_model", DEFAULT_AI_MODEL)
 
 
 def get_gateway_base(gateway_url: str) -> str:

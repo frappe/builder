@@ -6,6 +6,7 @@ import frappe
 from frappe.tests.utils import FrappeTestCase
 from frappe.utils.password import get_decrypted_password
 
+from builder.ai.models import DEFAULT_AI_MODEL
 from builder.ai.presets import sync_site_provider
 
 GATEWAY = "https://grove.test"
@@ -98,6 +99,18 @@ class TestSiteProvider(FrappeTestCase):
 			):
 				hook()
 			self.assertEqual(frappe.db.get_value("Builder AI Provider", {"from_site_config": 1}), "Frappe")
+
+	def test_a_new_provider_sets_the_default_model_only_when_none_is_set(self):
+		frappe.db.set_single_value("Builder Settings", "default_ai_model", "")
+		self.sync(SITE_KEY)
+		self.assertEqual(frappe.db.get_single_value("Builder Settings", "default_ai_model"), DEFAULT_AI_MODEL)
+
+		self.setUp()
+		frappe.db.set_single_value("Builder Settings", "default_ai_model", "frappe/openai/chosen")
+		self.sync(SITE_KEY)
+		self.assertEqual(
+			frappe.db.get_single_value("Builder Settings", "default_ai_model"), "frappe/openai/chosen"
+		)
 
 	def test_an_entry_without_a_key_connects_nothing(self):
 		with patch.dict(frappe.local.conf, {"ai_keys": [{"gateway_url": GATEWAY}]}):
