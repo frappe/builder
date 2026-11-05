@@ -28,6 +28,12 @@ USER_AGENT = "Mozilla/5.0 (compatible; FrappeBuilderAI/1.0)"
 
 READABLE_TYPES = ("text/", "application/xhtml", "application/json", "application/xml")
 
+# Said where the rows arrive: the rule alone loses to cards already on the page.
+ROWS_NOTE = (
+	"\n\n(These are rows. On a page they go in the page data script behind one repeater, "
+	"never one block per row: read_skill('forms-and-data') first.)"
+)
+
 
 def run_read_url(ctx, args: dict) -> str:
 	url = (args.get("url") or "").strip().strip("<>")
@@ -73,12 +79,25 @@ def requested_fields(fields) -> list[str]:
 
 
 def page_text(raw: str, content_type: str, fields: list[str]) -> str:
-	is_json = "json" in content_type
-	text = (pick_json_fields(raw, fields) if fields else raw) if is_json else html_to_text(raw)
-	if len(text) <= TEXT_LIMIT:
-		return text
-	hint = "; pass `fields` to keep only the keys you need" if is_json and not fields else ""
-	return f"{text[:TEXT_LIMIT]}… (truncated{hint})"
+	if "json" not in content_type:
+		return clipped(html_to_text(raw))
+	text = pick_json_fields(raw, fields) if fields else raw
+	hint = "" if fields else "; pass `fields` to keep only the keys you need"
+	return clipped(text, hint) + (ROWS_NOTE if holds_rows(raw) else "")
+
+
+def clipped(text: str, hint: str = "") -> str:
+	return text if len(text) <= TEXT_LIMIT else f"{text[:TEXT_LIMIT]}… (truncated{hint})"
+
+
+def holds_rows(raw: str) -> bool:
+	"""A list of records, at the top or one key down (a paged API's `results`)."""
+	try:
+		data = json.loads(raw)
+	except ValueError:
+		return False
+	values = data.values() if isinstance(data, dict) else [data]
+	return any(isinstance(v, list) and len(v) > 1 and all(isinstance(r, dict) for r in v) for v in values)
 
 
 def note_source(ctx, url: str, fields: list[str]) -> None:

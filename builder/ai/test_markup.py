@@ -273,6 +273,13 @@ class TestOps(unittest.TestCase):
 		self.assertEqual([op.kind for op in ops], ["error", "error", "patch"])
 		self.assertIn("line 1", ops[0].error)
 
+	def test_a_patch_cannot_turn_a_block_into_a_repeater_or_instance(self):
+		ops = markup.parse_ops("@grid repeat(speakers)\n@card use(speaker-card)\n@name bind(text=name)")
+
+		self.assertEqual([op.kind for op in ops], ["error", "error", "patch"])
+		self.assertIn("repeat() makes a new kind of block", ops[0].error)
+		self.assertIn("`replace @ref`", ops[1].error)
+
 	def test_sets_defined_in_a_script_or_seeded_apply_to_later_ops(self):
 		ops = markup.parse_ops("$x {color:red}\n@a $x $seeded", sets={"seeded": {"style": {"gap": "4px"}}})
 

@@ -133,7 +133,19 @@ class TestReadUrl(FrappeTestCase):
 		with fetched(json.dumps(SPEAKERS).encode(), "application/json"):
 			out = run_read_url(ctx(), {"url": "https://example.com"})
 
-		self.assertTrue(out.endswith("(truncated; pass `fields` to keep only the keys you need)"))
+		self.assertIn("(truncated; pass `fields` to keep only the keys you need)", out)
+
+	def test_rows_point_at_a_repeater(self):
+		with fetched(json.dumps(SPEAKERS).encode(), "application/json"):
+			out = run_read_url(ctx(), {"url": "https://example.com", "fields": ["fullname"]})
+
+		self.assertIn("read_skill('forms-and-data')", out)
+
+	def test_a_single_record_is_not_rows(self):
+		with fetched(json.dumps(SPEAKERS["results"][0]).encode(), "application/json"):
+			out = run_read_url(ctx(), {"url": "https://example.com"})
+
+		self.assertNotIn("forms-and-data", out)
 
 	def test_fields_that_match_nothing_say_so(self):
 		with fetched(json.dumps(SPEAKERS).encode(), "application/json"):
