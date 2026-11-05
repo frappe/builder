@@ -37,7 +37,7 @@
 						<LucideChevronLeft class="size-4" />
 					</template>
 				</Button>
-				<h1 class="text-xl font-bold text-ink-gray-9">{{ screen.heading }}</h1>
+				<h1 class="break-words text-xl font-bold text-ink-gray-9">{{ screen.heading }}</h1>
 				<p class="text-base text-ink-gray-6">{{ screen.subtitle }}</p>
 			</div>
 
