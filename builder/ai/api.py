@@ -346,6 +346,7 @@ def get_provider_credits(provider: str) -> dict | None:
 @frappe.whitelist()
 def get_site_ai_credits() -> dict | None:
 	"""The balance of the AI credits Frappe Cloud gives this site, or None when it gives none."""
+	sync_site_provider()
 	provider = frappe.db.get_value("Builder AI Provider", {"from_site_config": 1, "enabled": 1})
 	return get_provider_credits(provider) if provider else None
 

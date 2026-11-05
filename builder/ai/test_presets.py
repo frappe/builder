@@ -82,6 +82,30 @@ class TestSiteProvider(FrappeTestCase):
 		):
 			self.assertTrue(ai_setup_state()["configured"])
 
+	def test_the_credits_call_connects_the_provider(self):
+		from builder.ai.api import get_site_ai_credits
+
+		with patch.dict(frappe.local.conf, SITE_KEY), patch("builder.ai.api.get_provider_credits") as credits:
+			get_site_ai_credits()
+		credits.assert_called_once_with("Frappe")
+
+	def test_install_and_migrate_connect_the_provider(self):
+		from builder.install import after_install, after_migrate
+
+		for hook in (after_install, after_migrate):
+			self.setUp()
+			with (
+				patch.dict(frappe.local.conf, SITE_KEY),
+				patch("builder.install.create_new_folder"),
+				patch("builder.install.sync_page_templates"),
+				patch("builder.install.sync_block_templates"),
+				patch("builder.install.sync_builder_tokens"),
+				patch("builder.install.add_composite_index_to_web_page_view"),
+				patch("builder.install.sync_standard_builder_pages"),
+			):
+				hook()
+			self.assertEqual(frappe.db.get_value("Builder AI Provider", {"from_site_config": 1}), "Frappe")
+
 	def test_an_entry_without_a_key_connects_nothing(self):
 		with patch.dict(frappe.local.conf, {"ai_keys": [{"gateway_url": GATEWAY}]}):
 			sync_site_provider()
