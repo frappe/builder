@@ -7,7 +7,7 @@ from frappe.tests.utils import FrappeTestCase
 from frappe.utils.password import get_decrypted_password
 
 from builder.ai.models import DEFAULT_AI_MODEL
-from builder.ai.presets import sync_site_provider
+from builder.ai.presets import set_default_model, sync_site_provider
 
 GATEWAY = "https://grove.test"
 GATEWAY_BASE = "https://grove.test/openai/v1"
@@ -88,6 +88,7 @@ class TestSiteProvider(FrappeTestCase):
 
 		for hook in (after_install, after_migrate):
 			self.setUp()
+			frappe.db.set_single_value("Builder Settings", "default_ai_model", "")
 			with (
 				patch.dict(frappe.local.conf, SITE_KEY),
 				patch("builder.install.create_new_folder"),
@@ -99,15 +100,23 @@ class TestSiteProvider(FrappeTestCase):
 			):
 				hook()
 			self.assertEqual(frappe.db.get_value("Builder AI Provider", {"from_site_config": 1}), "Frappe")
+			self.assertEqual(
+				frappe.db.get_single_value("Builder Settings", "default_ai_model"), DEFAULT_AI_MODEL
+			)
 
-	def test_a_new_provider_sets_the_default_model_only_when_none_is_set(self):
+	def test_the_sync_returns_whether_it_registered_a_provider(self):
+		with patch.dict(frappe.local.conf, SITE_KEY):
+			self.assertTrue(sync_site_provider())
+			self.assertFalse(sync_site_provider())
+		with patch.dict(frappe.local.conf, {"ai_keys": []}):
+			self.assertFalse(sync_site_provider())
+
+	def test_the_default_model_is_set_only_when_none_is_set(self):
 		frappe.db.set_single_value("Builder Settings", "default_ai_model", "")
-		self.sync(SITE_KEY)
+		set_default_model()
 		self.assertEqual(frappe.db.get_single_value("Builder Settings", "default_ai_model"), DEFAULT_AI_MODEL)
-
-		self.setUp()
 		frappe.db.set_single_value("Builder Settings", "default_ai_model", "frappe/openai/chosen")
-		self.sync(SITE_KEY)
+		set_default_model()
 		self.assertEqual(
 			frappe.db.get_single_value("Builder Settings", "default_ai_model"), "frappe/openai/chosen"
 		)

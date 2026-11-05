@@ -101,21 +101,21 @@ def get_site_ai_key() -> dict | None:
 	return entry
 
 
-def sync_site_provider() -> None:
+def sync_site_provider() -> bool:
 	"""Keep the Frappe provider in step with site config: on with its gateway while
-	`ai_keys` has a key, off when it has none. Site config keeps the key itself."""
+	`ai_keys` has a key, off when it has none. Site config keeps the key itself.
+	Returns whether it registered a new provider."""
 	entry = get_site_ai_key()
 	doc = get_site_provider(create=bool(entry))
 	if not doc:
-		return
+		return False
 	api_base = get_gateway_base(entry["gateway_url"]) if entry else doc.api_base
 	fields = {"api_base": api_base, "enabled": int(bool(entry))}
 	is_new = not doc.name
 	if is_new or any(doc.get(field) != value for field, value in fields.items()):
 		doc.update(fields)
 		doc.save(ignore_permissions=True)
-	if is_new:
-		set_default_model()
+	return is_new
 
 
 def set_default_model() -> None:
