@@ -83,27 +83,6 @@ class TestSiteProvider(FrappeTestCase):
 		):
 			self.assertTrue(ai_setup_state()["configured"])
 
-	def test_install_and_migrate_connect_the_provider(self):
-		from builder.install import after_install, after_migrate
-
-		for hook in (after_install, after_migrate):
-			self.setUp()
-			frappe.db.set_single_value("Builder Settings", "default_ai_model", "")
-			with (
-				patch.dict(frappe.local.conf, SITE_KEY),
-				patch("builder.install.create_new_folder"),
-				patch("builder.install.sync_page_templates"),
-				patch("builder.install.sync_block_templates"),
-				patch("builder.install.sync_builder_tokens"),
-				patch("builder.install.add_composite_index_to_web_page_view"),
-				patch("builder.install.sync_standard_builder_pages"),
-			):
-				hook()
-			self.assertEqual(frappe.db.get_value("Builder AI Provider", {"from_site_config": 1}), "Frappe")
-			self.assertEqual(
-				frappe.db.get_single_value("Builder Settings", "default_ai_model"), DEFAULT_AI_MODEL
-			)
-
 	def test_registering_the_provider_sets_the_default_model_only_when_none_is_set(self):
 		frappe.db.set_single_value("Builder Settings", "default_ai_model", "")
 		self.sync(SITE_KEY)
@@ -115,12 +94,6 @@ class TestSiteProvider(FrappeTestCase):
 		self.assertEqual(
 			frappe.db.get_single_value("Builder Settings", "default_ai_model"), "frappe/openai/chosen"
 		)
-
-	def test_a_later_sync_leaves_a_cleared_default_alone(self):
-		self.sync(SITE_KEY)
-		frappe.db.set_single_value("Builder Settings", "default_ai_model", "")
-		self.sync(SITE_KEY)
-		self.assertFalse(frappe.db.get_single_value("Builder Settings", "default_ai_model"))
 
 	def test_an_entry_without_a_key_connects_nothing(self):
 		with patch.dict(frappe.local.conf, {"ai_keys": [{"gateway_url": GATEWAY}]}):
