@@ -231,16 +231,7 @@ class GatewayListing:
 	def credits(self) -> dict | None:
 		"""The balance the gateway reports at its credits_url, or None when it reports none."""
 		_, headers = self.request()
-		try:
-			response = requests.get(self.provider.credits_url, headers=headers, timeout=FETCH_TIMEOUT)
-			response.raise_for_status()
-			reported = response.json()
-		except Exception:
-			return None
-		if not isinstance(reported, dict) or not is_number(reported.get("balance")):
-			return None
-		spent = reported.get("spent")
-		return {"balance": reported["balance"], "spent": spent if is_number(spent) else None}
+		return fetch_credits(self.provider.credits_url, headers)
 
 	def request(self) -> tuple[str, dict]:
 		base = self.provider.api_base.rstrip("/")
@@ -287,6 +278,20 @@ def fetch_listing(request: tuple[str, dict]) -> list[str] | Exception:
 		return [entry["id"] for entry in response.json().get("data") or [] if (entry or {}).get("id")]
 	except Exception as e:
 		return e
+
+
+def fetch_credits(url: str, headers: dict) -> dict | None:
+	"""The balance a gateway reports at `url` as {balance, spent}, or None when it reports none."""
+	try:
+		response = requests.get(url, headers=headers, timeout=FETCH_TIMEOUT)
+		response.raise_for_status()
+		reported = response.json()
+	except Exception:
+		return None
+	if not isinstance(reported, dict) or not is_number(reported.get("balance")):
+		return None
+	spent = reported.get("spent")
+	return {"balance": reported["balance"], "spent": spent if is_number(spent) else None}
 
 
 def is_number(value) -> bool:

@@ -1,6 +1,7 @@
 import sys
+from contextlib import contextmanager
 from importlib import import_module
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
 import frappe
 from frappe.tests.utils import FrappeTestCase
@@ -12,6 +13,18 @@ from builder.ai.presets import sync_site_provider
 GATEWAY = "https://grove.test"
 GATEWAY_BASE = "https://grove.test/openai/v1"
 SITE_KEY = {"ai_keys": [{"gateway_url": GATEWAY, "api_key": "grove-key"}]}
+NO_KEY = {"ai_keys": []}
+
+
+@contextmanager
+def site_config(cached: dict, files: dict | None = None):
+	"""`cached` is the config a request sees, `files` what the config files hold now."""
+	files = cached if files is None else files
+	with (
+		patch.dict(frappe.local.conf, cached),
+		patch("frappe.get_site_config", return_value=frappe._dict(files)) as read_files,
+	):
+		yield read_files
 
 
 class TestMigrateWithoutLitellm(FrappeTestCase):
@@ -34,8 +47,8 @@ class TestSiteProvider(FrappeTestCase):
 		for name in names:
 			frappe.delete_doc("Builder AI Provider", name, force=True, ignore_permissions=True)
 
-	def sync(self, conf: dict):
-		with patch.dict(frappe.local.conf, conf):
+	def sync(self, cached: dict, files: dict | None = None):
+		with site_config(cached, files):
 			sync_site_provider()
 			return frappe.get_doc("Builder AI Provider", {"from_site_config": 1})
 
@@ -45,7 +58,7 @@ class TestSiteProvider(FrappeTestCase):
 
 	def test_the_key_is_read_from_site_config_and_never_stored(self):
 		provider = self.sync(SITE_KEY)
-		with patch.dict(frappe.local.conf, SITE_KEY):
+		with site_config(SITE_KEY):
 			self.assertEqual(provider.resolved_key(), "grove-key")
 		stored = get_decrypted_password("Builder AI Provider", "Frappe", "api_key", raise_exception=False)
 		self.assertIsNone(stored)
@@ -60,9 +73,9 @@ class TestSiteProvider(FrappeTestCase):
 
 	def test_removing_the_key_turns_the_provider_off(self):
 		self.sync(SITE_KEY)
-		provider = self.sync({"ai_keys": []})
+		provider = self.sync(NO_KEY)
 		self.assertEqual(provider.enabled, 0)
-		with patch.dict(frappe.local.conf, {"ai_keys": []}):
+		with site_config(NO_KEY):
 			self.assertIsNone(provider.resolved_key())
 
 	def test_a_site_config_key_counts_as_configured(self):
@@ -78,7 +91,7 @@ class TestSiteProvider(FrappeTestCase):
 			}
 		).insert(ignore_permissions=True)
 		with (
-			patch.dict(frappe.local.conf, SITE_KEY),
+			site_config(SITE_KEY),
 			patch("builder.ai.api.settings_api_key", return_value=None),
 		):
 			self.assertTrue(ai_setup_state()["configured"])
@@ -106,6 +119,56 @@ class TestSiteProvider(FrappeTestCase):
 		self.assertEqual(provider.enabled, 1)
 
 	def test_an_entry_without_a_key_connects_nothing(self):
-		with patch.dict(frappe.local.conf, {"ai_keys": [{"gateway_url": GATEWAY}]}):
+		with site_config({"ai_keys": [{"gateway_url": GATEWAY}]}):
 			sync_site_provider()
 		self.assertFalse(frappe.db.exists("Builder AI Provider", {"from_site_config": 1}))
+
+	def test_a_key_added_after_the_config_was_cached_connects_the_provider(self):
+		provider = self.sync(NO_KEY, files=SITE_KEY)
+		self.assertEqual((provider.name, provider.enabled), ("Frappe", 1))
+
+	def test_a_connected_provider_follows_the_cached_config(self):
+		self.sync(SITE_KEY)
+		with site_config(SITE_KEY, files=NO_KEY) as read_files:
+			sync_site_provider()
+		read_files.assert_not_called()
+		self.assertEqual(frappe.db.get_value("Builder AI Provider", "Frappe", "enabled"), 1)
+
+	def test_the_key_is_read_from_the_files_while_the_cache_misses_it(self):
+		provider = self.sync(NO_KEY, files=SITE_KEY)
+		with site_config(NO_KEY, files=SITE_KEY):
+			self.assertEqual(provider.resolved_key(), "grove-key")
+
+	def test_the_setup_state_connects_a_key_added_after_the_config_was_cached(self):
+		from builder.ai.api import ai_setup_state
+
+		with (
+			site_config(NO_KEY, files=SITE_KEY),
+			patch("builder.ai.models.fetch_listing", return_value=["openai/gpt-6-luna"]),
+			patch("builder.ai.api.settings_api_key", return_value=None),
+		):
+			self.assertTrue(ai_setup_state()["configured"])
+
+
+class TestSiteAICredits(FrappeTestCase):
+	def get_credits(self, cached: dict, files: dict, reported: dict | None = None):
+		from builder.ai.api import get_site_ai_credits
+
+		response = Mock(json=Mock(return_value=reported))
+		with (
+			site_config(cached, files),
+			patch("builder.ai.models.requests.get", return_value=response) as get,
+		):
+			return get_site_ai_credits(), get
+
+	def test_the_balance_is_read_with_the_site_config_key(self):
+		credits, get = self.get_credits(NO_KEY, SITE_KEY, {"balance": 4.5, "spent": 0.5})
+		self.assertEqual(credits, {"balance": 4.5, "spent": 0.5})
+		get.assert_called_once()
+		self.assertEqual(get.call_args.args[0], "https://grove.test/v1/credits")
+		self.assertEqual(get.call_args.kwargs["headers"], {"Authorization": "Bearer grove-key"})
+
+	def test_no_key_in_the_config_files_means_no_balance(self):
+		credits, get = self.get_credits(SITE_KEY, NO_KEY)
+		self.assertIsNone(credits)
+		get.assert_not_called()

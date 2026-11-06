@@ -245,15 +245,19 @@ export class AIChatController {
 			this.syncActiveBuild();
 		});
 
-		// loadSession stands down until AI is known to be on — but that answer only
-		// arrives once ai_setup_state (and Builder Settings) resolve, which is AFTER
-		// mount runs. Without this retry the very first load bails and never comes
-		// back, so the panel settles on an empty "New chat" with the real
+		// loadSession and loadModels stand down until AI is known to be on — but that
+		// answer only arrives once ai_setup_state (and Builder Settings) resolve, which
+		// is AFTER mount runs. Without this retry the very first load bails and never
+		// comes back, so the panel settles on an empty "New chat" with the real
 		// conversation still sitting in the database and no history to switch to.
+		// ai_setup_state also connects the site's Frappe Cloud key, so models read
+		// before it answers would miss that provider.
 		watch(
 			() => this.builderStore.isAIEnabled,
 			(enabled) => {
-				if (enabled && !this.sessionId.value) this.loadSession();
+				if (!enabled) return;
+				this.loadModels();
+				if (!this.sessionId.value) this.loadSession();
 			},
 		);
 	}
@@ -994,7 +998,7 @@ export class AIChatController {
 	async mount() {
 		if (this.pageId.value)
 			attachAIChatListeners(this.builderStore.realtime, this.pageId.value, this.handlers);
-		this.loadModels();
+		if (this.builderStore.isAIEnabled) this.loadModels();
 		await this.loadSession();
 	}
 

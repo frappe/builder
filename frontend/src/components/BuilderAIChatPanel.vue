@@ -424,6 +424,7 @@ import { type BobContext, creditsLabel, creditsTheme, money } from "@/components
 import AIUISpec from "@/components/ai/AIUISpec.vue";
 import BobOrb from "@/components/ai/BobOrb.vue";
 import { AIChatController } from "@/components/AIChatController";
+import { useAIStatePoll } from "@/composables/useAIStatePoll";
 import AIDebugPanel from "@/components/AIDebugPanel.vue";
 import Dialog from "@/components/Controls/Dialog.vue";
 import SparklesIcon from "@/components/Icons/Sparkles.vue";
@@ -834,6 +835,7 @@ onMounted(() => {
 	// is actually usable rather than inferring it from Builder Settings alone.
 	builderStore.refreshAIState();
 });
+useAIStatePoll(() => builderStore.leftPanelActiveTab === "Chat", builderStore);
 
 // the chat usually loads behind the closed tab, where the scroll can't land
 watch(
