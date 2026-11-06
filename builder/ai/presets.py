@@ -89,9 +89,12 @@ GATEWAY_BASE_PATH = "/openai/v1"
 logger = frappe.logger("builder.ai.presets")
 
 
-def get_site_ai_key() -> dict | None:
-	"""The first `ai_keys` entry Frappe Cloud writes into site config, as {gateway_url, api_key}."""
-	entries = frappe.conf.get("ai_keys") or []
+def get_site_ai_key(fresh: bool = False) -> dict | None:
+	"""The first `ai_keys` entry Frappe Cloud writes into site config, as {gateway_url, api_key}.
+	A request sees config cached for up to 60 seconds, and Frappe Cloud can add the key inside
+	that window: `fresh` reads the config files instead."""
+	conf = frappe.get_site_config() if fresh else frappe.conf
+	entries = conf.get("ai_keys") or []
 	if not entries:
 		return None
 	entry = entries[0]
@@ -104,9 +107,13 @@ def get_site_ai_key() -> dict | None:
 def sync_site_provider() -> None:
 	"""Keep the Frappe provider in step with site config: on with its gateway while
 	`ai_keys` has a key, off when it has none. Site config keeps the key itself.
-	A newly registered provider also lists its models and sets the default model."""
-	entry = get_site_ai_key()
-	doc = get_site_provider(create=bool(entry))
+	A newly registered provider also lists its models and sets the default model.
+	Frappe Cloud can add the key after install, so without the provider the config
+	files are read past the request cache."""
+	doc = get_site_provider()
+	entry = get_site_ai_key(fresh=not doc)
+	if not doc and entry:
+		doc = new_site_provider()
 	if not doc:
 		return
 	api_base = get_gateway_base(entry["gateway_url"]) if entry else doc.api_base
@@ -141,12 +148,21 @@ def get_gateway_base(gateway_url: str) -> str:
 	return f"{parts.scheme}://{parts.netloc}{GATEWAY_BASE_PATH}"
 
 
-def get_site_provider(create: bool):
-	"""The provider row site config owns, a new unsaved one when `create` is set, or None."""
+def get_credits_url(gateway_url: str) -> str:
+	"""Frappe's gateway reports its balance at its host's /v1/credits, outside the OpenAI-compatible base."""
+	parts = urlsplit(gateway_url)
+	return f"{parts.scheme}://{parts.netloc}/v1/credits"
+
+
+def get_site_provider():
+	"""The provider row site config owns, or None."""
 	if name := frappe.db.get_value("Builder AI Provider", {"from_site_config": 1}):
 		return frappe.get_doc("Builder AI Provider", name)
-	if not create:
-		return None
+	return None
+
+
+def new_site_provider():
+	"""A new unsaved provider for the site config key, or None when its name is taken."""
 	if frappe.db.exists("Builder AI Provider", SITE_PROVIDER["provider_name"]):
 		logger.error("a provider named Frappe already exists, so the site config key is not connected")
 		return None

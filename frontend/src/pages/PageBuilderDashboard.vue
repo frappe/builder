@@ -22,23 +22,17 @@ import router, { sessionUser } from "@/router";
 import { prefetchBuilderSettings, prefetchTemplateGallery } from "@/utils/prefetch";
 import { onMounted, watch } from "vue";
 
-declare global {
-	interface Window {
-		telemetry_enabled?: boolean;
-	}
-}
-
 onMounted(() => {
 	prefetchBuilderSettings();
 	prefetchTemplateGallery();
 });
-// Dev benches have telemetry (and thus the survey) off; ?persona_survey=test forces the redirect.
+// The survey runs on Frappe Cloud sites only; ?persona_survey=test forces the redirect elsewhere.
 const devForceShow = new URLSearchParams(window.location.search).get("persona_survey") === "test";
 
 watch(
 	[() => builderSettings.doc, sessionUser],
 	() => {
-		if (!window.telemetry_enabled && !devForceShow) return;
+		if (window.is_fc_site !== "True" && !devForceShow) return;
 		if (!builderSettings.doc) return;
 		if (builderSettings.doc.persona_survey_done && !devForceShow) return;
 		if (!sessionUser.value || sessionUser.value === "Guest") return;
