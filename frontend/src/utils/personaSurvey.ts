@@ -18,11 +18,7 @@ export type PersonaAnswers = Record<string, string | boolean | null>;
 
 export function submitPersonaSurvey(answers: PersonaAnswers) {
 	if (window.telemetry_enabled) return send(answers);
-	try {
-		localStorage.setItem(PENDING_KEY, JSON.stringify({ ...answers, submitted_at: new Date().toISOString() }));
-	} catch (e) {
-		console.error("[persona-survey] could not save the answers", e);
-	}
+	save(answers);
 }
 
 export function sendPendingPersonaSurvey() {
@@ -30,7 +26,6 @@ export function sendPendingPersonaSurvey() {
 	let pending: PersonaAnswers | null = null;
 	try {
 		pending = JSON.parse(localStorage.getItem(PENDING_KEY) || "null");
-		localStorage.removeItem(PENDING_KEY);
 	} catch (e) {
 		console.error("[persona-survey] could not read the saved answers", e);
 	}
@@ -45,10 +40,21 @@ async function send(answers: PersonaAnswers) {
 	}).catch((e: unknown) => console.error("[persona-survey] failed to identify", e));
 
 	const telemetry = useTelemetry();
-	await until(() => telemetry.isEnabled).toBe(true, { timeout: CLIENT_WAIT_MS });
+	const isReady = await until(() => telemetry.isEnabled).toBe(true, { timeout: CLIENT_WAIT_MS });
+	// capture does nothing while telemetry is off, so keep the answers for the next app start
+	if (!isReady) return save(answers);
 	try {
 		telemetry.capture("builder_persona_submitted", answers);
+		localStorage.removeItem(PENDING_KEY);
 	} catch (e) {
 		console.error("[persona-survey] failed to capture", e);
+	}
+}
+
+function save(answers: PersonaAnswers) {
+	try {
+		localStorage.setItem(PENDING_KEY, JSON.stringify({ submitted_at: new Date().toISOString(), ...answers }));
+	} catch (e) {
+		console.error("[persona-survey] could not save the answers", e);
 	}
 }
