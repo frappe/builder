@@ -38,6 +38,13 @@ class TestMigrateWithoutLitellm(FrappeTestCase):
 				sys.modules.pop(module, None)
 			import_module("builder.builder.patches.upgrade_ai_models")
 
+	def test_the_ai_api_loads_without_litellm(self):
+		# the first Billing or Bob call in a web worker must not wait for litellm to import
+		with patch.dict(sys.modules, {"litellm": None}):
+			for module in ("builder.ai.api", "builder.ai.llm"):
+				sys.modules.pop(module, None)
+			import_module("builder.ai.api")
+
 
 class TestSiteProvider(FrappeTestCase):
 	def setUp(self):
