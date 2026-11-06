@@ -8,12 +8,9 @@ import json
 import logging
 
 import frappe
-import litellm
 from frappe import _
 
 from builder.ai.models import ModelRegistry
-
-litellm.drop_params = True
 
 # Sent for a provider with no key of its own (as presets.verify_key does): a
 # keyless gateway (Ollama, vLLM) ignores it, anything else rejects it.
@@ -252,11 +249,14 @@ def complete(model: str, messages: list, params: dict, *, stream: bool, api_key:
 		f"LLM | model={model} stream={stream} params={params}\n"
 		+ "\n".join(f"[{m['role']}] {m['content']!s}" for m in messages)
 	)
+	import litellm
+
 	resp = litellm.completion(
 		model=model,
 		messages=messages,
 		stream=stream,
 		api_key=api_key,
+		drop_params=True,
 		num_retries=1,
 		# Read timeout (max stall between bytes, not total duration): a wedged
 		# provider connection otherwise blocks the worker forever — the loop only
@@ -297,12 +297,15 @@ def complete_with_tools(
 		f"LLM tools | model={model} stream={stream} tools={[t['function']['name'] for t in tools]}\n"
 		+ "\n".join(f"[{m['role']}] {m['content']}" for m in messages)
 	)
+	import litellm
+
 	resp = litellm.completion(
 		model=model,
 		messages=messages,
 		tools=tools,
 		stream=stream,
 		api_key=api_key,
+		drop_params=True,
 		num_retries=1,
 		timeout=120,  # see complete() — a stalled connection must fail, not wedge the turn
 		# Final usage chunk while streaming — see complete().

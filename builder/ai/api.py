@@ -8,7 +8,6 @@ endpoints are flow-agnostic session/model helpers.
 import logging
 
 import frappe
-import litellm
 from frappe import _
 
 from builder.ai.agent.loop import run_agent_job
@@ -587,6 +586,8 @@ def test_api_key(provider: str | None = None, api_key: str | None = None):
 			return {"success": False, "message": _("Please set an OpenRouter API key")}
 		actual_model = ModelRegistry.get_default("openrouter")
 
+	import litellm
+
 	from builder.ai.llm import route
 
 	# route() prefers the provider's stored key, and the typed one is what's under test
@@ -598,6 +599,7 @@ def test_api_key(provider: str | None = None, api_key: str | None = None):
 			messages=[{"role": "user", "content": "Say 'OK' if you can read this"}],
 			max_tokens=10,
 			api_key=typed_key or routed_key,
+			drop_params=True,
 		)
 		return {"success": True, "message": _("API key is valid")}
 	except Exception as e:
