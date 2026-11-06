@@ -1,52 +1,121 @@
 <template>
 	<div ref="arrayEditor" class="flex flex-col gap-2" @paste="pasteArray">
-		<div v-if="arr.length" class="-m-1 flex min-h-0 flex-col gap-2 overflow-y-auto p-1" :class="listClass">
-			<div v-for="(item, index) in arr" :key="index" class="flex gap-2">
-				<BuilderInput
-					:placeholder="__('Enter value')"
-					:modelValue="item"
-					@input="(val: string) => updateItem(index, val)" />
-				<Button
-					class="flex-shrink-0 text-xs"
-					variant="subtle"
-					icon="lucide-x"
-					@click="deleteItem(index)"></Button>
-			</div>
-		</div>
-		<Button variant="outline" class="w-full shrink-0" :label="__('Add')" @click="addItem"></Button>
+		<draggable
+			v-if="arr.length"
+			:modelValue="indexedItems"
+			item-key="index"
+			handle=".drag-handle"
+			class="-m-1 flex min-h-0 flex-col gap-2 overflow-y-auto p-1"
+			:class="listClass"
+			@update:modelValue="reorderItems">
+			<template #item="{ element: { item, index } }">
+				<div class="flex items-center gap-2">
+					<span
+						class="drag-handle lucide-grip-vertical -ml-1 size-3.5 flex-shrink-0 cursor-grab text-ink-gray-5 hover:text-ink-gray-8" />
+					<ImageUploadInput
+						v-if="itemType === 'image'"
+						class="w-full"
+						:placeholder="__('Enter image URL or upload one')"
+						:modelValue="itemURL(item)"
+						:imageFit="(itemFit(item) || 'cover') as 'contain' | 'cover' | 'fill'"
+						:objectPosition="itemPosition(item)"
+						:targetRatio="targetRatio"
+						multiple
+						@update:images="(urls: string[]) => setImagesFrom(item, index, urls)"
+						@update:modelValue="(val: string) => updateImageItem(index, { url: val })"
+						@update:imageFit="(val: string) => updateImageItem(index, { fit: val })"
+						@update:objectPosition="(val: string) => updateImageItem(index, { position: val })" />
+					<BuilderInput
+						v-else
+						:placeholder="__('Enter value')"
+						:modelValue="itemURL(item)"
+						@input="(val: string) => updateItem(index, val)" />
+					<Button
+						class="flex-shrink-0 text-xs"
+						variant="subtle"
+						icon="lucide-x"
+						@click="deleteItem(index)"></Button>
+				</div>
+			</template>
+		</draggable>
+		<Button variant="outline" class="w-full shrink-0" :label="__('Add')" iconLeft="plus" @click="addItem" />
 		<p class="shrink-0 rounded-1 bg-surface-gray-1 p-2 text-xs text-ink-gray-7" v-show="description">
 			<span v-html="description"></span>
 		</p>
 	</div>
 </template>
 <script setup lang="ts">
-import { nextTick, ref } from "vue";
+import { computed, nextTick, ref } from "vue";
+import draggable from "vuedraggable";
+import ImageUploadInput from "./ImageUploadInput.vue";
+import { __ } from "@/translation";
 
 const props = defineProps<{
-	arr: Array<string>;
+	arr: Array<ArrayPropItem>;
 	description?: string;
+	itemType?: "string" | "image";
+	targetRatio?: number;
 	listClass?: string;
 }>();
 
 const emit = defineEmits({
-	"update:arr": (arr: Array<string>) => true,
+	"update:arr": (arr: Array<ArrayPropItem>) => true,
 });
+
+const itemURL = (item: ArrayPropItem) => (typeof item === "string" ? item : item?.url || "");
+const itemFit = (item: ArrayPropItem) => (typeof item === "string" ? "" : item?.fit || "");
+const itemPosition = (item: ArrayPropItem) => (typeof item === "string" ? "" : item?.position || "");
 
 const addItem = async () => {
 	const newArr = [...props.arr, ""];
 	emit("update:arr", newArr);
 	await nextTick();
-	const inputs = arrayEditor.value?.querySelectorAll("input");
+	const inputs = arrayEditor.value?.querySelectorAll("input:not([type='file'])");
 	if (inputs) {
 		const lastInput = inputs[inputs.length - 1];
 		lastInput.focus();
 	}
 };
 
+// the row can move or go while its upload runs, so find it again before writing
+const setImagesFrom = (item: ArrayPropItem, index: number, urls: string[]) => {
+	const newArr = [...props.arr];
+	const target = newArr[index] === item ? index : newArr.indexOf(item);
+	if (target === -1) {
+		emit("update:arr", [...newArr, ...urls]);
+		return;
+	}
+	newArr.splice(target, 1, imageItem(item, { url: urls[0] }), ...urls.slice(1));
+	emit("update:arr", newArr);
+};
+
 const updateItem = (index: number, value: string) => {
 	const newArr = [...props.arr];
 	newArr[index] = value;
 	emit("update:arr", newArr);
+};
+
+// keep any other data saved on the item, such as a slide's own text
+const imageItem = (current: ArrayPropItem | undefined, patch: Partial<ImageArrayItem>): ArrayPropItem => {
+	const image = { ...(typeof current === "string" ? { url: current } : current), ...patch } as ImageArrayItem;
+	Object.keys(image).forEach((key) => key !== "url" && !image[key] && delete image[key]);
+	return Object.keys(image).length > 1 ? image : image.url || "";
+};
+
+const updateImageItem = (index: number, patch: Partial<ImageArrayItem>) => {
+	const newArr = [...props.arr];
+	newArr[index] = imageItem(newArr[index], patch);
+	emit("update:arr", newArr);
+};
+
+// items can be duplicate strings, so key draggable rows by their position
+const indexedItems = computed(() => props.arr.map((item, index) => ({ item, index })));
+
+const reorderItems = (items: Array<{ item: ArrayPropItem; index: number }>) => {
+	emit(
+		"update:arr",
+		items.map(({ item }) => item),
+	);
 };
 
 const deleteItem = (index: number) => {
@@ -58,7 +127,7 @@ const deleteItem = (index: number) => {
 const arrayEditor = ref<HTMLElement | null>(null);
 
 const pasteArray = (e: ClipboardEvent) => {
-	const passedArr = props.arr.filter((item) => item.trim() !== "");
+	const passedArr = props.arr.filter((item) => itemURL(item).trim() !== "");
 	const text = e.clipboardData?.getData("text/plain");
 	if (text) {
 		e.preventDefault();

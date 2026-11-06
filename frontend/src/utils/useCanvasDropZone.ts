@@ -289,7 +289,7 @@ export function useCanvasDropZone(
 					type: "new-image",
 				});
 			}
-		});
+		}).catch(() => {});
 	};
 
 	const handleFontFileDrop = async (file: File) => {
