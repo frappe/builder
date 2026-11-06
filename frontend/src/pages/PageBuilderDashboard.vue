@@ -28,11 +28,13 @@ onMounted(() => {
 });
 // The survey runs on Frappe Cloud sites only; ?persona_survey=test forces the redirect elsewhere.
 const devForceShow = new URLSearchParams(window.location.search).get("persona_survey") === "test";
+// is_fc_site reads a key only Frappe Cloud V1 sites have, and V2 sites carry Cloud Settings instead
+const isCloudSite = window.is_fc_site === "True" || Boolean(window.cloud_settings?.enabled);
 
 watch(
 	[() => builderSettings.doc, sessionUser],
 	() => {
-		if (window.is_fc_site !== "True" && !devForceShow) return;
+		if (!isCloudSite && !devForceShow) return;
 		if (!builderSettings.doc) return;
 		if (builderSettings.doc.persona_survey_done && !devForceShow) return;
 		if (!sessionUser.value || sessionUser.value === "Guest") return;
