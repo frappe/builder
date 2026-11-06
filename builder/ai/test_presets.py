@@ -7,6 +7,8 @@ import frappe
 from frappe.tests.utils import FrappeTestCase
 from frappe.utils.password import get_decrypted_password
 
+import builder.ai
+import builder.builder.patches
 from builder.ai.models import DEFAULT_AI_MODEL
 from builder.ai.presets import sync_site_provider
 
@@ -29,21 +31,29 @@ def site_config(cached: dict, files: dict | None = None):
 
 class TestMigrateWithoutLitellm(FrappeTestCase):
 	def test_the_model_upgrade_patch_loads_when_litellm_cannot(self):
-		with patch.dict(sys.modules, {"litellm": None}):
-			for module in (
-				"builder.builder.patches.upgrade_ai_models",
-				"builder.ai.presets",
-				"builder.ai.llm",
-			):
-				sys.modules.pop(module, None)
+		with fresh_import_without_litellm(
+			"builder.builder.patches.upgrade_ai_models", "builder.ai.presets", "builder.ai.llm"
+		):
 			import_module("builder.builder.patches.upgrade_ai_models")
 
 	def test_the_ai_api_loads_without_litellm(self):
 		# the first Billing or Bob call in a web worker must not wait for litellm to import
-		with patch.dict(sys.modules, {"litellm": None}):
-			for module in ("builder.ai.api", "builder.ai.llm"):
-				sys.modules.pop(module, None)
+		with fresh_import_without_litellm("builder.ai.api", "builder.ai.llm"):
 			import_module("builder.ai.api")
+
+
+@contextmanager
+def fresh_import_without_litellm(*modules: str):
+	"""Re-import `modules` with litellm missing, then put the originals back. A re-import
+	also rebinds the parent packages' attributes, which later patch() targets go through."""
+	with (
+		patch.dict(sys.modules, {"litellm": None}),
+		patch.dict(vars(builder.ai)),
+		patch.dict(vars(builder.builder.patches)),
+	):
+		for module in modules:
+			sys.modules.pop(module, None)
+		yield
 
 
 class TestSiteProvider(FrappeTestCase):
