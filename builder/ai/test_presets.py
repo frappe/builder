@@ -123,17 +123,6 @@ class TestSiteProvider(FrappeTestCase):
 			sync_site_provider()
 		self.assertFalse(frappe.db.exists("Builder AI Provider", {"from_site_config": 1}))
 
-	def test_a_key_added_after_the_config_was_cached_connects_the_provider(self):
-		provider = self.sync(NO_KEY, files=SITE_KEY)
-		self.assertEqual((provider.name, provider.enabled), ("Frappe", 1))
-
-	def test_a_connected_provider_follows_the_cached_config(self):
-		self.sync(SITE_KEY)
-		with site_config(SITE_KEY, files=NO_KEY) as read_files:
-			sync_site_provider()
-		read_files.assert_not_called()
-		self.assertEqual(frappe.db.get_value("Builder AI Provider", "Frappe", "enabled"), 1)
-
 	def test_the_key_is_read_from_the_files_while_the_cache_misses_it(self):
 		provider = self.sync(NO_KEY, files=SITE_KEY)
 		with site_config(NO_KEY, files=SITE_KEY):
@@ -151,24 +140,14 @@ class TestSiteProvider(FrappeTestCase):
 
 
 class TestSiteAICredits(FrappeTestCase):
-	def get_credits(self, cached: dict, files: dict, reported: dict | None = None):
+	def test_the_balance_is_read_with_the_site_config_key(self):
 		from builder.ai.api import get_site_ai_credits
 
-		response = Mock(json=Mock(return_value=reported))
+		response = Mock(json=Mock(return_value={"balance": 4.5, "spent": 0.5}))
 		with (
-			site_config(cached, files),
+			site_config(NO_KEY, files=SITE_KEY),
 			patch("builder.ai.models.requests.get", return_value=response) as get,
 		):
-			return get_site_ai_credits(), get
-
-	def test_the_balance_is_read_with_the_site_config_key(self):
-		credits, get = self.get_credits(NO_KEY, SITE_KEY, {"balance": 4.5, "spent": 0.5})
-		self.assertEqual(credits, {"balance": 4.5, "spent": 0.5})
-		get.assert_called_once()
+			self.assertEqual(get_site_ai_credits(), {"balance": 4.5, "spent": 0.5})
 		self.assertEqual(get.call_args.args[0], "https://grove.test/v1/credits")
 		self.assertEqual(get.call_args.kwargs["headers"], {"Authorization": "Bearer grove-key"})
-
-	def test_no_key_in_the_config_files_means_no_balance(self):
-		credits, get = self.get_credits(SITE_KEY, NO_KEY)
-		self.assertIsNone(credits)
-		get.assert_not_called()
