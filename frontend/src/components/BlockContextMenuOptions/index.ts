@@ -126,6 +126,13 @@ const options: ContextMenuOption[] = [
 				newBlock?.setStyle("width", width);
 			}
 
+			// the wrapped blocks keep the space their parent's gap put between them, as fields in a form row do
+			for (const styles of ["baseStyles", "tabletStyles", "mobileStyles"] as const) {
+				for (const gap of ["gap", "rowGap", "columnGap"] as const) {
+					if (newBlock && parentBlock[styles][gap]) newBlock[styles][gap] = parentBlock[styles][gap];
+				}
+			}
+
 			nextTick(() => {
 				if (newBlock) {
 					newBlock.selectBlock();

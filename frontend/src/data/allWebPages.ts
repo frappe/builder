@@ -1,3 +1,4 @@
+import { BuilderPage } from "@/types/doctypes";
 import { createListResource } from "frappe-ui";
 
 const allWebPages = createListResource({
@@ -30,4 +31,9 @@ const linkablePages = createListResource({
 	auto: true,
 });
 
-export { allWebPages, linkablePages };
+const getLinkablePageOptions = () =>
+	(linkablePages.data || [])
+		.filter((page: BuilderPage) => page.route)
+		.map((page: BuilderPage) => ({ label: `/${page.route}`, value: `/${page.route}` }));
+
+export { allWebPages, getLinkablePageOptions, linkablePages };

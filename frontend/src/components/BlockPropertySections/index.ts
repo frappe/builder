@@ -1,9 +1,12 @@
 import accessibilitySection from "@/components/BlockPropertySections/AccessibilitySection";
+import buttonSection from "@/components/BlockPropertySections/ButtonSection";
 import collectionOptionsSection from "@/components/BlockPropertySections/CollectionOptionsSection";
 import customAttributesSection from "@/components/BlockPropertySections/CustomAttributesSection";
 import dataKeySection from "@/components/BlockPropertySections/DataKeySection";
 import dimensionSection from "@/components/BlockPropertySections/DimensionSection";
 import editorConfigSection from "@/components/BlockPropertySections/EditorConfigSection";
+import formSection from "@/components/BlockPropertySections/FormSection";
+import formStateSection from "@/components/BlockPropertySections/FormStateSection";
 import HTMLOptionsSection from "@/components/BlockPropertySections/HTMLOptionsSection";
 import imageOptionsSection from "@/components/BlockPropertySections/ImageOptionsSection";
 import inputOptionsSection from "@/components/BlockPropertySections/InputOptionsSection";
@@ -12,6 +15,7 @@ import linkSection from "@/components/BlockPropertySections/LinkSection";
 import moreStylesSection from "@/components/BlockPropertySections/MoreStylesSection";
 import optionsSection from "@/components/BlockPropertySections/OptionsSection";
 import positionSection from "@/components/BlockPropertySections/PositionSection";
+import radioGroupOptionsSection from "@/components/BlockPropertySections/RadioGroupOptionsSection";
 import spacingSection from "@/components/BlockPropertySections/SpacingSection";
 import standardPropsInputSection from "@/components/BlockPropertySections/StandardPropsInputSection";
 import styleSection from "@/components/BlockPropertySections/StyleSection";
@@ -47,6 +51,10 @@ const sections = [
 	HTMLOptionsSection,
 	videoOptionsSection,
 	inputOptionsSection,
+	radioGroupOptionsSection,
+	formSection,
+	formStateSection,
+	buttonSection,
 	typographySection,
 	styleSection,
 	dimensionSection,

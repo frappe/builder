@@ -104,11 +104,16 @@ export function useCanvasDropZone(
 
 	const findDropTarget = (ev: DragEvent) => {
 		if (canvasStore.dropTarget.x === ev.x && canvasStore.dropTarget.y === ev.y) return {};
-		let parentBlock = getInitialParentBlock(ev);
+		const targetBlock = getInitialParentBlock(ev);
+		let parentBlock = targetBlock;
 		let layoutDirection = "column" as LayoutDirection;
 		let index = parentBlock?.children.length || 0;
 
 		while (parentBlock && !parentBlock.canHaveChildren()) {
+			parentBlock = parentBlock.getParentBlock();
+		}
+		// aimed at a field or its text, a drop lands beside the label they sit in, which holds one field
+		if (parentBlock !== targetBlock && parentBlock?.isFieldLabel()) {
 			parentBlock = parentBlock.getParentBlock();
 		}
 
@@ -227,6 +232,7 @@ export function useCanvasDropZone(
 		} else if (blockTemplate) {
 			await blockTemplateStore.fetchBlockTemplate(blockTemplate);
 			const newBlock = getBlockInstance(blockTemplateStore.getBlockTemplate(blockTemplate).block, false);
+			newBlock.renameTakenRadioNames(canvasStore.activeCanvas?.getRootBlock().getRadioNames() ?? new Set());
 			// if shift key is pressed, replace parent block with new block
 			if (ev.shiftKey) {
 				parentBlock = getBlockToReplace(ev);
@@ -237,7 +243,8 @@ export function useCanvasDropZone(
 				parentParentBlock.children.splice(index, 1, newBlock);
 			} else {
 				if (!parentBlock) return;
-				parentBlock.addChild(newBlock, index);
+				// a second Select or Checkbox in a form would submit under the first one's name
+				parentBlock.addChild(newBlock, index).giveFieldsUniqueNames();
 			}
 			capture("builder_block_template_used", { template: blockTemplate });
 		}

@@ -449,7 +449,7 @@ async function insertBlocks(blocks: (Block | BlockOptions)[]) {
 		while (parentBlock && !parentBlock.canHaveChildren()) {
 			parentBlock = parentBlock.getParentBlock() as Block;
 		}
-		blocks.forEach((block) => parentBlock.addChild(getBlockCopy(block), null, true));
+		blocks.forEach((block) => parentBlock.addChild(getBlockCopy(block), null, true).giveFieldsUniqueNames());
 	} else {
 		canvasStore.pushBlocks(
 			blocks.map((block) => getBlockCopy(block)),

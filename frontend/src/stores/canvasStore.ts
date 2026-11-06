@@ -59,6 +59,8 @@ const useCanvasStore = defineStore("canvasStore", {
 			fragmentId: <string | null>null,
 			showUsageCount: false,
 		},
+		// the state each form shows on the canvas (Form > State), by the form's blockId
+		formStatePreviews: <Record<string, string>>{},
 		versionPreviewBlock: <Block | null>null,
 		previewSnapshotName: <string | null>null,
 		draftRootBackup: <Block | null>null,

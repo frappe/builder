@@ -339,7 +339,7 @@ watchEffect(() => {
 const debouncedPageSave = useDebounceFn((aiEditEpoch: number) => {
 	if (aiEditEpoch === builderStore.aiEditEpoch) return pageStore.savePage();
 	// a save still in flight clears the flag itself when it lands
-	if (!pageStore.saveId) pageStore.savingPage = false;
+	if (!pageStore.hasPendingSave()) pageStore.savingPage = false;
 }, 300);
 
 const usageMessage = computed(() => getPageUsageMessage(usageCount.value));

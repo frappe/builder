@@ -9,10 +9,10 @@ import { __ } from "@/translation";
 import { BuilderClientScript, BuilderPage } from "@/types/doctypes";
 import getBlockTemplate from "@/utils/blockTemplate";
 import { editorDemo } from "@/utils/editorDemo";
+import { checkPageForms } from "@/utils/formFields";
 import {
 	confirm,
 	countBlocks,
-	generateId,
 	getBlockInstance,
 	getCopyWithoutParent,
 	getRouteVariables,
@@ -29,6 +29,12 @@ const DETACHED_PREVIEW_TAB = "builder-detached-preview";
 
 // a reloaded editor asks here for its detached tab, which replies with postMessage
 export const DETACHED_PREVIEW_CHANNEL = "builder-detached-preview";
+
+const SAVE_FAILED_TOAST_ID = "page-save-failed";
+
+// the draft save on the server, and the one queued behind it for the edits made meanwhile
+let saveInFlight: Promise<void> | null = null;
+let nextSave: Promise<void> | null = null;
 
 /** Normalize query values to strings; repeated parameters use the first value. */
 function normalizeRouteVariables(values: unknown) {
@@ -50,7 +56,6 @@ const usePageStore = defineStore("pageStore", {
 		route: "/",
 		selectedPage: <string | null>null,
 		pageBlocks: <Block[]>[],
-		saveId: null as string | null,
 		activePage: <BuilderPage | null>null,
 		activePageScripts: <BuilderClientScript[]>[],
 		savingPage: false,
@@ -249,6 +254,8 @@ const usePageStore = defineStore("pageStore", {
 					if (openInBrowser) {
 						this.openPageInBrowser(this.activePage as BuilderPage);
 					}
+					const canvasStore = useCanvasStore();
+					if (canvasStore.editingMode === "page") checkPageForms(canvasStore.getRootBlock() as Block);
 				});
 		},
 
@@ -370,6 +377,15 @@ const usePageStore = defineStore("pageStore", {
 			// including direct savePage() calls — keeps waitTillPageIsSaved reliable.
 			this.savingPage = true;
 
+			// two saves at once deadlock on the server and the edits of the one that loses are gone, so a
+			// save waits for the one in flight; it reads the blocks when it starts, so it takes every edit since
+			nextSave ??= (saveInFlight || Promise.resolve()).catch(() => {}).then(() => this.submitDraft());
+			return nextSave;
+		},
+
+		submitDraft() {
+			nextSave = null;
+			const builderStore = useBuilderStore();
 			const canvasStore = useCanvasStore();
 			const pageData = JSON.stringify(
 				canvasStore
@@ -377,15 +393,11 @@ const usePageStore = defineStore("pageStore", {
 					.filter((block): block is Block => block !== undefined)
 					.map((block: Block) => getCopyWithoutParent(block)),
 			);
-			const saveId = generateId();
-
-			// more save requests can be triggered till the first one is completed
-			this.saveId = saveId;
 			const args = {
 				name: this.activePage?.name || this.selectedPage,
 				draft_blocks: pageData,
 			};
-			return webPages.setValue
+			const save = webPages.setValue
 				.submit(args)
 				.then((page: BuilderPage) => {
 					if (this.activePage) {
@@ -393,21 +405,38 @@ const usePageStore = defineStore("pageStore", {
 					} else {
 						this.activePage = page;
 					}
+					toast.dismiss(SAVE_FAILED_TOAST_ID);
+					if (!nextSave) canvasStore.activeCanvas?.toggleDirty(false);
 				})
 				.catch((e: { exc_type?: string }) => {
 					if (e?.exc_type === "InReadOnlyMode") {
 						builderStore.isSiteInReadOnlyMode = true;
 						return;
 					}
+					this.warnUnsaved();
 					throw e;
 				})
 				.finally(() => {
-					if (this.saveId === saveId) {
-						this.saveId = null;
-						this.savingPage = false;
-					}
-					canvasStore.activeCanvas?.toggleDirty(false);
+					if (saveInFlight !== save) return;
+					saveInFlight = null;
+					if (!nextSave) this.savingPage = false;
 				});
+			saveInFlight = save;
+			return save;
+		},
+
+		hasPendingSave() {
+			return Boolean(saveInFlight || nextSave);
+		},
+
+		// the edits stay on the canvas, so a retry saves them
+		warnUnsaved() {
+			toast.error(__("Your latest changes weren't saved"), {
+				id: SAVE_FAILED_TOAST_ID,
+				description: __("Retry, or they're lost when you leave this page."),
+				duration: Infinity,
+				action: { label: __("Retry"), onClick: () => this.savePage() },
+			});
 		},
 
 		setPageData(page?: BuilderPage) {

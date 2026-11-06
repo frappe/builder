@@ -4,6 +4,7 @@
 
 from unittest.mock import patch
 
+import bs4 as bs
 import frappe
 from frappe.desk.form.load import getdoc
 from frappe.tests.utils import FrappeTestCase
@@ -575,6 +576,35 @@ class TestBuilderPage(FrappeTestCase):
 		finally:
 			page.delete()
 
+	def test_dynamic_attribute_values_cannot_close_the_attribute(self):
+		"""A form field prefilled from a URL parameter puts the visitor's text in an attribute."""
+		body = Block(element="div", originalElement="body")
+		job = Block(element="input", customAttributes={"type": "hidden", "value": "job"})
+		job.set_dynamic_value("job", "attribute", "value")
+		heading = Block(element="h2", innerHTML="Heading")
+		heading.set_dynamic_value("color", "style", "color")
+		body.attach_children(job, heading)
+		page = frappe.get_doc(
+			{
+				"doctype": "Builder Page",
+				"page_title": "Escaped Dynamic Attribute Test",
+				"published": 1,
+				"route": "/escaped-dynamic-attribute-test",
+				"page_data_script": (
+					"data.job = '\"><script>alert(1)</script>'\ndata.color = 'red\" onmouseover=\"alert(1)'"
+				),
+				"blocks": body.as_json(wrap_in_array=True),
+			}
+		).insert()
+
+		try:
+			content = get_response_content("/escaped-dynamic-attribute-test")
+			self.assertNotIn("<script>alert(1)", content)
+			self.assertNotIn(' onmouseover="', content)
+			self.assertEqual('"><script>alert(1)</script>', get_html_for(content, "attribute", "value"))
+		finally:
+			page.delete()
+
 	def dotted_key_blocks(self):
 		body = Block(element="div", originalElement="body")
 		heading = Block(element="h1", innerHTML="Fallback title")
@@ -1104,6 +1134,32 @@ class TestBuilderPage(FrappeTestCase):
 			frappe.local.flags.redirect_location = None
 			page.delete()
 
+	def test_failing_data_script_still_renders_the_page(self):
+		heading = Block(element="h1", innerHTML="Fallback")
+		heading.set_dynamic_value("title", "key", "innerHTML")
+		body = Block(element="div", originalElement="body")
+		body.attach_children(heading, Block(element="p", innerHTML="Rest of the page"))
+		page = frappe.get_doc(
+			{
+				"doctype": "Builder Page",
+				"page_title": "Failing Data Script Test",
+				"published": 1,
+				"route": "/failing-data-script-test",
+				"page_data_script": 'data.title = "Set before the error"\nx = 1 / 0',
+				"blocks": body.as_json(wrap_in_array=True),
+			}
+		).insert()
+		try:
+			response = get_response("/failing-data-script-test")
+			self.assertEqual(response.status_code, 200)
+			content = response.get_data(as_text=True)
+			self.assertIn("Set before the error", content)
+			self.assertIn("Rest of the page", content)
+			# the editor still shows the error
+			self.assertRaises(ZeroDivisionError, page.get_page_data)
+		finally:
+			page.delete()
+
 	def test_component_client_script(self):
 		component_root = Block(element="div", blockId="comp-root")
 		component_content = Block(element="h4", blockId="comp-content", innerHTML="Component Content")
@@ -1146,6 +1202,57 @@ class TestBuilderPage(FrappeTestCase):
 			self.assertNotIn(block_css, content)
 			self.assertIn(r"<\/script><p>Component Script</p>", content)
 			self.assertIn(r"<\/style><p>Component Style</p>", content)
+		finally:
+			page.delete()
+			component.delete()
+
+	def test_component_instance_can_remove_component_attributes(self):
+		component_root = Block(element="div", blockId="comp-root")
+		component_root.attach_children(
+			Block(
+				element="input", blockId="comp-email", attributes={"name": "email", "required": "required"}
+			),
+			Block(
+				element="input",
+				blockId="comp-phone",
+				attributes={"name": "phone"},
+				customAttributes={"required": ""},
+			),
+		)
+		component = frappe.get_doc(
+			{"doctype": "Builder Component", "block": component_root.as_json()}
+		).insert()
+
+		body = Block(element="div", originalElement="body")
+		component_root_copy = Block(extendedFromComponent=component.name)
+		component_root_copy.attach_children(
+			Block(
+				isChildOfComponent=component.name,
+				referenceBlockId="comp-email",
+				attributes={"required": None},
+			),
+			Block(
+				isChildOfComponent=component.name,
+				referenceBlockId="comp-phone",
+				customAttributes={"required": None},
+			),
+		)
+		body.attach_children(component_root_copy)
+		page = frappe.get_doc(
+			{
+				"doctype": "Builder Page",
+				"page_title": "Component Attribute Removal Test",
+				"published": 1,
+				"route": "/component-attribute-removal-test",
+				"blocks": body.as_json(wrap_in_array=True),
+			}
+		).insert()
+
+		try:
+			content = get_response_content("/component-attribute-removal-test")
+			inputs = bs.BeautifulSoup(content, "html.parser").find_all("input")
+			self.assertEqual([tag.get("name") for tag in inputs], ["email", "phone"])
+			self.assertFalse(any(tag.has_attr("required") for tag in inputs))
 		finally:
 			page.delete()
 			component.delete()
@@ -2232,6 +2339,30 @@ component.update({
 		self.assertIn("background-color: black", css)
 		self.assertNotIn("background: red", css)
 
+	def test_renders_form_state_styles_under_the_forms_data_state(self):
+		from builder.builder.doctype.builder_page.builder_page import get_block_html
+
+		blocks = [
+			{
+				"blockId": "form",
+				"element": "form",
+				"baseStyles": {"success:backgroundColor": "green"},
+				"children": [
+					{"blockId": "button", "element": "button", "baseStyles": {"sending:opacity": "0.5"}}
+				],
+			}
+		]
+
+		_, css, _, _ = get_block_html(blocks)
+
+		self.assertRegex(
+			css,
+			r'form\[data-state="sending"\] \.fb-\w+, form\.fb-\w+\[data-state="sending"\] \{ opacity: 0.5; \}',
+		)
+		self.assertRegex(css, r'form\[data-state="success"\] \.fb-\w+, form\.fb-\w+\[data-state="success"\]')
+		self.assertNotIn(":sending", css)
+		self.assertNotIn(":success", css)
+
 	def test_renders_legacy_raw_styles_from_component(self):
 		from builder.builder.doctype.builder_page.builder_page import get_block_html
 
@@ -2257,6 +2388,62 @@ component.update({
 			_, css, _, _ = get_block_html(blocks)
 			self.assertIn("text-overflow: ellipsis", css)
 			self.assertIn("flex-shrink: 0", css)
+		finally:
+			component.delete()
+
+	def test_instance_removes_component_attribute_with_none(self):
+		import bs4 as bs
+
+		from builder.builder.doctype.builder_page.builder_page import get_block_html
+
+		component_root = {
+			"blockId": "comp-root",
+			"element": "form",
+			"children": [
+				{
+					"blockId": "comp-email",
+					"element": "input",
+					"attributes": {"name": "email", "required": "required"},
+					"customAttributes": {"required": "required"},
+				},
+				{
+					"blockId": "comp-phone",
+					"element": "input",
+					"attributes": {"name": "phone"},
+					"customAttributes": {"required": "required"},
+				},
+			],
+		}
+		component = frappe.get_doc(
+			{"doctype": "Builder Component", "block": frappe.as_json(component_root)}
+		).insert()
+
+		blocks = [
+			{
+				"blockId": "instance",
+				"extendedFromComponent": component.name,
+				"children": [
+					{
+						"blockId": "email",
+						"referenceBlockId": "comp-email",
+						"isChildOfComponent": component.name,
+						"attributes": {"required": None},
+						"customAttributes": {"required": None},
+					},
+					{
+						"blockId": "phone",
+						"referenceBlockId": "comp-phone",
+						"isChildOfComponent": component.name,
+					},
+				],
+			}
+		]
+
+		try:
+			html, _, _, _ = get_block_html(blocks)
+			inputs = {tag["name"]: tag for tag in bs.BeautifulSoup(html, "html.parser").find_all("input")}
+			self.assertNotIn("required", inputs["email"].attrs)
+			self.assertIn("required", inputs["phone"].attrs)
 		finally:
 			component.delete()
 

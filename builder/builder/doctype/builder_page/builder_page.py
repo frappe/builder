@@ -36,6 +36,7 @@ from builder.builder.doctype.builder_snapshot.builder_snapshot import (
 from builder.builder.doctype.user_font.user_font import get_all_user_fonts
 from builder.editor_demo import is_demo_page
 from builder.export_import_standard_page import export_page_as_standard
+from builder.form_submission import seal_destinations, validate_new_form_doctypes
 from builder.html_preview_image import generate_preview
 from builder.template_sync import delete_template_page_fixture, export_template_group
 from builder.utils import (
@@ -226,6 +227,7 @@ class BuilderPage(WebsiteGenerator):
 	def validate(self):
 		super().validate()  # WebsiteGenerator route normalization
 		self.validate_route_variables()
+		self.validate_form_doctypes()
 
 		# pages of shipped template groups can only be edited in developer mode
 		if (
@@ -244,6 +246,15 @@ class BuilderPage(WebsiteGenerator):
 			# frappe trims slashes and dots but keeps whitespace, which reaches URLs as %20
 			self.route = self.route.strip("/. \t\n")
 		super().set_route()
+
+	def validate_form_doctypes(self):
+		if is_bulk_import():
+			return
+		before = self.get_doc_before_save()
+		validate_new_form_doctypes(
+			(self.blocks, self.draft_blocks),
+			(before.blocks, before.draft_blocks) if before else (),
+		)
 
 	def validate_route_variables(self):
 		if not self.route or not (":" in self.route or "<" in self.route):
@@ -703,13 +714,24 @@ class BuilderPage(WebsiteGenerator):
 					raise frappe.Redirect(http_status_code)
 
 			_locals = dict(data=frappe._dict(), redirect=redirect)
-			execute_script(self.page_data_script, _locals, self.name)
+			self.run_page_data_script(_locals, for_render)
 			page_data.update(_locals["data"])
 
 		# do not let users replace __content
 		page_data.pop("__content", None)
 
 		return page_data
+
+	def run_page_data_script(self, _locals: dict, for_render: bool):
+		try:
+			execute_script(self.page_data_script, _locals, self.name)
+		except (frappe.Redirect, frappe.DoesNotExistError, frappe.PermissionError):
+			raise
+		except Exception:
+			# the editor shows the error, but a visitor gets the page with the data set before it, not a 500
+			if not for_render:
+				raise
+			frappe.log_error(f"Data script of Builder Page {self.name} failed")
 
 	def generate_page_preview_image(self, html=None):
 		public_path, local_path = get_builder_page_preview_file_paths(self)
@@ -940,6 +962,7 @@ def build_tag(
 			tag, block, data_key, state, ancestor_font=resolved_font, ancestor_italic=resolved_italic
 		)
 
+	seal_form_destinations(tag)
 	attach_client_script(tag, block, state)
 
 	# Add body scripts for body element
@@ -948,6 +971,20 @@ def build_tag(
 		tag.append("{% include 'templates/generators/webpage_scripts.html' %}")
 
 	return tag
+
+
+def seal_form_destinations(tag: bs.Tag):
+	"""Keep a form's emails, webhook URLs and DocType unreadable on the page. Sealed once its
+	children are rendered, so the form's field names are sealed with them."""
+	if not tag.get("data-send-to"):
+		return
+	fieldnames = list(
+		dict.fromkeys(
+			field["name"] for field in tag.find_all(["input", "select", "textarea"], attrs={"name": True})
+		)
+	)
+	# a fresh dict, since tag.attrs is the block's own and a repeater renders the same block again
+	tag.attrs = {**tag.attrs, "data-send-to": seal_destinations(tag["data-send-to"], fieldnames)}
 
 
 def get_block_context(block: dict, props: dict, component_id: str | None) -> dict:
@@ -1107,7 +1144,10 @@ def create_html_tag(block: dict, state: dict, ancestor_font: str | None = None) 
 		picture_tag = None
 
 	for key, value in block.get("customAttributes", {}).items():
-		tag[key] = value
+		if value is not None:
+			tag[key] = value
+	# None marks an attribute a component instance removed, which bs4 would render bare
+	tag.attrs = {key: value for key, value in tag.attrs.items() if value is not None}
 
 	# Stamp the live blockId so duplicated blocks each get their own tracking id.
 	if tag.get("data-track") and block.get("blockId"):
@@ -1471,10 +1511,12 @@ def set_dynamic_content_placeholders(block: dict, data_key: dict | None = None):
 			custom_attributes = block.setdefault("customAttributes", {})
 			if property_name in custom_attributes:
 				current_value = custom_attributes.get(property_name, "") or ""
-				custom_attributes[property_name] = build_placeholder(keys, current_value, keep_empty=True)
+				custom_attributes[property_name] = build_placeholder(
+					keys, current_value, keep_empty=True, escape=True
+				)
 			else:
-				current_value = attributes.get(property_name, "")
-				attributes[property_name] = build_placeholder(keys, current_value)
+				current_value = attributes.get(property_name) or ""
+				attributes[property_name] = build_placeholder(keys, current_value, escape=True)
 
 		elif value_type == "style":
 			attributes = block.setdefault("attributes", {})
@@ -1483,7 +1525,7 @@ def set_dynamic_content_placeholders(block: dict, data_key: dict | None = None):
 
 			css_property = camel_case_to_kebab_case(property_name)
 			current_value = (block.get("baseStyles") or {}).get(property_name, "") or ""
-			attributes["style"] += f"{css_property}: {build_placeholder(keys, current_value)};"
+			attributes["style"] += f"{css_property}: {build_placeholder(keys, current_value, escape=True)};"
 
 		elif value_type == "key" and not block.get("isRepeaterBlock"):
 			current_value = block.get(property_name, "")
@@ -1523,7 +1565,7 @@ def resolve_binding_keys(binding: list[dict], data_key: dict | None) -> list[str
 	return keys
 
 
-def build_placeholder(keys: list[str], fallback_value, keep_empty: bool = False) -> str:
+def build_placeholder(keys: list[str], fallback_value, keep_empty: bool = False, escape: bool = False) -> str:
 	"""Chain the keys into one placeholder so the first that resolves wins.
 
 	Chaining inside a single expression, rather than applying a placeholder per key, keeps the raw
@@ -1535,7 +1577,8 @@ def build_placeholder(keys: list[str], fallback_value, keep_empty: bool = False)
 			expression = f"{key} if {key} or {key} in ['', 0] else {expression}"
 		else:
 			expression = f"{key} or {expression}"
-	return f"{{{{ {expression} }}}}"
+	# an attribute's value can come from the request, like a URL parameter, so it mustn't close the attribute
+	return f"{{{{ ({expression}) | e }}}}" if escape else f"{{{{ {expression} }}}}"
 
 
 def wrap_html_with_context(html: str, context: dict) -> str:
@@ -1617,8 +1660,18 @@ def append_state_style(style_obj, style_tag, style_class, device="desktop"):
 		if ":" in key:
 			state, property = key.split(":", 1)
 			css_property = camel_case_to_kebab_case(property)
-			style_string = f".{style_class}:{state} {{ {css_property}: {value}; }}"
+			style_string = f"{get_state_selector(style_class, state)} {{ {css_property}: {value}; }}"
 			style_tag.append(wrap_with_media_query(style_string, device))
+
+
+FORM_STATES = ("sending", "success", "error")
+
+
+def get_state_selector(style_class: str, state: str) -> str:
+	# a form state is the data-state its form's submit script sets, on the form and everything in it
+	if state in FORM_STATES:
+		return f'form[data-state="{state}"] .{style_class}, form.{style_class}[data-state="{state}"]'
+	return f".{style_class}:{state}"
 
 
 def get_font_family(font: str) -> str:

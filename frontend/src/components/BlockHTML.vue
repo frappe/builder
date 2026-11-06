@@ -9,7 +9,7 @@
 <script setup lang="ts">
 import type Block from "@/block";
 import { BlockValueResolver } from "@/utils/blockValueResolver";
-import { computed, ref } from "vue";
+import { computed, onMounted, ref, watch } from "vue";
 
 const component = ref<HTMLElement | null>(null);
 const props = defineProps<{
@@ -37,6 +37,15 @@ const html = computed(() => {
 		${content}
 	`;
 });
+
+// the canvas holds SVG animations, like the form button's spinner, at their first frame; published pages play them
+const pauseAnimations = () =>
+	component.value?.querySelectorAll("svg").forEach((svg) => {
+		svg.pauseAnimations();
+		svg.setCurrentTime(0);
+	});
+onMounted(pauseAnimations);
+watch(html, pauseAnimations, { flush: "post" });
 
 defineExpose({
 	component,

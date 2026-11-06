@@ -12,6 +12,7 @@ from frappe.website.utils import clear_website_cache
 
 from builder.builder.component_versions import ensure_component_version
 from builder.export_import_standard_page import StandardFileSync
+from builder.form_submission import validate_new_form_doctypes
 from builder.utils import Block, compact_json, execute_script, is_bulk_import
 
 
@@ -36,6 +37,12 @@ class BuilderComponent(StandardFileSync, Document):
 		if not self.component_id:
 			self.component_id = frappe.generate_hash(length=16)
 		capture("builder_component_created", "builder")
+
+	def validate(self):
+		if is_bulk_import():
+			return
+		before = self.get_doc_before_save()
+		validate_new_form_doctypes((self.block,), (before.block,) if before else ())
 
 	def on_update(self):
 		# Skip the background cache-clear and version snapshot during bulk imports

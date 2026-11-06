@@ -36,6 +36,11 @@ declare interface BlockAttributeMap {
 	[key: string]: string | number | null | undefined;
 }
 
+declare interface FormDestination {
+	type: "email" | "webhook" | "doctype";
+	value: string;
+}
+
 declare interface BlockEditorConfig {
 	icon?: string;
 	showChildrenInEditor?: boolean;

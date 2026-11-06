@@ -272,6 +272,13 @@ const styles = computed(() => {
 		...dynamicStyles,
 	} as BlockStyleMap;
 
+	// a block in a form looks as it does in the state picked for the form in Form > State
+	if (props.block.getFormBlock()) {
+		const formState = props.block.getFormStatePreview();
+		Object.assign(styleMap, props.block.getStateStyles(formState, props.breakpoint));
+		if (!props.block.getFormStates().includes(formState)) styleMap.display = "none";
+	}
+
 	if (!props.preview && isSelected.value && props.block.activeState) {
 		const [state] = props.block.activeState.split(":");
 

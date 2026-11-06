@@ -8,11 +8,13 @@ import {
 } from "@/utils/block/componentInstance";
 import { findBlockInTree, resetBlock } from "@/utils/block/tree";
 import type { SpacingType } from "@/utils/cssUtils";
+import { FORM_STATES } from "@/utils/formStates";
 import {
 	addPxToNumber,
 	cssUrl,
 	dataURLFileName,
 	dataURLtoFile,
+	escapeHtml,
 	generateId,
 	getBlockCopy,
 	getBlockInstance,
@@ -55,6 +57,15 @@ const TEXT_ELEMENTS = new Set([
 const CONTAINER_ELEMENTS = new Set(["section", "div"]);
 
 const HEADER_ELEMENTS = new Set(["h1", "h2", "h3", "h4", "h5", "h6"]);
+
+const CHECKABLE_INPUT_TYPES = new Set(["checkbox", "radio"]);
+
+const getNumberedName = (name: string, takenNames: Set<string>) => {
+	let count = 2;
+	while (takenNames.has(`${name}-${count}`)) count++;
+	takenNames.add(`${name}-${count}`);
+	return `${name}-${count}`;
+};
 
 // editor of the currently editable text block; kept off Block instances to
 // avoid Vue reactivity and serialization. Owner tracked by blockId since
@@ -139,6 +150,7 @@ class Block implements BlockOptions {
 		this.isRepeaterBlock = options.isRepeaterBlock;
 		this.isChildOfComponent = options.isChildOfComponent;
 		this.referenceBlockId = options.referenceBlockId;
+		this.elementBeforeConversion = options.elementBeforeConversion;
 		this.parentBlock = options.parentBlock || null;
 		if (this.extendedFromComponent) {
 			if (this.componentVersion) {
@@ -370,8 +382,14 @@ class Block implements BlockOptions {
 			}
 		}
 		let description = this.blockName || this.originalElement || this.getElement() || "";
-		if (this.getTextContent() && !this.blockName) {
+		// fields of one kind look alike in the layers, so they're told apart by the name they submit under
+		const fieldName = this.getSubmittedName();
+		if (fieldName) {
+			description += " | " + fieldName;
+		} else if (this.getTextContent() && !this.blockName) {
 			description += " | " + this.getTextContent();
+		} else if (this.isInput() && this.getEffectiveAttribute("type") && !this.blockName) {
+			description += " | " + this.getEffectiveAttribute("type");
 		}
 		return description;
 	}
@@ -417,6 +435,182 @@ class Block implements BlockOptions {
 			this.originalElement === "input" || this.getElement() === "input" || this.getElement() === "textarea"
 		);
 	}
+	isTextarea() {
+		return this.getElement() === "textarea";
+	}
+	isSelect() {
+		return this.getElement() === "select";
+	}
+	isCheckable() {
+		return this.isInput() && CHECKABLE_INPUT_TYPES.has(this.getEffectiveAttribute("type") as string);
+	}
+	isRadio() {
+		return this.isInput() && this.getEffectiveAttribute("type") === "radio";
+	}
+	isRadioGroup() {
+		return this.getEffectiveAttribute("role") === "radiogroup";
+	}
+	isFormField() {
+		return this.isInput() || this.isSelect() || this.isRadioGroup();
+	}
+	isFieldLabel() {
+		return this.getElement() === "label" && this.getChildren().some((child) => child.isFormField());
+	}
+	isInFormField(): boolean {
+		return this.isFormField() || this.isFieldLabel() || Boolean(this.getParentBlock()?.isInFormField());
+	}
+	// a field's name, or the one name submitted from inside a label or radio group
+	getSubmittedName(): string {
+		if (this.isInput() || this.isSelect()) return String(this.getEffectiveAttribute("name") || "");
+		if (this.getElement() !== "label" && !this.isRadioGroup()) return "";
+		const names = new Set(
+			this.getChildren()
+				.map((child) => child.getSubmittedName())
+				.filter(Boolean),
+		);
+		return names.size === 1 ? [...names][0] : "";
+	}
+	getRadios(): Block[] {
+		return this.getChildren().flatMap((child) => (child.isRadio() ? [child] : child.getRadios()));
+	}
+	// a radio group is required as soon as any of its radios is, so the group's toggle sets them all
+	isGroupRequired() {
+		return this.getRadios().some((radio) => radio.getEffectiveAttribute("required") != null);
+	}
+	setGroupRequired(required: boolean) {
+		this.getRadios().forEach((radio) =>
+			radio.setEffectiveAttribute("required", required ? "required" : undefined),
+		);
+	}
+	getRadioNames() {
+		return new Set(this.getRadios().map((radio) => radio.getEffectiveAttribute("name") as string));
+	}
+	// a name the page already uses gets a number, or two inserted radio groups would act as one
+	renameTakenRadioNames(takenNames: Set<string>) {
+		const newNames = new Map<string, string>();
+		const reservedNames = new Set([...takenNames, ...this.getRadioNames()]);
+		this.getRadios().forEach((radio) => {
+			const name = radio.getEffectiveAttribute("name") as string;
+			if (name && !newNames.has(name) && takenNames.has(name)) {
+				newNames.set(name, getNumberedName(name, reservedNames));
+			}
+			if (newNames.has(name)) radio.setEffectiveAttribute("name", newNames.get(name));
+		});
+	}
+	// kept as JSON on the form; the published page seals it so visitors can't read or change it
+	getFormDestinations(): FormDestination[] {
+		try {
+			const destinations = JSON.parse(String(this.getEffectiveAttribute("data-send-to") || "[]"));
+			return Array.isArray(destinations) ? destinations : [];
+		} catch {
+			return [];
+		}
+	}
+	setFormDestinations(destinations: FormDestination[]) {
+		this.setEffectiveAttribute(
+			"data-send-to",
+			destinations.length ? JSON.stringify(destinations) : undefined,
+		);
+	}
+	getFormBlock(): Block | null {
+		return this.isForm() ? this : this.getParentBlock()?.getFormBlock() || null;
+	}
+	// a copied or dropped-in field would submit under another field's name, and the two answers arrive
+	// joined as one; checkboxes and radios share a name on purpose
+	giveFieldsUniqueNames() {
+		const form = this.getParentBlock()?.getFormBlock();
+		if (!form) return;
+		const named = (block: Block): Block[] => [
+			...((block.isInput() || block.isSelect()) && !block.isCheckable() && block.getEffectiveAttribute("name")
+				? [block]
+				: []),
+			...block.getChildren().flatMap(named),
+		];
+		const copies = named(this);
+		const taken = new Set(
+			named(form)
+				.filter((field) => !copies.includes(field))
+				.map((field) => String(field.getEffectiveAttribute("name"))),
+		);
+		for (const copy of copies) {
+			const name = String(copy.getEffectiveAttribute("name"));
+			let unique = name;
+			for (let n = 2; taken.has(unique); n++) unique = `${name}_${n}`;
+			if (unique !== name) copy.setEffectiveAttribute("name", unique);
+			taken.add(unique);
+		}
+	}
+	// the state its form shows on the canvas, picked in Form > State; it is never saved
+	getFormStatePreview() {
+		const form = this.getFormBlock();
+		return (form && useCanvasStore().formStatePreviews[form.blockId]) || "default";
+	}
+	// a block without the attribute shows in every state
+	getFormStates(): string[] {
+		const states = this.getEffectiveAttribute("data-form-states");
+		return states == null ? FORM_STATES : String(states).split(" ").filter(Boolean);
+	}
+	setFormStates(states: string[]) {
+		const shownStates = FORM_STATES.filter((state) => states.includes(state));
+		this.setEffectiveAttribute(
+			"data-form-states",
+			shownStates.length === FORM_STATES.length ? undefined : shownStates.join(" "),
+		);
+	}
+	// a button's variants are its layers, each shown only in some form states (Submit, a spinner, Thank you)
+	hasFormStateVariants() {
+		return (
+			this.isButton() &&
+			this.getChildren().some((child) => child.getEffectiveAttribute("data-form-states") != null)
+		);
+	}
+	getFormStateVariant(state: string) {
+		return this.getChildren().find((child) => child.getFormStates().includes(state));
+	}
+	// a state shows one variant, so picking it hides the others in that state
+	setFormStateVariant(state: string, variantId: string) {
+		this.getChildren().forEach((child) => {
+			const states = child.getFormStates().filter((shownState) => shownState !== state);
+			child.setFormStates(child.blockId === variantId ? [...states, state] : states);
+		});
+	}
+	getOptions() {
+		return this.getChildren().filter((child) => child.getElement() === "option");
+	}
+	getOptionLabels() {
+		return this.getOptions().map((option) => option.getTextContent());
+	}
+	// renaming keeps an option's attributes, so a placeholder (empty value) stays one; an option
+	// without a value attribute submits its label, so the two stay in step
+	// labels are plain text but publish as HTML, so they are escaped or "&copy;" would become "©"
+	renameOption(index: number, label: string) {
+		this.getOptions()[index]?.setInnerHTML(escapeHtml(label));
+	}
+	removeOption(index: number) {
+		const option = this.getOptions()[index];
+		if (option) this.removeChild(option);
+	}
+	// before the option at index, or last
+	addOption(label: string, index?: number) {
+		const before = index === undefined ? undefined : this.getOptions()[index];
+		this.addChild(
+			{ element: "option", innerHTML: escapeHtml(label) },
+			before ? this.getChildIndex(before) : null,
+			false,
+		);
+	}
+	// the option shown before the visitor picks one, like the template's placeholder
+	getSelectedOptionIndex() {
+		return Math.max(
+			0,
+			this.getOptions().findIndex((option) => option.getEffectiveAttribute("selected") != null),
+		);
+	}
+	setSelectedOption(index: number) {
+		this.getOptions().forEach((option, i) =>
+			option.setEffectiveAttribute("selected", i === index ? "" : undefined),
+		);
+	}
 	setStyle(style: styleProperty, value: StyleValue) {
 		const canvasStore = useCanvasStore();
 		let styleObj = this.baseStyles;
@@ -446,7 +640,7 @@ class Block implements BlockOptions {
 		const activeState = this.activeState?.split(":")[0];
 		return (activeState ? `${activeState}:${String(style)}` : style) as styleProperty;
 	}
-	setAttribute(attribute: string, value: string | undefined) {
+	setAttribute(attribute: string, value: string | null | undefined) {
 		this.attributes[attribute] = value;
 	}
 	removeAttribute(attribute: string) {
@@ -458,14 +652,34 @@ class Block implements BlockOptions {
 	}
 	setId(id: string | undefined) {
 		// a removed key falls back to the component's id, so an instance blanks it instead
-		const value = id || (this.referenceComponent?.getId() ? "" : undefined);
-		if (value !== undefined && "id" in this.getCustomAttributes()) {
-			this.customAttributes.id = value;
+		this.setEffectiveAttribute("id", id || (this.referenceComponent?.getId() ? "" : undefined));
+	}
+	// what the published page renders, since customAttributes win over attributes there
+	getEffectiveAttribute(attribute: string) {
+		return this.getCustomAttributes()[attribute] ?? this.getAttribute(attribute) ?? undefined;
+	}
+	setEffectiveAttribute(attribute: string, value: string | undefined) {
+		if (value !== undefined && attribute in this.getCustomAttributes()) {
+			this.customAttributes[attribute] = value;
+		} else if (value === undefined && this.referenceComponent?.customAttributes[attribute] != null) {
+			// a deleted key lets the component's value show through, so null marks it removed
+			this.customAttributes[attribute] = null;
 		} else {
-			// clearing drops both copies, or the one left behind becomes the id again
-			delete this.customAttributes.id;
+			// clearing drops both copies, or the one left behind becomes the value again
+			delete this.customAttributes[attribute];
 		}
-		this.setAttribute("id", value);
+		if (value === undefined) this.removeAttributeBinding(attribute);
+		// undefined is dropped when saved, which would bring the component's value back
+		const cleared = this.getComponentAttributes()[attribute] != null ? null : undefined;
+		this.attributes[attribute] = value ?? cleared;
+	}
+	removeAttributeBinding(attribute: string) {
+		this.removeDynamicValue(attribute, "attribute");
+		const inherited = this.getDynamicValues().some(
+			(v) => v.type === "attribute" && v.property === attribute && v.key,
+		);
+		// an empty key hides the component's binding without binding anything
+		if (inherited) this.setDynamicValue(attribute, "attribute");
 	}
 	getAttribute(attribute: string) {
 		return this.getAttributes()[attribute];
@@ -761,8 +975,12 @@ class Block implements BlockOptions {
 			this.isImage() ||
 			this.isSVG() ||
 			this.isInput() ||
+			// a select holds only its options, which its Options property adds; a drop there vanishes from the canvas
+			this.isSelect() ||
+			this.getElement() === "option" ||
 			this.isVideo() ||
-			(this.isText() && !this.isLink()) ||
+			// a label wrapping a field takes more blocks, like helper text, the way a link does
+			(this.isText() && !this.isLink() && !(this.getElement() === "label" && this.hasChildren())) ||
 			this.isHTML() ||
 			this.isExtendedFromComponent()
 		);
@@ -1072,6 +1290,7 @@ class Block implements BlockOptions {
 		} else {
 			child = canvasStore.activeCanvas?.getRootBlock().addChild(blockCopy) as Block;
 		}
+		child?.giveFieldsUniqueNames();
 		nextTick(() => {
 			if (child) {
 				child.selectBlock();

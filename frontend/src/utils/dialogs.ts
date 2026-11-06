@@ -1,6 +1,7 @@
 import type Block from "@/block";
 import { useDashboardState } from "@/composables/useDashboardState";
 import builderProjectFolder from "@/data/builderProjectFolder";
+import { formDoctypes } from "@/data/formDoctypes";
 import webComponent from "@/data/webComponent";
 import { webPages } from "@/data/webPage";
 import useBuilderStore from "@/stores/builderStore";
@@ -8,6 +9,7 @@ import useCanvasStore from "@/stores/canvasStore";
 import useComponentStore from "@/stores/componentStore";
 import usePageStore from "@/stores/pageStore";
 import { BuilderComponent, BuilderPage, BuilderProjectFolder } from "@/types/doctypes";
+import { getFieldSchema, getFormFields, nameFormFields } from "@/utils/formFields";
 import { getBlockCopy, getBlockString } from "@/utils/helpers";
 import { useDateFormat, useStorage } from "@vueuse/core";
 import { createResource, dialog, toast } from "frappe-ui";
@@ -42,7 +44,10 @@ function choose<T>(resolve: (choice: T) => void, choice: T) {
 }
 
 // dismissing resolves null, so a stray Esc never saves
-export function promptSharedScriptSave(scriptName: string, otherPages: string): Promise<"all" | "copy" | null> {
+export function promptSharedScriptSave(
+	scriptName: string,
+	otherPages: string,
+): Promise<"all" | "copy" | null> {
 	return new Promise((resolve) => {
 		dialog.confirm({
 			title: __("Update a shared script?"),
@@ -94,6 +99,41 @@ export function promptScriptConflict(scriptName: string): Promise<"overwrite" | 
 				{ label: __("Load Latest"), variant: "subtle", onClick: choose(resolve, "reload") },
 				{ label: __("Overwrite"), variant: "solid", theme: "red", onClick: choose(resolve, "overwrite") },
 			],
+			onCancel: () => resolve(null),
+		});
+	});
+}
+
+// resolves the new DocType's name, or null when dismissed
+export function promptCreateFormDoctype(form: Block): Promise<string | null> {
+	const pageStore = usePageStore();
+	return new Promise((resolve) => {
+		dialog.prompt({
+			title: __("New DocType"),
+			message: __("Each field of the form becomes a field of the DocType, which saves its submissions."),
+			size: "sm",
+			confirmLabel: __("Create DocType"),
+			fields: [
+				{
+					name: "doctype",
+					label: __("DocType Name"),
+					required: true,
+					defaultValue: __("{0} Submission", [pageStore.activePage?.page_title || __("Form")]),
+				},
+			],
+			onConfirm: async ({ values }) => {
+				const fields = getFormFields(form);
+				const fieldnames = await createResource({
+					url: "builder.api.make_form_doctype",
+					method: "POST",
+				}).submit({
+					doctype: values.doctype,
+					fields: fields.map(getFieldSchema),
+				});
+				nameFormFields(fields, fieldnames);
+				formDoctypes.fetch();
+				resolve(values.doctype as string);
+			},
 			onCancel: () => resolve(null),
 		});
 	});
@@ -197,7 +237,9 @@ export function promptRenamePage(page: BuilderPage) {
 		title: __("Rename Page"),
 		size: "sm",
 		confirmLabel: __("Rename"),
-		fields: [{ name: "page_title", label: __("Page Title"), required: true, defaultValue: page.page_title || "" }],
+		fields: [
+			{ name: "page_title", label: __("Page Title"), required: true, defaultValue: page.page_title || "" },
+		],
 		onConfirm: async ({ values }) => {
 			const pageTitle = values.page_title.trim();
 			if (!pageTitle || pageTitle === page.page_title) return;
