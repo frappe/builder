@@ -1,3 +1,4 @@
+from typing import ClassVar
 from unittest.mock import patch
 
 from frappe.tests.utils import FrappeTestCase
@@ -5,6 +6,8 @@ from frappe.tests.utils import FrappeTestCase
 from builder.ai.llm import (
 	GENERIC_FAILURE,
 	NO_KEY,
+	TASK_PARAMS,
+	complete_with_tools,
 	is_retryable,
 	loads_tolerant,
 	patch_messages_for_provider,
@@ -191,3 +194,76 @@ class TestSharedKey(FrappeTestCase):
 			):
 				self.assertEqual(route(info["name"], SHARED_KEY)[2], expected)
 				self.assertEqual(resolve_api_key(info["name"]), expected)
+
+
+class TestGatewayToolCalls(FrappeTestCase):
+	model = "openai/openai/gpt-6-luna"
+	tools: ClassVar[list] = [
+		{"type": "function", "function": {"name": "inspect_page", "parameters": {"type": "object"}}}
+	]
+	base: ClassVar[dict] = {"api_base": "https://gateway.example.com/openai/v1"}
+
+	def missing_responses(self, message="openai/gpt-6-luna does not serve /v1/responses"):
+		from litellm import NotFoundError
+
+		return NotFoundError(message=message, model=self.model, llm_provider="openai")
+
+	def call(self, completion, *, model=None, overrides=None, params=None, stream=False):
+		with (
+			patch("builder.ai.llm.codex_route", return_value=None),
+			patch(
+				"builder.ai.llm.route",
+				return_value=(model or self.model, self.base if overrides is None else overrides, "test-key"),
+			),
+			patch("litellm.completion", side_effect=completion) as complete,
+		):
+			result = complete_with_tools(
+				"frappe/openai/gpt-6-luna",
+				[{"role": "user", "content": "Inspect the page"}],
+				self.tools,
+				TASK_PARAMS["agent"] if params is None else params,
+				stream=stream,
+			)
+			return result, complete.call_args_list
+
+	def test_retries_an_unsupported_responses_route_without_reasoning(self):
+		for stream in (False, True):
+			with self.subTest(stream=stream):
+				response = object()
+				result, calls = self.call([self.missing_responses(), response], stream=stream)
+				self.assertIs(result, response)
+				self.assertEqual(len(calls), 2)
+				first, retry = (call.kwargs for call in calls)
+				self.assertEqual(first["reasoning_effort"], "medium")
+				self.assertEqual(retry, {k: v for k, v in first.items() if k != "reasoning_effort"})
+				self.assertEqual(retry["tools"], self.tools)
+				self.assertEqual(retry["stream"], stream)
+				self.assertEqual(TASK_PARAMS["agent"]["reasoning_effort"], "medium")
+
+	def test_keeps_reasoning_when_the_gateway_serves_the_request(self):
+		response = object()
+		result, calls = self.call([response])
+		self.assertIs(result, response)
+		self.assertEqual(len(calls), 1)
+		self.assertEqual(calls[0].kwargs["reasoning_effort"], "medium")
+
+	def test_does_not_retry_other_models_or_provider_errors(self):
+		from litellm import AuthenticationError
+
+		cases = [
+			(self.missing_responses(), {"overrides": {}}),
+			(self.missing_responses(), {"model": "openrouter/openai/gpt-6-luna"}),
+			(self.missing_responses(), {"params": {"max_tokens": 1000}}),
+			(self.missing_responses("The selected model does not exist"), {}),
+			(AuthenticationError(message="Invalid key", model=self.model, llm_provider="openai"), {}),
+		]
+		for error, options in cases:
+			with self.subTest(error=str(error), options=options), self.assertRaises(type(error)) as raised:
+				self.call([error], **options)
+			self.assertIs(raised.exception, error)
+
+	def test_a_failed_fallback_is_not_retried_again(self):
+		error = self.missing_responses()
+		with self.assertRaises(type(error)) as raised:
+			self.call([self.missing_responses(), error])
+		self.assertIs(raised.exception, error)
