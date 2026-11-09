@@ -19,4 +19,11 @@ frappe.listview_settings["Web Page"] = {
       })
       .prependTo(listview.page.main);
   },
+  primary_action() {
+    if (frappe.model.can_create("Builder Page")) {
+      window.location.assign("/api/method/builder.api.open_editor?page=new");
+    } else {
+      frappe.new_doc("Web Page");
+    }
+  },
 };
