@@ -86,7 +86,7 @@ class TestSiteProvider(FrappeTestCase):
 		self.assertEqual(self.sync(moved).api_base, "https://moved.test/openai/v1")
 
 	def test_the_balance_is_read_from_the_gateway_host(self):
-		self.assertEqual(self.sync(SITE_KEY).credits_url, "https://grove.test/v1/credits")
+		self.assertEqual(self.sync(SITE_KEY).credits_url, "https://grove.test/v1/key/balance")
 
 	def test_removing_the_key_turns_the_provider_off(self):
 		self.sync(SITE_KEY)
@@ -166,5 +166,5 @@ class TestSiteAICredits(FrappeTestCase):
 			patch("builder.ai.models.requests.get", return_value=response) as get,
 		):
 			self.assertEqual(get_site_ai_credits(), {"balance": 4.5, "spent": 0.5})
-		self.assertEqual(get.call_args.args[0], "https://grove.test/v1/credits")
+		self.assertEqual(get.call_args.args[0], "https://grove.test/v1/key/balance")
 		self.assertEqual(get.call_args.kwargs["headers"], {"Authorization": "Bearer grove-key"})
