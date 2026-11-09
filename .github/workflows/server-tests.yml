@@ -42,46 +42,18 @@ jobs:
             ${{ runner.os }}-pip-
             ${{ runner.os }}-
 
-      # Stable key; drift is detected post-restore (see install.sh),
-      # so frappe schema churn never forces a full reprovision.
-      - name: Compute bench cache key
-        id: bench-key
-        run: echo "key=${{ runner.os }}-pilot-bench-builder-develop-py3.14-extdb" >> "$GITHUB_OUTPUT"
-
-      - name: Restore Pilot bench
-        id: bench-cache
-        uses: actions/cache/restore@v4
-        with:
-          path: |
-            ~/pilot/benches
-            ~/.config/systemd/user
-            ~/db-snapshot
-          key: ${{ steps.bench-key.outputs.key }}
-
       - name: Setup Pilot bench
         shell: bash
         env:
           FRAPPE_BRANCH: develop
-          PILOT_CACHE_HIT: ${{ steps.bench-cache.outputs.cache-hit }}
         run: bash ${GITHUB_WORKSPACE}/.github/helper/install.sh
-
-      - name: Save Pilot bench
-        if: steps.bench-cache.outputs.cache-hit != 'true'
-        uses: actions/cache/save@v4
-        with:
-          path: |
-            ~/pilot/benches
-            ~/.config/systemd/user
-            ~/db-snapshot
-          key: ${{ steps.bench-key.outputs.key }}
 
       - name: Install app under test
         shell: bash
         working-directory: /home/runner/pilot/benches/frappe-bench
         run: |
           export PATH="$HOME/pilot/bin:$HOME/.local/bin:$PATH"
-          # The cached bench never contains this app, so every run installs
-          # fresh PR code. The site database was restored during provisioning.
+          # Fresh PR code every run.
           pilot get-app "${GITHUB_WORKSPACE}" --branch "${GITHUB_SHA}" --skip-assets
           pilot install-app test_site builder
 
