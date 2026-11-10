@@ -71,6 +71,14 @@ logger.setLevel(logging.INFO)
 MAX_ROUNDS = 40
 EVENT_PREFIX = "ai_chat"
 
+# A step can spend its whole max_tokens thinking, drafting the edit it never gets to
+# call. Ending the turn there leaves an empty reply, so the model is told to act.
+OUT_OF_ROOM_NUDGES = 2
+OUT_OF_ROOM_NUDGE = (
+	"Your last step ran out of output room while thinking, before it called a tool. "
+	"Act now: keep the planning short and make the change in smaller edits, a section at a time."
+)
+
 # A streaming round is retried on transient failure (litellm can't fall back mid-stream).
 # Backoff is STREAM_BACKOFF_BASE * 2**attempt → ~1s, 2s before the final give-up.
 STREAM_MAX_ATTEMPTS = 3
@@ -442,6 +450,7 @@ class AgentRunner:
 		# of each LLM call (="length" flags truncation — the usual cause of broken args).
 		self.args_repaired = 0
 		self.finish_reasons: list[str | None] = []
+		self.out_of_room_nudges = 0
 		# Client ops the WorkingTree rejected (bad ref, wrong parent, partial bulk miss).
 		# Each is fed back to the model to self-correct; also logged and surfaced here so a
 		# "why didn't my edit land" is traceable in the agent debugger, not just live logs.
@@ -1328,6 +1337,9 @@ class AgentRunner:
 				self.record_round(round_index, tool_operations, summary_text)
 
 				if not tool_operations:
+					if self.ran_out_of_room(summary_text):
+						messages.append({"role": "user", "content": OUT_OF_ROOM_NUDGE})
+						continue
 					self.stop_reason = "model_finished"
 					break
 
@@ -1379,6 +1391,13 @@ class AgentRunner:
 			return
 
 		self.finish_turn(summary_text, started)
+
+	def ran_out_of_room(self, text: str) -> bool:
+		"""The step hit max_tokens before saying or calling anything."""
+		if text or self.finish_reasons[-1:] != ["length"] or self.out_of_room_nudges >= OUT_OF_ROOM_NUDGES:
+			return False
+		self.out_of_room_nudges += 1
+		return True
 
 	def turn_reply(self, ops: list[dict], results: list[str]) -> str:
 		"""The reply that ends the turn now, if any: never while a page generated this

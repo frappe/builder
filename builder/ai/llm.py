@@ -125,7 +125,7 @@ class Effort:
 	longer job."""
 
 	LEVELS = ("low", "medium", "high", "xhigh")
-	MAX_TOKENS: ClassVar[dict[str, int]] = {"high": 32000, "xhigh": 64000}
+	MAX_TOKENS: ClassVar[dict[str, int]] = {"high": 64000, "xhigh": 64000}
 	STALL_TIMEOUT: ClassVar[dict[str, int]] = {"high": 300, "xhigh": 600}
 	JOB_TIMEOUT: ClassVar[dict[str, int]] = {"high": 1800, "xhigh": 3600}
 
