@@ -187,8 +187,23 @@ def patch_params_for_provider(model: str, params: dict) -> dict:
 	direct_claude = "claude-" in model and not model.startswith("openrouter/")
 	needs_one = "kimi" in model or (direct_claude and params.get("reasoning_effort"))
 	if needs_one and params.get("temperature") not in (None, 1):
-		return {**params, "temperature": 1}
+		params = {**params, "temperature": 1}
+	if direct_claude and params.get("reasoning_effort") and thinks_adaptively(model):
+		params = {**params, "thinking": SUMMARIZED_THINKING}
 	return params
+
+
+# Newer Claude models stream empty thinking by default: minutes of silence in which
+# a cancel goes unnoticed and the stall timeout fires. A summary keeps chunks coming.
+SUMMARIZED_THINKING = {"type": "adaptive", "display": "summarized"}
+
+
+def thinks_adaptively(model: str) -> bool:
+	"""Claude 4.6 and later; older models take a thinking budget instead."""
+	from litellm import AnthropicConfig
+
+	check = getattr(AnthropicConfig, "_is_adaptive_thinking_model", None)
+	return bool(check and check(model, "anthropic"))
 
 
 # --- provider routing --------------------------------------------------------
