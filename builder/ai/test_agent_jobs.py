@@ -34,6 +34,20 @@ class TestAgentJobs(FrappeTestCase):
 			self.assertNotIn("api_key", enqueue.call_args.kwargs)
 			self.assertNotIn(SECRET, enqueue.call_args.kwargs.values())
 
+	def test_a_resumed_turn_keeps_the_picked_effort(self):
+		page, session = chat_session()
+		with (
+			patch.object(ModelRegistry, "find", return_value=MODEL),
+			patch("builder.ai.api.resolve_api_key", return_value=SECRET),
+			patch("frappe.enqueue") as enqueue,
+		):
+			api.run("hi", page, model=MODEL["name"], session_id=session, effort="xhigh")
+			api.resume_after_action(session, "Applied.")
+
+		self.assertEqual(
+			[(c.kwargs["effort"], c.kwargs["timeout"]) for c in enqueue.call_args_list], [("xhigh", 3600)] * 2
+		)
+
 	def test_a_resume_without_a_key_queues_nothing(self):
 		_, session = chat_session()
 
