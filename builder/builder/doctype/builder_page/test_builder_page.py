@@ -436,6 +436,28 @@ class TestBuilderPage(FrappeTestCase):
 		finally:
 			page.delete()
 
+	def test_app_hooks_feed_page_data_under_the_app_name(self):
+		page = insert_page("test-page-data-hook", "Hook")
+		page.page_data_script = 'data.builder["title"] = "from script"'
+		page.save()
+		get_hooks = frappe.get_hooks
+
+		def hooks(hook, *args, **kwargs):
+			if hook == "builder_page_data":
+				return [f"{__name__}.get_app_page_data"] if kwargs.get("app_name") == "builder" else []
+			return get_hooks(hook, *args, **kwargs)
+
+		try:
+			with patch("frappe.get_hooks", side_effect=hooks):
+				data = page.get_page_data()
+			self.assertEqual(data.builder["page_id"], page.name)
+			self.assertEqual(data.builder["title"], "from script")
+			self.assertNotIn("page_id", data)
+			# the editor fetches it with run_doc_method
+			page.is_whitelisted("get_page_data")
+		finally:
+			page.delete()
+
 	def test_page_data_script_can_set_the_page_language(self):
 		page = insert_page("test-page-language", "Language")
 		page.page_data_script = 'data.language = "ar"'
@@ -2415,3 +2437,7 @@ def get_html_for(html, type, value, index=None, only_content=False, list_all=Fal
 			results[index] if index is not None and index < len(results) else results[0] if results else None
 		)
 		return result.get(value) if result and result.get(value) else ""
+
+
+def get_app_page_data(page):
+	return {"page_id": page.name, "title": "from app"}

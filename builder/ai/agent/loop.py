@@ -629,6 +629,15 @@ class AgentRunner:
 			)
 		return context
 
+	def build_agent_context(self) -> str:
+		"""Instructions installed apps give for the open page, through the builder_agent_context hook."""
+		if not self.page_id:
+			return ""
+		texts = (
+			frappe.get_attr(method)(self.page_id) for method in frappe.get_hooks("builder_agent_context")
+		)
+		return "\n\n".join(text for text in texts if text)
+
 	def build_skill_context(self) -> str:
 		"""Include the build guide when the model asks to inspect an empty page."""
 		root = self.page_root()
@@ -688,6 +697,7 @@ class AgentRunner:
 		# ahead of it generally prevents reuse across turns.
 		blocks = [
 			self.build_open_page_context(),
+			self.build_agent_context(),
 			self.build_initial_page_context(),
 			self.build_memory_context(),
 			self.build_plugins_context(),

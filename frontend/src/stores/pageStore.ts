@@ -411,7 +411,8 @@ const usePageStore = defineStore("pageStore", {
 		},
 
 		setPageData(page?: BuilderPage) {
-			if (!page || !page.page_data_script) {
+			// apps can feed data through the builder_page_data hook, so a page without a script can still have data
+			if (!page) {
 				this.pageData = {};
 				return;
 			}
