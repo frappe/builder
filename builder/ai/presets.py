@@ -149,9 +149,9 @@ def get_gateway_base(gateway_url: str) -> str:
 
 
 def get_credits_url(gateway_url: str) -> str:
-	"""Frappe's gateway reports its balance at its host's /v1/credits, outside the OpenAI-compatible base."""
+	"""Frappe's gateway reports the key's balance at its host's /v1/key/balance, outside the OpenAI-compatible base."""
 	parts = urlsplit(gateway_url)
-	return f"{parts.scheme}://{parts.netloc}/v1/credits"
+	return f"{parts.scheme}://{parts.netloc}/v1/key/balance"
 
 
 def get_site_provider():
