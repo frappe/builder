@@ -3,6 +3,7 @@ import builderTokens from "@/data/builderToken";
 import { type AIChatHandlers, attachAIChatListeners, detachAIChatListeners } from "@/components/ai/realtime";
 import { type AffectedItems, type PageCanvas, ToolDispatcher } from "@/components/ai/toolDispatch";
 import { type Credits, creditsFor } from "@/components/ai/commands/shared";
+import { contextUsageOf } from "@/components/ai/contextUsage";
 import type { AIProvider, AITurnStep, ChatMessage } from "@/components/ai/types";
 import { buildLocalMessage } from "@/components/ai/blockFields";
 import type BuilderCanvas from "@/components/BuilderCanvas.vue";
@@ -46,6 +47,9 @@ export class AIChatController {
 
 	readonly sessionId = ref("");
 	readonly messages = ref<ChatMessage[]>([]);
+	readonly contextUsage = computed(() =>
+		contextUsageOf(this.messages.value.findLast((m) => m.metadata?.debug)?.metadata?.debug),
+	);
 	readonly isLoadingSession = ref(false);
 	// only the newest load may commit; older responses are stale
 	private loadSessionEpoch = 0;

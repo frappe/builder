@@ -375,11 +375,12 @@
 					<Tooltip v-if="credits" :text="credits.spent === null ? '' : `${money(credits.spent)} spent`">
 						<Badge variant="subtle" :theme="creditsTheme(credits)" :label="creditsLabel(credits)" />
 					</Tooltip>
+					<span class="flex-1" />
+					<AIContextMeter v-if="contextUsage" :usage="contextUsage" />
 					<Button
 						v-if="isSubmitting"
 						variant="solid"
 						icon="lucide-square"
-						class="ml-auto"
 						:loading="isCancelling"
 						:tooltip="isCancelling ? 'Cancelling…' : 'Cancel generation'"
 						@click="chat.cancel" />
@@ -393,7 +394,6 @@
 						<Button
 							variant="solid"
 							icon="lucide-arrow-up"
-							class="ml-auto"
 							:disabled="!canSubmit"
 							@click="submitPrompt" />
 					</Tooltip>
@@ -423,6 +423,7 @@
 import AIAffectedItems from "@/components/AIAffectedItems.vue";
 import AIPluginCard from "@/components/ai/AIPluginCard.vue";
 import AICommandMenu from "@/components/ai/AICommandMenu.vue";
+import AIContextMeter from "@/components/ai/AIContextMeter.vue";
 import AITurnTimeline from "@/components/ai/AITurnTimeline.vue";
 import { registerBobCommands } from "@/components/ai/bobCommands";
 import { useCommandMenu } from "@/components/ai/commandMenu";
@@ -450,7 +451,7 @@ import { computed, nextTick, onMounted, onUnmounted, ref, watch } from "vue";
 const chat = new AIChatController();
 
 const { prompt, isSubmitting, isCancelling, messages, modelLabel, canSubmit, credits } = chat;
-const { selectedEffort } = chat;
+const { selectedEffort, contextUsage } = chat;
 const { isEditingPage } = chat;
 const { selectedModelUnusable } = chat;
 const { progressMessage } = chat;
