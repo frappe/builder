@@ -39,7 +39,6 @@ printf '[client]\nskip-ssl\n' > ~/.my.cnf
 mariadb --host "$DB_HOST" --port "$DB_PORT" -u root -p"$DB_ROOT_PASSWORD" -e "SET GLOBAL character_set_server = 'utf8mb4'"
 mariadb --host "$DB_HOST" --port "$DB_PORT" -u root -p"$DB_ROOT_PASSWORD" -e "SET GLOBAL collation_server = 'utf8mb4_unicode_ci'"
 
-# shellcheck disable=SC2086
 pilot new-site test_site --admin-password admin --apps frappe --skip-assets
 # Emails resolve CSS through assets.json; tests never load the built bundles.
 mkdir -p sites/assets && echo '{}' > sites/assets/assets.json

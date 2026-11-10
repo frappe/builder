@@ -5,7 +5,7 @@ on:
   push:
     branches:
       - develop
-      - main
+      - master
   workflow_dispatch:
 
 jobs:
@@ -60,6 +60,8 @@ jobs:
       - name: Run Tests
         working-directory: /home/runner/pilot/benches/frappe-bench
         run: |
+          # pilot init enables server scripts; Frappe's default (off) runs builder's own data script sandbox
+          pilot frappe set-config -g -p server_script_enabled 0
           pilot frappe --site test_site set-config allow_tests true
           pilot frappe --site test_site run-tests --app builder --coverage
         env:
