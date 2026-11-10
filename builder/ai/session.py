@@ -368,6 +368,30 @@ class AISession:
 	def is_session_running(cls, session_id: str) -> bool:
 		return bool(session_id) and locks.held(locks.session_key(session_id))
 
+	# --- notes (what the user sends while a turn runs) ---------------------
+
+	@staticmethod
+	def notes_key(session_id: str) -> str:
+		return f"builder_ai_notes:{session_id}"
+
+	@classmethod
+	def queue_note(cls, session_id: str, text: str) -> None:
+		frappe.cache.rpush(cls.notes_key(session_id), text)
+
+	@classmethod
+	def pop_notes(cls, session_id: str | None) -> list[str]:
+		"""Queued notes, oldest first. Popped one by one, so a note sent mid-drain
+		waits for the next round instead of being lost."""
+		notes = []
+		while session_id and (note := frappe.cache.lpop(cls.notes_key(session_id))):
+			notes.append(note.decode())
+		return notes
+
+	@classmethod
+	def clear_notes(cls, session_id: str | None) -> None:
+		if session_id:
+			frappe.cache.delete_value(cls.notes_key(session_id))
+
 	# --- lifecycle --------------------------------------------------------
 
 	def truncate_from_turn(self, message_id: str):

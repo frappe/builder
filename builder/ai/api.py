@@ -219,6 +219,17 @@ def resume_after_action(session_id: str, outcome: str) -> bool:
 
 
 @frappe.whitelist()
+def steer(session_id: str, prompt: str):
+	"""Queue a message for the running turn; the loop reads it in at its next round.
+	With no turn running nothing would read it, so the chat sends it as a turn."""
+	ensure_session_owner(session_id)
+	if not prompt.strip() or not AISession.is_session_running(session_id):
+		return {"status": "not_running"}
+	AISession.queue_note(session_id, prompt.strip())
+	return {"status": "queued"}
+
+
+@frappe.whitelist()
 @has_page_write()
 def cancel(session_id: str):
 	"""Request that the currently-running turn for this session abort at its

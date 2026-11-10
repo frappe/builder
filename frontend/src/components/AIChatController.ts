@@ -277,6 +277,7 @@ export class AIChatController {
 			onError: this.onError,
 			onStep: this.onStep,
 			onRefetch: this.onRefetch,
+			onNote: this.onNote,
 		};
 	}
 
@@ -295,6 +296,7 @@ export class AIChatController {
 		this.dispatcher.reset();
 		this.isSubmitting.value = false;
 		this.isCancelling.value = false;
+		this.releaseNotes(false);
 	}
 
 	private clearTurnTimers() {
@@ -669,6 +671,7 @@ export class AIChatController {
 		this.clearStreamRenderTimer();
 		this.endCanvasBuild(this.previewUnconfirmed);
 		this.previewUnconfirmed = false;
+		const wasCancelled = this.isCancelling.value;
 		this.isSubmitting.value = false;
 		this.isCancelling.value = false;
 		this.progressMessage.value = data.message || "Done";
@@ -719,6 +722,7 @@ export class AIChatController {
 			this.progressMessage.value = "";
 			this.pendingAssistantId.value = null;
 		}, 1200);
+		this.releaseNotes(!wasCancelled);
 	};
 
 	onError = async (data: { message?: string; session_id?: string }) => {
@@ -736,6 +740,7 @@ export class AIChatController {
 		this.liveSteps.value = [];
 		await this.loadSession();
 		this.pendingAssistantId.value = null;
+		this.releaseNotes(false);
 	};
 
 	/** The agent composed a UI card (present_ui) — one generic renderer (AIUISpec)
@@ -776,6 +781,7 @@ export class AIChatController {
 		// Backend persists+commits clarify messages before emitting, so this is race-free.
 		await this.loadSession();
 		this.scrollToBottom();
+		this.releaseNotes(false);
 	};
 
 	// --- user actions -----------------------------------------------------
@@ -828,6 +834,42 @@ export class AIChatController {
 	 * cancelled `complete` event lands only after the next chunk + a round trip,
 	 * so we show "Cancelling" locally right away for instant feedback; that event
 	 * (or onError/onClarify) clears isCancelling when the turn actually ends. */
+	/** What the user sent while a turn ran, until the loop reads it in. */
+	readonly queuedNotes = ref<string[]>([]);
+
+	/** Send the composer to the running turn, which reads it in at its next round. */
+	steer = async () => {
+		const text = this.prompt.value.trim();
+		if (!text || !this.sessionId.value) return;
+		this.prompt.value = "";
+		this.queuedNotes.value.push(text);
+		const res: any = await createResource({ url: "builder.ai.api.steer" })
+			.submit({ session_id: this.sessionId.value, prompt: text })
+			.catch(() => null);
+		// the turn ended before the note landed, so it goes out as the next turn
+		if (res?.status === "not_running" && !this.isSubmitting.value) this.releaseNotes(true);
+	};
+
+	onNote = (data: { text?: string; session_id?: string }) => {
+		if (this.isForeignSession(data) || !data.text) return;
+		const queued = this.queuedNotes.value.indexOf(data.text);
+		if (queued !== -1) this.queuedNotes.value.splice(queued, 1);
+		// before the turn's reply, where the server saved it
+		const reply = this.messages.value.findIndex((m) => m.id === this.pendingAssistantId.value);
+		const at = reply === -1 ? this.messages.value.length : reply;
+		this.messages.value.splice(at, 0, buildLocalMessage("user", data.text));
+	};
+
+	/** Notes the turn ended without reading: sent as the next turn, or put back in the
+	 * composer when the turn stopped for the user (cancel, error, a question card). */
+	private releaseNotes(send: boolean) {
+		if (!this.queuedNotes.value.length) return;
+		const text = this.queuedNotes.value.join("\n\n");
+		this.queuedNotes.value = [];
+		this.prompt.value = [text, this.prompt.value.trim()].filter(Boolean).join("\n\n");
+		if (send) this.submitPrompt();
+	}
+
 	cancel = async () => {
 		if (!this.sessionId.value && this.liveSend) {
 			// the turn's session isn't known yet; cancel it the moment run names it

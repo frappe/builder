@@ -1233,6 +1233,21 @@ class AgentRunner:
 			)
 		self.pending_images.clear()
 
+	def read_notes(self, messages: list[dict]) -> None:
+		"""Messages the user sent while this turn ran, read in between rounds. Each is
+		saved as a user message of its own so later turns see it too."""
+		for note in AISession.pop_notes(self.session_id):
+			AISession.try_append_message(
+				self.session_id,
+				"user",
+				note,
+				message_type="chat",
+				task_type="agent",
+				metadata={"canvasTheme": self.canvas_theme, "effort": self.effort.level},
+			)
+			messages.append({"role": "user", "content": f"(Sent while you were working.)\n{note}"})
+			self.emit("note", text=note)
+
 	# --- orchestration ----------------------------------------------------
 
 	def emit_cancelled(self) -> None:
@@ -1250,8 +1265,9 @@ class AgentRunner:
 		self.emit("error", message=message, after_commit=True)
 
 	def run(self):
-		# Clear any stale cancel flag from a previous turn before starting.
+		# Clear any stale cancel flag or notes from a previous turn before starting.
 		self.clear_cancel_flag()
+		AISession.clear_notes(self.session_id)
 		started = time.monotonic()
 		logger.info(
 			f"AgentRunner.run: page_id={self.page_id}, model={self.model}, "
@@ -1273,6 +1289,8 @@ class AgentRunner:
 			self.run_turn(started)
 		finally:
 			self.clear_cancel_flag()
+			# Unread ones go back to the chat, which sends them as the next turn.
+			AISession.clear_notes(self.session_id)
 			for key, token in self.held_locks:
 				locks.release(key, token)
 			self.held_locks = []
@@ -1342,6 +1360,7 @@ class AgentRunner:
 					self.checkpoint()
 					break
 				self.flush_pending_images(messages)
+				self.read_notes(messages)
 				self.checkpoint()
 			else:
 				# Loop ran the full MAX_ROUNDS without the model finishing — a very large

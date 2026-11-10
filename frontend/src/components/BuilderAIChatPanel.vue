@@ -305,6 +305,14 @@
 					</span>
 				</div>
 			</Transition>
+			<div
+				v-for="(note, i) in queuedNotes"
+				:key="i"
+				class="mb-2 flex items-center gap-2 rounded-5 bg-surface-gray-2 px-2.5 py-1.5 text-p-xs text-ink-gray-6">
+				<span class="lucide-clock size-3.5 shrink-0" />
+				<span class="flex-1 truncate">{{ note }}</span>
+				<span class="shrink-0 text-ink-gray-4">Bob reads this next</span>
+			</div>
 			<!-- Say it before a prompt is typed, not after the send fails on the server. -->
 			<div
 				v-if="selectedModelUnusable"
@@ -343,7 +351,7 @@
 					size="md"
 					:rows="1"
 					class="no-scrollbar max-h-60 min-h-14 resize-none placeholder-ink-gray-4 disabled:border-0 disabled:bg-transparent"
-					:disabled="isSubmitting || !isEditingPage"
+					:disabled="!isEditingPage"
 					:placeholder="composerPlaceholder"
 					@keydown="menu.onKeydown"
 					@keydown.enter.exact="onEnter" />
@@ -451,7 +459,7 @@ import { computed, nextTick, onMounted, onUnmounted, ref, watch } from "vue";
 const chat = new AIChatController();
 
 const { prompt, isSubmitting, isCancelling, messages, modelLabel, canSubmit, credits } = chat;
-const { selectedEffort, contextUsage } = chat;
+const { selectedEffort, contextUsage, queuedNotes } = chat;
 const { isEditingPage } = chat;
 const { selectedModelUnusable } = chat;
 const { progressMessage } = chat;
@@ -808,11 +816,11 @@ onUnmounted(registerBobCommands(bob));
 // runs the open level's cleanup, like a sign-in still polling
 onUnmounted(menu.close);
 
-const composerPlaceholder = computed(() =>
-	menuLevel.value && !menuLevel.value.input
-		? "Type to filter"
-		: "Ask to create or edit this page, or type / for commands",
-);
+const composerPlaceholder = computed(() => {
+	if (menuLevel.value && !menuLevel.value.input) return "Type to filter";
+	if (isSubmitting.value) return "Tell Bob something while it works";
+	return "Ask to create or edit this page, or type / for commands";
+});
 
 // a key or URL is typed into a field inside the menu; hand focus back after
 watch(menuLevel, (level) => {
@@ -822,7 +830,8 @@ watch(menuLevel, (level) => {
 const submitPrompt = () => {
 	// while the menu is open, the prompt is a "/" command or a filter, not a message
 	if (menuOpen.value) return;
-	chat.submitPrompt();
+	if (isSubmitting.value) chat.steer();
+	else chat.submitPrompt();
 };
 
 // Enter sends. Shift+Enter is the textarea default (newline), .exact skips it.
