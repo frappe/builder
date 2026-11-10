@@ -352,6 +352,7 @@ class AgentRunner:
 		image_url: str | None = None,
 		image_file_url: str | None = None,
 		canvas_theme: str | None = None,
+		effort: str | None = None,
 		registry: ToolRegistry | None = None,
 		system_prompt: str | None = None,
 	):
@@ -367,6 +368,7 @@ class AgentRunner:
 		self.image_url = image_url
 		self.image_file_url = image_file_url
 		self.canvas_theme = canvas_theme
+		self.effort = llm.Effort(effort)
 		self.registry = registry or build_default_registry()
 		# Skills in context, including read_skill results; reset on every turn.
 		self.attached_skills: set[str] = set()
@@ -796,9 +798,10 @@ class AgentRunner:
 			self.loop_model,
 			messages,
 			self.registry.schemas(self.round_skills),
-			llm.TASK_PARAMS["agent"],
+			self.effort.params("agent"),
 			api_key=self.api_key,
 			stream=True,
+			timeout=self.effort.stall_timeout,
 		)
 
 		content_parts: list[str] = []
@@ -959,7 +962,7 @@ class AgentRunner:
 		from builder.ai import page_writer
 
 		key = locks.page_key(page_id)
-		token = locks.acquire(key, locks.PAGE_LOCK_TTL)
+		token = locks.acquire(key, self.effort.lock_ttl)
 		if token is None:
 			return (
 				f"FAILED: page {page_id} is being edited by another AI task right now. Try again in a moment."
@@ -1258,7 +1261,7 @@ class AgentRunner:
 		# One turn per session at a time — an atomic Redis lock with a TTL, so a
 		# crashed worker can never brick the session (the old is_running DB flag did).
 		if self.session_id:
-			self.run_token = AISession.start_run(self.session_id)
+			self.run_token = AISession.start_run(self.session_id, self.effort.lock_ttl)
 			if self.run_token is None:
 				logger.warning(f"AgentRunner.run: session {self.session_id} already running, rejecting")
 				self.emit(
@@ -1462,6 +1465,7 @@ class AgentRunner:
 			"debug": {
 				"stopReason": self.stop_reason or "model_finished",
 				"loopModel": self.loop_model,
+				"effort": self.effort.level,
 				"rounds": len(self.trace),
 				"argsRepaired": self.args_repaired,
 				"finishReasons": self.finish_reasons,

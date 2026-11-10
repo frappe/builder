@@ -288,9 +288,10 @@ def generate_page_markup(ctx, args: dict) -> list[dict]:
 	stream = llm.complete(
 		ctx.model,  # heavy model — generation quality
 		messages,
-		llm.TASK_PARAMS["complex"],
+		ctx.effort.params("complex"),
 		stream=True,
 		api_key=ctx.api_key,
+		timeout=ctx.effort.stall_timeout,
 	)
 	try:
 		for chunk in stream:

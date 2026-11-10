@@ -13,7 +13,7 @@ from frappe import _
 from builder.ai.agent.loop import run_agent_job
 from builder.ai.block_codec import BlockCodec
 from builder.ai.discovery import Discovery
-from builder.ai.llm import resolve_api_key, settings_api_key
+from builder.ai.llm import Effort, resolve_api_key, settings_api_key
 from builder.ai.models import GatewayListing, ModelRegistry, fetch_credits
 from builder.ai.presets import get_credits_url, get_site_ai_key
 from builder.ai.session import AISession
@@ -59,6 +59,7 @@ def run(
 	selected_block_context: list | None = None,
 	display_text: str | None = None,
 	canvas_theme: str | None = None,
+	effort: str | None = None,
 ):
 	"""Single entry point: run the agent for one user turn of the in-editor chat.
 
@@ -69,6 +70,7 @@ def run(
 
 	image_url = BlockCodec.validate_image_data(image_data) if image_data else None
 	canvas_theme = canvas_theme if canvas_theme in ("light", "dark") else None
+	thinking = Effort(effort)
 
 	# Guard concurrency for an established session first — nothing may persist on the
 	# busy path. The worker takes the atomic run lock; this check just gives a fast
@@ -88,6 +90,8 @@ def run(
 		msg_meta: dict = {"selectedBlockContext": selected_block_context or []}
 		if canvas_theme:
 			msg_meta["canvasTheme"] = canvas_theme
+		if thinking.level:
+			msg_meta["effort"] = thinking.level
 		if image_data:
 			msg_meta["attachedImageUrl"] = image_file_url or image_data
 		# A card-composed reply (option tap, form submit) shows as this compact line
@@ -115,7 +119,7 @@ def run(
 	frappe.enqueue(
 		run_agent_job,
 		queue="default",
-		timeout=600,
+		timeout=thinking.job_timeout,
 		prompt=prompt,
 		model=resolved_model,
 		user=frappe.session.user,
@@ -126,6 +130,7 @@ def run(
 		image_url=image_url,
 		image_file_url=image_file_url,
 		canvas_theme=canvas_theme,
+		effort=thinking.level,
 	)
 	frappe.local.response.http_status_code = 202
 	return {"status": "accepted", "session_id": session_id}
@@ -191,17 +196,20 @@ def resume_after_action(session_id: str, outcome: str) -> bool:
 		resolved_model = ModelRegistry.get_default(model or "openrouter")
 		# A job that can't find its key fails out of sight, so check before queueing it.
 		resolve_api_key(resolved_model)
+		turn = AISession.latest_turn_metadata(session_id)
+		thinking = Effort(turn.get("effort"))
 		frappe.enqueue(
 			run_agent_job,
 			queue="default",
-			timeout=600,
+			timeout=thinking.job_timeout,
 			# run_agent_job does not persist its prompt, so no phantom "continue" in the chat
 			prompt=f"{outcome}\n\nContinue with what you were doing. Do not repeat this step.",
 			model=resolved_model,
 			user=frappe.session.user,
 			page_id=page_id,
 			session_id=session_id,
-			canvas_theme=AISession.latest_canvas_theme(session_id),
+			canvas_theme=turn.get("canvasTheme"),
+			effort=thinking.level,
 			enqueue_after_commit=True,
 		)
 		return True

@@ -130,15 +130,15 @@ class AISession:
 		return list(dict.fromkeys(written))
 
 	@classmethod
-	def latest_canvas_theme(cls, session_id: str) -> str | None:
-		"""The editor theme the user's latest message was sent from."""
+	def latest_turn_metadata(cls, session_id: str) -> dict:
+		"""What the user's latest message was sent with: editor theme, thinking effort."""
 		metadata_json = frappe.db.get_value(
 			cls.MESSAGE_DOCTYPE,
 			{"session": session_id, "role": "user"},
 			"metadata_json",
 			order_by="creation desc",
 		)
-		return cls.load_metadata(metadata_json).get("canvasTheme")
+		return cls.load_metadata(metadata_json)
 
 	@staticmethod
 	def row_to_message(row: dict) -> dict:
@@ -355,10 +355,10 @@ class AISession:
 	# instead of bricking the session until someone edits the row.
 
 	@staticmethod
-	def start_run(session_id: str) -> str | None:
+	def start_run(session_id: str, ttl: int = locks.SESSION_LOCK_TTL) -> str | None:
 		"""Try to claim this session's turn slot. Returns the release token, or None
 		when another turn is still running."""
-		return locks.acquire(locks.session_key(session_id), locks.SESSION_LOCK_TTL)
+		return locks.acquire(locks.session_key(session_id), ttl)
 
 	@staticmethod
 	def end_run(session_id: str, token: str | None) -> None:

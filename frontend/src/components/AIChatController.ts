@@ -73,6 +73,7 @@ export class AIChatController {
 	readonly sessions = ref<Array<{ name: string; title: string | null }>>([]);
 	readonly availableModels = ref<AIProvider[]>([]);
 	readonly selectedModel = useLocalStorage("ai-selected-model", "");
+	readonly selectedEffort = useLocalStorage("ai-thinking-effort", "");
 
 	/** While a build stream owns this page's canvas, the editor's autosave stands
 	 * down — persisting the partial preview is how a mid-build refresh (or an
@@ -919,6 +920,7 @@ export class AIChatController {
 					...(attachedImageData ? { image_data: attachedImageData } : {}),
 					...(displayText ? { display_text: displayText } : {}),
 					canvas_theme: this.builderStore.canvasDarkMode ? "dark" : "light",
+					...(this.selectedEffort.value ? { effort: this.selectedEffort.value } : {}),
 				}),
 			}).submit();
 			if (!stillOwned()) return;

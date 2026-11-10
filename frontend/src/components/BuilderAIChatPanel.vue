@@ -363,6 +363,15 @@
 						:label="modelLabel"
 						class="min-w-0 !shrink"
 						@click="menu.open(modelLevel(bob))" />
+					<Button
+						variant="ghost"
+						size="xs"
+						:icon="selectedEffort ? undefined : 'lucide-brain'"
+						:icon-left="selectedEffort ? 'lucide-brain' : undefined"
+						:label="selectedEffort ? effortLabel(selectedEffort) : undefined"
+						tooltip="Thinking effort"
+						class="shrink-0"
+						@click="menu.open(effortLevel(bob))" />
 					<Tooltip v-if="credits" :text="credits.spent === null ? '' : `${money(credits.spent)} spent`">
 						<Badge variant="subtle" :theme="creditsTheme(credits)" :label="creditsLabel(credits)" />
 					</Tooltip>
@@ -418,6 +427,7 @@ import AITurnTimeline from "@/components/ai/AITurnTimeline.vue";
 import { registerBobCommands } from "@/components/ai/bobCommands";
 import { useCommandMenu } from "@/components/ai/commandMenu";
 import { connectLevel } from "@/components/ai/commands/connect";
+import { effortLabel, effortLevel } from "@/components/ai/commands/effort";
 import { modelLevel } from "@/components/ai/commands/models";
 import { providersLevel } from "@/components/ai/commands/providers";
 import { type BobContext, creditsLabel, creditsTheme, money } from "@/components/ai/commands/shared";
@@ -440,6 +450,7 @@ import { computed, nextTick, onMounted, onUnmounted, ref, watch } from "vue";
 const chat = new AIChatController();
 
 const { prompt, isSubmitting, isCancelling, messages, modelLabel, canSubmit, credits } = chat;
+const { selectedEffort } = chat;
 const { isEditingPage } = chat;
 const { selectedModelUnusable } = chat;
 const { progressMessage } = chat;
