@@ -312,6 +312,17 @@
 				<span class="lucide-clock size-3.5 shrink-0" />
 				<span class="flex-1 truncate">{{ note }}</span>
 				<span class="shrink-0 text-ink-gray-4">Bob reads this next</span>
+				<Tooltip v-if="i === queuedNotes.length - 1">
+					<template #content>
+						<span class="flex items-center gap-1.5">
+							Stop the step Bob is on and read this now
+							<KeyboardShortcut combo="Mod+Enter" class="!text-xs !text-ink-gray-4" />
+						</span>
+					</template>
+					<button class="shrink-0 font-medium underline underline-offset-2" @click="sendNotesNow">
+						Send now
+					</button>
+				</Tooltip>
 			</div>
 			<!-- Say it before a prompt is typed, not after the send fails on the server. -->
 			<div
@@ -354,7 +365,11 @@
 					:disabled="!isEditingPage"
 					:placeholder="composerPlaceholder"
 					@keydown="menu.onKeydown"
-					@keydown.enter.exact="onEnter" />
+					@keydown.enter.exact="onEnter"
+					@keydown.enter.ctrl.exact="onSendNow"
+					@keydown.enter.meta.exact="onSendNow"
+					@keydown.up.exact="onArrow"
+					@keydown.down.exact="onArrow" />
 				<div class="flex items-center gap-0.5 p-1.5">
 					<Button
 						variant="ghost"
@@ -399,11 +414,7 @@
 								<KeyboardShortcut combo="Enter" class="!text-xs !text-ink-gray-4" />
 							</span>
 						</template>
-						<Button
-							variant="solid"
-							icon="lucide-arrow-up"
-							:disabled="!canSubmit"
-							@click="submitPrompt" />
+						<Button variant="solid" icon="lucide-arrow-up" :disabled="!canSubmit" @click="submitPrompt" />
 					</Tooltip>
 				</div>
 				<AICommandMenu v-if="menuOpen" :menu="menu" />
@@ -438,6 +449,7 @@ import { useCommandMenu } from "@/components/ai/commandMenu";
 import { connectLevel } from "@/components/ai/commands/connect";
 import { effortLabel, effortLevel } from "@/components/ai/commands/effort";
 import { modelLevel } from "@/components/ai/commands/models";
+import { caretAtEdge, usePromptHistory } from "@/components/ai/promptHistory";
 import { providersLevel } from "@/components/ai/commands/providers";
 import { type BobContext, creditsLabel, creditsTheme, money } from "@/components/ai/commands/shared";
 import AIUISpec from "@/components/ai/AIUISpec.vue";
@@ -459,7 +471,7 @@ import { computed, nextTick, onMounted, onUnmounted, ref, watch } from "vue";
 const chat = new AIChatController();
 
 const { prompt, isSubmitting, isCancelling, messages, modelLabel, canSubmit, credits } = chat;
-const { selectedEffort, contextUsage, queuedNotes } = chat;
+const { selectedEffort, contextUsage, queuedNotes, sentPrompts } = chat;
 const { isEditingPage } = chat;
 const { selectedModelUnusable } = chat;
 const { progressMessage } = chat;
@@ -818,6 +830,7 @@ onUnmounted(menu.close);
 
 const composerPlaceholder = computed(() => {
 	if (menuLevel.value && !menuLevel.value.input) return "Type to filter";
+	if (isSubmitting.value && queuedNotes.value.length) return "Press ↑ to edit what Bob hasn't read";
 	if (isSubmitting.value) return "Tell Bob something while it works";
 	return "Ask to create or edit this page, or type / for commands";
 });
@@ -839,6 +852,32 @@ const onEnter = (event: KeyboardEvent) => {
 	if (event.isComposing) return;
 	event.preventDefault();
 	submitPrompt();
+};
+
+const sendNotesNow = () => chat.steer(true);
+
+// Mod+Enter while Bob works sends the draft and every queued note straight away
+const onSendNow = (event: KeyboardEvent) => {
+	if (event.isComposing || event.defaultPrevented) return;
+	event.preventDefault();
+	if (isSubmitting.value) sendNotesNow();
+	else submitPrompt();
+};
+
+const history = usePromptHistory(prompt, () => sentPrompts.value);
+
+// Up first takes back what Bob hasn't read yet, then steps through earlier prompts
+const onArrow = (event: KeyboardEvent) => {
+	const el = event.target;
+	if (event.isComposing || event.defaultPrevented || menuOpen.value) return;
+	if (!(el instanceof HTMLTextAreaElement)) return;
+	const up = event.key === "ArrowUp";
+	if (up && queuedNotes.value.length && caretAtEdge(el, true)) {
+		event.preventDefault();
+		chat.takeBackNotes();
+	} else if (history.step(up, el)) {
+		event.preventDefault();
+	}
 };
 
 const messageContainer = ref<HTMLElement | null>(null);

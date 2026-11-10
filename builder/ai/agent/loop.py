@@ -126,6 +126,11 @@ class CancelledError(Exception):
 	"""Raised inside the stream loops when the user cancels the turn."""
 
 
+class NotesSentNow(Exception):
+	"""Raised inside a model step when the user sends their notes now: the step is
+	dropped and run again with the notes read in."""
+
+
 # Skeletonising a page the model just wrote costs whole rounds re-reading its own
 # work, so the threshold has to clear a real generated page: a full read is once
 # per turn, behind a cache marker, and an outline is what a runaway page falls back to.
@@ -501,6 +506,14 @@ class AgentRunner:
 		if key := self.cancel_key():
 			frappe.cache.delete_value(key)
 
+	def stop_requested(self) -> Exception | None:
+		"""A cancel ends the turn; notes sent now end only the step being streamed."""
+		if self.is_cancelled():
+			return CancelledError()
+		if AISession.notes_wanted_now(self.session_id):
+			return NotesSentNow()
+		return None
+
 	def interruptible_sleep(self, seconds: float) -> None:
 		"""Sleep in small steps so a cancel during retry backoff is honored within ~0.25s
 		instead of blocking the worker for the full delay."""
@@ -775,7 +788,7 @@ class AgentRunner:
 		for attempt in range(STREAM_MAX_ATTEMPTS):
 			try:
 				return self.stream_tool_round(messages)
-			except CancelledError:
+			except (CancelledError, NotesSentNow):
 				raise
 			except Exception as exc:
 				if attempt == STREAM_MAX_ATTEMPTS - 1 or not llm.is_retryable(exc):
@@ -830,12 +843,12 @@ class AgentRunner:
 
 		try:
 			for chunk in stream:
-				if self.is_cancelled():
+				if stop := self.stop_requested():
 					try:
 						stream.close()
 					except Exception:
 						pass
-					raise CancelledError
+					raise stop
 				self.record_usage(chunk)
 				# The final include_usage chunk carries usage but no choices.
 				if not chunk.choices:
@@ -1333,7 +1346,11 @@ class AgentRunner:
 				if round_index and self.is_cancelled():
 					raise CancelledError
 				self.refresh_cache_markers(messages)
-				tool_operations, summary_text, raw_tool_calls = self.call_tool_llm(messages)
+				try:
+					tool_operations, summary_text, raw_tool_calls = self.call_tool_llm(messages)
+				except NotesSentNow:
+					self.read_notes(messages)
+					continue
 				self.record_round(round_index, tool_operations, summary_text)
 
 				if not tool_operations:

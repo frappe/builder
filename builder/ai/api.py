@@ -219,14 +219,25 @@ def resume_after_action(session_id: str, outcome: str) -> bool:
 
 
 @frappe.whitelist()
-def steer(session_id: str, prompt: str):
-	"""Queue a message for the running turn; the loop reads it in at its next round.
-	With no turn running nothing would read it, so the chat sends it as a turn."""
+def steer(session_id: str, prompt: str = "", now: bool = False):
+	"""Queue a message for the running turn; the loop reads it in at its next round,
+	or with `now` drops the step it is on to read it straight away. With no turn
+	running nothing would read it, so the chat sends it as a turn."""
 	ensure_session_owner(session_id)
-	if not prompt.strip() or not AISession.is_session_running(session_id):
+	if not (prompt.strip() or now) or not AISession.is_session_running(session_id):
 		return {"status": "not_running"}
-	AISession.queue_note(session_id, prompt.strip())
+	if prompt.strip():
+		AISession.queue_note(session_id, prompt.strip())
+	if now:
+		AISession.send_notes_now(session_id)
 	return {"status": "queued"}
+
+
+@frappe.whitelist()
+def take_back_notes(session_id: str):
+	"""The notes the running turn hasn't read yet, out of its queue, to edit or drop."""
+	ensure_session_owner(session_id)
+	return {"notes": AISession.pop_notes(session_id)}
 
 
 @frappe.whitelist()

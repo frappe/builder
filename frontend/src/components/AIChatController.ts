@@ -837,18 +837,43 @@ export class AIChatController {
 	/** What the user sent while a turn ran, until the loop reads it in. */
 	readonly queuedNotes = ref<string[]>([]);
 
-	/** Send the composer to the running turn, which reads it in at its next round. */
-	steer = async () => {
+	/** Send the composer to the running turn, which reads it in at its next round. With
+	 * `now`, the turn drops the step it is on and reads every queued note straight away. */
+	steer = async (now = false) => {
 		const text = this.prompt.value.trim();
-		if (!text || !this.sessionId.value) return;
+		if (!this.sessionId.value || !(text || (now && this.queuedNotes.value.length))) return;
 		this.prompt.value = "";
-		this.queuedNotes.value.push(text);
-		const res: any = await createResource({ url: "builder.ai.api.steer" })
-			.submit({ session_id: this.sessionId.value, prompt: text })
+		if (text) this.queuedNotes.value.push(text);
+		const res: { status?: string } | null = await createResource({ url: "builder.ai.api.steer" })
+			.submit({ session_id: this.sessionId.value, prompt: text, now })
 			.catch(() => null);
 		// the turn ended before the note landed, so it goes out as the next turn
 		if (res?.status === "not_running" && !this.isSubmitting.value) this.releaseNotes(true);
 	};
+
+	/** Pull the notes Bob hasn't read yet back into the composer, ahead of the draft. A
+	 * note it already read stays in the chat: the server only hands back unread ones. */
+	takeBackNotes = async () => {
+		if (!this.sessionId.value) return;
+		const res: { notes?: string[] } | null = await createResource({ url: "builder.ai.api.take_back_notes" })
+			.submit({ session_id: this.sessionId.value })
+			.catch(() => null);
+		const notes = res?.notes ?? [];
+		for (const note of notes) {
+			const at = this.queuedNotes.value.indexOf(note);
+			if (at !== -1) this.queuedNotes.value.splice(at, 1);
+		}
+		this.prompt.value = [...notes, this.prompt.value.trim()].filter(Boolean).join("\n\n");
+	};
+
+	/** What the user typed in this chat, newest first, for Up in the composer. */
+	readonly sentPrompts = computed(() =>
+		this.messages.value
+			.filter((m) => m.role === "user" && !m.metadata?.displayText)
+			.map((m) => m.content.trim())
+			.filter((text, i, all) => text && text !== all[i - 1])
+			.reverse(),
+	);
 
 	onNote = (data: { text?: string; session_id?: string }) => {
 		if (this.isForeignSession(data) || !data.text) return;

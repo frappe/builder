@@ -382,15 +382,34 @@ class AISession:
 	def pop_notes(cls, session_id: str | None) -> list[str]:
 		"""Queued notes, oldest first. Popped one by one, so a note sent mid-drain
 		waits for the next round instead of being lost."""
+		if not session_id:
+			return []
+		frappe.cache.delete_value(cls.notes_now_key(session_id))
 		notes = []
-		while session_id and (note := frappe.cache.lpop(cls.notes_key(session_id))):
+		while note := frappe.cache.lpop(cls.notes_key(session_id)):
 			notes.append(note.decode())
 		return notes
 
 	@classmethod
 	def clear_notes(cls, session_id: str | None) -> None:
 		if session_id:
-			frappe.cache.delete_value(cls.notes_key(session_id))
+			frappe.cache.delete_value([cls.notes_key(session_id), cls.notes_now_key(session_id)])
+
+	@staticmethod
+	def notes_now_key(session_id: str) -> str:
+		return f"builder_ai_notes_now:{session_id}"
+
+	@classmethod
+	def send_notes_now(cls, session_id: str) -> None:
+		"""Ask the running turn to drop the step it is on and read its notes straight away."""
+		frappe.cache.set_value(cls.notes_now_key(session_id), 1, expires_in_sec=locks.SESSION_LOCK_TTL)
+
+	@classmethod
+	def notes_wanted_now(cls, session_id: str | None) -> bool:
+		# set from a web worker and read from the job, so skip the per-request local cache
+		return bool(session_id) and bool(
+			frappe.cache.get_value(cls.notes_now_key(session_id), use_local_cache=False)
+		)
 
 	# --- lifecycle --------------------------------------------------------
 
