@@ -14,6 +14,7 @@
 import BasePropertyControl from "@/components/Controls/BasePropertyControl.vue";
 import { __ } from "@/translation";
 import blockController from "@/utils/blockController";
+import { FORM_STYLE_STATES } from "@/utils/formStates";
 import type { Component } from "vue";
 import { computed } from "vue";
 
@@ -60,10 +61,19 @@ const stateLabels: Record<string, string> = {
 	hover: __("On Hover"),
 	active: __("On Active"),
 	focus: __("On Focus"),
+	sending: __("While Sending"),
+	success: __("On Success"),
+	error: __("On Error"),
 };
 
+// a block in a form can also be styled for the states a submission takes the form through
+const states = computed(() => [
+	...props.enabledStates,
+	...(blockController.isInForm() ? FORM_STYLE_STATES : []),
+]);
+
 const stateVariants = computed(() =>
-	props.enabledStates.map((state) => ({
+	states.value.map((state) => ({
 		name: state,
 		property: `${state}:${props.propertyKey}`,
 		label: stateLabels[state] || state,

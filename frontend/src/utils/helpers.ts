@@ -56,7 +56,8 @@ async function alert(message: string, title: string = __("Alert")): Promise<bool
 }
 
 function getTextContent(html: string | null) {
-	if (!html || !isHTMLString(html)) {
+	// entities need parsing too, or "&amp;" shows where the published page shows "&"
+	if (!html || (!isHTMLString(html) && !html.includes("&"))) {
 		return html || "";
 	}
 	const tmp = document.createElement("div");

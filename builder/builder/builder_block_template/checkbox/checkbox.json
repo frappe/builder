@@ -1,0 +1,15 @@
+{
+ "block": "{\"blockId\":\"cig9jm7jo\",\"children\":[{\"blockId\":\"6hr3bvspo\",\"children\":[],\"baseStyles\":{\"width\":\"16px\",\"height\":\"16px\",\"flexShrink\":0,\"borderColor\":\"#c9c9c9\",\"borderWidth\":\"1px\",\"borderStyle\":\"solid\",\"cursor\":\"pointer\",\"borderRadius\":\"4px\"},\"mobileStyles\":{},\"tabletStyles\":{},\"attributes\":{\"type\":\"checkbox\"},\"classes\":[],\"dataKey\":null,\"element\":\"input\",\"customAttributes\":{\"name\":\"subscribe\",\"value\":\"yes\"}},{\"blockId\":\"x9wx932r4\",\"children\":[],\"baseStyles\":{\"fontSize\":\"14px\",\"lineHeight\":\"115%\",\"letterSpacing\":\"0.07px\",\"color\":\"#7C7C7C\",\"fontWeight\":\"400\",\"width\":\"fit-content\",\"height\":\"fit-content\"},\"mobileStyles\":{},\"tabletStyles\":{},\"attributes\":{},\"classes\":[],\"dataKey\":null,\"element\":\"p\",\"customAttributes\":{},\"innerHTML\":\"<p>Subscribe to newsletter</p>\"}],\"baseStyles\":{\"display\":\"flex\",\"flexDirection\":\"row\",\"alignItems\":\"center\",\"gap\":\"8px\",\"width\":\"fit-content\",\"height\":\"fit-content\",\"position\":\"static\",\"cursor\":\"pointer\"},\"mobileStyles\":{},\"tabletStyles\":{},\"attributes\":{},\"classes\":[],\"dataKey\":null,\"element\":\"label\",\"customAttributes\":{},\"blockName\":\"checkbox\"}",
+ "category": "Form parts",
+ "creation": "2026-10-15 12:00:00.000000",
+ "docstatus": 0,
+ "doctype": "Block Template",
+ "idx": 0,
+ "modified": "2026-10-15 12:00:00.000000",
+ "modified_by": "Administrator",
+ "name": "Checkbox",
+ "owner": "Administrator",
+ "preview": "/builder_assets/Checkbox/checkbox.png",
+ "template_name": "Checkbox",
+ "sort_order": 21
+}

@@ -1,0 +1,15 @@
+{
+ "block": "{\"blockId\":\"ee1wwqvw5\",\"children\":[{\"blockId\":\"j4t251ork\",\"children\":[],\"baseStyles\":{\"fontSize\":\"14px\",\"lineHeight\":\"115%\",\"letterSpacing\":\"0.07px\",\"color\":\"#7C7C7C\",\"fontWeight\":\"400\",\"width\":\"fit-content\",\"height\":\"fit-content\"},\"mobileStyles\":{},\"tabletStyles\":{},\"attributes\":{},\"classes\":[],\"dataKey\":null,\"element\":\"p\",\"customAttributes\":{},\"innerHTML\":\"<p>Location</p>\"},{\"blockId\":\"msizrul11\",\"children\":[{\"blockId\":\"euxokgz8s\",\"children\":[],\"baseStyles\":{},\"mobileStyles\":{},\"tabletStyles\":{},\"attributes\":{\"value\":\"\",\"disabled\":\"\",\"selected\":\"\"},\"classes\":[],\"dataKey\":null,\"element\":\"option\",\"customAttributes\":{},\"innerHTML\":\"Select...\"},{\"blockId\":\"tb03w1xca\",\"children\":[],\"baseStyles\":{},\"mobileStyles\":{},\"tabletStyles\":{},\"attributes\":{},\"classes\":[],\"dataKey\":null,\"element\":\"option\",\"customAttributes\":{},\"innerHTML\":\"Amsterdam\"},{\"blockId\":\"6qux8moew\",\"children\":[],\"baseStyles\":{},\"mobileStyles\":{},\"tabletStyles\":{},\"attributes\":{},\"classes\":[],\"dataKey\":null,\"element\":\"option\",\"customAttributes\":{},\"innerHTML\":\"Barcelona\"}],\"baseStyles\":{\"width\":\"100%\",\"height\":\"32px\",\"flexShrink\":0,\"borderRadius\":\"4px\",\"borderColor\":\"#c9c9c9\",\"borderWidth\":\"1px\",\"borderStyle\":\"solid\",\"fontSize\":\"14px\",\"cursor\":\"pointer\",\"paddingTop\":\"0px\",\"paddingBottom\":\"0px\"},\"mobileStyles\":{},\"tabletStyles\":{},\"attributes\":{},\"classes\":[],\"dataKey\":null,\"element\":\"select\",\"customAttributes\":{\"name\":\"location\"}}],\"baseStyles\":{\"display\":\"flex\",\"flexDirection\":\"column\",\"gap\":\"5px\",\"width\":\"100%\",\"height\":\"fit-content\",\"position\":\"static\"},\"mobileStyles\":{},\"tabletStyles\":{},\"attributes\":{},\"classes\":[],\"dataKey\":null,\"element\":\"label\",\"customAttributes\":{},\"blockName\":\"select\"}",
+ "category": "Form parts",
+ "creation": "2026-10-15 14:00:00.000000",
+ "docstatus": 0,
+ "doctype": "Block Template",
+ "idx": 0,
+ "modified": "2026-10-15 14:30:00.000000",
+ "modified_by": "Administrator",
+ "name": "Select",
+ "owner": "Administrator",
+ "preview": "/builder_assets/Select/select.png",
+ "template_name": "Select",
+ "sort_order": 23
+}
