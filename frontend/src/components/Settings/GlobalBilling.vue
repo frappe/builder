@@ -33,11 +33,13 @@ const isFirstScreen = ref(false);
 const BALANCE_INK = { gray: "text-ink-gray-9", amber: "text-ink-amber-6", red: "text-ink-red-6" };
 let screenWatcher: MutationObserver | undefined;
 
-// the Cloud panel shows its plan card only on its first screen: every flow replaces it
+// The Cloud panel shows its plan section only on its first screen: every flow replaces it.
+// Pilot serves this markup and gives no stable hook for it, so a Pilot redesign can break this check.
+// The plan section is the only labelled <section> on the billing panel, for trial and paid sites.
 function watchFirstScreen() {
 	const root = target.value?.querySelector("fc-cloud-settings")?.shadowRoot;
 	if (!root) return;
-	const update = () => (isFirstScreen.value = Boolean(root.querySelector("section.grid")));
+	const update = () => (isFirstScreen.value = Boolean(root.querySelector("section[aria-label]")));
 	screenWatcher = new MutationObserver(update);
 	screenWatcher.observe(root, { childList: true, subtree: true });
 	update();
