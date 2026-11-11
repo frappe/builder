@@ -6,7 +6,6 @@ import { call, createResource, getCachedResource, toast } from "frappe-ui";
 import { computed, reactive, shallowRef } from "vue";
 
 const METHOD = "builder.plugins.installations";
-/** The site asks the Hub for the browser, so the Hub needs no CORS. */
 const HUB_METHOD = "builder.plugins.hub";
 const CATALOG_CACHE = "plugins-catalog";
 
@@ -255,7 +254,7 @@ const latestVersion = (releases: HubPluginResponse["releases"]) =>
 		.filter((release) => release.status === "Published")
 		.sort((a, b) => b.published_on.localeCompare(a.published_on))[0]?.version ?? "";
 
-/** One plugin from the Hub. The site has no record of it yet. */
+/** One plugin from the Hub, because the site has no record of it yet. */
 const getHubPlugin = async (name: string): Promise<HubPlugin> => {
 	const { plugin, releases }: HubPluginResponse = await call(`${HUB_METHOD}.get_plugin`, { name });
 
