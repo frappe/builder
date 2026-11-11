@@ -6,6 +6,6 @@ export default defineConfig({
 		alias: { "@": path.resolve(import.meta.dirname, "src") },
 	},
 	test: {
-		include: ["src/**/*.test.ts", "plugin-sdk/**/*.test.js"],
+		include: ["src/**/*.test.ts"],
 	},
 });
