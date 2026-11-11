@@ -4,12 +4,12 @@
 		<Switch
 			size="sm"
 			:label="__('Disable Plugins')"
-			:description="
-				__('Stops all plugins and hides the Plugins tab, only for you. It applies from the next reload.')
-			"
+			:description="__('Stops all plugins, only for you. It applies from the next reload.')"
 			v-model="pluginsDisabled" />
 
 		<hr class="w-full border-outline-gray-2" />
+
+		<PluginsPanel v-if="!pluginsDisabled" />
 
 		<p class="text-p-xs text-ink-gray-5">
 			{{
@@ -21,6 +21,7 @@
 	</div>
 </template>
 <script setup lang="ts">
+import PluginsPanel from "@/components/Settings/Plugins/PluginsPanel.vue";
 import { pluginsDisabled } from "@/data/plugins";
 import { __ } from "@/translation";
 import { Alert, Switch } from "frappe-ui";

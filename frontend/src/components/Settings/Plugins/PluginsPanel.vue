@@ -4,8 +4,8 @@
 </template>
 
 <script setup lang="ts">
-import PluginDetails from "@/components/LeftPanelTabs/Plugins/PluginDetails.vue";
-import PluginList from "@/components/LeftPanelTabs/Plugins/PluginList.vue";
+import PluginDetails from "@/components/Settings/Plugins/PluginDetails.vue";
+import PluginList from "@/components/Settings/Plugins/PluginList.vue";
 import { installations, reloadInstallations } from "@/data/plugins";
 import { useIntervalFn } from "@vueuse/core";
 import { computed, onMounted, ref, watch } from "vue";

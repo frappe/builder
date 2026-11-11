@@ -160,9 +160,9 @@
 </template>
 
 <script setup lang="ts">
-import PluginActions from "@/components/LeftPanelTabs/Plugins/PluginActions.vue";
-import PluginInstallDialog from "@/components/LeftPanelTabs/Plugins/PluginInstallDialog.vue";
-import PluginUpdate from "@/components/LeftPanelTabs/Plugins/PluginUpdate.vue";
+import PluginActions from "@/components/Settings/Plugins/PluginActions.vue";
+import PluginInstallDialog from "@/components/Settings/Plugins/PluginInstallDialog.vue";
+import PluginUpdate from "@/components/Settings/Plugins/PluginUpdate.vue";
 import { renderMarkdown } from "@/components/ai/markdown";
 import { leftPanelTabs } from "@/components/LeftPanelTabs";
 import {

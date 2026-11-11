@@ -116,7 +116,7 @@ A manifest has no `permissions` field. A plugin runs with the access of the user
 
 1. Set `builderUrl` in `vite.config.ts` to the origin that serves Builder.
 2. Run `npm run dev`.
-3. In the editor, open the **Plugins** tab and choose **Load dev plugin**. The site must run in developer mode.
+3. In Builder, open **Settings** > **Plugins** and choose **Load dev plugin**. The site must run in developer mode.
 4. Paste the URL that Vite prints.
 
 The dev plugin runs until you reload the editor. Vite's hot reload updates its components.

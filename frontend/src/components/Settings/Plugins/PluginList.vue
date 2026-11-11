@@ -134,7 +134,7 @@
 
 <script setup lang="ts">
 import CollapsibleSection from "@/components/CollapsibleSection.vue";
-import DevPluginDialog from "@/components/LeftPanelTabs/Plugins/DevPluginDialog.vue";
+import DevPluginDialog from "@/components/Settings/Plugins/DevPluginDialog.vue";
 import {
 	canManagePlugins,
 	getPluginsCatalog,
