@@ -11,6 +11,8 @@ Every method that changes an installation checks for a plugin manager
 first, so the user gets a clear refusal before Frappe's own check runs.
 """
 
+from typing import NoReturn
+
 import frappe
 from frappe import _
 from frappe.utils.background_jobs import is_job_enqueued
@@ -73,7 +75,8 @@ def can_manage_plugins() -> bool:
 def set_plugin_enabled(plugin: str, enabled: bool) -> None:
 	"""Off stops this plugin for every user, from their next editor load."""
 	assert_plugin_manager()
-	installation = frappe.get_doc(INSTALLATION_DOCTYPE, get_installation(plugin))
+	installation = find_installation(plugin) or throw_not_installed(plugin)
+	installation = frappe.get_doc(INSTALLATION_DOCTYPE, installation)
 	installation.enabled = 1 if enabled else 0
 	installation.save()
 
@@ -85,7 +88,8 @@ def get_installation_details(plugin: str) -> dict:
 
 	`is_updating` lets the pane recover when the realtime message of an update job never came.
 	"""
-	row = frappe.get_cached_doc(INSTALLATION_DOCTYPE, get_installation(plugin))
+	installation = find_installation(plugin) or throw_not_installed(plugin)
+	row = frappe.get_cached_doc(INSTALLATION_DOCTYPE, installation)
 	return {
 		"installed_on": row.installed_on,
 		"readme": row.readme,
@@ -101,7 +105,7 @@ def uninstall_plugin(plugin: str) -> None:
 	The doctypes a plugin made hold the site's data, so they stay.
 	"""
 	assert_plugin_manager()
-	installation = get_installation(plugin)
+	installation = find_installation(plugin) or throw_not_installed(plugin)
 	source_app = frappe.db.get_value(INSTALLATION_DOCTYPE, installation, "source_app")
 	if source_app:
 		frappe.throw(
@@ -143,9 +147,5 @@ def describe_source(row) -> str:
 	return _("a dev server")
 
 
-def get_installation(plugin: str) -> str:
-	"""The site's installation of this plugin, or a refusal naming it."""
-	installation = find_installation(plugin)
-	if not installation:
-		frappe.throw(_('"{0}" is not installed on this site.').format(plugin), frappe.PermissionError)
-	return installation
+def throw_not_installed(plugin: str) -> NoReturn:
+	frappe.throw(_('"{0}" is not installed on this site.').format(plugin), frappe.PermissionError)
