@@ -1,37 +1,40 @@
 <template>
 	<div class="flex flex-col">
-		<CollapsibleSection class="order-1" :sectionName="section.sectionName" v-for="section in sections">
+		<CollapsibleSection
+			class="order-1"
+			:sectionName="__(section.category)"
+			v-for="section in sections"
+			:key="section.category">
 			<div class="grid auto-rows-[90px] grid-cols-2 gap-4">
 				<div
-					v-for="blockTemplate in section.blocks"
+					v-for="blockTemplate in section.templates"
 					:key="blockTemplate.name"
 					class="flex"
 					:class="{
 						'col-span-2': blockTemplate?.preview_width === 2,
 						'row-span-2': blockTemplate?.preview_height === 2,
 					}">
-					<div
-						class="relative flex h-full w-full translate-x-0 translate-y-0 cursor-pointer flex-col items-center justify-center gap-2 overflow-hidden truncate rounded-5 border border-transparent bg-surface-gray-1 p-2 pt-3"
-						draggable="true"
+					<BlockTemplateCard
+						:label="blockTemplate.template_name"
+						:preview="blockTemplate.preview"
+						:wide="blockTemplate?.preview_width === 2"
 						@click="selectBlockTemplate(blockTemplate)"
 						@dblclick="is_developer_mode && blockTemplateStore.editBlockTemplate(blockTemplate.name)"
-						@dragstart="(ev) => setBlockTemplateData(ev, blockTemplate)"
-						@dragend="() => canvasStore.handleDragEnd()">
-						<div
-							class="flex h-4/5 items-center justify-center"
-							:class="{
-								'w-14': !blockTemplate?.preview_width || blockTemplate?.preview_width == 1,
-							}">
-							<img :src="blockTemplate.preview" alt="" class="pointer-events-none" />
-						</div>
-						<p class="text-wrap text-center text-sm text-ink-gray-6">
-							{{ blockTemplate.template_name }}
-						</p>
-					</div>
+						@dragstart="(ev: DragEvent) => setBlockTemplateData(ev, blockTemplate)"
+						@dragend="() => canvasStore.handleDragEnd()" />
+				</div>
+				<div v-for="template in section.pluginTemplates" :key="template.name" class="flex">
+					<BlockTemplateCard
+						:label="template.label"
+						:preview="template.preview"
+						:icon="template.icon"
+						@click="insertBlock(template.getBlock())"
+						@dragstart="(ev: DragEvent) => startBlockDrag(ev, template.getBlock())"
+						@dragend="() => canvasStore.handleDragEnd()" />
 				</div>
 			</div>
 		</CollapsibleSection>
-		<div v-show="blockTemplates.length > 10 || blockTemplateFilter" class="sticky top-0 bg-surface-base py-3">
+		<div v-show="templateCount > 10 || blockTemplateFilter" class="sticky top-0 bg-surface-base py-3">
 			<BuilderInput
 				type="text"
 				:placeholder="__('Search Template')"
@@ -46,7 +49,10 @@
 </template>
 <script setup lang="ts">
 import { __ } from "@/translation";
+import BlockTemplateCard from "@/components/BlockTemplateCard.vue";
+import { blockTemplates, getBlockTemplateSections } from "@/components/BlockTemplates";
 import builderBlockTemplate from "@/data/builderBlockTemplate";
+import { insertBlock, startBlockDrag } from "@/plugins/blocks";
 import useBlockTemplateStore from "@/stores/blockTemplateStore";
 import useCanvasStore from "@/stores/canvasStore";
 import { BlockTemplate } from "@/types/doctypes";
@@ -62,15 +68,9 @@ onMounted(() => {
 	builderBlockTemplate.fetch();
 });
 
-const blockTemplates = computed(() => {
-	return (builderBlockTemplate.data || []).filter((d: BlockTemplate) => {
-		if (blockTemplateFilter.value) {
-			return d.name?.toLowerCase().includes(blockTemplateFilter.value.toLowerCase());
-		} else {
-			return true;
-		}
-	});
-});
+const templateCount = computed(
+	() => (builderBlockTemplate.data || []).length + blockTemplates.visible.value.length,
+);
 
 const setBlockTemplateData = (ev: DragEvent, component: BlockTemplate) => {
 	ev.dataTransfer?.setData("blockTemplate", component.name);
@@ -85,19 +85,12 @@ const selectBlockTemplate = (blockTemplate: BlockTemplate) => {
 	}
 };
 
-const getFilteredBlockTemplates = (section: string) => {
-	return blockTemplates.value.filter((d: BlockTemplate) => d.category === section);
-};
-
-const sections = computed(() => {
-	const categories = blockTemplateStore.blockTemplateCategoryOptions as string[];
-	return categories
-		.map((category) => {
-			return {
-				sectionName: __(category),
-				blocks: getFilteredBlockTemplates(category) as BlockTemplate[],
-			};
-		})
-		.filter((section) => section.blocks.length > 0);
-});
+const sections = computed(() =>
+	getBlockTemplateSections(
+		blockTemplateStore.blockTemplateCategoryOptions as string[],
+		builderBlockTemplate.data || [],
+		blockTemplates.visible.value,
+		blockTemplateFilter.value,
+	),
+);
 </script>
