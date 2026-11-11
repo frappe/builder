@@ -6,28 +6,12 @@ import { call, createResource, getCachedResource, toast } from "frappe-ui";
 import { computed, reactive, shallowRef } from "vue";
 
 const METHOD = "builder.plugins.installations";
-const HUB_API = "api/method/builder_hub.plugins.api";
+/** The site asks the Hub for the browser, so the Hub needs no CORS. */
+const HUB_METHOD = "builder.plugins.hub";
 const CATALOG_CACHE = "plugins-catalog";
-/** The Hub lists the releases at or below this protocol. Keep in step with `builder/plugins/constants.py`. */
-const PROTOCOL_VERSION = 1;
 
 /** A choice of this user in this browser. It is not an access control, so the server does not read it. */
 const pluginsDisabled = useStorage("builderPluginsDisabled", false);
-
-/** The server names the Hub, because only a manager can read Builder Settings. */
-const getHubMethodUrl = async (method: string) =>
-	`${await call("builder.plugins.hub.get_hub_url")}/${HUB_API}.${method}`;
-
-/**
- * A GET to the Hub with no cookies and no headers. `frappeRequest` sends the
- * CSRF token of this site, and the Hub must never get it.
- */
-const hubRequest = async (method: string, params: Record<string, string | number>) => {
-	const query = new URLSearchParams(Object.entries(params).map(([key, value]) => [key, String(value)]));
-	const response = await fetch(`${await getHubMethodUrl(method)}?${query}`, { credentials: "omit" });
-	if (!response.ok) throw new Error(`The Builder Hub returned an error (${response.status}).`);
-	return (await response.json()).message;
-};
 
 /** One row of the installation list of the site. */
 type Installation = {
@@ -244,10 +228,8 @@ type CatalogPlugin = Pick<Installation, "name" | "label" | "description" | "icon
 
 const getPluginsCatalog = (page: number = 1) =>
 	createResource({
-		url: "get_catalog",
-		resourceFetcher: (options: { url: string; params: Record<string, number> }) =>
-			hubRequest(options.url, options.params),
-		params: { page, protocol_version: PROTOCOL_VERSION },
+		url: `${HUB_METHOD}.get_catalog`,
+		params: { page },
 		auto: true,
 		cache: [CATALOG_CACHE, page],
 		initialData: { plugins: [] as CatalogPlugin[] },
@@ -273,12 +255,9 @@ const latestVersion = (releases: HubPluginResponse["releases"]) =>
 		.filter((release) => release.status === "Published")
 		.sort((a, b) => b.published_on.localeCompare(a.published_on))[0]?.version ?? "";
 
-/** One plugin from the Hub. It asks the Hub, not the site, because the site has no record of it yet. */
+/** One plugin from the Hub. The site has no record of it yet. */
 const getHubPlugin = async (name: string): Promise<HubPlugin> => {
-	const { plugin, releases }: HubPluginResponse = await hubRequest("get_plugin", {
-		name,
-		protocol_version: PROTOCOL_VERSION,
-	});
+	const { plugin, releases }: HubPluginResponse = await call(`${HUB_METHOD}.get_plugin`, { name });
 
 	return {
 		name: plugin.name,
@@ -297,7 +276,7 @@ const getHubPlugin = async (name: string): Promise<HubPlugin> => {
  * the `builder_plugin_install` realtime event.
  */
 const installFromHub = async (name: string, version: string) => {
-	await call("builder.plugins.hub.install_from_hub", { name, version });
+	await call(`${HUB_METHOD}.install_from_hub`, { name, version });
 	await reloadInstallations();
 };
 

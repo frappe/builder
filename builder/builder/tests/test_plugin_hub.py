@@ -14,11 +14,41 @@ from builder.plugins.hub import (
 	Release,
 	apply_release,
 	create_pending_installation,
+	get_catalog,
+	get_plugin,
 	hub_get,
 	read_release,
 	resolve_hub_url,
 )
 from builder.plugins.package import ValidatedPackage
+
+
+class TestHubProxy(FrappeTestCase):
+	"""The browser reads the Hub through the site, so the Hub needs no CORS."""
+
+	def ask_hub(self, method, **params):
+		with (
+			patch.dict(frappe.conf, {"builder_hub_url": "hub.example.com"}),
+			patch("builder.plugins.hub.hub_get", return_value={"ok": 1}) as fake_hub_get,
+		):
+			self.assertEqual(method(**params), {"ok": 1})
+		return fake_hub_get.call_args.args
+
+	def test_catalog_asks_the_configured_hub_with_the_site_protocol(self):
+		self.assertEqual(
+			self.ask_hub(get_catalog, page=2),
+			("https://hub.example.com", "get_catalog", {"page": 2, "protocol_version": PROTOCOL_VERSION}),
+		)
+
+	def test_plugin_asks_the_configured_hub_with_the_site_protocol(self):
+		self.assertEqual(
+			self.ask_hub(get_plugin, name="acme/sample"),
+			(
+				"https://hub.example.com",
+				"get_plugin",
+				{"name": "acme/sample", "protocol_version": PROTOCOL_VERSION},
+			),
+		)
 
 
 class TestReadRelease(FrappeTestCase):
