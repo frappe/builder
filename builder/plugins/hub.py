@@ -3,9 +3,9 @@
 
 """Install a plugin from a Builder Hub.
 
-The browser browses a Hub's catalog directly, but it never downloads plugin
-code. That crosses the trust boundary, so it happens here, on the server, under
-the session user.
+The browser reads a Hub's catalog through this module, and it never downloads
+plugin code. That crosses the trust boundary, so it happens here, on the server,
+under the session user.
 
 `install_from_hub` does only the fast part: the checks, an `Installing` row, and
 a background job. `run_hub_install` is the slow part: read the exact release,
@@ -90,9 +90,16 @@ def resolve_hub_url() -> str:
 
 @frappe.whitelist()
 @has_page_read(NO_BUILDER_ACCESS)
-def get_hub_url() -> str:
-	"""The Hub the panel reads its catalog from. Only the server can read the site config."""
-	return resolve_hub_url()
+def get_catalog(page: int = 1) -> dict:
+	"""One page of the Hub catalog."""
+	return hub_get(resolve_hub_url(), "get_catalog", {"page": page, "protocol_version": PROTOCOL_VERSION})
+
+
+@frappe.whitelist()
+@has_page_read(NO_BUILDER_ACCESS)
+def get_plugin(name: str) -> dict:
+	"""The Hub listing of one plugin, for a plugin that the site has not installed."""
+	return hub_plugin(resolve_hub_url(), name)
 
 
 def ensure_protocol(url: str, default_scheme: str = "https") -> str:
