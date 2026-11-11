@@ -125,7 +125,7 @@ class BuilderPlugin(Document):
 			frappe.throw(_("A README may hold {0} bytes at most.").format(MAX_README_BYTES))
 
 	def apply_package(self, package: ValidatedPackage, checksum: str, origin: dict):
-		"""Run this package from now on. `origin` holds the source fields, such as `hub_url`."""
+		"""Install this package: fill the row from its manifest and `origin`, save it, and write the files."""
 		manifest = package.manifest
 		self.update(
 			{

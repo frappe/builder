@@ -161,10 +161,11 @@ def sync_app_plugins() -> None:
 
 
 def sync_built_apps(built_apps: list[str]) -> None:
-	"""After `bench build`. `bench update` migrates before it builds, so without this a new build waits for the next migrate.
+	"""Apply new plugin builds to each site after `bench build`.
 
-	A build has no site, so each site syncs in its own process. A site that cannot connect,
-	such as in a Docker image build, is skipped with a warning.
+	`bench update` runs migrate before it builds, so migrate still sees the old build.
+	The build process has no site connection, so each site syncs in its own process.
+	If a site cannot connect, as in a Docker image build, this skips it and prints a warning.
 	"""
 	if not any(get_plugin_folders(app) for app in built_apps):
 		return
