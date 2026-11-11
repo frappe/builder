@@ -42,21 +42,24 @@ class AppPlugin:
 	def __init__(self, app: str, folder: Path):
 		self.app = app
 		self.folder = folder
-		self.build = folder / BUILD_FOLDER
+
+	@property
+	def build_folder(self) -> Path:
+		return self.folder / BUILD_FOLDER
 
 	@cached_property
 	def package(self) -> ValidatedPackage:
 		"""The build's files, keyed by path, through the same rules as a Hub package."""
-		if not (self.build / MANIFEST_FILE).is_file():
+		if not (self.build_folder / MANIFEST_FILE).is_file():
 			frappe.throw(
 				_("The {0} app has no built plugin at {1}. Run bench build --app {0}.").format(
-					self.app, self.build
+					self.app, self.build_folder
 				)
 			)
-		files = self.build.rglob("*")
+		files = self.build_folder.rglob("*")
 		return validate_files(
 			{
-				file.relative_to(self.build).as_posix(): file.read_bytes()
+				file.relative_to(self.build_folder).as_posix(): file.read_bytes()
 				for file in sorted(files)
 				if file.is_file()
 			}
