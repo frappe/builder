@@ -71,30 +71,29 @@ class TestAppPlugin(FrappeTestCase):
 		self.assertEqual(row.readme, "# For users")
 		self.assertEqual(Path(row.release_path, ENTRY_FILE).read_text(), "// 1.0.0")
 
-	def test_a_new_build_keeps_the_plugin_enabled(self):
+	def test_applies_only_a_new_build_and_keeps_enabled(self):
 		install_app_plugins(APP)
 		frappe.db.set_value(INSTALLATION_DOCTYPE, self.installed().name, "enabled", 1)
-		self.write_build("1.1.0")
+		modified = self.installed().modified
 
+		install_app_plugins(APP)
+		self.assertEqual(self.installed().modified, modified)
+
+		self.write_build("1.1.0")
 		install_app_plugins(APP)
 
 		row = self.installed()
 		self.assertEqual([row.version, row.enabled], ["1.1.0", 1])
 		self.assertEqual(Path(row.release_path, ENTRY_FILE).read_text(), "// 1.1.0")
 
-	def test_the_same_build_saves_nothing(self):
-		install_app_plugins(APP)
-		modified = self.installed().modified
-
-		install_app_plugins(APP)
-
-		self.assertEqual(self.installed().modified, modified)
-
-	def test_refuses_the_app_when_another_source_has_the_plugin(self):
+	def test_refuses_a_plugin_another_source_has_but_migrate_skips_it(self):
 		make_installation(PLUGIN, source="Hub", hub_url="https://hub.example.com")
 
 		with self.assertRaisesRegex(frappe.ValidationError, "hub.example.com"):
 			check_app_plugins(APP)
+		sync_app_plugins()
+
+		self.assertEqual(self.installed().source, "Hub")
 
 	def test_takes_over_a_development_row_disabled(self):
 		make_installation(PLUGIN, source="Development", version="0.0.0-dev", enabled=1)
@@ -111,38 +110,24 @@ class TestAppPlugin(FrappeTestCase):
 		with self.assertRaisesRegex(frappe.ValidationError, "bench build --app builder"):
 			check_app_plugins(APP)
 
-	def test_migrate_skips_an_plugin_another_source_has(self):
-		make_installation(PLUGIN, source="Hub", hub_url="https://hub.example.com")
-
-		sync_app_plugins()
-
-		self.assertEqual(self.installed().source, "Hub")
-
-	def test_removes_the_plugins_of_an_app(self):
-		install_app_plugins(APP)
-
-		remove_app_plugins(APP)
-
-		self.assertFalse(frappe.db.exists(INSTALLATION_DOCTYPE, {"plugin": PLUGIN}))
-
-	def test_refuses_to_uninstall_an_app_plugin(self):
+	def test_only_the_app_removes_its_plugin(self):
 		install_app_plugins(APP)
 
 		with self.assertRaisesRegex(frappe.ValidationError, "builder app"):
 			uninstall_plugin(PLUGIN)
+		remove_app_plugins(APP)
 
-	def test_a_build_syncs_each_site(self):
+		self.assertFalse(frappe.db.exists(INSTALLATION_DOCTYPE, {"plugin": PLUGIN}))
+
+	def test_a_build_syncs_each_site_only_for_apps_with_plugins(self):
 		with (
 			patch("builder.plugins.app_plugins.get_sites", return_value=["one.localhost"]),
 			patch("builder.plugins.app_plugins.subprocess.run") as run,
 		):
 			run.return_value.returncode = 0
+			sync_built_apps(["frappe"])
+			run.assert_not_called()
+
 			sync_built_apps([APP])
 
 		self.assertIn("one.localhost", run.call_args.args[0])
-
-	def test_a_build_without_plugins_starts_nothing(self):
-		with patch("builder.plugins.app_plugins.subprocess.run") as run:
-			sync_built_apps(["frappe"])
-
-		run.assert_not_called()
