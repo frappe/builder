@@ -73,14 +73,23 @@ def validate_package(package_bytes: bytes, expected_name: str, expected_version:
 	Raises `frappe.ValidationError` naming the first rule the package breaks.
 	"""
 	with open_archive(package_bytes) as archive:
-		entries = read_entries(archive)
+		files = {path: read_package_file(archive, path, info) for path, info in read_entries(archive).items()}
 
-		manifest_bytes = read_entry(archive, entries[MANIFEST_FILE], MAX_MANIFEST_BYTES)
-		manifest = parse_manifest(manifest_bytes)
-		assert_identity(manifest, expected_name, expected_version)
-		assert_file_set(entries, manifest.get("icon"))
-		files = {path: read_package_file(archive, path, info) for path, info in entries.items()}
+	package = validate_files(files)
+	assert_identity(package.manifest, expected_name, expected_version)
+	return package
 
+
+def validate_files(files: dict[str, bytes]) -> ValidatedPackage:
+	"""The package rules that do not depend on the ZIP. An app's built folder comes here directly."""
+	for required in (MANIFEST_FILE, ENTRY_FILE):
+		if required not in files:
+			frappe.throw(_("The package is missing {0}.").format(required))
+	for path, content in files.items():
+		assert_safe_file(path, content)
+
+	manifest = parse_manifest(files[MANIFEST_FILE])
+	assert_file_set(files, manifest.get("icon"))
 	return ValidatedPackage(manifest, files)
 
 
@@ -111,10 +120,6 @@ def read_entries(archive: zipfile.ZipFile) -> dict[str, zipfile.ZipInfo]:
 		if extracted > MAX_EXTRACTED_BYTES:
 			frappe.throw(_("The package unpacks to more than Builder allows."))
 		entries[path] = info
-
-	for required in (MANIFEST_FILE, ENTRY_FILE):
-		if required not in entries:
-			frappe.throw(_("The package is missing {0}.").format(required))
 	return entries
 
 
@@ -125,8 +130,6 @@ def assert_safe_entry(info: zipfile.ZipInfo, path: str, seen: dict) -> None:
 		frappe.throw(_("The package holds an encrypted file: {0}.").format(info.filename))
 	if path in seen:
 		frappe.throw(_("The package names {0} twice.").format(path))
-	if PurePosixPath(path).suffix not in ASSET_TYPES:
-		frappe.throw(_("The package holds an unsupported file: {0}.").format(path))
 
 
 def normalized_path(name: str) -> str:
@@ -227,13 +230,24 @@ def assert_identity(manifest: dict, expected_name: str, expected_version: str) -
 
 
 def read_package_file(archive: zipfile.ZipFile, path: str, info: zipfile.ZipInfo) -> bytes:
-	"""One file, within its limit. The site serves an SVG from its own origin, so each one is checked."""
-	if not path.endswith(".svg"):
-		return read_entry(archive, info, MAX_FILE_BYTES)
+	"""One file, read no further than its limit, so a ZIP bomb stops early."""
+	return read_entry(archive, info, get_file_limit(path))
 
-	content = read_entry(archive, info, MAX_ICON_BYTES)
-	assert_safe_svg(content, path)
-	return content
+
+def get_file_limit(path: str) -> int:
+	if path == MANIFEST_FILE:
+		return MAX_MANIFEST_BYTES
+	return MAX_ICON_BYTES if path.endswith(".svg") else MAX_FILE_BYTES
+
+
+def assert_safe_file(path: str, content: bytes) -> None:
+	"""The site serves an SVG from its own origin, so each one is checked."""
+	if PurePosixPath(path).suffix not in ASSET_TYPES:
+		frappe.throw(_("The package holds an unsupported file: {0}.").format(path))
+	if len(content) > get_file_limit(path):
+		frappe.throw(_("Package file is larger than allowed: {0}.").format(path))
+	if path.endswith(".svg"):
+		assert_safe_svg(content, path)
 
 
 def assert_safe_svg(content: bytes, name: str) -> None:
