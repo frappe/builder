@@ -11,7 +11,7 @@ import frappe
 from frappe import _
 from frappe.utils.background_jobs import is_job_enqueued
 
-from builder.plugins.access import INSTALLATION_DOCTYPE, assert_plugin_manager
+from builder.plugins.access import INSTALLATION_DOCTYPE, assert_plugin_manager, find_installation
 from builder.plugins.constants import DEV_PLUGIN_VERSION
 from builder.plugins.hub import (
 	INSTALL_JOB_TIMEOUT,
@@ -24,8 +24,8 @@ from builder.plugins.hub import (
 from builder.plugins.installations import (
 	NO_BUILDER_ACCESS,
 	describe_installation,
-	get_installation,
 	install_job_id,
+	throw_not_installed,
 )
 from builder.plugins.package import validate_package
 from builder.utils import has_page_read
@@ -100,7 +100,8 @@ def run_hub_update(installation: str, name: str, version: str, hub_url: str, use
 
 def get_updatable(plugin: str):
 	"""A ready Hub install. An app or dev install has no Hub release to update to."""
-	row = frappe.get_doc(INSTALLATION_DOCTYPE, get_installation(plugin))
+	installation = find_installation(plugin) or throw_not_installed(plugin)
+	row = frappe.get_doc(INSTALLATION_DOCTYPE, installation)
 	if row.install_state != "Ready" or row.source != "Hub" or row.version == DEV_PLUGIN_VERSION:
 		frappe.throw(_('"{0}" did not come from a Builder Hub, so it cannot update.').format(plugin))
 	return row
