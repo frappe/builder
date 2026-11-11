@@ -30,6 +30,8 @@ import { computed } from "vue";
 const props = defineProps<{
 	canOpen: boolean;
 	canManage: boolean;
+	/** An app's plugin goes with the app, so it has no Uninstall. */
+	canUninstall: boolean;
 	enabled: boolean;
 	working: boolean;
 	/** Unset when the plugin has no left bar tab. */
@@ -56,23 +58,25 @@ const tabActions = computed<DropdownOptions>(() =>
 			],
 );
 
-const managerActions = computed<DropdownOptions>(() =>
-	props.canManage
-		? [
-				{
-					label: props.enabled ? "Disable" : "Enable",
-					icon: props.enabled ? "lucide-power-off" : "lucide-power",
-					onClick: () => emit("setEnabled", !props.enabled),
-				},
-				{
-					label: "Uninstall",
-					icon: "lucide-trash-2",
-					theme: "red",
-					onClick: () => emit("uninstall"),
-				},
-			]
-		: [],
-);
+const managerActions = computed<DropdownOptions>(() => {
+	if (!props.canManage) return [];
+	const actions: DropdownOptions = [
+		{
+			label: props.enabled ? "Disable" : "Enable",
+			icon: props.enabled ? "lucide-power-off" : "lucide-power",
+			onClick: () => emit("setEnabled", !props.enabled),
+		},
+	];
+	if (props.canUninstall) {
+		actions.push({
+			label: "Uninstall",
+			icon: "lucide-trash-2",
+			theme: "red",
+			onClick: () => emit("uninstall"),
+		});
+	}
+	return actions;
+});
 
 const moreActions = computed<DropdownOptions>(() => [...tabActions.value, ...managerActions.value]);
 </script>
