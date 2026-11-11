@@ -101,7 +101,13 @@ def uninstall_plugin(plugin: str) -> None:
 	The doctypes a plugin made hold the site's data, so they stay.
 	"""
 	assert_plugin_manager()
-	frappe.delete_doc(INSTALLATION_DOCTYPE, get_installation(plugin))
+	installation = get_installation(plugin)
+	source_app = frappe.db.get_value(INSTALLATION_DOCTYPE, installation, "source_app")
+	if source_app:
+		frappe.throw(
+			_('"{0}" comes with the {1} app. Uninstall the app to remove it.').format(plugin, source_app)
+		)
+	frappe.delete_doc(INSTALLATION_DOCTYPE, installation)
 
 
 def describe_installation(installation: str) -> dict:
@@ -120,11 +126,21 @@ def describe_installation(installation: str) -> dict:
 		"entry_url": row.entry_url,
 		"source": row.source,
 		"hub_url": row.hub_url,
+		"source_app": row.source_app,
 		"enabled": bool(row.enabled),
 		"install_state": row.install_state,
 		"install_error": row.install_error,
 		"is_development": row.version == DEV_PLUGIN_VERSION,
 	}
+
+
+def describe_source(row) -> str:
+	"""Where an installation came from, as a refusal names it."""
+	if row.source == "Hub":
+		return row.hub_url
+	if row.source == "App":
+		return _("the {0} app").format(row.source_app)
+	return _("a dev server")
 
 
 def get_installation(plugin: str) -> str:

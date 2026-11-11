@@ -42,7 +42,12 @@ from builder.plugins.constants import (
 	PLUGIN_NAME_PATTERN,
 	PROTOCOL_VERSION,
 )
-from builder.plugins.installations import NO_BUILDER_ACCESS, describe_installation, install_job_id
+from builder.plugins.installations import (
+	NO_BUILDER_ACCESS,
+	describe_installation,
+	describe_source,
+	install_job_id,
+)
 from builder.plugins.package import ValidatedPackage, validate_package
 from builder.plugins.safe_requests import get_safe_request_session
 from builder.utils import has_page_read
@@ -327,11 +332,13 @@ def assert_installable(name: str) -> None:
 	existing = find_installation(name)
 	if not existing:
 		return
-	state, hub_url = frappe.db.get_value(INSTALLATION_DOCTYPE, existing, ["install_state", "hub_url"])
-	if state == "Installing" and is_job_enqueued(install_job_id(existing)):
+	row = frappe.db.get_value(
+		INSTALLATION_DOCTYPE, existing, ["install_state", "source", "hub_url", "source_app"], as_dict=True
+	)
+	if row.install_state == "Installing" and is_job_enqueued(install_job_id(existing)):
 		frappe.throw(_('"{0}" is already installing.').format(name))
-	if state not in ("Failed", "Installing"):
-		frappe.throw(_('"{0}" is already installed from {1}.').format(name, hub_url or _("a dev server")))
+	if row.install_state not in ("Failed", "Installing"):
+		frappe.throw(_('"{0}" is already installed from {1}.').format(name, describe_source(row)))
 
 
 def create_pending_installation(name: str, version: str, listing: dict) -> str:
@@ -371,18 +378,4 @@ def create_pending_installation(name: str, version: str, listing: dict) -> str:
 
 def apply_release(doc, hub_url: str, release: Release, package: ValidatedPackage) -> None:
 	"""Fill the pending row from the release and write the site's copy."""
-	manifest = package.manifest
-	doc.update(
-		{
-			"hub_url": hub_url,
-			"label": manifest["label"],
-			"description": manifest["description"],
-			"icon": manifest.get("icon"),
-			"version": release.version,
-			"checksum": release.package_sha256[:12],
-			"install_state": "Ready",
-			"install_error": None,
-		}
-	)
-	doc.save()
-	doc.write_plugin_files(package.files)
+	doc.apply_package(package, release.package_sha256[:12], {"hub_url": hub_url})

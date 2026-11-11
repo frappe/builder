@@ -69,7 +69,10 @@ jinja = {
 # before_install = "builder.install.before_install"
 after_install = "builder.install.after_install"
 after_migrate = "builder.install.after_migrate"
+before_app_install = "builder.install.before_app_install"
 after_app_install = "builder.install.after_app_install"
+before_app_uninstall = "builder.install.before_app_uninstall"
+after_app_build = "builder.install.after_app_build"
 
 # Uninstallation
 # ------------

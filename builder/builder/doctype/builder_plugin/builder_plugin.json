@@ -8,6 +8,7 @@
   "plugin",
   "source",
   "hub_url",
+  "source_app",
   "enabled",
   "label",
   "description",
@@ -48,6 +49,14 @@
    "fieldname": "hub_url",
    "fieldtype": "Data",
    "label": "Hub URL",
+   "read_only": 1
+  },
+  {
+   "depends_on": "eval:doc.source == \"App\"",
+   "description": "The Frappe app that ships this plugin. Builder installs and updates it with the app.",
+   "fieldname": "source_app",
+   "fieldtype": "Data",
+   "label": "Source App",
    "read_only": 1
   },
   {
