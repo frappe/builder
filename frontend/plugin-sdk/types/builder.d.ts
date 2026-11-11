@@ -85,11 +85,20 @@ declare module "builder" {
 		disabled?: boolean;
 	};
 
+	/** A view of the dashboard, beside All Pages. It opens at /dashboard/<name> and fills the area right of the sidebar. */
+	export type DashboardItem = RegistryItem & {
+		label: string;
+		icon: string | Component;
+		component: Component;
+		props?: () => Record<string, unknown>;
+	};
+
 	export const leftPanelTabs: Registry<LeftPanelTab>;
 	export const toolbarItems: Registry<ToolbarItem>;
 	export const blockContextMenuOptions: Registry<ContextMenuOption>;
 	export const propertySections: Registry<PropertySection>;
 	export const settingsItems: Registry<SettingsItem>;
+	export const dashboardItems: Registry<DashboardItem>;
 
 	/** One block of the page tree. */
 	export class Block {
