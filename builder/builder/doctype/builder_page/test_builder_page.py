@@ -2409,6 +2409,50 @@ component.update({
 			page_first.delete()
 			page_second.delete()
 
+	def test_dynamic_number_prop_without_its_root_uses_the_default(self):
+		prop = {
+			"label": "Count",
+			"isStandard": True,
+			"isDynamic": False,
+			"isPassedDown": False,
+			"comesFrom": None,
+			"value": None,
+			"propOptions": {
+				"isRequired": False,
+				"type": "number",
+				"options": {"defaultValue": 25},
+			},
+		}
+		root = Block(
+			element="div",
+			blockId="dynamic-number-prop-root",
+			clientScript={"js": "void 0;"},
+			props={"count": prop},
+		)
+		component = frappe.get_doc({"doctype": "Builder Component", "block": root.as_json()}).insert()
+		instance = Block(
+			extendedFromComponent=component.name,
+			props={"count": {**prop, "isDynamic": True, "comesFrom": "dataScript", "value": "hero.count"}},
+		)
+		body = Block(element="div", originalElement="body")
+		body.attach_children(instance)
+		page = frappe.get_doc(
+			{
+				"doctype": "Builder Page",
+				"page_title": "Dynamic Number Prop Fallback Test",
+				"published": 1,
+				"route": "/dynamic-number-prop-fallback-test",
+				"blocks": body.as_json(wrap_in_array=True),
+			}
+		).insert()
+
+		try:
+			content = get_response_content("/dynamic-number-prop-fallback-test")
+			self.assertIn('"count": 25', content)
+		finally:
+			page.delete()
+			component.delete()
+
 	@classmethod
 	def tearDownClass(cls):
 		cls.page.delete()

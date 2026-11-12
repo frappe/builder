@@ -1058,8 +1058,9 @@ def get_dynamic_props_template(
 	"""Get a Jinja template reference for dynamic properties."""
 	# props tell a missing path apart from an empty object, so the chain ends in none
 	key = get_binding_key(prop_value, comes_from, data_key, missing="none")
-	fallback = escape_single_quotes(default_value) if default_value is not None else "undefined"
-	return f"{{{{ {key} if {key} is defined and {key} is not none else '{fallback}' }}}}"
+	# a number, boolean or object default is a literal of its own type, not a quoted string
+	fallback = to_jinja_literal(default_value) if default_value is not None else "'undefined'"
+	return f"{{{{ {key} if {key} is defined and {key} is not none else {fallback} }}}}"
 
 
 # Reserved characters and existing %-escapes pass through, so absolute and data: URLs
