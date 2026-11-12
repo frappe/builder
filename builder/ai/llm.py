@@ -6,6 +6,7 @@ loop and tools talk to LLMs exclusively through the functions defined here.
 
 import json
 import logging
+from typing import ClassVar
 
 import frappe
 from frappe import _
@@ -117,6 +118,41 @@ TASK_PARAMS = {
 }
 
 
+class Effort:
+	"""The thinking effort picked in the chat; with none, each tier keeps its own.
+	Thinking counts against max_tokens and can go quiet for minutes at xhigh, so the
+	deeper levels also get room left to answer, a longer stall allowance and a
+	longer job."""
+
+	LEVELS = ("low", "medium", "high", "xhigh")
+	MAX_TOKENS: ClassVar[dict[str, int]] = {"high": 64000, "xhigh": 64000}
+	STALL_TIMEOUT: ClassVar[dict[str, int]] = {"high": 300, "xhigh": 600}
+	JOB_TIMEOUT: ClassVar[dict[str, int]] = {"high": 1800, "xhigh": 3600}
+
+	def __init__(self, level: str | None = None):
+		self.level = level if level in self.LEVELS else None
+
+	def params(self, tier: str) -> dict:
+		params = TASK_PARAMS[tier]
+		if not self.level:
+			return params
+		max_tokens = max(params["max_tokens"], self.MAX_TOKENS.get(self.level, 0))
+		return {**params, "reasoning_effort": self.level, "max_tokens": max_tokens}
+
+	@property
+	def stall_timeout(self) -> int:
+		return self.STALL_TIMEOUT.get(self.level, 120)
+
+	@property
+	def job_timeout(self) -> int:
+		return self.JOB_TIMEOUT.get(self.level, 600)
+
+	@property
+	def lock_ttl(self) -> int:
+		"""Just past the job's own deadline, so a dead worker's locks still expire."""
+		return self.job_timeout + 60
+
+
 def patch_messages_for_provider(model: str, messages: list[dict]) -> None:
 	"""Anthropic via OpenRouter reads cache_control from INSIDE a content block, not
 	from the message level (a message-level marker is silently ignored → full input
@@ -151,8 +187,23 @@ def patch_params_for_provider(model: str, params: dict) -> dict:
 	direct_claude = "claude-" in model and not model.startswith("openrouter/")
 	needs_one = "kimi" in model or (direct_claude and params.get("reasoning_effort"))
 	if needs_one and params.get("temperature") not in (None, 1):
-		return {**params, "temperature": 1}
+		params = {**params, "temperature": 1}
+	if direct_claude and params.get("reasoning_effort") and thinks_adaptively(model):
+		params = {**params, "thinking": SUMMARIZED_THINKING}
 	return params
+
+
+# Newer Claude models stream empty thinking by default: minutes of silence in which
+# a cancel goes unnoticed and the stall timeout fires. A summary keeps chunks coming.
+SUMMARIZED_THINKING = {"type": "adaptive", "display": "summarized"}
+
+
+def thinks_adaptively(model: str) -> bool:
+	"""Claude 4.6 and later; older models take a thinking budget instead."""
+	from litellm import AnthropicConfig
+
+	check = getattr(AnthropicConfig, "_is_adaptive_thinking_model", None)
+	return bool(check and check(model, "anthropic"))
 
 
 # --- provider routing --------------------------------------------------------
@@ -234,7 +285,15 @@ def resolve_api_key(model: str | None = None) -> str:
 	)
 
 
-def complete(model: str, messages: list, params: dict, *, stream: bool, api_key: str | None = None):
+def complete(
+	model: str,
+	messages: list,
+	params: dict,
+	*,
+	stream: bool,
+	api_key: str | None = None,
+	timeout: int = 120,
+):
 	"""Plain completion. Returns the response iterator when streaming, else the
 	text content. Transient failures are retried by litellm (and, for streaming
 	rounds, by the agent loop's own retry layer — litellm can't fall back mid-stream)."""
@@ -261,7 +320,7 @@ def complete(model: str, messages: list, params: dict, *, stream: bool, api_key:
 		# Read timeout (max stall between bytes, not total duration): a wedged
 		# provider connection otherwise blocks the worker forever — the loop only
 		# checks cancellation between chunks, so a silent stall is uncancellable.
-		timeout=120,
+		timeout=timeout,
 		# Emit a final usage chunk while streaming so the loop can tally tokens per
 		# turn (dropped automatically for providers that don't support it).
 		**({"stream_options": {"include_usage": True}} if stream else {}),
@@ -284,6 +343,7 @@ def complete_with_tools(
 	*,
 	api_key: str | None = None,
 	stream: bool = False,
+	timeout: int = 120,
 ):
 	"""Tool-calling completion. Returns the raw response (iterator when streaming)."""
 	if target := codex_route(model):
@@ -307,7 +367,7 @@ def complete_with_tools(
 		api_key=api_key,
 		drop_params=True,
 		num_retries=1,
-		timeout=120,  # see complete() — a stalled connection must fail, not wedge the turn
+		timeout=timeout,  # see complete() — a stalled connection must fail, not wedge the turn
 		# Final usage chunk while streaming — see complete().
 		**({"stream_options": {"include_usage": True}} if stream else {}),
 		**provider_kwargs(model),

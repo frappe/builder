@@ -5,6 +5,8 @@ from frappe.tests.utils import FrappeTestCase
 from builder.ai.llm import (
 	GENERIC_FAILURE,
 	NO_KEY,
+	TASK_PARAMS,
+	Effort,
 	is_retryable,
 	loads_tolerant,
 	patch_messages_for_provider,
@@ -169,6 +171,14 @@ class TestProviderTuning(FrappeTestCase):
 	def test_leaves_other_temperatures_alone(self):
 		self.assertEqual(patch_params_for_provider(GPT, {"temperature": 0.7})["temperature"], 0.7)
 
+	def test_asks_adaptive_claude_for_a_thinking_summary(self):
+		params = patch_params_for_provider("anthropic/claude-opus-4-6", {"reasoning_effort": "high"})
+		self.assertEqual(params["thinking"], {"type": "adaptive", "display": "summarized"})
+
+	def test_leaves_budget_thinking_and_openrouter_claude_alone(self):
+		for model in ("anthropic/claude-sonnet-4-5", "openrouter/anthropic/claude-opus-4-6"):
+			self.assertNotIn("thinking", patch_params_for_provider(model, {"reasoning_effort": "high"}))
+
 	def test_passes_through_a_configured_api_base(self):
 		self.assertEqual(
 			provider_overrides({"api_base": "https://gw.example.com"}),
@@ -191,3 +201,22 @@ class TestSharedKey(FrappeTestCase):
 			):
 				self.assertEqual(route(info["name"], SHARED_KEY)[2], expected)
 				self.assertEqual(resolve_api_key(info["name"]), expected)
+
+
+class TestEffort(FrappeTestCase):
+	def test_without_a_level_each_tier_keeps_its_own(self):
+		effort = Effort("not-a-level")
+
+		self.assertIsNone(effort.level)
+		self.assertIs(effort.params("agent"), TASK_PARAMS["agent"])
+		self.assertEqual((effort.stall_timeout, effort.job_timeout, effort.lock_ttl), (120, 600, 660))
+
+	def test_xhigh_gets_room_to_answer_and_longer_limits(self):
+		effort = Effort("xhigh")
+		params = effort.params("agent")
+
+		self.assertEqual((params["reasoning_effort"], params["max_tokens"]), ("xhigh", 64000))
+		self.assertEqual((effort.stall_timeout, effort.job_timeout, effort.lock_ttl), (600, 3600, 3660))
+
+	def test_never_lowers_a_tiers_own_token_cap(self):
+		self.assertEqual(Effort("low").params("complex")["max_tokens"], TASK_PARAMS["complex"]["max_tokens"])
