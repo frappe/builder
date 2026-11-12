@@ -274,7 +274,7 @@ class TestOpenPageContext(FrappeTestCase):
 		for theme in ("light", "dark"):
 			AISession.try_append_message(session_id, "user", "hi", metadata={"canvasTheme": theme})
 
-		self.assertEqual(AISession.latest_canvas_theme(session_id), "dark")
+		self.assertEqual(AISession.latest_turn_metadata(session_id).get("canvasTheme"), "dark")
 
 
 class TestComponentContract(FrappeTestCase):

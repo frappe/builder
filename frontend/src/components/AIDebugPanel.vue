@@ -161,6 +161,7 @@
 </template>
 
 <script setup lang="ts">
+import { contextUsageOf } from "@/components/ai/contextUsage";
 import { computed, ref } from "vue";
 
 const props = defineProps<{ debug: Record<string, any> | null }>();
@@ -209,16 +210,9 @@ const primaryStats = computed(() => {
 	];
 });
 
-// The latest call's prompt is the conversation's current size in the window.
 const context = computed(() => {
-	const d = props.debug || {};
-	const lastPrompt = perCall.value.at(-1)?.prompt || 0;
-	if (!d.contextWindow || !lastPrompt) return null;
-	return {
-		used: fmt(lastPrompt),
-		total: fmt(d.contextWindow),
-		pct: Math.round((lastPrompt / d.contextWindow) * 100),
-	};
+	const usage = contextUsageOf(props.debug);
+	return usage && { used: fmt(usage.used), total: fmt(usage.total), pct: usage.pct };
 });
 
 const signals = computed(() => {

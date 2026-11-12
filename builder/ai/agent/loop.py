@@ -71,6 +71,14 @@ logger.setLevel(logging.INFO)
 MAX_ROUNDS = 40
 EVENT_PREFIX = "ai_chat"
 
+# A step can spend its whole max_tokens thinking, drafting the edit it never gets to
+# call. Ending the turn there leaves an empty reply, so the model is told to act.
+OUT_OF_ROOM_NUDGES = 2
+OUT_OF_ROOM_NUDGE = (
+	"Your last step ran out of output room while thinking, before it called a tool. "
+	"Act now: keep the planning short and make the change in smaller edits, a section at a time."
+)
+
 # A streaming round is retried on transient failure (litellm can't fall back mid-stream).
 # Backoff is STREAM_BACKOFF_BASE * 2**attempt → ~1s, 2s before the final give-up.
 STREAM_MAX_ATTEMPTS = 3
@@ -116,6 +124,11 @@ def redact_secrets(text: str) -> str:
 
 class CancelledError(Exception):
 	"""Raised inside the stream loops when the user cancels the turn."""
+
+
+class NotesSentNow(Exception):
+	"""Raised inside a model step when the user sends their notes now: the step is
+	dropped and run again with the notes read in."""
 
 
 # Skeletonising a page the model just wrote costs whole rounds re-reading its own
@@ -352,6 +365,7 @@ class AgentRunner:
 		image_url: str | None = None,
 		image_file_url: str | None = None,
 		canvas_theme: str | None = None,
+		effort: str | None = None,
 		registry: ToolRegistry | None = None,
 		system_prompt: str | None = None,
 	):
@@ -367,6 +381,7 @@ class AgentRunner:
 		self.image_url = image_url
 		self.image_file_url = image_file_url
 		self.canvas_theme = canvas_theme
+		self.effort = llm.Effort(effort)
 		self.registry = registry or build_default_registry()
 		# Skills in context, including read_skill results; reset on every turn.
 		self.attached_skills: set[str] = set()
@@ -440,6 +455,7 @@ class AgentRunner:
 		# of each LLM call (="length" flags truncation — the usual cause of broken args).
 		self.args_repaired = 0
 		self.finish_reasons: list[str | None] = []
+		self.out_of_room_nudges = 0
 		# Client ops the WorkingTree rejected (bad ref, wrong parent, partial bulk miss).
 		# Each is fed back to the model to self-correct; also logged and surfaced here so a
 		# "why didn't my edit land" is traceable in the agent debugger, not just live logs.
@@ -489,6 +505,14 @@ class AgentRunner:
 	def clear_cancel_flag(self) -> None:
 		if key := self.cancel_key():
 			frappe.cache.delete_value(key)
+
+	def stop_requested(self) -> Exception | None:
+		"""A cancel ends the turn; notes sent now end only the step being streamed."""
+		if self.is_cancelled():
+			return CancelledError()
+		if AISession.notes_wanted_now(self.session_id):
+			return NotesSentNow()
+		return None
 
 	def interruptible_sleep(self, seconds: float) -> None:
 		"""Sleep in small steps so a cancel during retry backoff is honored within ~0.25s
@@ -629,6 +653,15 @@ class AgentRunner:
 			)
 		return context
 
+	def build_agent_context(self) -> str:
+		"""Instructions installed apps give for the open page, through the builder_agent_context hook."""
+		if not self.page_id:
+			return ""
+		texts = (
+			frappe.get_attr(method)(self.page_id) for method in frappe.get_hooks("builder_agent_context")
+		)
+		return "\n\n".join(text for text in texts if text)
+
 	def build_skill_context(self) -> str:
 		"""Include the build guide when the model asks to inspect an empty page."""
 		root = self.page_root()
@@ -688,6 +721,7 @@ class AgentRunner:
 		# ahead of it generally prevents reuse across turns.
 		blocks = [
 			self.build_open_page_context(),
+			self.build_agent_context(),
 			self.build_initial_page_context(),
 			self.build_memory_context(),
 			self.build_plugins_context(),
@@ -764,7 +798,7 @@ class AgentRunner:
 		for attempt in range(STREAM_MAX_ATTEMPTS):
 			try:
 				return self.stream_tool_round(messages)
-			except CancelledError:
+			except (CancelledError, NotesSentNow):
 				raise
 			except Exception as exc:
 				if attempt == STREAM_MAX_ATTEMPTS - 1 or not llm.is_retryable(exc):
@@ -796,9 +830,10 @@ class AgentRunner:
 			self.loop_model,
 			messages,
 			self.registry.schemas(self.round_skills),
-			llm.TASK_PARAMS["agent"],
+			self.effort.params("agent"),
 			api_key=self.api_key,
 			stream=True,
+			timeout=self.effort.stall_timeout,
 		)
 
 		content_parts: list[str] = []
@@ -818,12 +853,12 @@ class AgentRunner:
 
 		try:
 			for chunk in stream:
-				if self.is_cancelled():
+				if stop := self.stop_requested():
 					try:
 						stream.close()
 					except Exception:
 						pass
-					raise CancelledError
+					raise stop
 				self.record_usage(chunk)
 				# The final include_usage chunk carries usage but no choices.
 				if not chunk.choices:
@@ -959,7 +994,7 @@ class AgentRunner:
 		from builder.ai import page_writer
 
 		key = locks.page_key(page_id)
-		token = locks.acquire(key, locks.PAGE_LOCK_TTL)
+		token = locks.acquire(key, self.effort.lock_ttl)
 		if token is None:
 			return (
 				f"FAILED: page {page_id} is being edited by another AI task right now. Try again in a moment."
@@ -1230,6 +1265,21 @@ class AgentRunner:
 			)
 		self.pending_images.clear()
 
+	def read_notes(self, messages: list[dict]) -> None:
+		"""Messages the user sent while this turn ran, read in between rounds. Each is
+		saved as a user message of its own so later turns see it too."""
+		for note in AISession.pop_notes(self.session_id):
+			AISession.try_append_message(
+				self.session_id,
+				"user",
+				note,
+				message_type="chat",
+				task_type="agent",
+				metadata={"canvasTheme": self.canvas_theme, "effort": self.effort.level},
+			)
+			messages.append({"role": "user", "content": f"(Sent while you were working.)\n{note}"})
+			self.emit("note", text=note)
+
 	# --- orchestration ----------------------------------------------------
 
 	def emit_cancelled(self) -> None:
@@ -1247,8 +1297,9 @@ class AgentRunner:
 		self.emit("error", message=message, after_commit=True)
 
 	def run(self):
-		# Clear any stale cancel flag from a previous turn before starting.
+		# Clear any stale cancel flag or notes from a previous turn before starting.
 		self.clear_cancel_flag()
+		AISession.clear_notes(self.session_id)
 		started = time.monotonic()
 		logger.info(
 			f"AgentRunner.run: page_id={self.page_id}, model={self.model}, "
@@ -1258,7 +1309,7 @@ class AgentRunner:
 		# One turn per session at a time — an atomic Redis lock with a TTL, so a
 		# crashed worker can never brick the session (the old is_running DB flag did).
 		if self.session_id:
-			self.run_token = AISession.start_run(self.session_id)
+			self.run_token = AISession.start_run(self.session_id, self.effort.lock_ttl)
 			if self.run_token is None:
 				logger.warning(f"AgentRunner.run: session {self.session_id} already running, rejecting")
 				self.emit(
@@ -1270,6 +1321,8 @@ class AgentRunner:
 			self.run_turn(started)
 		finally:
 			self.clear_cancel_flag()
+			# Unread ones go back to the chat, which sends them as the next turn.
+			AISession.clear_notes(self.session_id)
 			for key, token in self.held_locks:
 				locks.release(key, token)
 			self.held_locks = []
@@ -1303,10 +1356,17 @@ class AgentRunner:
 				if round_index and self.is_cancelled():
 					raise CancelledError
 				self.refresh_cache_markers(messages)
-				tool_operations, summary_text, raw_tool_calls = self.call_tool_llm(messages)
+				try:
+					tool_operations, summary_text, raw_tool_calls = self.call_tool_llm(messages)
+				except NotesSentNow:
+					self.read_notes(messages)
+					continue
 				self.record_round(round_index, tool_operations, summary_text)
 
 				if not tool_operations:
+					if self.ran_out_of_room(summary_text):
+						messages.append({"role": "user", "content": OUT_OF_ROOM_NUDGE})
+						continue
 					self.stop_reason = "model_finished"
 					break
 
@@ -1339,6 +1399,7 @@ class AgentRunner:
 					self.checkpoint()
 					break
 				self.flush_pending_images(messages)
+				self.read_notes(messages)
 				self.checkpoint()
 			else:
 				# Loop ran the full MAX_ROUNDS without the model finishing — a very large
@@ -1357,6 +1418,13 @@ class AgentRunner:
 			return
 
 		self.finish_turn(summary_text, started)
+
+	def ran_out_of_room(self, text: str) -> bool:
+		"""The step hit max_tokens before saying or calling anything."""
+		if text or self.finish_reasons[-1:] != ["length"] or self.out_of_room_nudges >= OUT_OF_ROOM_NUDGES:
+			return False
+		self.out_of_room_nudges += 1
+		return True
 
 	def turn_reply(self, ops: list[dict], results: list[str]) -> str:
 		"""The reply that ends the turn now, if any: never while a page generated this
@@ -1462,6 +1530,7 @@ class AgentRunner:
 			"debug": {
 				"stopReason": self.stop_reason or "model_finished",
 				"loopModel": self.loop_model,
+				"effort": self.effort.level,
 				"rounds": len(self.trace),
 				"argsRepaired": self.args_repaired,
 				"finishReasons": self.finish_reasons,

@@ -3,6 +3,7 @@ import builderTokens from "@/data/builderToken";
 import { type AIChatHandlers, attachAIChatListeners, detachAIChatListeners } from "@/components/ai/realtime";
 import { type AffectedItems, type PageCanvas, ToolDispatcher } from "@/components/ai/toolDispatch";
 import { type Credits, creditsFor } from "@/components/ai/commands/shared";
+import { contextUsageOf } from "@/components/ai/contextUsage";
 import type { AIProvider, AITurnStep, ChatMessage } from "@/components/ai/types";
 import { buildLocalMessage } from "@/components/ai/blockFields";
 import type BuilderCanvas from "@/components/BuilderCanvas.vue";
@@ -46,6 +47,9 @@ export class AIChatController {
 
 	readonly sessionId = ref("");
 	readonly messages = ref<ChatMessage[]>([]);
+	readonly contextUsage = computed(() =>
+		contextUsageOf(this.messages.value.findLast((m) => m.metadata?.debug)?.metadata?.debug),
+	);
 	readonly isLoadingSession = ref(false);
 	// only the newest load may commit; older responses are stale
 	private loadSessionEpoch = 0;
@@ -73,6 +77,7 @@ export class AIChatController {
 	readonly sessions = ref<Array<{ name: string; title: string | null }>>([]);
 	readonly availableModels = ref<AIProvider[]>([]);
 	readonly selectedModel = useLocalStorage("ai-selected-model", "");
+	readonly selectedEffort = useLocalStorage("ai-thinking-effort", "");
 
 	/** While a build stream owns this page's canvas, the editor's autosave stands
 	 * down — persisting the partial preview is how a mid-build refresh (or an
@@ -272,6 +277,7 @@ export class AIChatController {
 			onError: this.onError,
 			onStep: this.onStep,
 			onRefetch: this.onRefetch,
+			onNote: this.onNote,
 		};
 	}
 
@@ -290,6 +296,7 @@ export class AIChatController {
 		this.dispatcher.reset();
 		this.isSubmitting.value = false;
 		this.isCancelling.value = false;
+		this.releaseNotes(false);
 	}
 
 	private clearTurnTimers() {
@@ -664,6 +671,7 @@ export class AIChatController {
 		this.clearStreamRenderTimer();
 		this.endCanvasBuild(this.previewUnconfirmed);
 		this.previewUnconfirmed = false;
+		const wasCancelled = this.isCancelling.value;
 		this.isSubmitting.value = false;
 		this.isCancelling.value = false;
 		this.progressMessage.value = data.message || "Done";
@@ -714,6 +722,7 @@ export class AIChatController {
 			this.progressMessage.value = "";
 			this.pendingAssistantId.value = null;
 		}, 1200);
+		this.releaseNotes(!wasCancelled);
 	};
 
 	onError = async (data: { message?: string; session_id?: string }) => {
@@ -731,6 +740,7 @@ export class AIChatController {
 		this.liveSteps.value = [];
 		await this.loadSession();
 		this.pendingAssistantId.value = null;
+		this.releaseNotes(false);
 	};
 
 	/** The agent composed a UI card (present_ui) — one generic renderer (AIUISpec)
@@ -771,6 +781,7 @@ export class AIChatController {
 		// Backend persists+commits clarify messages before emitting, so this is race-free.
 		await this.loadSession();
 		this.scrollToBottom();
+		this.releaseNotes(false);
 	};
 
 	// --- user actions -----------------------------------------------------
@@ -823,6 +834,67 @@ export class AIChatController {
 	 * cancelled `complete` event lands only after the next chunk + a round trip,
 	 * so we show "Cancelling" locally right away for instant feedback; that event
 	 * (or onError/onClarify) clears isCancelling when the turn actually ends. */
+	/** What the user sent while a turn ran, until the loop reads it in. */
+	readonly queuedNotes = ref<string[]>([]);
+
+	/** Send the composer to the running turn, which reads it in at its next round. With
+	 * `now`, the turn drops the step it is on and reads every queued note straight away. */
+	steer = async (now = false) => {
+		const text = this.prompt.value.trim();
+		if (!this.sessionId.value || !(text || (now && this.queuedNotes.value.length))) return;
+		this.prompt.value = "";
+		if (text) this.queuedNotes.value.push(text);
+		const res: { status?: string } | null = await createResource({ url: "builder.ai.api.steer" })
+			.submit({ session_id: this.sessionId.value, prompt: text, now })
+			.catch(() => null);
+		// the turn ended before the note landed, so it goes out as the next turn
+		if (res?.status === "not_running" && !this.isSubmitting.value) this.releaseNotes(true);
+	};
+
+	/** Pull the notes Bob hasn't read yet back into the composer, ahead of the draft. A
+	 * note it already read stays in the chat: the server only hands back unread ones. */
+	takeBackNotes = async () => {
+		if (!this.sessionId.value) return;
+		const res: { notes?: string[] } | null = await createResource({ url: "builder.ai.api.take_back_notes" })
+			.submit({ session_id: this.sessionId.value })
+			.catch(() => null);
+		const notes = res?.notes ?? [];
+		for (const note of notes) {
+			const at = this.queuedNotes.value.indexOf(note);
+			if (at !== -1) this.queuedNotes.value.splice(at, 1);
+		}
+		this.prompt.value = [...notes, this.prompt.value.trim()].filter(Boolean).join("\n\n");
+	};
+
+	/** What the user typed in this chat, newest first, for Up in the composer. */
+	readonly sentPrompts = computed(() =>
+		this.messages.value
+			.filter((m) => m.role === "user" && !m.metadata?.displayText)
+			.map((m) => m.content.trim())
+			.filter((text, i, all) => text && text !== all[i - 1])
+			.reverse(),
+	);
+
+	onNote = (data: { text?: string; session_id?: string }) => {
+		if (this.isForeignSession(data) || !data.text) return;
+		const queued = this.queuedNotes.value.indexOf(data.text);
+		if (queued !== -1) this.queuedNotes.value.splice(queued, 1);
+		// before the turn's reply, where the server saved it
+		const reply = this.messages.value.findIndex((m) => m.id === this.pendingAssistantId.value);
+		const at = reply === -1 ? this.messages.value.length : reply;
+		this.messages.value.splice(at, 0, buildLocalMessage("user", data.text));
+	};
+
+	/** Notes the turn ended without reading: sent as the next turn, or put back in the
+	 * composer when the turn stopped for the user (cancel, error, a question card). */
+	private releaseNotes(send: boolean) {
+		if (!this.queuedNotes.value.length) return;
+		const text = this.queuedNotes.value.join("\n\n");
+		this.queuedNotes.value = [];
+		this.prompt.value = [text, this.prompt.value.trim()].filter(Boolean).join("\n\n");
+		if (send) this.submitPrompt();
+	}
+
 	cancel = async () => {
 		if (!this.sessionId.value && this.liveSend) {
 			// the turn's session isn't known yet; cancel it the moment run names it
@@ -919,6 +991,7 @@ export class AIChatController {
 					...(attachedImageData ? { image_data: attachedImageData } : {}),
 					...(displayText ? { display_text: displayText } : {}),
 					canvas_theme: this.builderStore.canvasDarkMode ? "dark" : "light",
+					...(this.selectedEffort.value ? { effort: this.selectedEffort.value } : {}),
 				}),
 			}).submit();
 			if (!stillOwned()) return;

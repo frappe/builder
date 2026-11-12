@@ -130,15 +130,15 @@ class AISession:
 		return list(dict.fromkeys(written))
 
 	@classmethod
-	def latest_canvas_theme(cls, session_id: str) -> str | None:
-		"""The editor theme the user's latest message was sent from."""
+	def latest_turn_metadata(cls, session_id: str) -> dict:
+		"""What the user's latest message was sent with: editor theme, thinking effort."""
 		metadata_json = frappe.db.get_value(
 			cls.MESSAGE_DOCTYPE,
 			{"session": session_id, "role": "user"},
 			"metadata_json",
 			order_by="creation desc",
 		)
-		return cls.load_metadata(metadata_json).get("canvasTheme")
+		return cls.load_metadata(metadata_json)
 
 	@staticmethod
 	def row_to_message(row: dict) -> dict:
@@ -355,10 +355,10 @@ class AISession:
 	# instead of bricking the session until someone edits the row.
 
 	@staticmethod
-	def start_run(session_id: str) -> str | None:
+	def start_run(session_id: str, ttl: int = locks.SESSION_LOCK_TTL) -> str | None:
 		"""Try to claim this session's turn slot. Returns the release token, or None
 		when another turn is still running."""
-		return locks.acquire(locks.session_key(session_id), locks.SESSION_LOCK_TTL)
+		return locks.acquire(locks.session_key(session_id), ttl)
 
 	@staticmethod
 	def end_run(session_id: str, token: str | None) -> None:
@@ -367,6 +367,49 @@ class AISession:
 	@classmethod
 	def is_session_running(cls, session_id: str) -> bool:
 		return bool(session_id) and locks.held(locks.session_key(session_id))
+
+	# --- notes (what the user sends while a turn runs) ---------------------
+
+	@staticmethod
+	def notes_key(session_id: str) -> str:
+		return f"builder_ai_notes:{session_id}"
+
+	@classmethod
+	def queue_note(cls, session_id: str, text: str) -> None:
+		frappe.cache.rpush(cls.notes_key(session_id), text)
+
+	@classmethod
+	def pop_notes(cls, session_id: str | None) -> list[str]:
+		"""Queued notes, oldest first. Popped one by one, so a note sent mid-drain
+		waits for the next round instead of being lost."""
+		if not session_id:
+			return []
+		frappe.cache.delete_value(cls.notes_now_key(session_id))
+		notes = []
+		while note := frappe.cache.lpop(cls.notes_key(session_id)):
+			notes.append(note.decode())
+		return notes
+
+	@classmethod
+	def clear_notes(cls, session_id: str | None) -> None:
+		if session_id:
+			frappe.cache.delete_value([cls.notes_key(session_id), cls.notes_now_key(session_id)])
+
+	@staticmethod
+	def notes_now_key(session_id: str) -> str:
+		return f"builder_ai_notes_now:{session_id}"
+
+	@classmethod
+	def send_notes_now(cls, session_id: str) -> None:
+		"""Ask the running turn to drop the step it is on and read its notes straight away."""
+		frappe.cache.set_value(cls.notes_now_key(session_id), 1, expires_in_sec=locks.SESSION_LOCK_TTL)
+
+	@classmethod
+	def notes_wanted_now(cls, session_id: str | None) -> bool:
+		# set from a web worker and read from the job, so skip the per-request local cache
+		return bool(session_id) and bool(
+			frappe.cache.get_value(cls.notes_now_key(session_id), use_local_cache=False)
+		)
 
 	# --- lifecycle --------------------------------------------------------
 

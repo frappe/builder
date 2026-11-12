@@ -305,6 +305,25 @@
 					</span>
 				</div>
 			</Transition>
+			<div
+				v-for="(note, i) in queuedNotes"
+				:key="i"
+				class="mb-2 flex items-center gap-2 rounded-5 bg-surface-gray-2 px-2.5 py-1.5 text-p-xs text-ink-gray-6">
+				<span class="lucide-clock size-3.5 shrink-0" />
+				<span class="flex-1 truncate">{{ note }}</span>
+				<span class="shrink-0 text-ink-gray-4">Bob reads this next</span>
+				<Tooltip v-if="i === queuedNotes.length - 1">
+					<template #content>
+						<span class="flex items-center gap-1.5">
+							Stop the step Bob is on and read this now
+							<KeyboardShortcut combo="Mod+Enter" class="!text-xs !text-ink-gray-4" />
+						</span>
+					</template>
+					<button class="shrink-0 font-medium underline underline-offset-2" @click="sendNotesNow">
+						Send now
+					</button>
+				</Tooltip>
+			</div>
 			<!-- Say it before a prompt is typed, not after the send fails on the server. -->
 			<div
 				v-if="selectedModelUnusable"
@@ -343,10 +362,14 @@
 					size="md"
 					:rows="1"
 					class="no-scrollbar max-h-60 min-h-14 resize-none placeholder-ink-gray-4 disabled:border-0 disabled:bg-transparent"
-					:disabled="isSubmitting || !isEditingPage"
+					:disabled="!isEditingPage"
 					:placeholder="composerPlaceholder"
 					@keydown="menu.onKeydown"
-					@keydown.enter.exact="onEnter" />
+					@keydown.enter.exact="onEnter"
+					@keydown.enter.ctrl.exact="onSendNow"
+					@keydown.enter.meta.exact="onSendNow"
+					@keydown.up.exact="onArrow"
+					@keydown.down.exact="onArrow" />
 				<div class="flex items-center gap-0.5 p-1.5">
 					<Button
 						variant="ghost"
@@ -363,14 +386,24 @@
 						:label="modelLabel"
 						class="min-w-0 !shrink"
 						@click="menu.open(modelLevel(bob))" />
+					<Button
+						variant="ghost"
+						size="xs"
+						:icon="selectedEffort ? undefined : 'lucide-brain'"
+						:icon-left="selectedEffort ? 'lucide-brain' : undefined"
+						:label="selectedEffort ? effortLabel(selectedEffort) : undefined"
+						tooltip="Thinking effort"
+						class="shrink-0"
+						@click="menu.open(effortLevel(bob))" />
 					<Tooltip v-if="credits" :text="credits.spent === null ? '' : `${money(credits.spent)} spent`">
 						<Badge variant="subtle" :theme="creditsTheme(credits)" :label="creditsLabel(credits)" />
 					</Tooltip>
+					<span class="flex-1" />
+					<AIContextMeter v-if="contextUsage" :usage="contextUsage" />
 					<Button
 						v-if="isSubmitting"
 						variant="solid"
 						icon="lucide-square"
-						class="ml-auto"
 						:loading="isCancelling"
 						:tooltip="isCancelling ? 'Cancelling…' : 'Cancel generation'"
 						@click="chat.cancel" />
@@ -381,12 +414,7 @@
 								<KeyboardShortcut combo="Enter" class="!text-xs !text-ink-gray-4" />
 							</span>
 						</template>
-						<Button
-							variant="solid"
-							icon="lucide-arrow-up"
-							class="ml-auto"
-							:disabled="!canSubmit"
-							@click="submitPrompt" />
+						<Button variant="solid" icon="lucide-arrow-up" :disabled="!canSubmit" @click="submitPrompt" />
 					</Tooltip>
 				</div>
 				<AICommandMenu v-if="menuOpen" :menu="menu" />
@@ -414,11 +442,14 @@
 import AIAffectedItems from "@/components/AIAffectedItems.vue";
 import AIPluginCard from "@/components/ai/AIPluginCard.vue";
 import AICommandMenu from "@/components/ai/AICommandMenu.vue";
+import AIContextMeter from "@/components/ai/AIContextMeter.vue";
 import AITurnTimeline from "@/components/ai/AITurnTimeline.vue";
 import { registerBobCommands } from "@/components/ai/bobCommands";
 import { useCommandMenu } from "@/components/ai/commandMenu";
 import { connectLevel } from "@/components/ai/commands/connect";
+import { effortLabel, effortLevel } from "@/components/ai/commands/effort";
 import { modelLevel } from "@/components/ai/commands/models";
+import { caretAtEdge, usePromptHistory } from "@/components/ai/promptHistory";
 import { providersLevel } from "@/components/ai/commands/providers";
 import { type BobContext, creditsLabel, creditsTheme, money } from "@/components/ai/commands/shared";
 import AIUISpec from "@/components/ai/AIUISpec.vue";
@@ -440,6 +471,7 @@ import { computed, nextTick, onMounted, onUnmounted, ref, watch } from "vue";
 const chat = new AIChatController();
 
 const { prompt, isSubmitting, isCancelling, messages, modelLabel, canSubmit, credits } = chat;
+const { selectedEffort, contextUsage, queuedNotes, sentPrompts } = chat;
 const { isEditingPage } = chat;
 const { selectedModelUnusable } = chat;
 const { progressMessage } = chat;
@@ -796,11 +828,12 @@ onUnmounted(registerBobCommands(bob));
 // runs the open level's cleanup, like a sign-in still polling
 onUnmounted(menu.close);
 
-const composerPlaceholder = computed(() =>
-	menuLevel.value && !menuLevel.value.input
-		? "Type to filter"
-		: "Ask to create or edit this page, or type / for commands",
-);
+const composerPlaceholder = computed(() => {
+	if (menuLevel.value && !menuLevel.value.input) return "Type to filter";
+	if (isSubmitting.value && queuedNotes.value.length) return "Press ↑ to edit what Bob hasn't read";
+	if (isSubmitting.value) return "Tell Bob something while it works";
+	return "Ask to create or edit this page, or type / for commands";
+});
 
 // a key or URL is typed into a field inside the menu; hand focus back after
 watch(menuLevel, (level) => {
@@ -810,7 +843,8 @@ watch(menuLevel, (level) => {
 const submitPrompt = () => {
 	// while the menu is open, the prompt is a "/" command or a filter, not a message
 	if (menuOpen.value) return;
-	chat.submitPrompt();
+	if (isSubmitting.value) chat.steer();
+	else chat.submitPrompt();
 };
 
 // Enter sends. Shift+Enter is the textarea default (newline), .exact skips it.
@@ -818,6 +852,32 @@ const onEnter = (event: KeyboardEvent) => {
 	if (event.isComposing) return;
 	event.preventDefault();
 	submitPrompt();
+};
+
+const sendNotesNow = () => chat.steer(true);
+
+// Mod+Enter while Bob works sends the draft and every queued note straight away
+const onSendNow = (event: KeyboardEvent) => {
+	if (event.isComposing || event.defaultPrevented) return;
+	event.preventDefault();
+	if (isSubmitting.value) sendNotesNow();
+	else submitPrompt();
+};
+
+const history = usePromptHistory(prompt, () => sentPrompts.value);
+
+// Up first takes back what Bob hasn't read yet, then steps through earlier prompts
+const onArrow = (event: KeyboardEvent) => {
+	const el = event.target;
+	if (event.isComposing || event.defaultPrevented || menuOpen.value) return;
+	if (!(el instanceof HTMLTextAreaElement)) return;
+	const up = event.key === "ArrowUp";
+	if (up && queuedNotes.value.length && caretAtEdge(el, true)) {
+		event.preventDefault();
+		chat.takeBackNotes();
+	} else if (history.step(up, el)) {
+		event.preventDefault();
+	}
 };
 
 const messageContainer = ref<HTMLElement | null>(null);
