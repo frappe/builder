@@ -359,7 +359,7 @@ def complete_with_tools(
 	)
 	import litellm
 
-	resp = litellm.completion(
+	request = dict(
 		model=model,
 		messages=messages,
 		tools=tools,
@@ -374,4 +374,18 @@ def complete_with_tools(
 		**overrides,
 		**params,
 	)
-	return resp
+	try:
+		return litellm.completion(**request)
+	except litellm.NotFoundError as exc:
+		if not (
+			model.startswith("openai/")
+			and overrides.get("api_base")
+			and params.get("reasoning_effort")
+			and "does not serve /v1/responses" in str(exc)
+		):
+			raise
+		# LiteLLM bridges reasoning + function tools to Responses, which some
+		# chat-compatible gateways cannot serve. Keep reasoning when they can.
+		logger.warning("Gateway does not serve Responses; retrying the tool call without reasoning effort")
+		request.pop("reasoning_effort")
+		return litellm.completion(**request)
