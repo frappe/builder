@@ -499,9 +499,18 @@ export class AIChatController {
 	onProgress = (data: { message?: string; session_id?: string }) => {
 		if (this.holdUntilSessionKnown(data, () => this.onProgress(data))) return;
 		if (this.isForeignSession(data)) return;
+		this.ensureTurnBubble();
 		this.isSubmitting.value = true;
 		this.progressMessage.value = data.message || this.progressMessage.value;
 	};
+
+	/** A turn the server started by itself (the next approved page to build) has no
+	 * bubble yet, and the last one's was replaced by its session reload. */
+	private ensureTurnBubble() {
+		const id = this.pendingAssistantId.value;
+		if (id && this.messages.value.some((m) => m.id === id)) return;
+		this.beginResumedTurn();
+	}
 
 	/** One timeline entry, upserted by id: the model thinking, a tool running, or the
 	 * narration it wrote before moving on. A "text" step is also the signal that the
@@ -510,6 +519,7 @@ export class AIChatController {
 	onStep = (data: AITurnStep & { session_id?: string }) => {
 		if (this.holdUntilSessionKnown(data, () => this.onStep(data))) return;
 		if (this.isForeignSession(data) || typeof data.id !== "number") return;
+		this.ensureTurnBubble();
 		this.isSubmitting.value = true;
 		const { session_id, page_id, ...step } = data as Record<string, any>;
 		if (step.kind === "text") this.summaryContent.value = "";
@@ -533,14 +543,21 @@ export class AIChatController {
 		});
 	}
 
+	/** Canvas events name the page they change; this canvas only takes its own. */
+	private isOtherPage(data: { page_id?: string }): boolean {
+		return !!data.page_id && data.page_id !== this.pageId.value;
+	}
+
 	onStream = (data: {
 		chunk?: string;
 		kind?: string;
 		session_id?: string;
+		page_id?: string;
 		blocks?: BlockOptions[];
 		replace?: boolean;
 	}) => {
 		if (!data.chunk && !data.replace && !data.blocks) return;
+		if (data.kind === "page_blocks" && this.isOtherPage(data)) return;
 		if (this.holdUntilSessionKnown(data, () => this.onStream(data))) return;
 		if (this.isForeignSession(data)) {
 			// Another chat on this page is generating: the canvas is page-level, so
@@ -592,8 +609,10 @@ export class AIChatController {
 
 	onToolBatch = (data: {
 		session_id?: string;
+		page_id?: string;
 		operations?: Array<{ tool_name: string; args: Record<string, any> }>;
 	}) => {
+		if (this.isOtherPage(data)) return;
 		// Cancel any pending throttled stream render so it can't fire AFTER and clobber
 		// the authoritative apply below with stale partial YAML.
 		this.clearStreamRenderTimer();
@@ -707,8 +726,10 @@ export class AIChatController {
 			this.sessionId.value === completedSession &&
 			(localMeta.affectedBlocks?.length || localMeta.affectedScripts?.length)
 		) {
+			// the turn's reply, not a confirm card it left after it
+			const isReply = (m?: ChatMessage) => m?.role === "assistant" && m.metadata?.status !== "pending_action";
 			let idx = this.messages.value.length - 1;
-			while (idx >= 0 && this.messages.value[idx]?.role !== "assistant") idx--;
+			while (idx >= 0 && !isReply(this.messages.value[idx])) idx--;
 			if (idx >= 0) {
 				this.messages.value[idx] = {
 					...this.messages.value[idx],
@@ -806,7 +827,9 @@ export class AIChatController {
 				method: "POST",
 			}).submit({ message_id: message.id, decision });
 			await this.loadSession();
-			if (decision === "apply") toast.success(res?.message || "Applied");
+			// a page card's outcome lists itself in the chat, page by page
+			if (decision === "apply" && !res?.pages) toast.success(res?.message || "Applied");
+			this.scrollToBottom();
 			if (res?.resumed && !this.isSubmitting.value) this.beginResumedTurn();
 		} catch (e: any) {
 			toast.error(e?.messages?.[0] || "Could not apply the change");

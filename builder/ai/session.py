@@ -329,10 +329,11 @@ class AISession:
 
 	def update_last_assistant_metadata(self, extra_metadata: dict):
 		"""Merge extra_metadata into the most recent assistant message's
-		metadata_json. One-row UPDATE — no read-modify-write of a giant blob."""
+		metadata_json. One-row UPDATE, no read-modify-write of a giant blob.
+		A confirm card the turn left after its reply is not that message."""
 		row = frappe.db.get_value(
 			self.MESSAGE_DOCTYPE,
-			{"session": self._doc.name, "role": "assistant"},
+			{"session": self._doc.name, "role": "assistant", "status": ("!=", "pending_action")},
 			["name", "metadata_json"],
 			order_by="creation desc",
 			as_dict=True,

@@ -99,6 +99,7 @@ def build_default_registry() -> ToolRegistry:
 		generate,
 		images,
 		memory,
+		pages,
 		plugins,
 		preview,
 		python,
@@ -112,6 +113,7 @@ def build_default_registry() -> ToolRegistry:
 	registry = ToolRegistry()
 	registry.extend(generate.TOOLS)
 	registry.extend(blocks.TOOLS)
+	registry.extend(pages.TOOLS)
 	registry.extend(query.TOOLS)
 	registry.extend(scripts.TOOLS)
 	registry.extend(conversation.TOOLS)

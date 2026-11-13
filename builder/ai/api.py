@@ -151,8 +151,6 @@ def confirm_pending_settings(message_id: str, decision: str = "apply"):
 	payload off the pending-action message and dispatches to apply_pending_action."""
 	from builder.ai.agent.pending import apply_pending_action
 
-	if not frappe.has_permission("Builder Settings", "write"):
-		frappe.throw(_("You are not permitted to apply this change"), frappe.PermissionError)
 	if not message_id or not frappe.db.exists(AISession.MESSAGE_DOCTYPE, message_id):
 		frappe.throw(_("Pending action not found"))
 
@@ -162,15 +160,22 @@ def confirm_pending_settings(message_id: str, decision: str = "apply"):
 		frappe.throw(_("This action does not belong to you"), frappe.PermissionError)
 	if msg.status != "pending_action":
 		frappe.throw(_("No pending action on this message"))
+	meta = AISession.load_metadata(msg.metadata_json)
+	# Page changes check each page's own permission as they apply.
+	on_pages = meta.get("kind") == "page_changes"
+	if not on_pages and not frappe.has_permission("Builder Settings", "write"):
+		frappe.throw(_("You are not permitted to apply this change"), frappe.PermissionError)
 
 	if decision != "apply":
 		frappe.db.set_value(AISession.MESSAGE_DOCTYPE, message_id, "status", "action_skipped")
 		outcome = "Skipped. Nothing was changed."
 		AISession.try_append_message(msg.session, "assistant", outcome, message_type="status")
-		resumed = resume_after_action(msg.session, outcome)
+		# Nothing waits on a page card: it comes once the turn's work is done.
+		resumed = not on_pages and resume_after_action(msg.session, outcome)
 		return {"status": "skipped", "resumed": resumed}
 
-	meta = AISession.load_metadata(msg.metadata_json)
+	if on_pages:
+		return confirm_page_changes(msg, meta.get("payload") or {})
 	result = apply_pending_action(meta.get("kind"), meta.get("payload") or {})
 	frappe.db.set_value(AISession.MESSAGE_DOCTYPE, message_id, "status", "action_applied")
 	# The OUTCOME becomes part of the conversation — visible in the chat after a
@@ -178,6 +183,23 @@ def confirm_pending_settings(message_id: str, decision: str = "apply"):
 	AISession.try_append_message(msg.session, "assistant", result, message_type="status")
 	resumed = resume_after_action(msg.session, result)
 	return {"status": "applied", "message": result, "resumed": resumed}
+
+
+def confirm_page_changes(msg, payload: dict) -> dict:
+	"""Apply a page card. The outcome lists every page on its own, and new pages are
+	built next, one turn each, with the chat staying on the page it belongs to."""
+	from builder.ai.agent.page_changes import apply_page_changes
+
+	if AISession.is_session_running(msg.session):
+		frappe.throw(_("Bob is still working. Apply this once the current reply is done."))
+	outcome, pages = apply_page_changes(payload)
+	frappe.db.set_value(AISession.MESSAGE_DOCTYPE, msg.name, "status", "action_applied")
+	AISession.try_append_message(
+		msg.session, "assistant", outcome, message_type="status", metadata={"pages": pages}
+	)
+	builds = [p for p in pages if p["status"] == "created"]
+	resumed = bool(builds) and queue_page_build(msg.session, builds)
+	return {"status": "applied", "message": outcome, "pages": pages, "resumed": resumed}
 
 
 def resume_after_action(session_id: str, outcome: str) -> bool:
@@ -189,9 +211,32 @@ def resume_after_action(session_id: str, outcome: str) -> bool:
 	"""
 	if AISession.is_session_running(session_id):
 		return False
+	# run_agent_job does not persist its prompt, so no phantom "continue" in the chat
+	return continue_session(
+		session_id, f"{outcome}\n\nContinue with what you were doing. Do not repeat this step."
+	)
+
+
+def queue_page_build(session_id: str, builds: list[dict], user: str | None = None) -> bool:
+	"""Build the first of the approved new pages off-screen; its turn hands on the rest."""
+	page = builds[0]
+	prompt = (
+		f"The user approved the new page “{page['title']}” ({page['route']}). It now exists and is "
+		"empty. Build it now: it is your working page this turn. They already said yes, so don't ask "
+		"anything first and keep its title and route; read the site pages you need to match, then "
+		"build it from the brief you "
+		f"proposed:\n{page.get('brief') or '(no brief, use the conversation)'}\n\n"
+		"Finish with a short summary of what you built."
+	)
+	return continue_session(session_id, prompt, page_id=page["page_id"], next_builds=builds[1:], user=user)
+
+
+def continue_session(session_id: str, prompt: str, page_id: str | None = None, **job) -> bool:
+	"""Queue a turn the server starts itself, on the session's model and effort. The
+	chat stays on the session's page; `page_id` is the page that turn works on."""
 	try:
-		page_id, model = frappe.db.get_value(AISession.DOCTYPE, session_id, ["page", "selected_model"])
-		if not page_id:
+		open_page, model = frappe.db.get_value(AISession.DOCTYPE, session_id, ["page", "selected_model"])
+		if not open_page:
 			return False
 		resolved_model = ModelRegistry.get_default(model or "openrouter")
 		# A job that can't find its key fails out of sight, so check before queueing it.
@@ -202,19 +247,20 @@ def resume_after_action(session_id: str, outcome: str) -> bool:
 			run_agent_job,
 			queue="default",
 			timeout=thinking.job_timeout,
-			# run_agent_job does not persist its prompt, so no phantom "continue" in the chat
-			prompt=f"{outcome}\n\nContinue with what you were doing. Do not repeat this step.",
+			prompt=prompt,
 			model=resolved_model,
-			user=frappe.session.user,
-			page_id=page_id,
+			user=job.pop("user", None) or frappe.session.user,
+			page_id=page_id or open_page,
+			open_page_id=open_page,
 			session_id=session_id,
 			canvas_theme=turn.get("canvasTheme"),
 			effort=thinking.level,
 			enqueue_after_commit=True,
+			**job,
 		)
 		return True
 	except Exception:
-		logger.warning(f"could not resume session {session_id} after a confirmed action", exc_info=True)
+		logger.warning(f"could not continue session {session_id}", exc_info=True)
 		return False
 
 

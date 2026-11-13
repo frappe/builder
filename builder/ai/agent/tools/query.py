@@ -26,7 +26,9 @@ def read_open_block(ctx, ref: str, show_image: bool) -> str:
 	return result
 
 
-MAX_PAGE_READS_PER_TURN = 3  # each read is thousands of tokens — bound a sweep of the whole site
+# each read is thousands of tokens: bound a sweep of the whole site, yet leave room
+# to read every page a site-wide edit (a footer on each page) has to touch
+MAX_PAGE_READS_PER_TURN = 6
 
 
 def resolve_page_reference(ref: str) -> tuple[str | None, str]:
@@ -78,24 +80,29 @@ def run_read_page(ctx, args: dict) -> str:
 	if page_id == ctx.page_id:
 		parts = [ctx.build_page_context(), render_scripts(page_id), ctx.build_skill_context()]
 		return "\n\n".join(part for part in parts if part) or "The open page has no blocks yet."
-	if ctx.page_read_count >= MAX_PAGE_READS_PER_TURN:
-		return "Page-read limit reached for this turn — work with the references you have."
-	ctx.page_read_count += 1
+	edits = getattr(ctx, "page_changes", None)
+	held = edits.tree_of(page_id) if edits else None
+	if held is None:
+		if ctx.page_read_count >= MAX_PAGE_READS_PER_TURN:
+			return "Page-read limit reached for this turn: work with the references you have."
+		ctx.page_read_count += 1
 
 	from builder.ai.page_writer import load_page_root
 
 	title, route = frappe.db.get_value("Builder Page", page_id, ["page_title", "route"])
 	label = f"Page '{title or page_id}' (route: {route})"
-	root = load_page_root(page_id)
+	root = held.root if held else load_page_root(page_id)
 	if root is None:
 		return f"{label} has no blocks yet."
 	components = render_components(root)
 	fonts_missing = font_warning(root)
 	digest = design_digest(root)
 	prefix = "abcdefgh"[(ctx.page_read_count - 1) % 8]
+	pending = " It includes the edits you prepared for it this turn." if held else ""
 	parts = [
-		f"{label}: READ-ONLY reference; its refs are NOT editable from here.",
-		render_reference(root, digest, prefix, getattr(ctx, "style_sets", None)),
+		f"{label}: another page of this site. To change it, edit_page(page='{page_id}') with these "
+		f"refs; such edits wait for the user's OK.{pending}",
+		render_reference(root, digest, prefix, getattr(ctx, "style_sets", None), markup.short_refs(root)),
 	]
 	if fonts_missing:
 		parts.append(fonts_missing)
@@ -120,15 +127,17 @@ OUTLINE_LIMIT = 20_000  # a reference outline is for rhythm, not coverage — bo
 SCRIPT_LIMIT = 4_000  # per attached script
 
 
-def render_reference(root: dict, digest: str, prefix: str, sets: dict | None = None) -> str:
+def render_reference(
+	root: dict, digest: str, prefix: str, sets: dict | None = None, refs: dict | None = None
+) -> str:
 	"""Digest + structure. The digest leads so the design language survives even
 	when the tree is big and only the outline ships. Style sets get the read's own
 	prefix ($a1, $b1) so an edit can reuse a reference's sets by name."""
 	digest = f"Design digest (base styles, with use counts):\n{digest}"
-	full = markup.dump_block(root, set_prefix=prefix, sets=sets)
+	full = markup.dump_block(root, refs=refs, set_prefix=prefix, sets=sets)
 	if len(full) <= REFERENCE_FULL_LIMIT:
 		return f"{digest}\n\nFull structure and styles (page markup):\n{full}"
-	outline = markup.dump_block(root, styles=False, max_text=60)
+	outline = markup.dump_block(root, refs=refs, styles=False, max_text=60)
 	if len(outline) > OUTLINE_LIMIT:
 		kept = outline[:OUTLINE_LIMIT].rsplit("\n", 1)[0]
 		dropped = outline.count("\n") - kept.count("\n")

@@ -106,6 +106,11 @@
 								v-if="assistantText(message)"
 								class="ai-prose prose prose-sm max-w-none break-words text-p-sm"
 								v-html="renderMarkdown(assistantText(message))" />
+							<!-- how each page came out: applied from a card, or built off-screen -->
+							<AIPageList
+								v-if="message.metadata?.pages?.length"
+								:rows="resultRows(message.metadata.pages)"
+								:class="assistantText(message) && 'mt-2'" />
 							<div v-if="cardPlugins(message).length" class="mt-2 flex flex-col gap-2">
 								<AIPluginCard v-for="plugin in cardPlugins(message)" :key="plugin" :plugin="plugin" />
 							</div>
@@ -188,22 +193,38 @@
 							<p class="mt-1 text-p-sm leading-snug text-ink-gray-8">
 								{{ pendingPreview(message.metadata) }}
 							</p>
+							<AIPageList
+								v-if="message.metadata?.kind === 'page_changes'"
+								:rows="proposedRows(message.metadata.payload)"
+								class="mt-3" />
 							<div v-if="message.id === lastMessageId" class="mt-3 flex gap-2">
 								<Button
 									variant="solid"
 									size="sm"
 									:loading="confirmingAction"
+									:disabled="isSubmitting"
 									@click="confirmPendingAction(message, 'apply')">
-									{{ applyLabel(message.metadata?.kind) }}
+									{{ applyLabel(message.metadata) }}
 								</Button>
 								<Button
 									variant="subtle"
 									size="sm"
-									:disabled="confirmingAction"
+									:disabled="confirmingAction || isSubmitting"
 									@click="confirmPendingAction(message, 'skip')">
 									Skip
 								</Button>
 							</div>
+						</div>
+						<!-- an answered page card keeps what it proposed; the outcome below says how it went -->
+						<div
+							v-if="
+								message.metadata?.kind === 'page_changes' && message.metadata?.status !== 'pending_action'
+							"
+							class="mt-2 w-full">
+							<p class="text-p-xs text-ink-gray-5">
+								{{ message.metadata.status === "action_skipped" ? "You skipped these" : "You applied these" }}
+							</p>
+							<AIPageList :rows="proposedRows(message.metadata.payload)" class="mt-2" />
 						</div>
 						<!-- Agent-composed UI card (present_ui) -->
 						<AIUISpec
@@ -440,6 +461,8 @@
 
 <script setup lang="ts">
 import AIAffectedItems from "@/components/AIAffectedItems.vue";
+import AIPageList from "@/components/ai/AIPageList.vue";
+import { applyPagesLabel, proposedRows, resultRows } from "@/components/ai/pageChanges";
 import AIPluginCard from "@/components/ai/AIPluginCard.vue";
 import AICommandMenu from "@/components/ai/AICommandMenu.vue";
 import AIContextMeter from "@/components/ai/AIContextMeter.vue";
@@ -562,6 +585,14 @@ function pendingPreview(m: Record<string, any>): string {
 			return `Update site-wide code (${Object.keys(p).join(", ")}). This loads on every page.`;
 		case "home_page":
 			return `Make “/${String(p.route || "").replace(/^\//, "")}” the site's home page.`;
+		case "page_changes": {
+			const creates = p.new_pages?.length || 0;
+			if (!creates) return "Change these pages? Nothing on them changes until you apply.";
+			if (p.pages?.length)
+				return "Apply these? Nothing changes until you do, and new pages are built right after.";
+			const page = creates === 1 ? "this page" : "these pages";
+			return `Create ${page}? Bob builds ${creates === 1 ? "it" : "each"} right after, without touching the page you're on.`;
+		}
 		default:
 			return "Confirm this change?";
 	}
@@ -576,7 +607,8 @@ const APPLY_LABELS: Record<string, string> = {
 	home_page: "Set home page",
 	global_settings: "Apply",
 };
-const applyLabel = (kind?: string) => APPLY_LABELS[kind || ""] || "Apply";
+const applyLabel = (m: Record<string, any> = {}) =>
+	m.kind === "page_changes" ? applyPagesLabel(m.payload) : APPLY_LABELS[m.kind || ""] || "Apply";
 const builderStore = useBuilderStore();
 const canvasStore = useCanvasStore();
 
@@ -588,7 +620,10 @@ const lastMessageId = computed(() => messages.value.at(-1)?.id ?? null);
  * the model-facing summary, and the card already asks the question in human terms;
  * rendering both put the same ask on screen twice, once in jargon. */
 function assistantText(message: ChatMessage): string {
-	if (message.metadata?.status === "pending_action") return "";
+	// a page card's text is for the model; its rows say it for the user
+	if (message.metadata?.status === "pending_action" || message.metadata?.kind === "page_changes") return "";
+	// an applied card's outcome: its page list says it, row by row
+	if (message.message_type === "status" && message.metadata?.pages) return "";
 	return message.metadata?.status === "ui" ? (message.metadata?.text ?? message.content) : message.content;
 }
 
