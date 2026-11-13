@@ -368,6 +368,20 @@ class ModelRegistry:
 		return m["provider"] if m else None
 
 	@classmethod
+	def telemetry_route(cls, model_name: str) -> tuple[str, str]:
+		"""(provider, model id) to report in usage telemetry. A custom gateway's route
+		prefix is named by the site, so it is reported as `custom`."""
+		from builder.ai.presets import PRESETS, SITE_PROVIDER
+
+		m = cls.find(model_name) or {}
+		prefix = m.get("route_prefix") or ""
+		known = {p.get("route_prefix") for p in PRESETS} | {SITE_PROVIDER["route_prefix"]}
+		model_id = (
+			model_name[len(prefix) + 1 :] if prefix and model_name.startswith(f"{prefix}/") else model_name
+		)
+		return (prefix if prefix in known else "custom"), model_id
+
+	@classmethod
 	def context_window(cls, model_name: str) -> int:
 		m = cls.find(model_name)
 		return int((m or {}).get("max_tokens") or DEFAULT_CONTEXT_WINDOW)

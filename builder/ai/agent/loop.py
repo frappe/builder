@@ -48,6 +48,7 @@ import re
 import time
 
 import frappe
+from frappe.utils.telemetry import capture
 
 from builder.ai import llm, locks, markup
 from builder.ai.agent.edits import EditScript, composition_notes
@@ -442,6 +443,9 @@ class AgentRunner:
 		self.server_mutations = 0
 		# Every client op the tree accepted this turn (block edits, scripts, generation).
 		self.applied_operations: list[dict] = []
+		# How the turn ended, for usage telemetry. Empty means it raised out of run().
+		self.outcome = ""
+		self.started: float | None = None
 		# Revert bookkeeping: pending_state is the page's pre-turn state, not yet
 		# snapshotted; revert_snapshot is its snapshot doc once the turn mutates.
 		self.pending_state: dict | None = None
@@ -1283,6 +1287,7 @@ class AgentRunner:
 	# --- orchestration ----------------------------------------------------
 
 	def emit_cancelled(self) -> None:
+		self.outcome = "cancelled"
 		msg = "Stopped. Kept what was built so far." if self.applied_operations else "Cancelled."
 		AISession.try_append_message(
 			self.session_id, "assistant", msg, message_type="status", metadata={"status": "cancelled"}
@@ -1291,6 +1296,7 @@ class AgentRunner:
 
 	def fail_turn(self, message: str) -> None:
 		"""End the turn with a persisted error message + error event."""
+		self.outcome = "error"
 		AISession.try_append_message(
 			self.session_id, "assistant", message, message_type="status", metadata={"status": "error"}
 		)
@@ -1300,7 +1306,7 @@ class AgentRunner:
 		# Clear any stale cancel flag or notes from a previous turn before starting.
 		self.clear_cancel_flag()
 		AISession.clear_notes(self.session_id)
-		started = time.monotonic()
+		started = self.started = time.monotonic()
 		logger.info(
 			f"AgentRunner.run: page_id={self.page_id}, model={self.model}, "
 			f"session_id={self.session_id}, user={self.user}"
@@ -1312,6 +1318,7 @@ class AgentRunner:
 			self.run_token = AISession.start_run(self.session_id, self.effort.lock_ttl)
 			if self.run_token is None:
 				logger.warning(f"AgentRunner.run: session {self.session_id} already running, rejecting")
+				self.outcome = "busy"
 				self.emit(
 					"error", message="Another AI request is still processing. Please wait for it to finish."
 				)
@@ -1391,6 +1398,7 @@ class AgentRunner:
 						break
 					messages.append({"role": "tool", "tool_call_id": tc["id"], "content": content})
 				if turn_over:
+					self.outcome = "awaiting_input"
 					return
 				results = [m["content"] for m in messages[-len(raw_tool_calls) :]]
 				if reply := self.turn_reply(tool_operations, results):
@@ -1461,6 +1469,7 @@ class AgentRunner:
 			# and just failed to write its reply. Warn — and persist, so the turn doesn't
 			# vanish on reload.
 			logger.warning("Agent returned empty response (no text; tools=%d)", len(self.tool_steps()))
+			self.outcome = "empty"
 			if self.server_mutations:
 				note = "Done. The steps above were applied (I skipped the write-up)."
 			elif self.tool_steps():
@@ -1497,6 +1506,7 @@ class AgentRunner:
 		if summary_text != self.live_text:
 			self.emit("stream", chunk=summary_text, replace=True)
 
+		self.outcome = "incomplete" if self.stop_reason == "max_rounds" else "complete"
 		# Hit the per-turn round cap → the work is INCOMPLETE. Say so, so a big edit
 		# doesn't look finished; the user can reply "continue" to resume from here.
 		if self.stop_reason == "max_rounds":
@@ -1564,6 +1574,37 @@ class AgentRunner:
 		)
 		self.maybe_name_session()
 		self.emit("complete", message=summary_text or "Done", after_commit=True)
+
+	def usage_properties(self) -> dict:
+		provider, model = ModelRegistry.telemetry_route(self.model)
+		return {
+			"outcome": self.outcome or "failed",
+			"stop_reason": self.stop_reason,
+			"provider": provider,
+			"model": model,
+			"effort": self.effort.level,
+			"page": self.page_id,
+			"session": self.session_id,
+			"generated_page": any(op["tool_name"] == "generate_page" for op in self.applied_operations),
+			"tools": sorted({tool["name"] for entry in self.trace for tool in entry["tools"]}),
+			"operations": len(self.applied_operations),
+			"rounds": len(self.trace),
+			"llm_calls": self.usage["calls"],
+			"prompt_tokens": self.usage["prompt_tokens"],
+			"cached_tokens": self.usage["cached_tokens"],
+			"completion_tokens": self.usage["completion_tokens"],
+			"tool_failures": len(self.tool_failures),
+			"with_image": bool(self.image_url),
+			"elapsed_ms": round((time.monotonic() - self.started) * 1000) if self.started else None,
+		}
+
+	def capture_usage(self) -> None:
+		"""One `builder_ai_used` event per turn, however it ended."""
+		try:
+			capture("builder_ai_used", "builder", user=self.user, properties=self.usage_properties())
+		except Exception:
+			# Telemetry must never fail or retry a turn the user already saw finish.
+			logger.warning("could not capture AI usage telemetry", exc_info=True)
 
 	def maybe_name_session(self) -> None:
 		"""The first completed turn names the chat: a short generated title reads
@@ -1703,4 +1744,8 @@ class AgentRunner:
 def run_agent_job(prompt: str, model: str, **kwargs):
 	# Resolved here so the key never sits in Redis; jobs queued by older code still pass one.
 	kwargs.pop("api_key", None)
-	AgentRunner(prompt, model, llm.resolve_api_key(model), **kwargs).run()
+	runner = AgentRunner(prompt, model, llm.resolve_api_key(model), **kwargs)
+	try:
+		runner.run()
+	finally:
+		runner.capture_usage()

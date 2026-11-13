@@ -4,8 +4,9 @@ import frappe
 from frappe.tests.utils import FrappeTestCase
 
 from builder.ai import api
-from builder.ai.agent.loop import run_agent_job
+from builder.ai.agent.loop import AgentRunner, run_agent_job
 from builder.ai.models import ModelRegistry
+from builder.ai.test_llm import GATEWAY_MODEL
 from builder.ai.test_llm import OPENROUTER_MODEL as MODEL
 
 SECRET = "sk-or-secret"
@@ -68,3 +69,51 @@ class TestAgentJobs(FrappeTestCase):
 				run_agent_job("hi", MODEL["name"], page_id="some-page", **queued)
 
 				runner.assert_called_once_with("hi", MODEL["name"], SECRET, page_id="some-page")
+
+	def run_job_reporting_usage(self, turn) -> dict:
+		page, session = chat_session()
+		with (
+			patch("builder.ai.llm.resolve_api_key", return_value=SECRET),
+			patch.object(ModelRegistry, "find", return_value=MODEL),
+			patch.object(AgentRunner, "run_turn", autospec=True, side_effect=turn),
+			patch("builder.ai.agent.loop.capture") as capture,
+		):
+			try:
+				run_agent_job("hi", MODEL["name"], page_id=page, session_id=session, user="Administrator")
+			except RuntimeError:
+				pass
+
+		capture.assert_called_once()
+		self.assertEqual(capture.call_args.args, ("builder_ai_used", "builder"))
+		self.assertEqual(capture.call_args.kwargs["user"], "Administrator")
+		return capture.call_args.kwargs["properties"]
+
+	def test_a_finished_turn_reports_its_ai_usage(self):
+		def turn(runner, started):
+			op = {"tool_name": "generate_page", "args": {}}
+			runner.record_round(0, [op, {"tool_name": "preview_page", "args": {}}], "")
+			runner.applied_operations.append(op)
+			runner.outcome = "complete"
+
+		usage = self.run_job_reporting_usage(turn)
+
+		self.assertEqual(usage["outcome"], "complete")
+		self.assertEqual((usage["provider"], usage["model"]), ("openrouter", MODEL["name"].split("/", 1)[1]))
+		self.assertEqual(usage["tools"], ["generate_page", "preview_page"])
+		self.assertTrue(usage["generated_page"])
+		self.assertEqual((usage["operations"], usage["rounds"]), (1, 1))
+
+	def test_a_turn_that_crashes_is_still_reported(self):
+		def turn(runner, started):
+			raise RuntimeError("worker died")
+
+		self.assertEqual(self.run_job_reporting_usage(turn)["outcome"], "failed")
+
+	def test_usage_never_names_a_custom_gateway(self):
+		with patch.object(ModelRegistry, "find", return_value=GATEWAY_MODEL):
+			self.assertEqual(ModelRegistry.telemetry_route(GATEWAY_MODEL["name"]), ("custom", "llama-4"))
+
+	def test_broken_telemetry_does_not_fail_the_turn(self):
+		runner = AgentRunner("hi", model=MODEL["name"], api_key=SECRET)
+		with patch("builder.ai.agent.loop.capture", side_effect=RuntimeError("pulse down")):
+			runner.capture_usage()
