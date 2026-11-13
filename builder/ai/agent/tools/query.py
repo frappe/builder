@@ -99,9 +99,12 @@ def run_read_page(ctx, args: dict) -> str:
 	digest = design_digest(root)
 	prefix = "abcdefgh"[(ctx.page_read_count - 1) % 8]
 	pending = " It includes the edits you prepared for it this turn." if held else ""
-	parts = [
+	header = (
 		f"{label}: another page of this site. To change it, edit_page(page='{page_id}') with these "
-		f"refs; such edits wait for the user's OK.{pending}",
+		f"refs; such edits wait for the user's OK.{pending}"
+	)
+	parts = [
+		header,
 		render_reference(root, digest, prefix, getattr(ctx, "style_sets", None), markup.short_refs(root)),
 	]
 	if fonts_missing:
