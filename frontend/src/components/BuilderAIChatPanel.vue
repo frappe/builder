@@ -463,9 +463,10 @@ import { cardAnswers } from "@/components/ai/cardAnswers";
 import { renderMarkdown } from "@/components/ai/markdown";
 import type { AITurnStep, ChatMessage } from "@/components/ai/types";
 import { reloadAIRegistry } from "@/data/aiModels";
+import { __ } from "@/translation";
 import useBuilderStore from "@/stores/builderStore";
 import useCanvasStore from "@/stores/canvasStore";
-import { Badge, Button, Dropdown, KeyboardShortcut, Textarea, Tooltip } from "frappe-ui";
+import { Badge, Button, Dropdown, KeyboardShortcut, Textarea, Tooltip, useKeyboardShortcut } from "frappe-ui";
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from "vue";
 
 const chat = new AIChatController();
@@ -827,6 +828,14 @@ const bob: BobContext = {
 onUnmounted(registerBobCommands(bob));
 // runs the open level's cleanup, like a sign-in still polling
 onUnmounted(menu.close);
+// the composer stops its own Escape, so this only hears one pressed after focus left it
+useKeyboardShortcut({
+	combo: "Escape",
+	description: __("Close Bob's Menu"),
+	group: __("General"),
+	enabled: () => menuOpen.value && builderStore.leftPanelActiveTab === "Chat",
+	handler: (event) => menu.onKeydown(event),
+});
 
 const composerPlaceholder = computed(() => {
 	if (menuLevel.value && !menuLevel.value.input) return "Type to filter";
