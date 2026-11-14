@@ -37,8 +37,9 @@ const pageStore = usePageStore();
 
 async function resolveOversizedSVG(svg: string) {
 	if (!isOversizedSVG(svg) || !(await promptOversizedSVG(svg.length))) return null;
-	const { fileURL } = await uploadSVGAsFile(svg);
-	return fileURL || null;
+	// a failed upload falls back to pasting the SVG inline
+	const upload = await uploadSVGAsFile(svg).catch(() => null);
+	return upload?.fileURL || null;
 }
 
 export function useBuilderEvents(
@@ -112,7 +113,7 @@ export function useBuilderEvents(
 							imageBlock.setAttribute("src", res.fileURL);
 						}
 					}
-				});
+				}).catch(() => {});
 			}
 			return;
 		}
