@@ -1,10 +1,10 @@
 <template>
 	<div class="flex h-full min-h-full flex-col bg-surface-base">
-		<div class="flex items-center justify-between border-b border-outline-gray-1 px-3 py-2.5">
+		<!-- fixed height, so a title arriving later doesn't push the chat down -->
+		<div class="flex h-14 shrink-0 items-center justify-between border-b border-outline-gray-1 px-3">
 			<div class="flex min-w-0 flex-col gap-1">
-				<div class="mt-1 text-sm font-semibold text-ink-gray-9">Bob AI</div>
-				<!-- min-h holds the row while the title is still blank -->
-				<div class="min-h-4 truncate text-p-xs leading-4 text-ink-gray-5">
+				<div class="text-sm font-semibold text-ink-gray-9">Bob AI</div>
+				<div v-if="isSubmitting || currentSessionTitle" class="truncate text-p-xs leading-4 text-ink-gray-5">
 					{{ isSubmitting ? currentActivity : currentSessionTitle }}
 				</div>
 			</div>
