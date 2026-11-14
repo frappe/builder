@@ -87,6 +87,7 @@ export const createPlugin = ({
 	copyrightHolder,
 	cwd = process.cwd(),
 	initializeGit = true,
+	releaseWorkflow = true,
 } = {}) => {
 	const label = plainText(name, "Plugin name", 80);
 	const pluginSlug = slugify(label);
@@ -127,9 +128,11 @@ export const createPlugin = ({
 		fs.mkdirSync(path.dirname(destination), { recursive: true });
 		fs.writeFileSync(destination, render(fs.readFileSync(template, "utf8"), values));
 	}
-	const workflow = path.join(target, ".github/workflows/release.yml");
-	fs.mkdirSync(path.dirname(workflow), { recursive: true });
-	fs.copyFileSync(RELEASE_WORKFLOW, workflow);
+	if (releaseWorkflow) {
+		const workflow = path.join(target, ".github/workflows/release.yml");
+		fs.mkdirSync(path.dirname(workflow), { recursive: true });
+		fs.copyFileSync(RELEASE_WORKFLOW, workflow);
+	}
 	if (initializeGit) initializeRepository(target);
 
 	return { directory: target, pluginId: `${publisherSlug}/${pluginSlug}` };

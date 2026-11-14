@@ -99,6 +99,7 @@
 					v-else
 					:can-open="Boolean(openHandler)"
 					:can-manage="canManagePlugins"
+					:can-uninstall="details.source !== 'App'"
 					:enabled="details.enabled"
 					:working="working"
 					:tab-hidden="tabHidden"
@@ -134,6 +135,7 @@
 					<p v-else-if="details.is_development">Served by {{ details.development_server }}</p>
 					<template v-else-if="isReady">
 						<p v-if="details.source === 'Hub'">{{ details.hub_url }}</p>
+						<p v-else-if="details.source === 'App'">Comes with the {{ details.source_app }} app</p>
 						<p>Installed on {{ installedOn }}</p>
 					</template>
 				</div>
@@ -144,7 +146,15 @@
 			v-if="details"
 			v-model:open="isInstallDialogOpen"
 			:label="details.label ?? details.name"
-			@install="install" />
+			action="Install"
+			@confirm="install" />
+
+		<PluginInstallDialog
+			v-if="details"
+			v-model:open="isEnableDialogOpen"
+			:label="details.label ?? details.name"
+			action="Enable"
+			@confirm="enable" />
 	</div>
 </template>
 
@@ -293,7 +303,20 @@ watch(
 	(state, before) => before === "Installing" && state !== before && load(),
 );
 
-const setEnabled = async (enabled: boolean) => {
+const isEnableDialogOpen = ref(false);
+
+/** An app installs its plugin without asking anyone. So enabling it asks the manager to trust its code. */
+const setEnabled = (enabled: boolean) => {
+	if (enabled && details.value?.source === "App") isEnableDialogOpen.value = true;
+	else saveEnabled(enabled);
+};
+
+const enable = () => {
+	isEnableDialogOpen.value = false;
+	saveEnabled(true);
+};
+
+const saveEnabled = async (enabled: boolean) => {
 	working.value = true;
 	try {
 		await setPluginEnabled(props.plugin, enabled);

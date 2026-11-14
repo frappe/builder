@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 
+import { createAppPlugin } from "../app.js";
 import { createPlugin, promptForCreateOptions } from "../create.js";
 import { packagePlugin } from "../package.js";
 
@@ -13,6 +14,8 @@ Create options:
   --description <description>    Optional description
   --builder-url <url>            Origin that serves Builder
   --copyright-holder <name>      Person or organization for the MIT license
+  --app <path>                   Add the plugin to this Frappe app, so the app ships it.
+                                 [directory] is then the folder name in the app's source folder
 
 Package options:
   --dist <directory>    Built files relative to root (default: dist)
@@ -57,6 +60,7 @@ const readArguments = (arguments_) => {
 			"--description": "description",
 			"--builder-url": "builderUrl",
 			"--copyright-holder": "copyrightHolder",
+			"--app": "app",
 		});
 		return { command, ...options, directory: positional };
 	}
@@ -71,6 +75,15 @@ try {
 		console.log(`Created ${packaged.path}`);
 		console.log(`SHA-256 ${packaged.sha256}`);
 		console.log(`Size ${packaged.size} bytes`);
+	} else if (options.app) {
+		const created = createAppPlugin(await promptForCreateOptions(options));
+		console.log(`\nCreated ${created.pluginId} in ${created.directory}`);
+		console.log(`Added it to the builder_plugins hook and the build script of ${created.app}`);
+		console.log("\nNext steps:");
+		console.log(`  cd ${JSON.stringify(created.directory)}`);
+		console.log("  yarn install");
+		console.log("  yarn dev");
+		console.log("\nbench build builds it, and Builder installs it with the app.");
 	} else {
 		const created = createPlugin(await promptForCreateOptions(options));
 		console.log(`\nCreated ${created.pluginId} in ${created.directory}`);

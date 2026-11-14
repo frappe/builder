@@ -20,6 +20,7 @@ from builder.plugins.constants import (
 	PLUGINS_FOLDER,
 	VERSION_PATTERN,
 )
+from builder.plugins.package import ValidatedPackage
 
 STATE_DOCTYPE = "Builder Plugin State"
 KEPT_PREVIOUS_RELEASES = 1
@@ -48,6 +49,7 @@ class BuilderPlugin(Document):
 		label: DF.Data | None
 		readme: DF.LongText | None
 		source: DF.Literal["Hub", "App", "Development", "Bob"]
+		source_app: DF.Data | None
 		version: DF.Data
 	# end: auto-generated types
 
@@ -121,6 +123,24 @@ class BuilderPlugin(Document):
 	def validate_readme(self):
 		if self.readme and len(self.readme.encode()) > MAX_README_BYTES:
 			frappe.throw(_("A README may hold {0} bytes at most.").format(MAX_README_BYTES))
+
+	def apply_package(self, package: ValidatedPackage, checksum: str, origin: dict):
+		"""Install this package: fill the row from its manifest and `origin`, save it, and write the files."""
+		manifest = package.manifest
+		self.update(
+			{
+				**origin,
+				"label": manifest["label"],
+				"description": manifest["description"],
+				"icon": manifest.get("icon"),
+				"version": manifest["version"],
+				"checksum": checksum,
+				"install_state": "Ready",
+				"install_error": None,
+			}
+		)
+		self.save()
+		self.write_plugin_files(package.files)
 
 	def write_plugin_files(self, files: dict[str, bytes]):
 		"""Write one release to its own folder, keyed by path under the release root.
