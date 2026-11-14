@@ -122,7 +122,7 @@ class AISession:
 
 	def add_pages(self, *page_ids: str) -> None:
 		"""Record pages this chat changed or was used on, so each of them lists it."""
-		for page_id in dict.fromkeys(filter(None, page_ids)):
+		for page_id in dict.fromkeys(page for page in page_ids if page):
 			if not self.lists(page_id):
 				self._doc.append("pages", {"page": page_id}).db_insert()
 
