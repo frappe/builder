@@ -95,6 +95,15 @@ const blockController = {
 	isInput: () => {
 		return blockController.isBlockSelected() && blockController.getFirstSelectedBlock().isInput();
 	},
+	isTextarea: () => {
+		return blockController.isBlockSelected() && blockController.getFirstSelectedBlock().isTextarea();
+	},
+	isSelect: () => {
+		return blockController.isBlockSelected() && blockController.getFirstSelectedBlock().isSelect();
+	},
+	isCheckbox: () => {
+		return blockController.isBlockSelected() && blockController.getFirstSelectedBlock().isCheckbox();
+	},
 	getAttribute: (attribute: string) => {
 		let attributeValue = "__initial__" as StyleValue;
 		canvasStore.activeCanvas?.selectedBlocks.forEach((block) => {
@@ -114,6 +123,22 @@ const blockController = {
 	removeAttribute: (attribute: string) => {
 		canvasStore.activeCanvas?.selectedBlocks.forEach((block) => {
 			block.removeAttribute(attribute);
+		});
+	},
+	getEffectiveAttribute: (attribute: string) => {
+		let attributeValue = "__initial__" as StyleValue;
+		canvasStore.activeCanvas?.selectedBlocks.forEach((block) => {
+			if (attributeValue === "__initial__") {
+				attributeValue = block.getEffectiveAttribute(attribute);
+			} else if (attributeValue !== block.getEffectiveAttribute(attribute)) {
+				attributeValue = "Mixed";
+			}
+		});
+		return attributeValue;
+	},
+	setEffectiveAttribute: (attribute: string, value: string | undefined) => {
+		canvasStore.activeCanvas?.selectedBlocks.forEach((block) => {
+			block.setEffectiveAttribute(attribute, value);
 		});
 	},
 	getKeyValue: (key: "element" | "innerHTML" | "visibilityCondition") => {
@@ -172,12 +197,15 @@ const blockController = {
 		block.classes = classes;
 	},
 	getCustomAttributes: () => {
-		return blockController.isBlockSelected() && blockController.getFirstSelectedBlock().getCustomAttributes();
+		if (!blockController.isBlockSelected()) return false;
+		// null marks an inherited attribute the instance removed, so it gets no row
+		const customAttributes = blockController.getFirstSelectedBlock().getCustomAttributes();
+		return Object.fromEntries(Object.entries(customAttributes).filter(([, value]) => value !== null));
 	},
 	setCustomAttributes: (customAttributes: BlockAttributeMap) => {
 		canvasStore.activeCanvas?.selectedBlocks.forEach((block) => {
 			Object.keys(block.customAttributes).forEach((key) => {
-				if (!(key in customAttributes)) {
+				if (!(key in customAttributes) && block.customAttributes[key] !== null) {
 					delete block.customAttributes[key];
 					block.removeDynamicValue(key, "attribute");
 				}
