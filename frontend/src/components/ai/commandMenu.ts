@@ -41,13 +41,16 @@ export type MenuStep = MenuLevel | "stay" | "back" | { back: number } | void;
 
 export type CommandMenu = ReturnType<typeof useCommandMenu>;
 
+/** progress is a wait the menu can't hurry, like a sign-in being approved elsewhere */
+export type NoteTone = "info" | "error" | "progress";
+
 /** The "/" menu over the composer. Typing "/" lists the commands; a command can open
  * levels of its own, and the composer text filters whichever list is showing. */
 export function useCommandMenu(prompt: Ref<string>) {
 	const stack = shallowRef<MenuLevel[]>([]);
 	const items = shallowRef<MenuItem[]>([]);
 	const note = ref("");
-	const noteIsError = ref(false);
+	const noteTone = ref<NoteTone>("info");
 	const busy = ref(false);
 	const activeIndex = ref(0);
 	const dismissed = ref(false);
@@ -126,7 +129,7 @@ export function useCommandMenu(prompt: Ref<string>) {
 			const loaded = await current.items();
 			if (level.value === current) items.value = loaded;
 		} catch (error) {
-			setNote(getErrorMessage(error, "Could not load this list"), true);
+			setNote(getErrorMessage(error, "Could not load this list"), "error");
 		} finally {
 			busy.value = false;
 		}
@@ -151,15 +154,15 @@ export function useCommandMenu(prompt: Ref<string>) {
 			else if (next) await open(next);
 			else close();
 		} catch (error) {
-			setNote(getErrorMessage(error, "That didn't work"), true);
+			setNote(getErrorMessage(error, "That didn't work"), "error");
 		} finally {
 			busy.value = false;
 		}
 	}
 
-	function setNote(text: string, isError = false) {
+	function setNote(text: string, tone: NoteTone = "info") {
 		note.value = text;
-		noteIsError.value = isError;
+		noteTone.value = tone;
 	}
 
 	/** Composer keys while the menu is open. Returns true when the menu took the key. */
@@ -193,7 +196,7 @@ export function useCommandMenu(prompt: Ref<string>) {
 		atRoot,
 		visibleItems,
 		note,
-		noteIsError,
+		noteTone,
 		busy,
 		activeIndex,
 		isOpen,

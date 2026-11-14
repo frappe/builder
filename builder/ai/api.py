@@ -482,7 +482,7 @@ def start_codex_login():
 @frappe.whitelist()
 @has_page_write()
 def poll_codex_login(state: str):
-	"""Where a ChatGPT sign-in stands: pending, connected (with its models), failed or expired."""
+	"""Where a ChatGPT sign-in stands: pending, approved, connected (with its models), failed or expired."""
 	from builder.ai import codex_login
 	from builder.ai.codex import CodexError
 
