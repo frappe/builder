@@ -1,10 +1,11 @@
 """Unit tests for the ChatGPT sign-in helpers (builder/ai/codex_login.py).
 
-Pure-function tests (no DB, no network): the PKCE pair, the authorize URL and
-the account-id extraction. The listener and exchange need a browser and OpenAI.
+No DB, no network: the PKCE pair, the authorize URL, the account-id extraction,
+and the device poll's steps with the cache and OpenAI stubbed.
 """
 
 import unittest
+from unittest.mock import Mock, patch
 from urllib.parse import parse_qs, urlparse
 
 from builder.ai import codex, codex_login
@@ -40,3 +41,45 @@ class TestAccountId(unittest.TestCase):
 		access = fake_jwt({"organizations": [{"id": "org_1"}]})
 		self.assertEqual(codex.account_id_from_tokens(None, access), "org_1")
 		self.assertEqual(codex.account_id_from_tokens("not-a-jwt", None), "")
+
+
+class TestDevicePoll(unittest.TestCase):
+	"""The cache and OpenAI are stubbed: poll() is only the order of its steps."""
+
+	def setUp(self):
+		self.logins = {"s1": {"device_auth_id": "dev-1", "user_code": "ABCD-1234"}}
+		self.approval = {"authorization_code": "auth-1", "code_verifier": "verifier-1"}
+		stubs = {
+			"load_login": lambda state: self.logins.get(state),
+			"save_login": lambda state, data: self.logins.__setitem__(state, data),
+			"clear_login": lambda state: self.logins.pop(state, None),
+			"check_device": Mock(return_value=None),
+			"exchange_code": Mock(return_value={"access": "token-1"}),
+			"install_provider": Mock(return_value={"provider": "ChatGPT", "models": []}),
+		}
+		for name, stub in stubs.items():
+			patcher = patch.object(codex_login, name, stub)
+			patcher.start()
+			self.addCleanup(patcher.stop)
+		self.stubs = stubs
+
+	def test_waits_until_approved(self):
+		self.assertEqual(codex_login.poll("s1"), {"status": "pending"})
+		self.stubs["exchange_code"].assert_not_called()
+
+	def test_reports_the_approval_before_exchanging_it(self):
+		self.stubs["check_device"].return_value = self.approval
+		self.assertEqual(codex_login.poll("s1"), {"status": "approved"})
+		self.stubs["exchange_code"].assert_not_called()
+
+		result = codex_login.poll("s1")
+		self.assertEqual(result, {"status": "connected", "provider": "ChatGPT", "models": []})
+		self.stubs["exchange_code"].assert_called_once_with(
+			"auth-1", "verifier-1", codex_login.DEVICE_REDIRECT_URI
+		)
+		self.stubs["install_provider"].assert_called_once_with({"access": "token-1"})
+		self.assertNotIn("s1", self.logins)
+		self.assertEqual(self.stubs["check_device"].call_count, 1)
+
+	def test_unknown_state_has_expired(self):
+		self.assertEqual(codex_login.poll("gone"), {"status": "expired"})
