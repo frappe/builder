@@ -9,6 +9,7 @@
  "field_order": [
   "title",
   "page",
+  "pages",
   "session_user",
   "status",
   "selected_model",
@@ -28,6 +29,13 @@
    "in_list_view": 1,
    "label": "Page",
    "options": "Builder Page"
+  },
+  {
+   "description": "Other pages this chat was used on or changed, so each of them lists it",
+   "fieldname": "pages",
+   "fieldtype": "Table",
+   "label": "Pages",
+   "options": "Builder AI Session Page"
   },
   {
    "fieldname": "session_user",
@@ -74,7 +82,7 @@
  "hide_toolbar": 1,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-10-20 10:17:21.196004",
+ "modified": "2026-11-14 13:40:00.000000",
  "modified_by": "Administrator",
  "module": "Builder",
  "name": "Builder AI Session",

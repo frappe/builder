@@ -16,9 +16,14 @@ class BuilderAISession(Document):
 	if TYPE_CHECKING:
 		from frappe.types import DF
 
+		from builder.builder.doctype.builder_ai_session_page.builder_ai_session_page import (
+			BuilderAISessionPage,
+		)
+
 		last_interaction_on: DF.Datetime | None
 		last_task_type: DF.Data | None
 		page: DF.Link
+		pages: DF.Table[BuilderAISessionPage]
 		selected_model: DF.Data | None
 		session_user: DF.Link
 		status: DF.Literal["Active", "Archived"]
