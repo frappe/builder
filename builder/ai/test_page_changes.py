@@ -249,8 +249,9 @@ class TestPageChangesInATurn(FrappeTestCase):
 		self.assertEqual(texts(self.other)["abouthead2"], "Our story")
 		self.assertFalse(result["resumed"])
 		enqueue.assert_not_called()
-		outcome = self.messages()[-1]
-		self.assertEqual(outcome["metadata"]["pages"][0]["status"], "changed")
+		card, outcome = self.messages()[-2:]
+		self.assertEqual(card["metadata"]["results"][0]["status"], "changed")
+		self.assertEqual(outcome["metadata"]["card"], card["id"])
 		self.assertEqual(frappe.db.get_value("Builder AI Message", card["id"], "status"), "action_applied")
 
 	def test_skipping_the_card_changes_nothing_and_starts_no_turn(self):

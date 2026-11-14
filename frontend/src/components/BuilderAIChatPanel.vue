@@ -93,7 +93,17 @@
 						">
 						<!-- ui-card messages persist the full card as text (for model replay);
 						     the bubble shows only the short lead-in — the card renders the rest -->
-						<template v-if="message.role === 'assistant'">
+						<AIPageBuild
+							v-if="message.role === 'assistant' && message.metadata?.buildPage"
+							:page="message.metadata.buildPage"
+							:steps="message.metadata.steps || []"
+							:text="message.metadata?.status === 'running' ? '' : message.content"
+							:running="turnRunning(message)"
+							:elapsed-ms="message.metadata.debug?.elapsedMs"
+							:debug="!!message.metadata.debug"
+							@open="chat.openPage"
+							@inspect="openDebug(message.metadata.debug)" />
+						<template v-else-if="message.role === 'assistant'">
 							<!-- What Bob thought, ran and said on the way to this answer. Steps
 							     carry their own running state; the row below covers the stretches
 							     where no step is on the clock. -->
@@ -106,11 +116,6 @@
 								v-if="assistantText(message)"
 								class="ai-prose prose prose-sm max-w-none break-words text-p-sm"
 								v-html="renderMarkdown(assistantText(message))" />
-							<!-- how each page came out: applied from a card, or built off-screen -->
-							<AIPageList
-								v-if="message.metadata?.pages?.length"
-								:rows="resultRows(message.metadata.pages)"
-								:class="assistantText(message) && 'mt-2'" />
 							<div v-if="cardPlugins(message).length" class="mt-2 flex flex-col gap-2">
 								<AIPluginCard v-for="plugin in cardPlugins(message)" :key="plugin" :plugin="plugin" />
 							</div>
@@ -139,10 +144,11 @@
 						</div>
 						<div
 							v-if="
-								message.metadata?.affectedBlocks?.length ||
-								message.metadata?.affectedScripts?.length ||
-								message.metadata?.revertSnapshot ||
-								message.metadata?.debug
+								!message.metadata?.buildPage &&
+								(message.metadata?.affectedBlocks?.length ||
+									message.metadata?.affectedScripts?.length ||
+									message.metadata?.revertSnapshot ||
+									message.metadata?.debug)
 							"
 							class="mb-2 mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] text-ink-gray-4">
 							<AIAffectedItems
@@ -152,7 +158,7 @@
 								@select-block="selectBlockById"
 								@open-script="openScriptByName" />
 
-							<Tooltip v-if="message.metadata?.revertSnapshot" text="Revert the page to before this AI edit">
+							<Tooltip v-if="canRevert(message)" text="Revert the page to before this AI edit">
 								<button
 									class="inline-flex items-center gap-1 transition-colors hover:text-ink-gray-7 disabled:cursor-not-allowed disabled:opacity-40"
 									:disabled="isSubmitting || !isEditingPage"
@@ -182,22 +188,27 @@
 								</div>
 							</template>
 						</div>
-						<!-- Sensitive action — needs the user's OK. Calm neutral surface with a
-						     small amber eyebrow: the QUESTION is the content, and it appears once
-						     (the model-facing summary text is suppressed above), so the card
-						     reads as a decision, not an alarm. -->
+						<!-- Bob's changes to other pages: asks per page, then shows how each went -->
+						<AIPageCard
+							v-if="message.metadata?.kind === 'page_changes'"
+							:metadata="message.metadata"
+							:interactive="message.id === lastMessageId"
+							:busy="isSubmitting"
+							:confirming="confirmingAction"
+							class="mt-2"
+							@apply="(skip) => confirmPendingAction(message, 'apply', skip)"
+							@skip="confirmPendingAction(message, 'skip')"
+							@open="chat.openPage" />
+						<!-- A sensitive action waits for the user's OK. The question is the whole
+						     card (the model-facing summary is suppressed above), so it reads as a
+						     decision, not an alarm. -->
 						<div
-							v-if="message.metadata?.status === 'pending_action'"
+							v-else-if="message.metadata?.status === 'pending_action'"
 							class="mt-2 w-full rounded-6 border border-outline-gray-2 bg-surface-gray-1 p-3">
-							<p class="text-p-xs font-medium text-ink-amber-8">Needs your OK</p>
-							<p class="mt-1 text-p-sm leading-snug text-ink-gray-8">
+							<p class="text-p-sm font-medium text-ink-gray-8">
 								{{ pendingPreview(message.metadata) }}
 							</p>
-							<AIPageList
-								v-if="message.metadata?.kind === 'page_changes'"
-								:rows="proposedRows(message.metadata.payload)"
-								class="mt-3" />
-							<div v-if="message.id === lastMessageId" class="mt-3 flex gap-2">
+							<div v-if="message.id === lastMessageId" class="mt-2.5 flex gap-2">
 								<Button
 									variant="solid"
 									size="sm"
@@ -215,17 +226,6 @@
 								</Button>
 							</div>
 						</div>
-						<!-- an answered page card keeps what it proposed; the outcome below says how it went -->
-						<div
-							v-if="
-								message.metadata?.kind === 'page_changes' && message.metadata?.status !== 'pending_action'
-							"
-							class="mt-2 w-full">
-							<p class="text-p-xs text-ink-gray-5">
-								{{ message.metadata.status === "action_skipped" ? "You skipped these" : "You applied these" }}
-							</p>
-							<AIPageList :rows="proposedRows(message.metadata.payload)" class="mt-2" />
-						</div>
 						<!-- Agent-composed UI card (present_ui) -->
 						<AIUISpec
 							v-if="message.metadata?.status === 'ui' && message.metadata?.ui?.length"
@@ -236,13 +236,23 @@
 							:lead="message.metadata.text"
 							@submit="selectOption" />
 					</div>
-					<!-- Block + image chips below the bubble -->
+					<!-- Page, block and image chips below the bubble -->
 					<div
 						v-if="
 							message.role === 'user' &&
-							(message.metadata?.selectedBlockContext?.length || message.metadata?.attachedImageUrl)
+							(sentFrom(message) ||
+								message.metadata?.selectedBlockContext?.length ||
+								message.metadata?.attachedImageUrl)
 						"
 						class="mt-1 flex max-w-[88%] flex-wrap items-center gap-1">
+						<!-- sent from another page: the chat went on from there -->
+						<button
+							v-if="sentFrom(message)"
+							class="inline-flex items-center gap-1 rounded-4 bg-surface-gray-2 px-1.5 py-0.5 text-[10px] text-ink-gray-6 transition-colors hover:bg-surface-gray-3 hover:text-ink-gray-8"
+							@click="chat.openPage(sentFrom(message)!.page_id)">
+							<span class="lucide-file size-2.5" />
+							{{ sentFrom(message)!.title }}
+						</button>
 						<!-- image chip -->
 						<span
 							v-if="message.metadata?.attachedImageUrl"
@@ -461,8 +471,8 @@
 
 <script setup lang="ts">
 import AIAffectedItems from "@/components/AIAffectedItems.vue";
-import AIPageList from "@/components/ai/AIPageList.vue";
-import { applyPagesLabel, proposedRows, resultRows } from "@/components/ai/pageChanges";
+import AIPageBuild from "@/components/ai/AIPageBuild.vue";
+import AIPageCard from "@/components/ai/AIPageCard.vue";
 import AIPluginCard from "@/components/ai/AIPluginCard.vue";
 import AICommandMenu from "@/components/ai/AICommandMenu.vue";
 import AIContextMeter from "@/components/ai/AIContextMeter.vue";
@@ -550,10 +560,10 @@ const { imagePreviewUrl, imageFileName, isDragging, isVisionModel } = chat;
 const { clearImage, attachImageFile } = chat;
 
 const confirmingAction = ref(false);
-async function confirmPendingAction(message: ChatMessage, decision: "apply" | "skip") {
+async function confirmPendingAction(message: ChatMessage, decision: "apply" | "skip", skip: string[] = []) {
 	confirmingAction.value = true;
 	try {
-		await chat.confirmPendingAction(message, decision);
+		await chat.confirmPendingAction(message, decision, skip);
 	} finally {
 		confirmingAction.value = false;
 	}
@@ -585,14 +595,6 @@ function pendingPreview(m: Record<string, any>): string {
 			return `Update site-wide code (${Object.keys(p).join(", ")}). This loads on every page.`;
 		case "home_page":
 			return `Make “/${String(p.route || "").replace(/^\//, "")}” the site's home page.`;
-		case "page_changes": {
-			const creates = p.new_pages?.length || 0;
-			if (!creates) return "Change these pages? Nothing on them changes until you apply.";
-			if (p.pages?.length)
-				return "Apply these? Nothing changes until you do, and new pages are built right after.";
-			const page = creates === 1 ? "this page" : "these pages";
-			return `Create ${page}? Bob builds ${creates === 1 ? "it" : "each"} right after, without touching the page you're on.`;
-		}
 		default:
 			return "Confirm this change?";
 	}
@@ -607,8 +609,7 @@ const APPLY_LABELS: Record<string, string> = {
 	home_page: "Set home page",
 	global_settings: "Apply",
 };
-const applyLabel = (m: Record<string, any> = {}) =>
-	m.kind === "page_changes" ? applyPagesLabel(m.payload) : APPLY_LABELS[m.kind || ""] || "Apply";
+const applyLabel = (m: Record<string, any> = {}) => APPLY_LABELS[m.kind || ""] || "Apply";
 const builderStore = useBuilderStore();
 const canvasStore = useCanvasStore();
 
@@ -622,8 +623,6 @@ const lastMessageId = computed(() => messages.value.at(-1)?.id ?? null);
 function assistantText(message: ChatMessage): string {
 	// a page card's text is for the model; its rows say it for the user
 	if (message.metadata?.status === "pending_action" || message.metadata?.kind === "page_changes") return "";
-	// an applied card's outcome: its page list says it, row by row
-	if (message.message_type === "status" && message.metadata?.pages) return "";
 	return message.metadata?.status === "ui" ? (message.metadata?.text ?? message.content) : message.content;
 }
 
@@ -637,6 +636,23 @@ function stillWorking(message: ChatMessage): boolean {
 	if (!isSubmitting.value || message.id !== lastMessageId.value) return false;
 	if (message.metadata?.status !== "running") return false;
 	return !(message.metadata.steps || []).some((step: AITurnStep) => step.status === "running");
+}
+
+/** This tab's turn, still running: a build line moves with it. */
+function turnRunning(message: ChatMessage): boolean {
+	return isSubmitting.value && message.id === lastMessageId.value && message.metadata?.status === "running";
+}
+
+/** A turn's snapshot restores onto its own page, and a chat goes on across pages. */
+function canRevert(message: ChatMessage): boolean {
+	const page = message.metadata?.pageId;
+	return !!message.metadata?.revertSnapshot && (!page || page === chat.pageId.value);
+}
+
+/** The page a message was sent from, when that's not the page open now. */
+function sentFrom(message: ChatMessage): { page_id: string; title: string } | null {
+	const page = message.metadata?.page;
+	return page?.page_id && page.page_id !== chat.pageId.value ? page : null;
 }
 
 /** The reply a card was answered with: the user message right after it. That
@@ -653,6 +669,8 @@ function replyTo(message: ChatMessage): string | undefined {
  * button, an unlabelled question) is left to speak for itself. */
 const visibleMessages = computed(() =>
 	messages.value.filter((message, i) => {
+		// the outcome of a page card, which the card itself shows
+		if (message.metadata?.card) return false;
 		if (message.role !== "user") return true;
 		const card = messages.value[i - 1]?.metadata;
 		if (card?.status !== "ui" || !card?.ui?.length) return true;

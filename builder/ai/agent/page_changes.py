@@ -117,7 +117,12 @@ class OtherPageEdit:
 		return content, changes
 
 	def payload(self) -> dict:
-		return {**self.page, "changes": summarise(self.changes), "ops": self.ops}
+		return {
+			**self.page,
+			"changes": summarise(self.changes),
+			"change_count": len(self.changes),
+			"ops": self.ops,
+		}
 
 
 class PageChanges:
@@ -233,36 +238,58 @@ def replay(tree: WorkingTree, ops: list[dict]) -> str:
 	return ""
 
 
-def apply_page_changes(payload: dict) -> tuple[str, list[dict]]:
+def apply_page_changes(payload: dict, skip: list | None = None) -> tuple[str, list[dict]]:
 	"""Apply a confirmed card: new pages first (an edit may link to one), then each
-	page's edits. Every page succeeds or fails on its own. Returns the outcome line
-	and one result per page for the chat to list."""
-	results = [isolated(create_page, item, "create") for item in payload.get("new_pages") or []]
-	results += [isolated(apply_page_edit, item, "edit") for item in payload.get("pages") or []]
+	page's edits. Every page succeeds or fails on its own, and a page the user unticked
+	(its key in `skip`) is left as it is. Returns the outcome line and one result per
+	page for the card to show."""
+	skip = set(skip or [])
+	items = [(create_page, item, "create") for item in payload.get("new_pages") or []]
+	items += [(apply_page_edit, item, "edit") for item in payload.get("pages") or []]
+	results = [
+		left_out(item, action) if card_key(item) in skip else isolated(apply, item, action)
+		for apply, item, action in items
+	]
 	return outcome_text(results), results
 
 
-def isolated(apply, item: dict, action: str) -> dict:
-	"""One page's share of the card: a crash rolls back only that page and reads
-	as its failure."""
-	result = {
+def card_key(item: dict) -> str:
+	"""How the card names a row: the page, or for a page not created yet, its route."""
+	return item.get("page_id") or f"new:{route_path(item.get('route'))}"
+
+
+def left_out(item: dict, action: str) -> dict:
+	return {**result_row(item, action), "status": "skipped"}
+
+
+def result_row(item: dict, action: str) -> dict:
+	return {
 		"action": action,
 		"page_id": item.get("page_id"),
 		"title": item.get("title"),
 		"route": route_path(item.get("route")),
 	}
+
+
+def isolated(apply, item: dict, action: str) -> dict:
+	"""One page's share of the card: a crash rolls back only that page and reads
+	as its failure."""
+	result = result_row(item, action)
 	frappe.db.savepoint("page_change")
 	try:
 		return {**result, **apply(item)}
-	except frappe.PermissionError:
-		reason = "you aren't permitted to create pages" if action == "create" else "you can't edit it"
-	except frappe.ValidationError as e:
-		reason = str(e) or "the page didn't validate"
-	except Exception:
-		frappe.log_error(f"Bob couldn't {action} a page", "builder.ai.page_changes")
-		reason = "something went wrong"
-	frappe.db.rollback(save_point="page_change")
-	return {**result, "status": "failed", "detail": reason}
+	except Exception as e:
+		frappe.db.rollback(save_point="page_change")
+		return {**result, "status": "failed", "detail": failure_reason(e, action)}
+
+
+def failure_reason(e: Exception, action: str) -> str:
+	if isinstance(e, frappe.PermissionError):
+		return "you aren't permitted to create pages" if action == "create" else "you can't edit it"
+	if isinstance(e, frappe.ValidationError):
+		return str(e) or "the page didn't validate"
+	frappe.log_error(f"Bob couldn't {action} a page", "builder.ai.page_changes")
+	return "something went wrong"
 
 
 def create_page(item: dict) -> dict:
@@ -325,6 +352,10 @@ def outcome_text(results: list[dict]) -> str:
 		if r["status"] == "failed":
 			verb = "create" if r["action"] == "create" else "change"
 			lines.append(f"Couldn't {verb} {name}, so nothing was changed there: {r['detail']}.")
+		elif r["status"] == "skipped":
+			lines.append(
+				f"The user left out {name}, so it was not {'created' if r['action'] == 'create' else 'changed'}."
+			)
 		else:
 			lines.append(f"{'Created' if r['status'] == 'created' else 'Changed'} {name}.")
 	return " ".join(lines) or "Nothing to apply."

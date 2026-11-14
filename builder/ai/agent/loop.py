@@ -316,6 +316,8 @@ def activity_summary(tool_name: str, args: dict, tree=None, done: bool = True) -
 		return voice(*pair)
 	if tool_name == "create_page" and args.get("title"):
 		return f"{voice('Proposing', 'Proposed')} a new page: {args['title']}"
+	if tool_name == "read_skill" and args.get("name"):
+		return f"{voice('Reading', 'Read')} skill: {args['name'].replace('-', ' ').capitalize()}"
 	if tool_name == "read_page" and args.get("ref"):
 		return f"{voice('Reading', 'Read')} block: {resolved_label(args.get('ref'))}"
 	if tool_name == "read_page":
@@ -391,6 +393,9 @@ class AgentRunner:
 		self.page_changes = PageChanges(folder)
 		# New pages the user approved that are still to build, one turn each.
 		self.next_builds = next_builds or []
+		# The page an off-screen turn builds: every event names it, so the chat can
+		# show the whole turn as one line about that page.
+		self.build_page = page_row(page_id) if self.off_screen else None
 		self.selected_block_ids = selected_block_ids or []
 		self.image_url = image_url
 		self.image_file_url = image_file_url
@@ -556,6 +561,8 @@ class AgentRunner:
 		event = f"{EVENT_PREFIX}_{suffix}"
 		if channel := page_id or self.channel:
 			event = f"{event}_{channel}"
+		if self.build_page:
+			kwargs["build_page"] = self.build_page
 		frappe.publish_realtime(
 			event,
 			{"page_id": page_id, "session_id": self.session_id, **kwargs},
@@ -1617,12 +1624,13 @@ class AgentRunner:
 				"trace": self.trace,
 			},
 		}
-		if self.off_screen:
+		if self.build_page:
 			# Revert restores onto the open canvas, and this turn's page isn't on it.
-			if self.applied_operations:
-				final_metadata["pages"] = [{**page_row(self.page_id), "status": "built"}]
+			final_metadata["buildPage"] = {**self.build_page, "built": bool(self.applied_operations)}
 		elif self.revert_snapshot:
 			final_metadata["revertSnapshot"] = self.revert_snapshot
+			# a chat goes on across pages, and a snapshot only restores onto its own
+			final_metadata["pageId"] = self.page_id
 		if self.plugins_written:
 			final_metadata["plugins"] = self.plugins_written
 		if self.web_sources:
@@ -1734,11 +1742,6 @@ class AgentRunner:
 		if missing := self.require_skill("new-page"):
 			return missing, []
 		entry = self.build_step = self.begin_activity(op["tool_name"], op["args"])
-		if self.off_screen:
-			title = page_row(self.page_id)["title"]
-			entry["summary"] = f"Building {title}"
-			self.step_done_summaries[entry["id"]] = f"Built {title}"
-			self.emit("step", **entry)
 		self.ensure_revert_snapshot()  # generation replaces the block tree
 		ops = tool.generator(self, op["args"])
 		self.build_step = None
@@ -1764,8 +1767,7 @@ class AgentRunner:
 		sections = [s for s in blocks[0].get("children") or [] if isinstance(s, dict)]
 		if not sections:
 			return
-		title = page_row(self.page_id)["title"]
-		self.build_step["summary"] = f"Building {title}: section {len(sections)}, {block_label(sections[-1])}"
+		self.build_step["summary"] = f"Section {len(sections)}: {block_label(sections[-1])}"
 		self.emit("step", **self.build_step)
 
 	def dropped_lines_note(self) -> str:

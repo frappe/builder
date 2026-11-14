@@ -13,6 +13,7 @@ RECENT_SESSION_SCAN = 20
 class AISession:
 	DOCTYPE = "Builder AI Session"
 	MESSAGE_DOCTYPE = "Builder AI Message"
+	PAGE_DOCTYPE = "Builder AI Session Page"
 	CONTEXT_WINDOW = 10  # how many prior turns to feed back to the model
 	IMAGE_REPLAY_LIMIT = 2  # newest attached images re-shown to a vision model
 
@@ -46,6 +47,22 @@ class AISession:
 		return next((name for name in recent if name in spoken), recent[0])
 
 	@classmethod
+	def on_page(cls, page_id: str, user: str | None = None) -> dict:
+		"""Filters for a user's chats on a page: one is on every page it was used on
+		or changed, not only the one it started on."""
+		user = user or frappe.session.user
+		listed = frappe.get_all(
+			cls.PAGE_DOCTYPE, {"page": page_id, "parenttype": cls.DOCTYPE}, pluck="parent"
+		)
+		started = frappe.get_all(cls.DOCTYPE, {"page": page_id, "session_user": user}, pluck="name")
+		return {"name": ["in", list({*listed, *started}) or [""]], "session_user": user}
+
+	@classmethod
+	def can_open(cls, session_id: str, page_id: str) -> bool:
+		doc = frappe.db.exists(cls.DOCTYPE, session_id) and frappe.get_doc(cls.DOCTYPE, session_id)
+		return bool(doc) and doc.session_user == frappe.session.user and cls(doc).touches(page_id)
+
+	@classmethod
 	def create(cls, values: dict, model: str | None = None):
 		"""Insert a fresh Active session. A chat gets one with its first message."""
 		doc = frappe.get_doc(
@@ -68,9 +85,10 @@ class AISession:
 		doc = frappe.get_doc(cls.DOCTYPE, session_id)
 		if doc.session_user != user:
 			frappe.throw(_("You do not have access to this AI session"))
-		if page_id and doc.page != page_id:
+		session = cls(doc)
+		if page_id and not session.touches(page_id):
 			frappe.throw(_("AI session does not belong to this page"))
-		return cls(doc)
+		return session
 
 	@classmethod
 	def try_append_message(cls, session_id: str | None, role: str, content: str, **kwargs) -> str | None:
@@ -95,6 +113,27 @@ class AISession:
 	@property
 	def page(self):
 		return self._doc.page
+
+	def touches(self, page_id: str) -> bool:
+		return self._doc.page == page_id or self.lists(page_id)
+
+	def lists(self, page_id: str) -> bool:
+		return any(row.page == page_id for row in self._doc.pages)
+
+	def add_pages(self, *page_ids: str) -> None:
+		"""Record pages this chat changed or was used on, so each of them lists it."""
+		for page_id in dict.fromkeys(filter(None, page_ids)):
+			if not self.lists(page_id):
+				self._doc.append("pages", {"page": page_id}).db_insert()
+
+	def move_to(self, page_id: str) -> None:
+		"""The chat goes on from another page: it lives there now, and both pages list it.
+		Its page is where the server's own turns (a build, a resume) report back."""
+		if not page_id or self._doc.page == page_id:
+			return
+		self.add_pages(self._doc.page, page_id)
+		self._doc.page = page_id
+		frappe.db.set_value(self.DOCTYPE, self._doc.name, "page", page_id, update_modified=False)
 
 	@property
 	def selected_model(self):
@@ -224,6 +263,8 @@ class AISession:
 				content = self.plan_context_content(content, r.get("metadata_json"))
 			if role == "assistant":
 				content = self.sources_context_content(content, r.get("metadata_json"))
+			if role == "user":
+				content = self.sent_from(content, r.get("metadata_json"))
 			if i in replay_images and (image := self.replay_image_part(r)):
 				out.append({"role": role, "content": [{"type": "text", "text": content}, image]})
 				continue
@@ -257,6 +298,13 @@ class AISession:
 			if data_url := read_site_image(url):
 				return {"type": "image_url", "image_url": {"url": data_url}}
 		return None
+
+	def sent_from(self, content: str, metadata_json: str | None) -> str:
+		"""A message sent from another page says so: its "this page" meant that one."""
+		page = self.load_metadata(metadata_json).get("page") or {}
+		if not page.get("page_id") or page["page_id"] == self._doc.page:
+			return content
+		return f"[Sent from the page '{page.get('title')}' ({page.get('route')}), id {page['page_id']}]\n{content}"
 
 	@staticmethod
 	def plan_context_content(headline: str, metadata_json: str | None) -> str:
@@ -326,6 +374,15 @@ class AISession:
 			updates["last_task_type"] = task_type
 		frappe.db.set_value(self.DOCTYPE, self._doc.name, updates, update_modified=False)
 		return msg.name
+
+	@classmethod
+	def answer_card(cls, message_id: str, status: str, metadata: dict) -> None:
+		"""Close a confirm card, keeping how it came out on the card itself."""
+		frappe.db.set_value(
+			cls.MESSAGE_DOCTYPE,
+			message_id,
+			{"status": status, "metadata_json": json.dumps(metadata, separators=(",", ":"))},
+		)
 
 	def update_last_assistant_metadata(self, extra_metadata: dict):
 		"""Merge extra_metadata into the most recent assistant message's

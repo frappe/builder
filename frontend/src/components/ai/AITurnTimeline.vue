@@ -74,31 +74,50 @@ import { computed, ref } from "vue";
  * appends the turn's idle shimmer as the tail row (see template). */
 const props = defineProps<{ steps: AITurnStep[]; working?: boolean }>();
 
+type Row = AITurnStep & { repeats?: number; pages?: Set<string> };
+
 /** A run of the same tool collapses to one row with a count. Minting six design
  * tokens is one action to the reader, not six lines of "Set token: …", and the
  * repetition drowns out the steps that actually differ. Times are summed. */
-const rows = computed<(AITurnStep & { repeats?: number })[]>(() => {
-	const out: (AITurnStep & { repeats?: number })[] = [];
+const rows = computed<Row[]>(() => {
+	const out: Row[] = [];
 	for (const step of props.steps) {
 		const last = out[out.length - 1];
 		if (last && sameAction(last, step)) {
 			last.repeats = (last.repeats || 1) + 1;
 			last.ms = (last.ms || 0) + (step.ms || 0);
 			last.status = step.status;
+			last.pages?.add(otherPage(step));
 			continue;
 		}
-		out.push({ ...step });
+		const page = otherPage(step);
+		out.push({ ...step, pages: page ? new Set([page]) : undefined });
 	}
-	return out.map(countTokens);
+	return out.map(countTokens).map(countPages);
 });
 
 const sameAction = (a: AITurnStep, b: AITurnStep) =>
 	a.kind === "tool" &&
 	b.kind === "tool" &&
-	(a.summary === b.summary || (a.tool === "set_design_token" && b.tool === "set_design_token"));
+	(a.summary === b.summary ||
+		(a.tool === "set_design_token" && b.tool === "set_design_token") ||
+		(!!otherPage(a) && !!otherPage(b)));
+
+/** The page an edit to another page is held for: "Prepared for About: …". */
+function otherPage(step: AITurnStep): string {
+	if (step.tool !== "edit_page") return "";
+	return step.summary?.match(/^(?:Prepared for|Preparing changes to) (.+?)(?::|$)/)?.[1] || "";
+}
+
+// edits held for several pages read as one step that names how many
+function countPages(row: Row) {
+	if (!row.repeats || (row.pages?.size || 0) < 2) return row;
+	const verb = running(row) ? "Preparing" : "Prepared";
+	return { ...row, summary: `${verb} changes for ${row.pages!.size} pages`, repeats: undefined };
+}
 
 // each token step names its token, so a run of them says how many instead
-function countTokens(row: AITurnStep & { repeats?: number }) {
+function countTokens(row: Row) {
 	if (row.tool !== "set_design_token" || !row.repeats) return row;
 	const verb = running(row) ? "Setting" : "Set";
 	return { ...row, summary: `${verb} ${row.repeats} design tokens`, repeats: undefined };
