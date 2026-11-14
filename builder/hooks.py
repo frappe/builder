@@ -29,8 +29,8 @@ require_type_annotated_api_methods = True
 # page_js = {"page" : "public/js/file.js"}
 
 # include js in doctype views
-# doctype_js = {"doctype" : "public/js/doctype.js"}
-# doctype_list_js = {"doctype" : "public/js/doctype_list.js"}
+doctype_js = {"Web Page": "public/js/web_page.js"}
+doctype_list_js = {"Web Page": "public/js/web_page_list.js"}
 # doctype_tree_js = {"doctype" : "public/js/doctype_tree.js"}
 # doctype_calendar_js = {"doctype" : "public/js/doctype_calendar.js"}
 
@@ -74,7 +74,7 @@ after_app_install = "builder.install.after_app_install"
 # Uninstallation
 # ------------
 
-# before_uninstall = "builder.uninstall.before_uninstall"
+before_uninstall = "builder.install.before_uninstall"
 # after_uninstall = "builder.uninstall.after_uninstall"
 
 # Desk Notifications
