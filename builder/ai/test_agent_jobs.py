@@ -48,6 +48,19 @@ class TestAgentJobs(FrappeTestCase):
 			[(c.kwargs["effort"], c.kwargs["timeout"]) for c in enqueue.call_args_list], [("xhigh", 3600)] * 2
 		)
 
+	def test_a_sent_message_reports_ai_usage_and_a_resumed_turn_does_not(self):
+		page, session = chat_session()
+		with (
+			patch.object(ModelRegistry, "find", return_value=MODEL),
+			patch("builder.ai.api.resolve_api_key", return_value=SECRET),
+			patch("frappe.enqueue"),
+			patch("builder.ai.api.capture") as capture,
+		):
+			api.run("hi", page, model=MODEL["name"], session_id=session)
+			api.resume_after_action(session, "Applied.")
+
+		capture.assert_called_once_with("builder_ai_used", "builder")
+
 	def test_a_resume_without_a_key_queues_nothing(self):
 		_, session = chat_session()
 
