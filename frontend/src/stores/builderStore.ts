@@ -13,6 +13,8 @@ import BlockLayers from "./components/BlockLayers.vue";
 
 const { capture } = useTelemetry();
 const belowLgBreakpoint = useBreakpoints(breakpointsTailwind).smaller("lg");
+// Cloud Settings is enabled on Frappe Cloud v2 sites only
+const isCloudV2Site = Boolean(window.cloud_settings?.enabled);
 
 declare global {
 	interface Window {
@@ -36,7 +38,7 @@ const useBuilderStore = defineStore("builderStore", {
 			scriptEditorHeight: 300,
 			optionsPanelWidth: 57,
 		},
-		leftPanelActiveTab: <LeftSidebarTabOption>"Layers",
+		leftPanelActiveTab: <LeftSidebarTabOption>(isCloudV2Site ? "Chat" : "Layers"),
 		showRightPanel: <boolean>true,
 		showLeftPanel: <boolean>true,
 		showVersionHistory: <boolean>false,

@@ -223,7 +223,8 @@ class PagePreview:
 		if not blocks:
 			return
 		self.sent_at, self.sent_upto = time.monotonic(), cut
-		self.ctx.emit("stream", kind="page_blocks", blocks=blocks)
+		self.ctx.emit_to_page("stream", kind="page_blocks", blocks=blocks)
+		self.ctx.show_build_progress(blocks)
 		save_stream_buffer(self.ctx, blocks)
 
 
@@ -280,7 +281,8 @@ def generate_page_markup(ctx, args: dict) -> list[dict]:
 		else:
 			messages.append({"role": "user", "content": build_text})
 
-	ctx.emit("progress", message="Building the page…")
+	title = frappe.db.get_value("Builder Page", ctx.page_id, "page_title") if ctx.off_screen else None
+	ctx.emit("progress", message=f"Building {title}…" if title else "Building the page…")
 
 	text = ""
 	finish_reason = None

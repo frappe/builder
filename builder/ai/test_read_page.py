@@ -53,7 +53,7 @@ class TestReadPage(FrappeTestCase):
 		out = run_read_page(self.ctx(), {"page_id": self.page.name})
 
 		self.assertIn("Reference Page", out)
-		self.assertIn("READ-ONLY", out)
+		self.assertIn(f"edit_page(page='{self.page.name}')", out)
 		self.assertIn("fonts: Libre Baskerville x1 (div), Cinzel x1 (h1)", out)
 		self.assertIn("colors: #E6DECA x1, #161412 x1", out)
 		self.assertIn('h1 "Ravens" {color:#161412;font-family:Cinzel}', out)
@@ -77,7 +77,7 @@ class TestReadPage(FrappeTestCase):
 		self.assertIn("Updated", out)
 		self.assertIn('@live "Updated"', out)
 		self.assertIn(".raven { letter-spacing: 0.08em; }", out)
-		self.assertNotIn("READ-ONLY", out)
+		self.assertNotIn("another page of this site", out)
 		self.assertNotIn("Ravens", out)
 
 	def test_reads_one_open_page_block_by_its_short_ref(self):

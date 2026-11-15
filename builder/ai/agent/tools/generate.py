@@ -15,8 +15,9 @@ generate_page = Tool(
 	artifact="page_markup",
 	generator=generate_page_markup,
 	description=(
-		"Build a complete web page from a brief and replace the entire page with it. Use it "
-		"when the page is empty, or the user asks for a new page or a full redesign. If the "
+		"Build a complete web page from a brief and replace the entire page you're working on "
+		"with it. Use it when that page is empty or the user asks for a full redesign (a "
+		"separate new page is create_page). If the "
 		"page must match a reference page of this site, read_page that reference this turn "
 		"and carry its exact values ($token handles, font names, section structure) into "
 		"the brief: a brief written from memory of a page you didn't read produces an "

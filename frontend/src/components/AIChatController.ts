@@ -4,6 +4,7 @@ import { type AIChatHandlers, attachAIChatListeners, detachAIChatListeners } fro
 import { type AffectedItems, type PageCanvas, ToolDispatcher } from "@/components/ai/toolDispatch";
 import { type Credits, creditsFor } from "@/components/ai/commands/shared";
 import { contextUsageOf } from "@/components/ai/contextUsage";
+import type { BuildPage } from "@/components/ai/pageChanges";
 import type { AIProvider, AITurnStep, ChatMessage } from "@/components/ai/types";
 import { buildLocalMessage } from "@/components/ai/blockFields";
 import type BuilderCanvas from "@/components/BuilderCanvas.vue";
@@ -15,7 +16,7 @@ import { useBuilderToken } from "@/utils/useBuilderToken";
 import { useLocalStorage } from "@vueuse/core";
 import { createResource, toast } from "frappe-ui";
 import { computed, inject, nextTick, ref, shallowRef, watch } from "vue";
-import { useRoute } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
 
 /**
  * Orchestrates the Builder AI chat: holds UI state, sends each user turn to the
@@ -27,6 +28,9 @@ export class AIChatController {
 	private readonly canvasStore = useCanvasStore();
 	private readonly pageStore = usePageStore();
 	private readonly route = useRoute();
+	private readonly router = useRouter();
+	/** The chat to carry on with on the page being opened from it. */
+	private carriedSessionId = "";
 	// Bob edits the page, so everything lands here even while a component is open
 	private readonly pageCanvas: PageCanvas = inject(
 		"pageCanvas",
@@ -237,14 +241,17 @@ export class AIChatController {
 			if (!newPageId) return;
 			attachAIChatListeners(this.builderStore.realtime, newPageId, this.handlers);
 			this.resetTransientState();
-			// Sessions are page-scoped: never carry one across a page switch.
+			// A page switch starts from that page's own chats, unless it was opened from
+			// this chat (a page Bob changed), which then goes on there.
+			const carried = this.carriedSessionId;
+			this.carriedSessionId = "";
 			this.sessionIntentEpoch++;
 			this.invalidateSessionLoads();
 			this.sessionId.value = "";
 			this.sessions.value = [];
 			this.messages.value = [];
 			if (newPageId === "new") return;
-			await this.loadSession();
+			await this.loadSession(carried || undefined);
 			// A build may be mid-stream on this page (opened from another chat's link,
 			// or a refresh mid-generation): replay the buffered stream as live preview.
 			this.syncActiveBuild();
@@ -390,12 +397,18 @@ export class AIChatController {
 				}),
 			}).submit();
 			if (epoch !== this.loadSessionEpoch || this.pageId.value !== pageId) return;
-			const session = result as { session_id: string; messages: ChatMessage[]; is_running?: boolean };
+			const session = result as {
+				session_id: string;
+				page_id?: string;
+				messages: ChatMessage[];
+				is_running?: boolean;
+			};
 			this.sessionId.value = session.session_id;
 			this.messages.value = (session.messages || []).map(
 				(m) => ({ ...m, role: m.role === "user" ? "user" : "assistant" }) as ChatMessage,
 			);
-			if (session.is_running) this.beginResumedTurn();
+			// a turn running from another page reports there, so this one can't follow it
+			if (session.is_running && session.page_id === pageId) this.beginResumedTurn();
 			this.scrollToBottom();
 			this.loadSessions();
 		} finally {
@@ -499,9 +512,18 @@ export class AIChatController {
 	onProgress = (data: { message?: string; session_id?: string }) => {
 		if (this.holdUntilSessionKnown(data, () => this.onProgress(data))) return;
 		if (this.isForeignSession(data)) return;
+		this.ensureTurnBubble();
 		this.isSubmitting.value = true;
 		this.progressMessage.value = data.message || this.progressMessage.value;
 	};
+
+	/** A turn the server started by itself (the next approved page to build) has no
+	 * bubble yet, and the last one's was replaced by its session reload. */
+	private ensureTurnBubble() {
+		const id = this.pendingAssistantId.value;
+		if (id && this.messages.value.some((m) => m.id === id)) return;
+		this.beginResumedTurn();
+	}
 
 	/** One timeline entry, upserted by id: the model thinking, a tool running, or the
 	 * narration it wrote before moving on. A "text" step is also the signal that the
@@ -510,8 +532,10 @@ export class AIChatController {
 	onStep = (data: AITurnStep & { session_id?: string }) => {
 		if (this.holdUntilSessionKnown(data, () => this.onStep(data))) return;
 		if (this.isForeignSession(data) || typeof data.id !== "number") return;
+		this.ensureTurnBubble();
 		this.isSubmitting.value = true;
-		const { session_id, page_id, ...step } = data as Record<string, any>;
+		const { session_id, page_id, build_page, ...step } = data as Record<string, any>;
+		if (build_page) this.markBuildTurn(build_page);
 		if (step.kind === "text") this.summaryContent.value = "";
 		const index = this.liveSteps.value.findIndex((s) => s.id === step.id);
 		if (index === -1) this.liveSteps.value.push(step as AITurnStep);
@@ -521,6 +545,20 @@ export class AIChatController {
 		}
 		this.syncPendingSteps();
 		this.scrollToBottom();
+	};
+
+	/** A turn building another page names it on every event; the chat shows that
+	 * turn as one line about the page. */
+	private markBuildTurn(page: BuildPage) {
+		const message = this.messages.value.find((m) => m.id === this.pendingAssistantId.value);
+		if (message && !message.metadata?.buildPage) message.metadata = { ...message.metadata, buildPage: page };
+	}
+
+	/** Open a page from the chat, carrying the chat on there. */
+	openPage = (pageId: string) => {
+		if (!pageId || pageId === this.pageId.value) return;
+		this.carriedSessionId = this.sessionId.value;
+		this.router.push({ name: "builder", params: { pageId } });
 	};
 
 	/** Mirror the live timeline (and whatever is streaming) onto the pending message,
@@ -533,14 +571,21 @@ export class AIChatController {
 		});
 	}
 
+	/** Canvas events name the page they change; this canvas only takes its own. */
+	private isOtherPage(data: { page_id?: string }): boolean {
+		return !!data.page_id && data.page_id !== this.pageId.value;
+	}
+
 	onStream = (data: {
 		chunk?: string;
 		kind?: string;
 		session_id?: string;
+		page_id?: string;
 		blocks?: BlockOptions[];
 		replace?: boolean;
 	}) => {
 		if (!data.chunk && !data.replace && !data.blocks) return;
+		if (data.kind === "page_blocks" && this.isOtherPage(data)) return;
 		if (this.holdUntilSessionKnown(data, () => this.onStream(data))) return;
 		if (this.isForeignSession(data)) {
 			// Another chat on this page is generating: the canvas is page-level, so
@@ -592,8 +637,10 @@ export class AIChatController {
 
 	onToolBatch = (data: {
 		session_id?: string;
+		page_id?: string;
 		operations?: Array<{ tool_name: string; args: Record<string, any> }>;
 	}) => {
+		if (this.isOtherPage(data)) return;
 		// Cancel any pending throttled stream render so it can't fire AFTER and clobber
 		// the authoritative apply below with stale partial YAML.
 		this.clearStreamRenderTimer();
@@ -707,8 +754,10 @@ export class AIChatController {
 			this.sessionId.value === completedSession &&
 			(localMeta.affectedBlocks?.length || localMeta.affectedScripts?.length)
 		) {
+			// the turn's reply, not a confirm card it left after it
+			const isReply = (m?: ChatMessage) => m?.role === "assistant" && m.metadata?.status !== "pending_action";
 			let idx = this.messages.value.length - 1;
-			while (idx >= 0 && this.messages.value[idx]?.role !== "assistant") idx--;
+			while (idx >= 0 && !isReply(this.messages.value[idx])) idx--;
 			if (idx >= 0) {
 				this.messages.value[idx] = {
 					...this.messages.value[idx],
@@ -799,14 +848,16 @@ export class AIChatController {
 	/** Apply or skip a sensitive action the agent proposed (create doctype, seed data,
 	 * global settings, publish). The privileged write happens server-side in the endpoint;
 	 * we reload the session so the message's status flips out of "pending_action". */
-	confirmPendingAction = async (message: ChatMessage, decision: "apply" | "skip") => {
+	confirmPendingAction = async (message: ChatMessage, decision: "apply" | "skip", skip: string[] = []) => {
 		try {
 			const res = await createResource({
 				url: "builder.ai.api.confirm_pending_settings",
 				method: "POST",
-			}).submit({ message_id: message.id, decision });
+			}).submit({ message_id: message.id, decision, skip });
 			await this.loadSession();
-			if (decision === "apply") toast.success(res?.message || "Applied");
+			// a page card shows how each page came out itself
+			if (decision === "apply" && !res?.pages) toast.success(res?.message || "Applied");
+			this.scrollToBottom();
 			if (res?.resumed && !this.isSubmitting.value) this.beginResumedTurn();
 		} catch (e: any) {
 			toast.error(e?.messages?.[0] || "Could not apply the change");

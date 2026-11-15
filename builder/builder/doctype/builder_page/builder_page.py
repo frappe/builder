@@ -359,6 +359,8 @@ class BuilderPage(WebsiteGenerator):
 		for session in frappe.get_all("Builder AI Session", filters={"page": self.name}, pluck="name"):
 			# another user's chat on this page goes too, whoever deletes the page
 			frappe.delete_doc("Builder AI Session", session, ignore_missing=True, ignore_permissions=True)
+		# a chat that went on elsewhere keeps its messages and just stops listing this page
+		frappe.db.delete("Builder AI Session Page", {"page": self.name})
 
 		if self.is_template and self.template_group:
 			if frappe.conf.developer_mode:

@@ -20,7 +20,7 @@
 		</div>
 
 		<div v-if="note || level?.input" class="flex flex-col gap-2 p-2">
-			<p v-if="note" class="text-p-sm" :class="noteIsError ? 'text-ink-red-6' : 'text-ink-gray-6'">
+			<p v-if="note" class="text-p-sm" :class="noteClasses[noteTone]">
 				{{ note }}
 			</p>
 			<form v-if="level?.input" @submit.prevent="submitField" @keydown.esc.prevent.stop="menu.back()">
@@ -93,12 +93,17 @@
 </template>
 
 <script setup lang="ts">
-import type { CommandMenu, MenuItem } from "@/components/ai/commandMenu";
+import type { CommandMenu, MenuItem, NoteTone } from "@/components/ai/commandMenu";
 import { Button, ItemListRow, LoadingIndicator, Password, Switch, TextInput } from "frappe-ui";
 import { computed, nextTick, ref, watch } from "vue";
 
 const props = defineProps<{ menu: CommandMenu }>();
-const { stack, root, level, atRoot, visibleItems: items, note, noteIsError, busy, activeIndex } = props.menu;
+const { stack, root, level, atRoot, visibleItems: items, note, noteTone, busy, activeIndex } = props.menu;
+const noteClasses: Record<NoteTone, string> = {
+	info: "text-ink-gray-6",
+	error: "text-ink-red-6",
+	progress: "animate-shine w-fit",
+};
 
 // the command list heads the trail only when it is the whole trail
 const breadcrumb = computed(() =>

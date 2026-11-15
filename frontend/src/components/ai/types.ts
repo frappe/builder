@@ -60,7 +60,8 @@ export interface BrowserSignIn {
 }
 
 export type SignInStatus =
-	({ status: "connected" } & ConnectResult) | { status: "pending" | "failed" | "expired"; message?: string };
+	| ({ status: "connected" } & ConnectResult)
+	| { status: "pending" | "approved" | "failed" | "expired"; message?: string };
 
 /** What builder.ai.api.ai_setup_state reports. */
 export interface AISetupState {
