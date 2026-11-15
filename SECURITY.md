@@ -4,6 +4,8 @@ The Frappe team and community take security issues in Frappe Builder seriously. 
 
 Before you report, please read our [security policy](https://frappe.io/security). It covers scope, what to include in a report, disclosure, CVE assignment and credits.
 
+## Supported Versions
+
 We provide security fixes only for the latest release of Frappe Builder. Fixes are not backported to older releases.
 
 To get security fixes, update to the [latest release](https://github.com/frappe/builder/releases/latest). If you find a vulnerability in an older release, please check that it still exists in the latest release before you report it.
