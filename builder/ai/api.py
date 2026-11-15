@@ -9,6 +9,7 @@ import logging
 
 import frappe
 from frappe import _
+from frappe.utils.telemetry import capture
 
 from builder.ai.agent.loop import run_agent_job
 from builder.ai.agent.page_changes import page_row
@@ -135,6 +136,7 @@ def run(
 		canvas_theme=canvas_theme,
 		effort=thinking.level,
 	)
+	capture("builder_ai_used", "builder")
 	frappe.local.response.http_status_code = 202
 	return {"status": "accepted", "session_id": session_id}
 
