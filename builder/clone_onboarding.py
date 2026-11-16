@@ -4,9 +4,9 @@ frappe.page sites only.
 The service needs a key to write into this site, so a dedicated user holds a short-lived one: it is created for the
 clone and disabled as soon as the clone finishes.
 
-A frappe.page site has no System Manager at all and is reached at its editor address (frappe.page/<sub>), so there the
-clone user is a Website Manager and the service is told the editor address; its API and the nonce callback answer
-under that path."""
+A frappe.page site has no System Manager at all, so there the clone user is a Website Manager. The service calls
+/api/... at the root of the address it is given, so a host that serves the editor under a path of a shared host
+(frappe.page/<sub>) names the site's own origin through the `builder_clone_site_url` hook."""
 
 import json
 
@@ -79,12 +79,10 @@ def only_site_managers():
 
 
 def site_url() -> str:
-	"""Where the service reaches this site's API. A frappe.page editor shares its host with every other site, so
-	the address carries the mount (frappe.page/<sub>); the edge forwards the scheme and host the browser used."""
-	if not is_mounted():
-		return frappe.utils.get_url()
-	request = frappe.request
-	return f"{request.scheme}://{request.host}{frappe.get_request_header('X-FP-Mount')}"
+	"""The origin at which the service reaches this site's API and the nonce callback."""
+	if hook := frappe.get_hooks("builder_clone_site_url"):
+		return frappe.get_attr(hook[-1])()
+	return frappe.utils.get_url()
 
 
 def design_for(look: str) -> dict:
