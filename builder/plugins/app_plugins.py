@@ -114,7 +114,7 @@ class AppPlugin:
 			doc = frappe.get_doc(INSTALLATION_DOCTYPE, installation)
 		else:
 			doc = frappe.new_doc(INSTALLATION_DOCTYPE).update({"plugin": self.name})
-		if doc.checksum == self.checksum and doc.readme == self.readme:
+		if doc.checksum == self.checksum and doc.readme == self.readme and doc.release_path.is_dir():
 			return
 		if doc.source != "App":
 			doc.enabled = 0
