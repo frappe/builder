@@ -1,5 +1,6 @@
 import { websiteSettings } from "@/data/websiteSettings";
 import { shortenNumber } from "@/utils/helpers";
+import { liveOrigin } from "@/utils/frappePage";
 import { useStorage } from "@vueuse/core";
 import { createResource, debounce } from "frappe-ui";
 import { computed, ref, watch } from "vue";
@@ -181,7 +182,7 @@ export function useAnalytics({
 	});
 
 	const onPageRowClick = (row: { route: string }) => {
-		window.open(`/${row.route}`, "_blank");
+		window.open(`${liveOrigin()}/${row.route}`, "_blank");
 	};
 
 	const formatDateToString = (date: Date): string => {

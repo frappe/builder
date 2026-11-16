@@ -116,6 +116,7 @@ import builderProjectFolder from "@/data/builderProjectFolder";
 import useBuilderStore from "@/stores/builderStore";
 import { BuilderProjectFolder } from "@/types/doctypes";
 import { promptCreateFolder } from "@/utils/dialogs";
+import { deskURL, isMounted } from "@/utils/frappePage";
 import { confirm } from "@/utils/helpers";
 import { useDark, useToggle } from "@vueuse/core";
 import {
@@ -145,7 +146,7 @@ const renamingFolder = ref("");
 const apps = createResource({
 	url: "builder.api.get_apps",
 	cache: "other_apps",
-	auto: true,
+	auto: !isMounted,
 });
 
 const appsSubmenu = computed(() => {
@@ -176,6 +177,14 @@ const appMenuItems = computed<SidebarHeaderProps["menuItems"]>(() => [
 				label: __("Apps"),
 				icon: "lucide-grid",
 				submenu: appsSubmenu.value,
+				condition: () => !isMounted,
+			},
+			{
+				// a frappe.page site has no Desk or other apps: its dashboard is where the user goes next
+				label: __("Dashboard"),
+				icon: "lucide-layout-dashboard",
+				onClick: () => window.open(deskURL(), "_self"),
+				condition: () => isMounted,
 			},
 			{
 				label: __("Toggle Theme"),
