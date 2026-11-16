@@ -23,6 +23,7 @@ from builder.plugins.access import (
 	find_installation,
 	is_plugin_manager,
 )
+from builder.plugins.app_plugins import sync_app_plugins
 from builder.plugins.constants import DEV_PLUGIN_VERSION
 from builder.utils import has_page_read
 
@@ -34,9 +35,12 @@ NO_BUILDER_ACCESS = "You need access to Builder to use plugins."
 def get_installations() -> list[dict]:
 	"""Every installation on this site, the disabled and development ones included.
 
+	App plugins sync first, so the list shows the build that each app comes with now.
+
 	A development installation is listed so the panel can open its record. The
 	browser loads its entry from the dev server, and hides a record no dev server serves.
 	"""
+	sync_app_plugins()
 	rows = frappe.get_all(
 		INSTALLATION_DOCTYPE,
 		fields=["name", "enabled", "install_state"],
@@ -106,6 +110,9 @@ def uninstall_plugin(plugin: str) -> None:
 	"""
 	assert_plugin_manager()
 	installation = find_installation(plugin) or throw_not_installed(plugin)
+	source_app = frappe.db.get_value(INSTALLATION_DOCTYPE, installation, "source_app")
+	if source_app:
+		frappe.throw(_('"{0}" comes with {1}. Uninstall {1} to remove it.').format(plugin, source_app))
 	frappe.delete_doc(INSTALLATION_DOCTYPE, installation)
 
 
@@ -120,16 +127,26 @@ def describe_installation(installation: str) -> dict:
 		"name": row.plugin,
 		"label": row.label,
 		"description": row.description,
-		"icon": row.icon_data_uri,
+		"icon": row.get_file_url(row.icon),
 		"version": row.version,
 		"entry_url": row.entry_url,
 		"source": row.source,
 		"hub_url": row.hub_url,
+		"source_app": row.source_app,
 		"enabled": bool(row.enabled),
 		"install_state": row.install_state,
 		"install_error": row.install_error,
 		"is_development": row.version == DEV_PLUGIN_VERSION,
 	}
+
+
+def describe_source(row) -> str:
+	"""Where an installation came from, as a refusal names it."""
+	if row.source == "Hub":
+		return row.hub_url
+	if row.source == "App":
+		return row.source_app
+	return _("a dev server")
 
 
 def throw_not_installed(plugin: str) -> NoReturn:

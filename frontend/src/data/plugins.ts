@@ -26,6 +26,8 @@ type Installation = {
 	source: "Hub" | "App" | "Development" | "Bob";
 	/** The Builder Hub that it came from, when `source` is "Hub". */
 	hub_url?: string;
+	/** The Frappe app that ships it, when `source` is "App". */
+	source_app?: string;
 	enabled: boolean;
 	/** A Hub install is "Installing" until its background job ends. Then it is "Ready" or "Failed". */
 	install_state?: "Installing" | "Ready" | "Failed";
