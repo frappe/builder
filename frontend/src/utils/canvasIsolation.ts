@@ -48,6 +48,14 @@ export function sanitizeBlockHTML(html: string): string {
 	return isMounted ? purify.sanitize(html, SANITIZE_OPTIONS) : html;
 }
 
+// a block's element comes from its stored JSON, so it could name one that loads or runs code
+const ACTIVE_TAGS = new Set(["script", "object", "embed", "applet", "frame", "frameset", "base", "meta"]);
+
+/** The element the canvas draws for a block's tag: an active one is drawn as a plain div. */
+export function canvasTag(tag: string): string {
+	return isMounted && ACTIVE_TAGS.has(tag.trim().toLowerCase()) ? "div" : tag;
+}
+
 const URL_ATTRIBUTES = new Set(["href", "src", "action", "formaction", "xlink:href", "data"]);
 
 /** Drops what would run from a block's attributes. `keep` holds the ones Builder itself passes. */
