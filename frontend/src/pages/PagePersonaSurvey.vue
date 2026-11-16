@@ -80,7 +80,7 @@
 					:disabled="!answers[activeQuestion.key]"
 					@click="goNext" />
 			</template>
-			<StartChoice v-else-if="step === 'start'" :can-clone="canClone && !isMounted" @choose="choose" />
+			<StartChoice v-else-if="step === 'start'" :can-clone="canClone" @choose="choose" />
 			<CloneAddressStep
 				v-else-if="step === 'clone-address'"
 				v-model="cloneAddress"
@@ -118,7 +118,6 @@ import { type CloneLook, serverMessage, useSiteClone } from "@/composables/useSi
 import { builderSettings } from "@/data/builderSettings";
 import router, { sessionUser } from "@/router";
 import { getUserInfo } from "@/usersInfo";
-import { isMounted } from "@/utils/frappePage";
 import { submitPersonaSurvey } from "@/utils/personaSurvey";
 import { Button, Textarea } from "frappe-ui";
 import { useTelemetry } from "@framework/ui/telemetry";

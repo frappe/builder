@@ -87,7 +87,7 @@
 		</ScrollArea>
 
 		<div class="mt-auto">
-			<DashboardCloneCard @open-domains="openSettings('global_cloud_domains')" />
+			<DashboardCloneCard @open-domains="openSettings(isMounted ? 'global_domains' : 'global_cloud_domains')" />
 			<DashboardTrialCard @open-billing="openSettings('global_billing')" />
 			<p class="p-2 text-center text-sm text-ink-gray-4">{{ __("Version") }}: {{ builderVersion }}</p>
 			<TrialBanner v-if="builderStore.isFCSite" />

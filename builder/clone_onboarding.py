@@ -1,7 +1,12 @@
-"""Clone an existing website into this site during onboarding, through Frappe's clone service. Frappe Cloud v2 only.
+"""Clone an existing website into this site during onboarding, through Frappe's clone service. Frappe Cloud v2 and
+frappe.page sites only.
 
 The service needs a key to write into this site, so a dedicated user holds a short-lived one: it is created for the
-clone and disabled as soon as the clone finishes."""
+clone and disabled as soon as the clone finishes.
+
+A frappe.page site has no System Manager at all and is reached at its editor address (frappe.page/<sub>), so there the
+clone user is a Website Manager and the service is told the editor address; its API and the nonce callback answer
+under that path."""
 
 import json
 
@@ -10,12 +15,15 @@ from frappe import _
 from frappe.utils.password import remove_encrypted_password
 
 from builder.public_fetch import public_session
+from builder.utils import is_mounted
 from builder.www._builder import get_cloud_settings
 
 SERVICE_URL = "https://clone.frappe.page"
 CLONE_USER = "clone-service@example.com"
 # Website Settings and the Builder doctypes need Website Manager; the rest of the copy needs System Manager
 CLONE_ROLES = ("System Manager", "Website Manager")
+# a frappe.page member is a Website Manager, which covers everything the clone writes there
+MOUNTED_CLONE_ROLES = ("Website Manager",)
 STATE_KEY = "builder_clone"
 NONCE_SECONDS = 10 * 60
 LOOKS = {"clean_up", "as_is", "redesign"}
@@ -24,8 +32,8 @@ FINISHED = {"Done", "Failed", "Expired"}
 
 @frappe.whitelist(methods=["POST"])
 def start_clone(url: str, look: str = "clean_up") -> dict | None:
-	frappe.only_for("System Manager")
-	if not get_cloud_settings().get("enabled"):
+	only_site_managers()
+	if not (is_mounted() or get_cloud_settings().get("enabled")):
 		frappe.throw(_("Cloning a website is available on Frappe Cloud sites."))
 	if look not in LOOKS:
 		frappe.throw(_("Pick how the copy should look."))
@@ -33,7 +41,7 @@ def start_clone(url: str, look: str = "clean_up") -> dict | None:
 	frappe.cache.set_value(nonce_key(nonce), 1, expires_in_sec=NONCE_SECONDS)
 	payload = {
 		"url": url,
-		"site": frappe.utils.get_url(),
+		"site": site_url(),
 		"nonce": nonce,
 		"design": json.dumps(design_for(look)),
 		"email": frappe.session.user,
@@ -46,7 +54,7 @@ def start_clone(url: str, look: str = "clean_up") -> dict | None:
 
 @frappe.whitelist()
 def clone_status() -> dict | None:
-	frappe.only_for("System Manager")
+	only_site_managers()
 	saved = json.loads(frappe.db.get_default(STATE_KEY) or "null")
 	if not saved:
 		return None
@@ -66,6 +74,19 @@ def confirm_clone_request(nonce: str) -> bool:
 	return True
 
 
+def only_site_managers():
+	frappe.only_for("Website Manager" if is_mounted() else "System Manager")
+
+
+def site_url() -> str:
+	"""Where the service reaches this site's API. A frappe.page editor shares its host with every other site, so
+	the address carries the mount (frappe.page/<sub>); the edge forwards the scheme and host the browser used."""
+	if not is_mounted():
+		return frappe.utils.get_url()
+	request = frappe.request
+	return f"{request.scheme}://{request.host}{frappe.get_request_header('X-FP-Mount')}"
+
+
 def design_for(look: str) -> dict:
 	if look == "redesign":
 		return {"mode": "redesign", "prompt": "The best modern website for this type of business."}
@@ -76,7 +97,7 @@ def clone_user_keys() -> dict:
 	"""A fresh key for the clone service user. Committed now, since the service starts writing before this request ends."""
 	user = frappe.get_doc("User", CLONE_USER) if frappe.db.exists("User", CLONE_USER) else new_clone_user()
 	secret = frappe.generate_hash(length=15)
-	user.append_roles(*CLONE_ROLES)
+	user.append_roles(*(MOUNTED_CLONE_ROLES if is_mounted() else CLONE_ROLES))
 	user.enabled = 1
 	user.api_key = frappe.generate_hash(length=15)
 	user.api_secret = secret
