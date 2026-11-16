@@ -342,7 +342,7 @@ function finishQuestions(skipped = false) {
 	submitted = true;
 	const category = answers.use_case && useCaseToCategory[answers.use_case];
 	if (category) templateCategoryFilter.value = category;
-	// Optimistically flag done so the dashboard's redirect guard sees it before the async save lands.
+	// Optimistically flag done so the home route's survey guard sees it before the async save lands.
 	// A failed save/capture must never block the user from moving on.
 	try {
 		if (builderSettings.doc) builderSettings.doc.persona_survey_done = 1;

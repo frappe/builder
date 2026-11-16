@@ -4,6 +4,7 @@ import { NavigationGuardNext, RouteLocationNormalized, createRouter, createWebHi
 import { __ } from "./translation";
 import { editorDemo } from "./utils/editorDemo";
 import { appURL, isMounted, loginURL, shortEditorURLs } from "./utils/frappePage";
+import { personaSurveyRedirect } from "./utils/personaSurvey";
 
 let hasPermission: null | boolean = null;
 let sessionUser = ref("Guest");
@@ -49,6 +50,9 @@ const validateVisit = async function (
 	return validatePermission(next);
 };
 
+// before the dashboard renders, so a user who owes the persona survey never sees the dashboard first
+const personaSurveyFirst = (to: RouteLocationNormalized) => personaSurveyRedirect(to, sessionUser.value);
+
 function isUserLoggedIn() {
 	return document.cookie.includes("user_id") && !document.cookie.includes("user_id=Guest");
 }
@@ -74,7 +78,7 @@ const routes = [
 	{
 		path: "/",
 		name: "home",
-		beforeEnter: validateVisit,
+		beforeEnter: [validateVisit, personaSurveyFirst],
 		component: () => import("@/pages/PageBuilderDashboard.vue"),
 	},
 	{
