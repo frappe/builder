@@ -27,6 +27,7 @@
 				<div v-if="loading" class="absolute inset-0 animate-pulse bg-surface-gray-2"></div>
 				<iframe
 					:src="src"
+					:sandbox="sandbox"
 					class="absolute left-1/2 top-0 origin-top"
 					:style="frameStyle"
 					@load="loading = false"></iframe>
@@ -37,6 +38,7 @@
 <script setup lang="ts">
 import { __ } from "@/translation";
 import { TemplatePageSummary } from "@/types/template";
+import { fp, isMounted } from "@/utils/frappePage";
 import { useElementSize } from "@vueuse/core";
 import { Button } from "frappe-ui";
 import { computed, ref } from "vue";
@@ -76,6 +78,8 @@ const frameStyle = computed(() => ({
 const src = computed(
 	() =>
 		props.page.live_url ||
-		`/api/method/builder.api.get_page_preview_html?page=${encodeURIComponent(props.page.name)}`,
+		`${fp.mount ?? ""}/api/method/builder.api.get_page_preview_html?page=${encodeURIComponent(props.page.name)}`,
 );
+// on frappe.page a local template renders on the editor's origin, so its scripts get an opaque one
+const sandbox = computed(() => (isMounted && !props.page.live_url ? "allow-scripts" : undefined));
 </script>

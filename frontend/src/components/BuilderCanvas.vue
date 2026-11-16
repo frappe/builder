@@ -123,12 +123,12 @@ import type Block from "@/block";
 import DraggablePopup from "@/components/Controls/DraggablePopup.vue";
 import SearchBlock from "@/components/Controls/SearchBlock.vue";
 import LoadingIcon from "@/components/Icons/Loading.vue";
-import { builderSettings } from "@/data/builderSettings";
 import useBuilderStore from "@/stores/builderStore";
 import useCanvasStore from "@/stores/canvasStore";
 import usePageStore from "@/stores/pageStore";
 import { __ } from "@/translation";
 import { BreakpointConfig, CanvasHistory } from "@/types/Builder/BuilderCanvas";
+import { blockScriptsMode } from "@/utils/canvasIsolation";
 import { getBlockObject, isCtrlOrCmd } from "@/utils/helpers";
 import {
 	type BlockClientScriptRuntime,
@@ -487,7 +487,7 @@ function emulateBlockClientScript(script: BlockClientScriptRuntime) {
 	)}"][data-breakpoint="${escapeAttributeValue(script.breakpoint)}"]`;
 	blockStyles.set(registrationKey, script.css ? `@scope (${selector}) { ${script.css} }` : "");
 
-	const mode = builderSettings.doc?.execute_block_scripts_in_editor ?? "Restricted";
+	const mode = blockScriptsMode();
 	let cleanup = () => {};
 	if (mode !== "Don't Execute" && script.javascript.trim()) {
 		const context = {
