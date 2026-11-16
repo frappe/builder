@@ -9,6 +9,7 @@ from builder.ai.site_key import (
 	REDACTED,
 	REDACTED_GATEWAY,
 	Charge,
+	SiteAIKey,
 	Usage,
 	UsageLimitError,
 	ensure_allowance_left,
@@ -64,7 +65,7 @@ class SiteKeyTestCase(FrappeTestCase):
 	def setUp(self):
 		self.meter = Meter()
 		for target, value in (
-			("builder.ai.site_key.site_entry", {"gateway_url": GATEWAY, "api_key": KEY}),
+			("builder.ai.site_key.site_entry", SiteAIKey("gateway", KEY, GATEWAY)),
 			("builder.ai.llm.codex_route", None),
 			(
 				"builder.ai.llm.route",

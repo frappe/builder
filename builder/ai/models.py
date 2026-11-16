@@ -13,6 +13,7 @@ offline fallback, and the only source for every other provider.
 """
 
 import logging
+import re
 from concurrent.futures import ThreadPoolExecutor
 
 import frappe
@@ -28,8 +29,6 @@ FETCH_TIMEOUT = 10
 DEFAULT_CONTEXT_WINDOW = 200_000
 # a new site starts with this in Builder Settings: the Frappe Cloud gateway's model
 DEFAULT_AI_MODEL = "frappe/openai/gpt-5.6-terra"
-# the Frappe gateway speaks the OpenAI API, so the site config key is only ever sent that way
-SITE_CONFIG_LITELLM_PROVIDER = "openai"
 
 # Used only when the rows are unreachable (install/migrate ordering) or all gone,
 # so the agent still has something to call.
@@ -124,21 +123,21 @@ def load_models() -> list[dict]:
 
 
 def route_site_config_models(models: list[dict]) -> list[dict]:
-	"""Point the Frappe provider's models at the gateway site config names, whatever its row says.
-	The row is only a record: one edited by hand, or by a script that skips validation, must never
-	send the site's key to another address or another kind of API. With no key in site config the
-	provider is off, so its models go too."""
+	"""Point the Frappe provider's models at the API site config names (a gateway, or Anthropic's own),
+	whatever its row says. The row is only a record: one edited by hand, or by a script that skips
+	validation, must never send the site's key to another address or another kind of API. With no key
+	in site config the provider is off, so its models go too."""
 	if not any(m.get("from_site_config") for m in models):
 		return models
-	from builder.ai.presets import site_gateway_base
+	from builder.ai.site_key import site_entry
 
-	base = site_gateway_base()
+	entry = site_entry()
 	routed = []
 	for m in models:
 		if m.get("from_site_config"):
-			if not base:
+			if not entry:
 				continue
-			m = {**m, "api_base": base, "litellm_provider": SITE_CONFIG_LITELLM_PROVIDER}
+			m = {**m, "api_base": entry.api_base, "litellm_provider": entry.litellm_provider}
 		routed.append(m)
 	return routed
 
@@ -182,7 +181,8 @@ NON_CHAT_MARKERS = ("embed", "embedding", "rerank", "reranker", "whisper", "tts"
 
 
 class GatewayListing:
-	"""The models a gateway with its own api_base serves right now, per its /models.
+	"""The models a gateway with its own api_base serves right now, per its /models; and the models the
+	site config key may call, from its gateway or Anthropic's /v1/models.
 
 	Gateways add and retire models without telling anyone, so newly listed models
 	get rows as they appear, and the cached listing lets the picker hide a model
@@ -272,15 +272,37 @@ class GatewayListing:
 			raise scrub_exception(outcome)
 		return self.apply(outcome)
 
-	def apply(self, listed: list[str]) -> dict:
-		chat = [i for i in listed if not any(m in i.lower() for m in NON_CHAT_MARKERS)]
-		self.remember(chat)
-		added = [model_id for model_id in chat if self.add_row(model_id)]
+	def apply(self, listed: list) -> dict:
+		"""`listed` is what /models answered: entries with an id, or bare ids."""
+		entries = [entry if isinstance(entry, dict) else {"id": entry} for entry in listed]
+		chosen = self.offered(entries)
+		ids = [entry["id"] for entry in chosen]
+		self.remember(ids)
+		added = [entry["id"] for rank, entry in enumerate(chosen, start=1) if self.add_row(entry, rank)]
 		if self.provider.from_site_config:
 			from builder.ai.presets import adopt_default_model
 
-			adopt_default_model(self.provider, chat)
-		return {"added": added, "skipped": sorted(set(listed) - set(chat)), "found": len(listed)}
+			adopt_default_model(self.provider, ids)
+		all_ids = {entry["id"] for entry in entries}
+		return {"added": added, "skipped": sorted(all_ids - set(ids)), "found": len(entries)}
+
+	def offered(self, entries: list[dict]) -> list[dict]:
+		"""The listed models worth a row: an Anthropic site key's current models, else every chat model."""
+		entry = self.site_key()
+		if entry and entry.is_anthropic:
+			from builder.ai.presets import match_model, preferred_model
+
+			keep = match_model(preferred_model(), [e["id"] for e in entries])
+			return current_claude_models(entries, keep)
+		return [e for e in entries if not any(m in e["id"].lower() for m in NON_CHAT_MARKERS)]
+
+	def site_key(self):
+		"""The site config key, when this lists for it."""
+		if not self.provider.from_site_config:
+			return None
+		from builder.ai.site_key import site_entry
+
+		return site_entry()
 
 	def credits(self) -> dict | None:
 		"""The balance the gateway reports at its credits_url, or None when it reports none."""
@@ -288,12 +310,16 @@ class GatewayListing:
 		return fetch_credits(self.provider.credits_url, headers)
 
 	def request(self) -> tuple[str, dict]:
+		if self.provider.from_site_config:
+			# the API site config names and its own way of listing, whatever the row says
+			entry = self.site_key()
+			return entry.listing_request() if entry else ("", {})
 		base = (self.provider.base_url() or "").rstrip("/")
 		# Never the Builder Settings key: that belongs to OpenRouter, not this api_base.
 		key = self.provider.resolved_key()
 		if not base:
 			return "", {}
-		if self.provider.litellm_provider == "anthropic" and not self.provider.from_site_config:
+		if self.provider.litellm_provider == "anthropic":
 			# litellm treats an Anthropic api_base as the host root and appends /v1/messages
 			return f"{base}/v1/models", {"x-api-key": key or "", "anthropic-version": "2023-06-01"}
 		return f"{base}/models", {"Authorization": f"Bearer {key}"} if key else {}
@@ -301,9 +327,18 @@ class GatewayListing:
 	def remember(self, ids: list[str] | None) -> None:
 		frappe.cache.set_value(self.cache_key(self.provider.name), {"ids": ids}, expires_in_sec=LISTING_TTL)
 
-	def add_row(self, model_id: str) -> bool:
-		if frappe.db.exists("Builder AI Model", f"{self.provider.route_prefix}/{model_id}"):
+	def add_row(self, entry: dict, rank: int | None = None) -> bool:
+		"""A row for a listed model that has none. What the listing says about it (Anthropic's names its
+		display name, context window and image input) fills the row; litellm's model map the rest."""
+		model_id = entry["id"]
+		name = f"{self.provider.route_prefix}/{model_id}"
+		if frappe.db.exists("Builder AI Model", name):
+			# where it sits in the picker follows the listing; whether it is on stays the site's
+			if rank and frappe.db.get_value("Builder AI Model", name, "frontier_rank") != rank:
+				frappe.db.set_value("Builder AI Model", name, "frontier_rank", rank, update_modified=False)
+				ModelRegistry.clear_cache()
 			return False
+		capabilities = entry.get("capabilities") or {}
 		try:
 			frappe.get_doc(
 				{
@@ -311,7 +346,10 @@ class GatewayListing:
 					"provider": self.provider.name,
 					"model_id": model_id,
 					# the provider heads its group in the picker, so a vendor prefix is noise
-					"label": model_id.rsplit("/", 1)[-1],
+					"label": entry.get("display_name") or model_id.rsplit("/", 1)[-1],
+					"max_tokens": entry.get("max_input_tokens") or None,
+					"supports_vision": int(supported(capabilities, "image_input")),
+					"frontier_rank": rank,
 					"enabled": 1,
 				}
 			).insert(ignore_permissions=True)
@@ -324,16 +362,66 @@ def sync_stale_gateways() -> None:
 	GatewayListing.sync_all()
 
 
-def fetch_listing(request: tuple[str, dict]) -> list[str] | Exception:
-	"""Model ids at a /models endpoint. Plain HTTP and no frappe calls, so it is safe in a
-	worker thread; it returns the error rather than raising, so one failure can't sink a batch."""
+def fetch_listing(request: tuple[str, dict]) -> list[dict] | Exception:
+	"""The models a /models endpoint lists, each as it describes it (at least an id). Plain HTTP and no
+	frappe calls, so it is safe in a worker thread; it returns the error rather than raising, so one
+	failure can't sink a batch."""
 	url, headers = request
 	try:
 		response = requests.get(url, headers=headers, timeout=FETCH_TIMEOUT)
 		response.raise_for_status()
-		return [entry["id"] for entry in response.json().get("data") or [] if (entry or {}).get("id")]
+		return [entry for entry in response.json().get("data") or [] if (entry or {}).get("id")]
 	except Exception as e:
 		return e
+
+
+def current_claude_models(entries: list[dict], keep: str | None = None) -> list[dict]:
+	"""What an Anthropic key offers of what it lists: the newest model of each line (Opus, Sonnet,
+	Fable...) that Builder's frontier policy admits (builder/ai/frontier.json: it takes images, has the
+	context, and is no tier the policy leaves out, such as Haiku), never a deprecated or retiring one.
+	`keep`, the model the host wants as the default, is offered whenever the key lists it. Best first:
+	`keep`, then the newest."""
+	from builder.ai.discovery import load_policy, qualifies
+
+	policy = load_policy()
+	newest: dict[str, dict] = {}
+	for entry in sorted(entries, key=lambda e: e.get("created_at") or "", reverse=True):
+		described = describe_claude(entry)
+		if described["deprecated"] or not qualifies(described, policy):
+			continue
+		newest.setdefault(entry.get("line") or claude_line(entry["id"]), entry)
+	chosen = list(newest.values())
+	if keep and keep not in {e["id"] for e in chosen}:
+		chosen += [e for e in entries if e["id"] == keep]
+	chosen.sort(key=lambda e: e.get("created_at") or "", reverse=True)
+	return sorted(chosen, key=lambda e: e["id"] != keep)
+
+
+def describe_claude(entry: dict) -> dict:
+	"""An Anthropic /v1/models entry in the terms discovery's policy judges by."""
+	capabilities = entry.get("capabilities") or {}
+	return {
+		"id": entry["id"],
+		"tools": True,  # every Claude model calls tools
+		"input": ["text", "image"] if supported(capabilities, "image_input") else ["text"],
+		"output": ["text"],
+		"context": entry.get("max_input_tokens") or 0,
+		"deprecated": bool(
+			entry.get("deprecated_at")
+			or entry.get("retires_at")
+			or entry.get("lifecycle") not in (None, "active")
+		),
+	}
+
+
+def claude_line(model_id: str) -> str:
+	"""claude-opus-4-5-20251101 -> claude-opus, for a listing that names no line."""
+	return re.sub(r"-\d.*$", "", model_id)
+
+
+def supported(capabilities: dict, name: str) -> bool:
+	found = capabilities.get(name)
+	return bool(found.get("supported") if isinstance(found, dict) else found)
 
 
 def fetch_credits(url: str, headers: dict) -> dict | None:

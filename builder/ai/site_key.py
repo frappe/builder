@@ -1,10 +1,11 @@
 """The AI key that site config gives a site, and what calls with it cost.
 
 Frappe Cloud writes `ai_keys` into a site's config (frappe.page writes it into the bench's common
-config, for every site), and the Frappe provider (builder/ai/presets.py) calls the gateway with it.
-The key belongs to whoever hosts the site, not to the site: it is sent to that gateway and nowhere
-else, it and the gateway's address are kept out of every text a user can read, and a host app can hold
-what a site spends with it to an allowance by implementing the hook `builder_ai_site_key_allowance`.
+config, for every site), and the Frappe provider (builder/ai/presets.py) calls models with it: through
+the host's OpenAI-compatible gateway, or Anthropic's own API (SiteAIKey says which). The key belongs to
+whoever hosts the site, not to the site: it is sent to that one API and nowhere else, it and a gateway's
+address are kept out of every text a user can read, and a host app can hold what a site spends with it
+to an allowance by implementing the hook `builder_ai_site_key_allowance`.
 
 The hook names a callable that returns the allowance for the current site, or None when that site is
 not metered. An allowance has:
@@ -19,12 +20,19 @@ A reservation has `settle(usage: Usage)`, called once when the call's usage is k
 import hmac
 import json
 import math
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from urllib.parse import urlsplit
 
 import frappe
 
 ALLOWANCE_HOOK = "builder_ai_site_key_allowance"
+ANTHROPIC = "anthropic"
+GATEWAY = "gateway"
+# the only address an Anthropic site key is sent to, whatever else the entry or a row says
+ANTHROPIC_API = "https://api.anthropic.com"
+ANTHROPIC_VERSION = "2023-06-01"
+# a gateway's OpenAI-compatible API, under the host site config names
+GATEWAY_BASE_PATH = "/openai/v1"
 REDACTED = "[the site's AI key]"
 REDACTED_GATEWAY = "[the site's AI gateway]"
 # a rough count, on the high side: a held estimate that is too low lets parallel calls overspend
@@ -42,23 +50,100 @@ class UsageLimitError(frappe.ValidationError):
 
 @dataclass(frozen=True)
 class Usage:
-	"""What a call used. `measured` is False when the model reported nothing and this is an estimate."""
+	"""What a call used. `prompt_tokens` counts every input token, those read from and written to the
+	prompt cache included; `cache_write_tokens` is how many were written, `cache_write_1h_tokens` how many
+	of those for an hour rather than five minutes. `measured` is False when the model reported nothing
+	and this is an estimate."""
 
 	prompt_tokens: int
 	completion_tokens: int
 	cached_tokens: int = 0
 	measured: bool = True
+	cache_write_tokens: int = 0
+	cache_write_1h_tokens: int = 0
+
+
+@dataclass(frozen=True)
+class SiteAIKey:
+	"""The first `ai_keys` entry in site config: the key, and the one API it may be sent to.
+
+	- {"provider": "anthropic", "api_key": ...}: Anthropic's own API, called natively. The key goes to
+	  ANTHROPIC_API and nowhere else; an address in the entry is ignored.
+	- {"gateway_url": ..., "api_key": ...}, Frappe Cloud's shape ("provider" absent or "gateway"): an
+	  OpenAI-compatible gateway at <gateway_url>/openai/v1, which may report the key's balance.
+	"""
+
+	provider: str
+	api_key: str = field(repr=False)  # kept out of any repr of the entry
+	gateway_url: str | None = None
+
+	@classmethod
+	def from_entry(cls, entry) -> "SiteAIKey | None":
+		"""The key an entry describes, or None (logged) when it is incomplete or names no API Builder knows."""
+		entry = entry if isinstance(entry, dict) else {}
+		provider = (entry.get("provider") or GATEWAY).strip().lower()
+		api_key = (entry.get("api_key") or "").strip()
+		if provider == ANTHROPIC and api_key:
+			return cls(ANTHROPIC, api_key)
+		if provider == GATEWAY and api_key and entry.get("gateway_url"):
+			return cls(GATEWAY, api_key, entry["gateway_url"])
+		frappe.logger("builder.ai.site_key").error(
+			'site config ai_keys[0] needs {"provider": "anthropic", "api_key"} or {"gateway_url", "api_key"}'
+		)
+		return None
+
+	@property
+	def is_anthropic(self) -> bool:
+		return self.provider == ANTHROPIC
+
+	@property
+	def litellm_provider(self) -> str:
+		"""How litellm calls it: Anthropic's own route, or the OpenAI API a gateway speaks."""
+		return "anthropic" if self.is_anthropic else "openai"
+
+	@property
+	def api_base(self) -> str:
+		"""Where calls go. litellm adds /v1/messages to Anthropic's."""
+		if self.is_anthropic:
+			return ANTHROPIC_API
+		parts = urlsplit(self.gateway_url)
+		return f"{parts.scheme}://{parts.netloc}{GATEWAY_BASE_PATH}"
+
+	def listing_request(self) -> tuple[str, dict]:
+		"""The URL and headers that list the models this key may call."""
+		if self.is_anthropic:
+			headers = {"x-api-key": self.api_key, "anthropic-version": ANTHROPIC_VERSION}
+			return f"{ANTHROPIC_API}/v1/models?limit=1000", headers
+		return f"{self.api_base}/models", {"Authorization": f"Bearer {self.api_key}"}
+
+	@property
+	def credits_url(self) -> str | None:
+		"""Frappe's gateway reports the key's balance at its host's /v1/key/balance; Anthropic reports none."""
+		if self.is_anthropic:
+			return None
+		parts = urlsplit(self.gateway_url)
+		return f"{parts.scheme}://{parts.netloc}/v1/key/balance"
+
+	def hidden(self) -> list[tuple[str, str]]:
+		"""What no user may read, each with what stands in for it, longest first: the key, and a gateway's
+		address, which is the host's (errors name its host without the scheme). Anthropic's is public."""
+		found = [(self.api_key, REDACTED)]
+		if not self.is_anthropic:
+			parts = urlsplit(self.gateway_url)
+			hosts = {a for a in (parts.netloc, parts.hostname) if a and "." in a}
+			addresses = {f"{parts.scheme}://{parts.netloc}", *hosts}
+			found += [(a, REDACTED_GATEWAY) for a in addresses]
+		return sorted(found, key=lambda pair: len(pair[0]), reverse=True)
 
 
 def site_key() -> str | None:
 	"""The key itself."""
 	entry = site_entry()
-	return entry["api_key"] if entry else None
+	return entry.api_key if entry else None
 
 
-def site_entry() -> dict | None:
-	"""The site config entry, {gateway_url, api_key}. Site config cached by the request can miss a key
-	that was just added."""
+def site_entry() -> SiteAIKey | None:
+	"""The site config key. Site config cached by the request can miss a key that was just added."""
 	from builder.ai.presets import get_site_ai_key
 
 	return get_site_ai_key() or get_site_ai_key(fresh=True)
@@ -107,22 +192,27 @@ def scrub_exception(exc: BaseException) -> BaseException:
 
 
 def hidden() -> list[tuple[str, str]]:
-	"""What site config holds that no user may read, each with what stands in for it, longest first.
-	The gateway's host goes as well: it is the host's, and errors name it without the scheme."""
+	"""What site config holds that no user may read (SiteAIKey.hidden), or nothing without a key."""
 	entry = site_entry()
-	if not entry:
-		return []
-	parts = urlsplit(entry["gateway_url"])
-	hosts = {a for a in (parts.netloc, parts.hostname) if a and "." in a}
-	addresses = {f"{parts.scheme}://{parts.netloc}", *hosts}
-	found = [(entry["api_key"], REDACTED)] + [(a, REDACTED_GATEWAY) for a in addresses]
-	return sorted(found, key=lambda pair: len(pair[0]), reverse=True)
+	return entry.hidden() if entry else []
 
 
 def allowance():
 	"""The host's allowance for this site's key, or None when nothing meters it."""
-	hooks = frappe.get_hooks(ALLOWANCE_HOOK)
-	return frappe.get_attr(hooks[-1])() if hooks else None
+	meter = host_hook(ALLOWANCE_HOOK)
+	return meter() if meter else None
+
+
+def host_hook(name: str):
+	"""The callable the last installed app names for hook `name`, or None. Read from each app's hooks.py
+	as this process imported it, not from the bench's shared hooks cache: a process started before a host
+	app added the hook (a long-running scheduler, say) writes hooks without it back into that cache when a
+	site's cache is cleared, which for the allowance would leave the site key unmetered."""
+	found = None
+	for app in frappe.get_installed_apps():
+		if hooks := frappe.get_hooks(name, app_name=app):
+			found = hooks[-1]
+	return frappe.get_attr(found) if found else None
 
 
 def allowance_status() -> dict | None:
@@ -190,10 +280,13 @@ class Charge:
 	def used(self, reported) -> Usage:
 		# a gateway that reports nothing can still get an empty usage object from litellm
 		if reported and (getattr(reported, "prompt_tokens", 0) or getattr(reported, "completion_tokens", 0)):
+			written, written_1h = cache_write_tokens(reported)
 			return Usage(
 				prompt_tokens=getattr(reported, "prompt_tokens", 0) or 0,
 				completion_tokens=getattr(reported, "completion_tokens", 0) or 0,
 				cached_tokens=cached_prompt_tokens(reported),
+				cache_write_tokens=written,
+				cache_write_1h_tokens=written_1h,
 			)
 		if not self.answered:
 			return Usage(0, 0)
@@ -245,9 +338,24 @@ def text_length(part) -> int:
 
 def cached_prompt_tokens(usage) -> int:
 	details = getattr(usage, "prompt_tokens_details", None)
-	if cached := getattr(details, "cached_tokens", None):
+	if cached := part(details, "cached_tokens"):
 		return cached
 	return getattr(usage, "cache_read_input_tokens", 0) or 0
+
+
+def cache_write_tokens(usage) -> tuple[int, int]:
+	"""(prompt tokens written to the cache, how many of them for an hour), as Anthropic reports them
+	through litellm. A gateway that reports no writes writes nothing."""
+	details = getattr(usage, "prompt_tokens_details", None)
+	written = getattr(usage, "cache_creation_input_tokens", 0) or part(details, "cache_creation_tokens")
+	by_ttl = part(details, "cache_creation_token_details")
+	return written, min(part(by_ttl, "ephemeral_1h_input_tokens"), written)
+
+
+def part(value, name: str):
+	"""A field of a usage detail, which litellm hands back as an object or a dict; 0 when it is missing."""
+	found = value.get(name) if isinstance(value, dict) else getattr(value, name, None)
+	return found or 0
 
 
 def estimate_tokens(value) -> int:

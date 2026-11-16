@@ -76,4 +76,4 @@ class ProviderCatalog:
 		listed = fetch_listing(listing.request())
 		if isinstance(listed, Exception):
 			raise listed
-		return [i for i in listed if not any(m in i.lower() for m in NON_CHAT_MARKERS)]
+		return [e["id"] for e in listed if not any(m in e["id"].lower() for m in NON_CHAT_MARKERS)]

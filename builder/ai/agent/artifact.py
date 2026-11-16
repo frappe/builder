@@ -320,6 +320,11 @@ def generate_page_markup(ctx, args: dict) -> list[dict]:
 		# draft is persisted (or the turn failed/cancelled) and the DB is the truth.
 		clear_stream_buffer(ctx.page_id)
 
+	if finish_reason == llm.REFUSED:
+		# a page the model declined part way is not one to keep: the turn ends, saying why
+		logger.info("generate_page: the model refused (model=%s, page=%s)", ctx.model, ctx.page_id)
+		raise llm.Refused
+
 	if not text.strip() or not ctx.page_id:
 		logger.warning("generate_page: nothing to persist (model=%s, page=%s)", ctx.model, ctx.page_id)
 		return []

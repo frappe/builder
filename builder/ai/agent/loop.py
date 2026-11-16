@@ -59,6 +59,7 @@ from builder.ai.block_codec import BlockCodec
 from builder.ai.models import ModelRegistry
 from builder.ai.prompts import Prompts
 from builder.ai.session import AISession
+from builder.ai.site_key import cache_write_tokens
 from builder.ai.skills import Skills
 from builder.ai.snapshots import capture_page_state, save_revert_snapshot
 from builder.ai.turns import TurnQueue
@@ -504,13 +505,15 @@ class AgentRunner:
 		# Per-turn token tally, summed across every LLM call this turn (the loop's
 		# tool-calling rounds + the generation stream). Surfaced in debug metadata and
 		# logged so the selector/tiered-context changes can be measured against baseline.
-		# `cached_tokens` is the cache-read slice of prompt_tokens; `per_call` keeps
-		# each call's split so a turn can be read round by round.
+		# `cached_tokens` is the cache-read slice of prompt_tokens, `cache_write_tokens`
+		# the slice written to the cache; `per_call` keeps each call's split so a turn
+		# can be read round by round.
 		self.usage = {
 			"prompt_tokens": 0,
 			"completion_tokens": 0,
 			"total_tokens": 0,
 			"cached_tokens": 0,
+			"cache_write_tokens": 0,
 			"calls": 0,
 			"per_call": [],
 		}
@@ -615,12 +618,16 @@ class AgentRunner:
 		completion = getattr(usage, "completion_tokens", 0) or 0
 		total = getattr(usage, "total_tokens", 0) or 0
 		cached = self.cached_prompt_tokens(usage)
+		written, _ = cache_write_tokens(usage)
 		self.usage["prompt_tokens"] += prompt
 		self.usage["completion_tokens"] += completion
 		self.usage["total_tokens"] += total
 		self.usage["cached_tokens"] += cached
+		self.usage["cache_write_tokens"] += written
 		self.usage["calls"] += 1
-		self.usage["per_call"].append({"prompt": prompt, "completion": completion, "cached": cached})
+		self.usage["per_call"].append(
+			{"prompt": prompt, "completion": completion, "cached": cached, "written": written}
+		)
 
 	def record_round(self, round_index: int, tool_operations: list[dict], text: str) -> None:
 		"""Append one round to the debug trace: which tools the model called (with
@@ -1444,6 +1451,9 @@ class AgentRunner:
 					self.read_notes(messages)
 					continue
 				self.record_round(round_index, tool_operations, summary_text)
+				if self.finish_reasons[-1:] == [llm.REFUSED]:
+					# a refusal can cut a reply off mid-call, so nothing of this round is applied
+					raise llm.Refused
 
 				if not tool_operations:
 					if self.ran_out_of_room(summary_text):
@@ -1491,6 +1501,12 @@ class AgentRunner:
 		except CancelledError:
 			self.emit_cancelled()
 			return
+		except llm.Refused:
+			# the model's safety checks declined to go on: what earlier rounds did stays, and the reply
+			# says why, as a reply rather than as an error
+			logger.info(f"Agent turn stopped by a refusal from {self.loop_model}")
+			self.stop_reason = "refused"
+			summary_text = llm.REFUSAL_NOTE
 		except llm.UsageLimitError as e:
 			# the site's allowance is spent: nothing failed, and the message says when it renews
 			logger.info(f"Agent turn stopped by the site key allowance: {e}")
@@ -1754,9 +1770,12 @@ class AgentRunner:
 			return missing, []
 		entry = self.build_step = self.begin_activity(op["tool_name"], op["args"])
 		self.ensure_revert_snapshot()  # generation replaces the block tree
-		ops = tool.generator(self, op["args"])
-		self.build_step = None
-		self.end_activity(entry)
+		try:
+			ops = tool.generator(self, op["args"])
+		finally:
+			# a generation the model refused ends the turn, and must not leave its step spinning
+			self.build_step = None
+			self.end_activity(entry)
 		if not ops:
 			return ("FAILED: generation produced nothing. Retry generate_page with a fuller brief.", [])
 		root = ops[0]["args"]["blocks"][0]

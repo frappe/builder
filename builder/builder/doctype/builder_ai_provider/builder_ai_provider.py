@@ -49,13 +49,13 @@ class BuilderAIProvider(Document):
 		"""This provider's key, or None when it has none. Site config owns the Frappe provider's key.
 		A cached config can miss a key that a fresh read just connected, so a miss reads the files."""
 		if self.from_site_config:
-			from builder.ai.presets import get_site_ai_key
+			from builder.ai.site_key import site_key
 
-			return (get_site_ai_key() or get_site_ai_key(fresh=True) or {}).get("api_key")
+			return site_key()
 		return self.get_password("api_key", raise_exception=False)
 
 	def base_url(self) -> str | None:
-		"""Where this provider's API is. For the Frappe provider that is the gateway site config names,
+		"""Where this provider's API is. For the Frappe provider that is the API site config names,
 		never the stored api_base, so an edited row cannot send the site's key anywhere else."""
 		if self.from_site_config:
 			from builder.ai.presets import site_gateway_base
@@ -65,12 +65,12 @@ class BuilderAIProvider(Document):
 
 	@property
 	def credits_url(self) -> str | None:
-		"""Where the gateway reports its balance."""
+		"""Where the gateway reports its balance, if anywhere: Anthropic reports none."""
 		if self.from_site_config:
-			from builder.ai.presets import get_credits_url, get_site_ai_key
+			from builder.ai.site_key import site_entry
 
-			entry = get_site_ai_key() or get_site_ai_key(fresh=True)
-			return get_credits_url(entry["gateway_url"]) if entry else None
+			entry = site_entry()
+			return entry.credits_url if entry else None
 		return f"{self.api_base.rstrip('/')}/credits"
 
 	def before_rename(self, old, new, merge=False):

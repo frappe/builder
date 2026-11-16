@@ -16,7 +16,7 @@ from builder.ai.block_codec import BlockCodec
 from builder.ai.discovery import Discovery
 from builder.ai.llm import Effort, resolve_api_key, settings_api_key
 from builder.ai.models import GatewayListing, ModelRegistry, fetch_credits
-from builder.ai.presets import get_credits_url, get_site_ai_key
+from builder.ai.presets import get_site_ai_key
 from builder.ai.session import AISession
 from builder.ai.turns import TurnQueue
 from builder.utils import has_page_write
@@ -483,14 +483,14 @@ def get_provider_credits(provider: str) -> dict | None:
 def get_site_ai_credits() -> dict | None:
 	"""The balance of the AI credits Frappe Cloud gives this site, or None when it gives none. A host
 	that meters the site key shares it between sites, so its balance is the host's own business: the
-	site sees its allowance instead (get_site_ai_allowance)."""
+	site sees its allowance instead (get_site_ai_allowance). Anthropic reports no balance at all."""
 	from builder.ai.site_key import allowance
 
 	frappe.has_permission("Builder AI Provider", "read", throw=True)
-	if not (entry := get_site_ai_key(fresh=True)) or allowance():
+	entry = get_site_ai_key(fresh=True)
+	if not (entry and entry.credits_url) or allowance():
 		return None
-	headers = {"Authorization": f"Bearer {entry['api_key']}"}
-	return fetch_credits(get_credits_url(entry["gateway_url"]), headers)
+	return fetch_credits(entry.credits_url, {"Authorization": f"Bearer {entry.api_key}"})
 
 
 @frappe.whitelist()
@@ -740,24 +740,25 @@ def test_api_key(provider: str | None = None, api_key: str | None = None):
 
 	import litellm
 
-	from builder.ai.llm import call_metered, route
+	from builder.ai.llm import call_metered, prepare_request, route
 	from builder.ai.site_key import Charge, UsageLimitError, redact
 
 	# route() prefers the provider's stored key, and the typed one is what's under test
 	call_model, overrides, routed_key = route(actual_model, api_key)
 	key = typed_key or routed_key
 	messages = [{"role": "user", "content": "Say 'OK' if you can read this"}]
+	params = prepare_request(call_model, messages, {"max_tokens": 10})
 	try:
 		call_metered(
-			Charge.open(key, messages, {"max_tokens": 10}),
+			Charge.open(key, messages, params),
 			False,
 			litellm.completion,
 			model=call_model,
 			**overrides,
 			messages=messages,
-			max_tokens=10,
 			api_key=key,
 			drop_params=True,
+			**params,
 		)
 		return {"success": True, "message": _("API key is valid")}
 	except UsageLimitError as e:
