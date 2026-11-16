@@ -59,9 +59,9 @@ class AppPlugin:
 
 	@property
 	def fingerprint(self) -> list:
-		"""Changes with each build, as a build writes its manifest again. Reads no file."""
-		files = [self.build_path / MANIFEST_FILE, self.project_path / MANIFEST_FILE]
-		files += [self.project_path / name for name in README_FILES]
+		"""Changes when any build file or project file changes. Reads no file."""
+		project_files = [self.project_path / name for name in (MANIFEST_FILE, *README_FILES)]
+		files = [*sorted(self.build_path.rglob("*")), *project_files]
 		return [(str(file), get_stat(file)) for file in files]
 
 	@property

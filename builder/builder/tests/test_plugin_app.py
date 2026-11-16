@@ -84,6 +84,15 @@ class TestAppPlugin(FrappeTestCase):
 
 		self.assertEqual([self.installed().version, self.installed().enabled], ["1.1.0", 1])
 
+	def test_applies_a_new_entry_with_the_same_manifest(self):
+		sync_app_plugins()
+		checksum = self.installed().checksum
+
+		(self.build / ENTRY_FILE).write_text("// a changed entry")
+		sync_app_plugins()
+
+		self.assertNotEqual(self.installed().checksum, checksum)
+
 	def test_shows_a_plugin_without_a_build_as_failed(self):
 		shutil.rmtree(self.build)
 
