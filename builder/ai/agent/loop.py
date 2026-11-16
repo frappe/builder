@@ -1487,6 +1487,11 @@ class AgentRunner:
 		except CancelledError:
 			self.emit_cancelled()
 			return
+		except llm.UsageLimitError as e:
+			# the site's allowance is spent: nothing failed, and the message says when it renews
+			logger.info(f"Agent turn stopped by the site key allowance: {e}")
+			self.fail_turn(llm.user_facing_error(e))
+			return
 		except Exception as e:
 			logger.error(f"Agent LLM call failed: {e!s}", exc_info=True)
 			frappe.log_error(f"Agent LLM call failed: {e}", "AgentRunner.run")

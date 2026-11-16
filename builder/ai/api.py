@@ -123,6 +123,8 @@ def run(
 	frappe.enqueue(
 		run_agent_job,
 		queue="default",
+		# someone is watching the chat: on a busy bench this turn goes before the scheduler's backlog
+		at_front=True,
 		timeout=thinking.job_timeout,
 		prompt=prompt,
 		model=resolved_model,
@@ -259,6 +261,7 @@ def continue_session(session_id: str, prompt: str, page_id: str | None = None, *
 		frappe.enqueue(
 			run_agent_job,
 			queue="default",
+			at_front=True,  # as in run(): someone is waiting on it
 			timeout=thinking.job_timeout,
 			prompt=prompt,
 			model=resolved_model,
@@ -376,19 +379,22 @@ def import_provider_models(provider: str) -> dict:
 		frappe.throw(_("You are not permitted to manage AI models"), frappe.PermissionError)
 
 	doc = frappe.get_doc("Builder AI Provider", provider)
-	if not doc.api_base:
+	if not doc.base_url():
 		frappe.throw(_("This provider has no API Base to ask"))
 	try:
 		return GatewayListing(doc).sync()
 	except Exception as e:
-		logger.warning(f"import_provider_models failed for {provider}: {e}")
-		frappe.throw(_("Could not reach {0}: {1}").format(doc.api_base, str(e)[:200]))
+		from builder.ai.site_key import redact
+
+		logger.warning(f"import_provider_models failed for {provider}: {redact(str(e))}")
+		frappe.throw(_("Could not reach {0}: {1}").format(doc.base_url(), redact(str(e))[:200]))
 
 
 @frappe.whitelist()
 def delete_ai_provider(provider: str) -> None:
 	"""Delete a provider with its models. A provider refuses to go while models still
-	point at it, so they go first, in the same request."""
+	point at it, so they go first, in the same request; the one site config owns never goes."""
+	frappe.get_doc("Builder AI Provider", provider).guard_site_config_row()
 	for model in frappe.get_all("Builder AI Model", filters={"provider": provider}, pluck="name"):
 		frappe.delete_doc("Builder AI Model", model)
 	frappe.delete_doc("Builder AI Provider", provider)
@@ -428,17 +434,32 @@ def get_provider_credits(provider: str) -> dict | None:
 		frappe.throw(_("You are not permitted to view AI providers"), frappe.PermissionError)
 
 	doc = frappe.get_doc("Builder AI Provider", provider)
+	if doc.from_site_config:
+		return get_site_ai_credits()
 	return GatewayListing(doc).credits() if doc.api_base else None
 
 
 @frappe.whitelist()
 def get_site_ai_credits() -> dict | None:
-	"""The balance of the AI credits Frappe Cloud gives this site, or None when it gives none."""
+	"""The balance of the AI credits Frappe Cloud gives this site, or None when it gives none. A host
+	that meters the site key shares it between sites, so its balance is the host's own business: the
+	site sees its allowance instead (get_site_ai_allowance)."""
+	from builder.ai.site_key import allowance
+
 	frappe.has_permission("Builder AI Provider", "read", throw=True)
-	if not (entry := get_site_ai_key(fresh=True)):
+	if not (entry := get_site_ai_key(fresh=True)) or allowance():
 		return None
 	headers = {"Authorization": f"Bearer {entry['api_key']}"}
 	return fetch_credits(get_credits_url(entry["gateway_url"]), headers)
+
+
+@frappe.whitelist()
+@has_page_write()
+def get_site_ai_allowance() -> dict | None:
+	"""How much of its allowance for the site config key this site has left, when a host meters it."""
+	from builder.ai.site_key import allowance_status
+
+	return allowance_status() if get_site_ai_key() else None
 
 
 @frappe.whitelist()
@@ -679,23 +700,31 @@ def test_api_key(provider: str | None = None, api_key: str | None = None):
 
 	import litellm
 
-	from builder.ai.llm import route
+	from builder.ai.llm import call_metered, route
+	from builder.ai.site_key import Charge, UsageLimitError, redact
 
 	# route() prefers the provider's stored key, and the typed one is what's under test
 	call_model, overrides, routed_key = route(actual_model, api_key)
+	key = typed_key or routed_key
+	messages = [{"role": "user", "content": "Say 'OK' if you can read this"}]
 	try:
-		litellm.completion(
+		call_metered(
+			Charge.open(key, messages, {"max_tokens": 10}),
+			False,
+			litellm.completion,
 			model=call_model,
 			**overrides,
-			messages=[{"role": "user", "content": "Say 'OK' if you can read this"}],
+			messages=messages,
 			max_tokens=10,
-			api_key=typed_key or routed_key,
+			api_key=key,
 			drop_params=True,
 		)
 		return {"success": True, "message": _("API key is valid")}
-	except Exception as e:
-		logger.error(f"test_api_key failed: {e!s}", exc_info=True)
+	except UsageLimitError as e:
 		return {"success": False, "message": str(e)}
+	except Exception as e:
+		logger.error(f"test_api_key failed: {redact(str(e))}", exc_info=True)
+		return {"success": False, "message": redact(str(e))}
 
 
 @frappe.whitelist()

@@ -28,6 +28,8 @@ FETCH_TIMEOUT = 10
 DEFAULT_CONTEXT_WINDOW = 200_000
 # a new site starts with this in Builder Settings: the Frappe Cloud gateway's model
 DEFAULT_AI_MODEL = "frappe/openai/gpt-5.6-terra"
+# the Frappe gateway speaks the OpenAI API, so the site config key is only ever sent that way
+SITE_CONFIG_LITELLM_PROVIDER = "openai"
 
 # Used only when the rows are unreachable (install/migrate ordering) or all gone,
 # so the agent still has something to call.
@@ -74,6 +76,7 @@ def load_models() -> list[dict]:
 					"route_prefix",
 					"litellm_provider",
 					"api_base",
+					"from_site_config",
 				],
 				order_by="creation asc",
 			)
@@ -112,11 +115,32 @@ def load_models() -> list[dict]:
 				"route_prefix": provider.route_prefix,
 				"litellm_provider": provider.litellm_provider,
 				"api_base": provider.api_base or None,
+				"from_site_config": bool(provider.from_site_config),
 				"max_tokens": row.max_tokens or DEFAULT_CONTEXT_WINDOW,
 				"vision": bool(row.supports_vision),
 			}
 		)
 	return models or [dict(FALLBACK_MODEL)]
+
+
+def route_site_config_models(models: list[dict]) -> list[dict]:
+	"""Point the Frappe provider's models at the gateway site config names, whatever its row says.
+	The row is only a record: one edited by hand, or by a script that skips validation, must never
+	send the site's key to another address or another kind of API. With no key in site config the
+	provider is off, so its models go too."""
+	if not any(m.get("from_site_config") for m in models):
+		return models
+	from builder.ai.presets import site_gateway_base
+
+	base = site_gateway_base()
+	routed = []
+	for m in models:
+		if m.get("from_site_config"):
+			if not base:
+				continue
+			m = {**m, "api_base": base, "litellm_provider": SITE_CONFIG_LITELLM_PROVIDER}
+		routed.append(m)
+	return routed
 
 
 def lookup_metadata(qualified_name: str, model_id: str) -> dict:
@@ -226,6 +250,10 @@ class GatewayListing:
 		chat = [i for i in listed if not any(m in i.lower() for m in NON_CHAT_MARKERS)]
 		self.remember(chat)
 		added = [model_id for model_id in chat if self.add_row(model_id)]
+		if self.provider.from_site_config:
+			from builder.ai.presets import adopt_default_model
+
+			adopt_default_model(self.provider, chat)
 		return {"added": added, "skipped": sorted(set(listed) - set(chat)), "found": len(listed)}
 
 	def credits(self) -> dict | None:
@@ -234,10 +262,12 @@ class GatewayListing:
 		return fetch_credits(self.provider.credits_url, headers)
 
 	def request(self) -> tuple[str, dict]:
-		base = self.provider.api_base.rstrip("/")
+		base = (self.provider.base_url() or "").rstrip("/")
 		# Never the Builder Settings key: that belongs to OpenRouter, not this api_base.
 		key = self.provider.resolved_key()
-		if self.provider.litellm_provider == "anthropic":
+		if not base:
+			return "", {}
+		if self.provider.litellm_provider == "anthropic" and not self.provider.from_site_config:
 			# litellm treats an Anthropic api_base as the host root and appends /v1/messages
 			return f"{base}/v1/models", {"x-api-key": key or "", "anthropic-version": "2023-06-01"}
 		return f"{base}/models", {"Authorization": f"Bearer {key}"} if key else {}
@@ -315,7 +345,7 @@ class ModelRegistry:
 			logger.warning(f"OpenRouter catalog fetch failed, using stored values: {e}")
 		return [
 			{**m, **{k: v for k, v in (live.get(m["name"]) or {}).items() if v is not None}}
-			for m in load_models()
+			for m in route_site_config_models(load_models())
 		]
 
 	@classmethod

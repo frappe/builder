@@ -12,6 +12,7 @@ import frappe
 from frappe import _
 
 from builder.ai.models import ModelRegistry
+from builder.ai.site_key import Charge, UsageLimitError, scrub_exception
 
 # Sent for a provider with no key of its own (as presets.verify_key does): a
 # keyless gateway (Ollama, vLLM) ignores it, anything else rejects it.
@@ -65,6 +66,8 @@ GENERIC_FAILURE = "Something went wrong while building your changes. Please try 
 
 def user_facing_error(exc: BaseException) -> str:
 	"""A fixed, safe message for a failed turn: actionable when the user can fix it."""
+	if isinstance(exc, UsageLimitError):
+		return str(exc)
 	if getattr(exc, "status_code", None) == 402:
 		return PAYMENT_FAILURE
 	for cls in type(exc).__mro__:
@@ -308,9 +311,13 @@ def complete(
 		f"LLM | model={model} stream={stream} params={params}\n"
 		+ "\n".join(f"[{m['role']}] {m['content']!s}" for m in messages)
 	)
+	charge = Charge.open(api_key, messages, params)
 	import litellm
 
-	resp = litellm.completion(
+	resp = call_metered(
+		charge,
+		stream,
+		litellm.completion,
 		model=model,
 		messages=messages,
 		stream=stream,
@@ -357,6 +364,7 @@ def complete_with_tools(
 		f"LLM tools | model={model} stream={stream} tools={[t['function']['name'] for t in tools]}\n"
 		+ "\n".join(f"[{m['role']}] {m['content']}" for m in messages)
 	)
+	charge = Charge.open(api_key, messages, params, tools)
 	import litellm
 
 	request = dict(
@@ -374,18 +382,43 @@ def complete_with_tools(
 		**overrides,
 		**params,
 	)
+
+	def call():
+		try:
+			return litellm.completion(**request)
+		except litellm.NotFoundError as exc:
+			if not (
+				model.startswith("openai/")
+				and overrides.get("api_base")
+				and params.get("reasoning_effort")
+				and "does not serve /v1/responses" in str(exc)
+			):
+				raise
+			# LiteLLM bridges reasoning + function tools to Responses, which some
+			# chat-compatible gateways cannot serve. Keep reasoning when they can.
+			logger.warning(
+				"Gateway does not serve Responses; retrying the tool call without reasoning effort"
+			)
+			request.pop("reasoning_effort")
+			return litellm.completion(**request)
+
+	return call_metered(charge, stream, call)
+
+
+def call_metered(charge: Charge | None, streaming: bool, call, /, **kwargs):
+	"""Make the call, holding its cost against the site key's allowance when it is paid with that key
+	(see builder/ai/site_key.py). A stream settles as it ends; anything else once it returns. An
+	error loses the site key from its text, since the gateway may have echoed it."""
 	try:
-		return litellm.completion(**request)
-	except litellm.NotFoundError as exc:
-		if not (
-			model.startswith("openai/")
-			and overrides.get("api_base")
-			and params.get("reasoning_effort")
-			and "does not serve /v1/responses" in str(exc)
-		):
-			raise
-		# LiteLLM bridges reasoning + function tools to Responses, which some
-		# chat-compatible gateways cannot serve. Keep reasoning when they can.
-		logger.warning("Gateway does not serve Responses; retrying the tool call without reasoning effort")
-		request.pop("reasoning_effort")
-		return litellm.completion(**request)
+		resp = call(**kwargs)
+	except Exception as exc:
+		if charge:
+			charge.settle()
+		scrub_exception(exc)
+		raise
+	if not charge:
+		return resp
+	if streaming:
+		return charge.stream(resp)
+	charge.settle(getattr(resp, "usage", None))
+	return resp

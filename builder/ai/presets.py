@@ -9,12 +9,20 @@ released tomorrow shows up without a change here.
 Everything a preset creates is an ordinary Builder AI Provider row.
 """
 
+from contextlib import contextmanager
+from contextvars import ContextVar
 from urllib.parse import urlsplit
 
 import frappe
 from frappe import _
 
-from builder.ai.models import DEFAULT_AI_MODEL, GatewayListing, ModelRegistry
+from builder.ai.models import (
+	DEFAULT_AI_MODEL,
+	SITE_CONFIG_LITELLM_PROVIDER,
+	GatewayListing,
+	ModelRegistry,
+	get_configured_default,
+)
 
 PRESETS = [
 	{
@@ -85,8 +93,32 @@ PRESETS = [
 
 SITE_PROVIDER = {"provider_name": "Frappe", "route_prefix": "frappe"}
 GATEWAY_BASE_PATH = "/openai/v1"
+# a host app names the gateway model it wants as the default: an id, or part of one
+DEFAULT_MODEL_HOOK = "builder_ai_default_model"
+# the default this sync chose last, so a default the site picked itself is told apart and kept
+ADOPTED_DEFAULT_KEY = "builder_ai_adopted_default_model"
 
 logger = frappe.logger("builder.ai.presets")
+
+# set only while sync_site_provider writes the row; scripts cannot reach a module's globals
+_syncing_site_provider: ContextVar[bool] = ContextVar("builder_ai_syncing_site_provider", default=False)
+
+
+@contextmanager
+def syncing_site_provider():
+	token = _syncing_site_provider.set(True)
+	try:
+		yield
+	finally:
+		_syncing_site_provider.reset(token)
+
+
+def may_change_site_provider() -> bool:
+	"""Whether this code may write the provider site config owns: the sync itself, or Administrator from
+	the bench or an install. Never a member, and never a script, which can run as anyone."""
+	if _syncing_site_provider.get():
+		return True
+	return frappe.session.user == "Administrator" and not frappe.flags.in_safe_exec
 
 
 def get_site_ai_key(fresh: bool = False) -> dict | None:
@@ -117,14 +149,20 @@ def sync_site_provider() -> None:
 	if not doc:
 		return
 	api_base = get_gateway_base(entry["gateway_url"]) if entry else doc.api_base
-	fields = {"api_base": api_base, "enabled": int(bool(entry))}
+	# the routing is re-asserted too, should anything have changed the row behind validation
+	fields = {
+		"api_base": api_base,
+		"enabled": int(bool(entry)),
+		"litellm_provider": SITE_CONFIG_LITELLM_PROVIDER,
+		"route_prefix": SITE_PROVIDER["route_prefix"],
+	}
 	is_registering = not doc.name
 	if is_registering or any(doc.get(field) != value for field, value in fields.items()):
 		doc.update(fields)
-		doc.save(ignore_permissions=True)
+		with syncing_site_provider():
+			doc.save(ignore_permissions=True)
 	if is_registering:
 		list_models(doc)
-		set_default_model()
 
 
 def list_models(provider) -> None:
@@ -136,10 +174,55 @@ def list_models(provider) -> None:
 		logger.error(f"could not list the models of {provider.name}: {error}")
 
 
-def set_default_model() -> None:
-	"""Make the Frappe gateway model the default, unless Builder Settings already names one."""
-	if not frappe.db.get_single_value("Builder Settings", "default_ai_model"):
-		frappe.db.set_single_value("Builder Settings", "default_ai_model", DEFAULT_AI_MODEL)
+def adopt_default_model(provider, listed: list[str]) -> None:
+	"""Make the gateway model the host prefers the default, once the gateway lists it.
+
+	A default the site picked itself stays. Three kinds are not the site's pick and give way: none at
+	all, one this sync set before, and one naming a model the site cannot call. So a preference that
+	changes later still takes over, and so does a host's preference once its app is installed (Builder
+	installs first, and registers the provider before the host's hook exists)."""
+	model_id = match_model(preferred_model(), listed)
+	if not model_id:
+		return
+	name = f"{provider.route_prefix}/{model_id}"
+	if not frappe.db.get_value("Builder AI Model", name, "enabled"):
+		return  # switched off on this site
+	current = get_configured_default()
+	if current != name:
+		if current and current != frappe.db.get_default(ADOPTED_DEFAULT_KEY) and ModelRegistry.find(current):
+			return
+		frappe.db.set_single_value("Builder Settings", "default_ai_model", name)
+	frappe.db.set_default(ADOPTED_DEFAULT_KEY, name)
+
+
+def preferred_model() -> str:
+	"""What a host app asks for (hook builder_ai_default_model), else the Frappe Cloud gateway's model."""
+	if hooks := frappe.get_hooks(DEFAULT_MODEL_HOOK):
+		if wanted := frappe.get_attr(hooks[-1])():
+			return wanted
+	return DEFAULT_AI_MODEL.removeprefix(f"{SITE_PROVIDER['route_prefix']}/")
+
+
+def match_model(wanted: str, ids: list[str]) -> str | None:
+	"""The id `wanted` names, ignoring case: that id, else the id whose last part it is, else the
+	shortest id containing it (so "sol" picks gpt-6.1-sol over gpt-6.1-sol-mini)."""
+	wanted = (wanted or "").strip().lower()
+	if not wanted:
+		return None
+	for found in (
+		[i for i in ids if i.lower() == wanted],
+		[i for i in ids if i.lower().rsplit("/", 1)[-1] == wanted],
+		sorted((i for i in ids if wanted in i.lower()), key=len),
+	):
+		if found:
+			return found[0]
+	return None
+
+
+def site_gateway_base() -> str | None:
+	"""Where the site config key may go: its gateway's OpenAI-compatible base, or None with no key."""
+	entry = get_site_ai_key() or get_site_ai_key(fresh=True)
+	return get_gateway_base(entry["gateway_url"]) if entry else None
 
 
 def get_gateway_base(gateway_url: str) -> str:
@@ -166,7 +249,14 @@ def new_site_provider():
 	if frappe.db.exists("Builder AI Provider", SITE_PROVIDER["provider_name"]):
 		logger.error("a provider named Frappe already exists, so the site config key is not connected")
 		return None
-	return frappe.get_doc({"doctype": "Builder AI Provider", "from_site_config": 1, **SITE_PROVIDER})
+	return frappe.get_doc(
+		{
+			"doctype": "Builder AI Provider",
+			"from_site_config": 1,
+			"litellm_provider": SITE_CONFIG_LITELLM_PROVIDER,
+			**SITE_PROVIDER,
+		}
+	)
 
 
 def find_preset(preset_id: str) -> dict | None:
@@ -174,8 +264,9 @@ def find_preset(preset_id: str) -> dict | None:
 
 
 def preset_for(provider) -> dict | None:
-	"""The preset a provider row was made from. A row with its own base URL is a custom gateway."""
-	if provider.api_base:
+	"""The preset a provider row was made from. A row with its own base URL is a custom gateway, and the
+	Frappe provider is none: its key goes to its gateway only, never to a preset's listing."""
+	if provider.api_base or provider.from_site_config:
 		return None
 	return next((p for p in PRESETS if p.get("litellm_provider") == provider.litellm_provider), None)
 
@@ -249,7 +340,9 @@ def enabled_models(names: list[str]) -> list[dict]:
 
 def stored_key(preset: dict) -> str:
 	if preset["name"] and frappe.db.exists("Builder AI Provider", preset["name"]):
-		return frappe.get_cached_doc("Builder AI Provider", preset["name"]).resolved_key() or ""
+		provider = frappe.get_cached_doc("Builder AI Provider", preset["name"])
+		# a row claiming the site config key is not a preset's: that key goes to its gateway only
+		return "" if provider.from_site_config else provider.resolved_key() or ""
 	return ""
 
 
@@ -275,6 +368,9 @@ def readable_error(raw: str) -> tuple[str, str]:
 	"""Provider errors arrive as a wall of JSON. Say what to actually do about it,
 	and how much it matters: "warn" means the credentials are fine and something
 	else is in the way (credit, a rate limit), "error" that it cannot work as entered."""
+	from builder.ai.site_key import redact
+
+	raw = redact(raw)
 	low = raw.lower()
 	if "authentication" in low or ("invalid" in low and "key" in low) or "401" in low or "403" in low:
 		return (
