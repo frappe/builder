@@ -7,6 +7,14 @@
 			icon-left="lucide-panel-right"
 			label="Open"
 			@click="emit('open')" />
+		<Button
+			v-else-if="canEnable"
+			variant="solid"
+			size="sm"
+			icon-left="lucide-power"
+			label="Enable"
+			:disabled="working"
+			@click="emit('setEnabled', true)" />
 
 		<span v-if="moreActions.length" class="ml-auto inline-flex shrink-0">
 			<Dropdown :options="moreActions" align="end">
@@ -58,15 +66,20 @@ const tabActions = computed<DropdownOptions>(() =>
 			],
 );
 
+// a disabled plugin has nothing to open, so Enable takes the button's place
+const canEnable = computed(() => props.canManage && !props.enabled && !props.canOpen);
+
 const managerActions = computed<DropdownOptions>(() => {
 	if (!props.canManage) return [];
-	const actions: DropdownOptions = [
-		{
-			label: props.enabled ? "Disable" : "Enable",
-			icon: props.enabled ? "lucide-power-off" : "lucide-power",
-			onClick: () => emit("setEnabled", !props.enabled),
-		},
-	];
+	const actions: DropdownOptions = canEnable.value
+		? []
+		: [
+				{
+					label: props.enabled ? "Disable" : "Enable",
+					icon: props.enabled ? "lucide-power-off" : "lucide-power",
+					onClick: () => emit("setEnabled", !props.enabled),
+				},
+			];
 	if (props.canUninstall) {
 		actions.push({
 			label: "Uninstall",
