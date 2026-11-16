@@ -85,9 +85,13 @@ class BuilderPlugin(Document):
 	def release_path(self) -> Path | None:
 		return self.install_path / self.checksum if self.checksum else None
 
-	def get_file_url(self, file: str) -> str | None:
-		"""Where the editor gets one of this plugin's files. A new build gets a new URL, so no browser keeps the old one."""
-		if not self.checksum:
+	def get_file_url(self, file: str | None) -> str | None:
+		"""Where the editor gets one of this plugin's files. A new build gets a new URL, so no browser keeps the old one.
+
+		None for no file, such as a package with no icon. The package checks make sure that a
+		file the manifest names is in the files.
+		"""
+		if not file or not self.checksum:
 			return None
 		if self.source != "App":
 			return f"/files/{PLUGINS_FOLDER}/{self.name}/{self.checksum}/{file}"
@@ -100,14 +104,6 @@ class BuilderPlugin(Document):
 	@property
 	def entry_url(self) -> str | None:
 		return self.get_file_url(ENTRY_FILE)
-
-	@property
-	def icon_url(self) -> str | None:
-		"""None when the package ships no icon. The editor draws its own glyph then.
-
-		The package checks make sure that an icon the manifest names is in the files.
-		"""
-		return self.get_file_url(self.icon) if self.icon else None
 
 	def validate_identity(self):
 		if not PLUGIN_NAME_PATTERN.fullmatch(self.plugin or ""):
