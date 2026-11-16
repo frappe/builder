@@ -183,7 +183,7 @@ def sync_app_plugins() -> None:
 	is kept only after that commit.
 	"""
 	plugins = [plugin for app in frappe.get_installed_apps() for plugin in get_app_plugins(app)]
-	fingerprint = get_fingerprint(plugins)
+	fingerprint = hashlib.sha256(repr([plugin.fingerprint for plugin in plugins]).encode()).hexdigest()
 	if frappe.cache.get_value(APP_PLUGINS_FINGERPRINT_KEY) == fingerprint:
 		return
 	changed = [plugin.sync() for plugin in plugins]
@@ -194,10 +194,6 @@ def sync_app_plugins() -> None:
 		frappe.db.after_commit.add(keep)
 	else:
 		keep()
-
-
-def get_fingerprint(plugins: list[AppPlugin]) -> str:
-	return hashlib.sha256(repr([plugin.fingerprint for plugin in plugins]).encode()).hexdigest()
 
 
 def drop_unshipped_rows(shipped: list[str]) -> bool:
