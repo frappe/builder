@@ -86,6 +86,18 @@ class TestQueueingATurn(TurnsTestCase):
 		self.assertEqual(TurnQueue.in_flight(), 1)
 		self.assertTrue(job["turn_ticket"])
 
+	def test_a_turn_goes_to_the_queue_site_config_names_once_the_bench_declares_it(self):
+		queues = "frappe.utils.background_jobs.get_queues_timeout"
+		builtin = {"short": 300, "default": 300, "long": 1500}
+		with patch.dict(frappe.local.conf, {"builder_ai_queue": "builder_ai_test"}):
+			with patch(queues, return_value={**builtin, "builder_ai_test": 3660}):
+				api.run("hi", self.page, model=MODEL["name"])
+			self.assertEqual(self.enqueue.call_args.kwargs["queue"], "builder_ai_test")
+			# a queue no worker config declares has no worker either: such a turn would wait forever
+			with patch(queues, return_value=builtin):
+				api.run("hi", self.page, model=MODEL["name"])
+			self.assertEqual(self.enqueue.call_args.kwargs["queue"], turns.DEFAULT_QUEUE)
+
 	def test_a_site_with_every_turn_queued_is_refused_before_anything_is_saved(self):
 		for _ in range(turns.DEFAULT_TURNS_IN_FLIGHT):
 			api.run("hi", self.page, model=MODEL["name"])

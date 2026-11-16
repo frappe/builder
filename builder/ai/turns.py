@@ -8,6 +8,12 @@ site on one), so two limits keep a site from taking it over:
   once its job could no longer be waiting or running, so a worker that died frees it.
 - Only FRONT_TURNS of a site's turns in each FRONT_WINDOW go to the front. The rest queue behind
   what is already waiting, so a site sending turn after turn can't keep everyone else waiting.
+
+Turns go to the RQ queue `builder_ai_queue` names (site config, default "default"). A bench that serves
+many sites gives them one of their own, so AI turns and every other background job stop waiting on each
+other: declare it in common_site_config.json (`"workers": {"<name>": {"timeout": 3660}}`) and run a
+worker for it alone (`bench worker --queue <name>`). A name no worker config declares falls back to
+"default", which every bench has.
 """
 
 import secrets
@@ -18,6 +24,8 @@ from frappe import _
 from frappe.utils import cint
 
 DEFAULT_TURNS_IN_FLIGHT = 3
+QUEUE_CONFIG = "builder_ai_queue"
+DEFAULT_QUEUE = "default"
 FRONT_TURNS = 10
 FRONT_WINDOW = 10 * 60
 # how long a turn may wait for a worker before its ticket lapses anyway
@@ -79,7 +87,7 @@ class TurnQueue:
 
 		frappe.enqueue(
 			run_agent_job,
-			queue="default",
+			queue=cls.queue(),
 			at_front=cls.goes_first(),
 			timeout=job_timeout,
 			enqueue_after_commit=True,
@@ -95,6 +103,19 @@ class TurnQueue:
 	@classmethod
 	def in_flight(cls) -> int:
 		return frappe.cache.zcount(cls.key(TICKETS_KEY), time.time(), "+inf")
+
+	@staticmethod
+	def queue() -> str:
+		"""The queue AI turns go to: `builder_ai_queue`, when the bench declares it."""
+		from frappe.utils.background_jobs import get_queues_timeout
+
+		name = (frappe.conf.get(QUEUE_CONFIG) or DEFAULT_QUEUE).strip()
+		if name in get_queues_timeout():
+			return name
+		frappe.logger("builder.ai.turns").error(
+			f"{QUEUE_CONFIG} names the queue {name!r}, which no `workers` config declares: using {DEFAULT_QUEUE!r}"
+		)
+		return DEFAULT_QUEUE
 
 	@staticmethod
 	def limit() -> int:
