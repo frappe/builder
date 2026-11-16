@@ -62,6 +62,7 @@ class BuilderPlugin(Document):
 
 	def validate(self):
 		self.validate_identity()
+		self.validate_source()
 		self.validate_checksum()
 		self.validate_icon()
 		self.validate_readme()
@@ -109,6 +110,12 @@ class BuilderPlugin(Document):
 			frappe.throw(_("Plugin must read as publisher/name, in lowercase."))
 		if not VERSION_PATTERN.fullmatch(self.version or ""):
 			frappe.throw(_("Version must hold only letters, digits, dots, plus signs and hyphens."))
+
+	def validate_source(self):
+		# hosts that share one editor origin across sites load only Hub and App plugins, and decide by
+		# `source`, so a Bob or Development install must not be relabelled after its files are written
+		if not self.is_new() and self.has_value_changed("source"):
+			frappe.throw(_("A plugin's source cannot change after it is installed."))
 
 	def validate_checksum(self):
 		if self.checksum and not CHECKSUM_PATTERN.fullmatch(self.checksum):

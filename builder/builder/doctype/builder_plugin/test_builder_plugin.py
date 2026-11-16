@@ -40,6 +40,13 @@ class TestBuilderPlugin(FrappeTestCase):
 			with self.subTest(checksum=checksum), self.assertRaises(frappe.ValidationError):
 				installation.save()
 
+	def test_the_source_cannot_change_after_install(self):
+		installation = make_installation(PLUGIN, source="Bob")
+
+		installation.source = "Hub"
+		with self.assertRaises(frappe.ValidationError):
+			installation.save()
+
 	def test_a_delete_removes_the_files_after_the_commit(self):
 		installation = make_installation(PLUGIN, entry="// 1")
 
