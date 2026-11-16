@@ -35,25 +35,25 @@ class TestAppPlugin(FrappeTestCase):
 		(self.module / "plugin").mkdir()
 		(self.module / "plugin" / "manifest.json").write_text(json.dumps(self.get_manifest("1.0.0")))
 		self.write_build("1.0.0")
-		self.ship(["plugin"])
+		self.set_plugin_folders(["plugin"])
 		module = patch("builder.plugins.app_plugins.get_app_folder", return_value=self.module)
 		module.start()
 		self.addCleanup(module.stop)
 
-	def ship(self, folders: list[str]):
-		shipped = patch(
+	def set_plugin_folders(self, folders: list[str]):
+		plugin_folders = patch(
 			"builder.plugins.app_plugins.get_plugin_folders",
 			side_effect=lambda app: folders if app == APP else [],
 		)
-		shipped.start()
-		self.addCleanup(shipped.stop)
+		plugin_folders.start()
+		self.addCleanup(plugin_folders.stop)
 
 	def get_manifest(self, version: str) -> dict:
 		return {
 			"v": 1,
 			"name": PLUGIN,
 			"label": "Bundled",
-			"description": "Ships with an app",
+			"description": "Comes with an app",
 			"version": version,
 			"entry": ENTRY_FILE,
 		}
@@ -93,10 +93,10 @@ class TestAppPlugin(FrappeTestCase):
 		self.assertEqual(row.install_state, "Failed")
 		self.assertIn("bench build --app builder", row.install_error)
 
-	def test_drops_the_row_when_the_app_no_longer_ships_it(self):
+	def test_drops_an_orphan_row(self):
 		sync_app_plugins()
 
-		self.ship([])
+		self.set_plugin_folders([])
 		sync_app_plugins()
 
 		self.assertFalse(frappe.db.exists(INSTALLATION_DOCTYPE, {"plugin": PLUGIN}))

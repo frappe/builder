@@ -1,7 +1,7 @@
 # Copyright (c) 2026, Frappe Technologies Pvt Ltd and contributors
 # For license information, please see license.txt
 
-"""Plugins that a Frappe app ships with its code.
+"""Plugins that come with a Frappe app's code.
 
 An app names its plugin project folders in the `builder_plugins` hook,
 relative to its module folder, the one that holds hooks.py:
@@ -9,7 +9,7 @@ relative to its module folder, the one that holds hooks.py:
     builder_plugins = ["plugin"]
 
 A project builds into `public/builder_plugins/<folder>` of the module. So the
-build ships as the app's other assets do, and `/assets` serves it. Builder runs
+build goes out as the app's other assets do, and `/assets` serves it. Builder runs
 no hook on install, build or migrate. When the editor lists plugins, each app
 plugin's row is made to match the build on disk. The Hub plays no part.
 """
@@ -176,7 +176,7 @@ def find_app_plugin(app: str, plugin: str) -> AppPlugin | None:
 
 
 def sync_app_plugins() -> None:
-	"""Make each app plugin's row match its build, and drop the rows of plugins no installed app ships.
+	"""Make each app plugin's row match its build, and drop the orphan rows.
 
 	It skips all of that while no plugin file changed since the last sync. The editor's list
 	is a GET, which Frappe rolls back. So a write asks Frappe to commit, and the fingerprint
@@ -187,7 +187,7 @@ def sync_app_plugins() -> None:
 	if frappe.cache.get_value(APP_PLUGINS_FINGERPRINT_KEY) == fingerprint:
 		return
 	changed = [plugin.sync() for plugin in plugins]
-	dropped = drop_unshipped_rows([plugin.name for plugin in plugins])
+	dropped = drop_orphan_rows(plugins)
 	keep = lambda: frappe.cache.set_value(APP_PLUGINS_FINGERPRINT_KEY, fingerprint)  # noqa: E731
 	if any(changed) or dropped:
 		frappe.local.flags.commit = True
@@ -196,11 +196,12 @@ def sync_app_plugins() -> None:
 		keep()
 
 
-def drop_unshipped_rows(shipped: list[str]) -> bool:
-	"""True when it dropped a row."""
-	stale = frappe.get_all(
-		INSTALLATION_DOCTYPE, filters={"source": "App", "plugin": ["not in", shipped or [""]]}, pluck="name"
+def drop_orphan_rows(plugins: list[AppPlugin]) -> bool:
+	"""App rows whose plugin no installed app comes with now. True when it dropped one."""
+	names = [plugin.name for plugin in plugins] or [""]
+	orphans = frappe.get_all(
+		INSTALLATION_DOCTYPE, filters={"source": "App", "plugin": ["not in", names]}, pluck="name"
 	)
-	for installation in stale:
+	for installation in orphans:
 		frappe.delete_doc(INSTALLATION_DOCTYPE, installation, ignore_permissions=True)
-	return bool(stale)
+	return bool(orphans)

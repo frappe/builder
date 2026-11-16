@@ -35,7 +35,7 @@ NO_BUILDER_ACCESS = "You need access to Builder to use plugins."
 def get_installations() -> list[dict]:
 	"""Every installation on this site, the disabled and development ones included.
 
-	App plugins sync first, so the list shows the build that each app ships now.
+	App plugins sync first, so the list shows the build that each app comes with now.
 
 	A development installation is listed so the panel can open its record. The
 	browser loads its entry from the dev server, and hides a record no dev server serves.
