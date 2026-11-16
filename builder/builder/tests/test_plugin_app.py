@@ -113,7 +113,7 @@ class TestAppPlugin(FrappeTestCase):
 	def test_only_the_app_removes_its_plugin(self):
 		install_app_plugins(APP)
 
-		with self.assertRaisesRegex(frappe.ValidationError, "builder app"):
+		with self.assertRaisesRegex(frappe.ValidationError, "comes with builder"):
 			uninstall_plugin(PLUGIN)
 		remove_app_plugins(APP)
 

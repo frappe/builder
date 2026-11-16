@@ -135,7 +135,7 @@
 					<p v-else-if="details.is_development">Served by {{ details.development_server }}</p>
 					<template v-else-if="isReady">
 						<p v-if="details.source === 'Hub'">{{ details.hub_url }}</p>
-						<p v-else-if="details.source === 'App'">Comes with the {{ details.source_app }} app</p>
+						<p v-else-if="details.source === 'App'">Comes with {{ details.source_app }}</p>
 						<p>Installed on {{ installedOn }}</p>
 					</template>
 				</div>

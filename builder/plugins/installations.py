@@ -109,7 +109,7 @@ def uninstall_plugin(plugin: str) -> None:
 	source_app = frappe.db.get_value(INSTALLATION_DOCTYPE, installation, "source_app")
 	if source_app:
 		frappe.throw(
-			_('"{0}" comes with the {1} app. Uninstall the app to remove it.').format(plugin, source_app)
+			_('"{0}" comes with {1}. Uninstall {1} to remove it.').format(plugin, source_app)
 		)
 	frappe.delete_doc(INSTALLATION_DOCTYPE, installation)
 
@@ -143,7 +143,7 @@ def describe_source(row) -> str:
 	if row.source == "Hub":
 		return row.hub_url
 	if row.source == "App":
-		return _("the {0} app").format(row.source_app)
+		return row.source_app
 	return _("a dev server")
 
 

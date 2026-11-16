@@ -52,7 +52,7 @@ class AppPlugin:
 		"""The build's files, keyed by path, through the same rules as a Hub package."""
 		if not (self.build_folder / MANIFEST_FILE).is_file():
 			frappe.throw(
-				_("The {0} app has no built plugin at {1}. Run bench build --app {0}.").format(
+				_("{0} has no built plugin at {1}. Run bench build --app {0}.").format(
 					self.app, self.build_folder
 				)
 			)
@@ -95,7 +95,7 @@ class AppPlugin:
 		)
 		if not row or row.source_app == self.app or row.source == "Development":
 			return None
-		return _('The {0} app cannot install "{1}". The site has it from {2}.').format(
+		return _('{0} cannot install "{1}". The site has it from {2}.').format(
 			self.app, self.name, describe_source(row)
 		)
 
@@ -157,7 +157,7 @@ def sync_app_plugins() -> None:
 			try:
 				plugin.install()
 			except frappe.ValidationError as error:
-				print(f"Skipped a plugin of the {app} app: {error}")
+				print(f"Skipped a plugin of {app}: {error}")
 
 
 def sync_built_apps(built_apps: list[str]) -> None:
