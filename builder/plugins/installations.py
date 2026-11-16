@@ -108,9 +108,7 @@ def uninstall_plugin(plugin: str) -> None:
 	installation = find_installation(plugin) or throw_not_installed(plugin)
 	source_app = frappe.db.get_value(INSTALLATION_DOCTYPE, installation, "source_app")
 	if source_app:
-		frappe.throw(
-			_('"{0}" comes with {1}. Uninstall {1} to remove it.').format(plugin, source_app)
-		)
+		frappe.throw(_('"{0}" comes with {1}. Uninstall {1} to remove it.').format(plugin, source_app))
 	frappe.delete_doc(INSTALLATION_DOCTYPE, installation)
 
 
