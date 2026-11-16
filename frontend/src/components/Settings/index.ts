@@ -88,11 +88,15 @@ const panes: SettingsPane[] = [
 	},
 	{
 		name: "global_users",
-		label: __("Users"),
-		title: __("Users"),
+		// a frappe.page site's members come from the app host, which mirrors them to this site
+		label: isMounted ? __("Members") : __("Users"),
+		title: isMounted ? __("Members") : __("Users"),
 		icon: "lucide-users",
 		group: "Global",
-		load: () => import("@/components/Settings/GlobalUsers.vue"),
+		load: () =>
+			isMounted
+				? import("@/components/Settings/FrappePageMembers.vue")
+				: import("@/components/Settings/GlobalUsers.vue"),
 	},
 	{
 		name: "global_code",
@@ -111,12 +115,21 @@ const panes: SettingsPane[] = [
 		load: () => import("@/components/Settings/GlobalRedirects.vue"),
 	},
 	{
+		name: "global_address",
+		label: __("Address"),
+		title: __("Site Address"),
+		icon: "lucide-link",
+		group: "Global",
+		load: () => import("@/components/Settings/FrappePageAddress.vue"),
+		condition: () => isMounted,
+	},
+	{
 		name: "global_domains",
 		label: __("Domains"),
 		title: __("Custom Domains"),
 		icon: "lucide-globe",
 		group: "Global",
-		// frappe.page adds and verifies domains on its own dashboard
+		// frappe.page adds and verifies domains on the app host's control site
 		load: () =>
 			isMounted
 				? import("@/components/Settings/FrappePageDomains.vue")

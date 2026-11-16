@@ -3,7 +3,7 @@ import { ref } from "vue";
 import { NavigationGuardNext, RouteLocationNormalized, createRouter, createWebHistory } from "vue-router";
 import { __ } from "./translation";
 import { editorDemo } from "./utils/editorDemo";
-import { deskURL, loginURL, shortEditorURLs } from "./utils/frappePage";
+import { appURL, isMounted, loginURL, shortEditorURLs } from "./utils/frappePage";
 
 let hasPermission: null | boolean = null;
 let sessionUser = ref("Guest");
@@ -14,7 +14,8 @@ function validatePermission(next: NavigationGuardNext) {
 	} else {
 		alert(__("You do not have permission to access this page"));
 		if (isUserLoggedIn()) {
-			window.location.href = deskURL();
+			// a frappe.page site has no Desk: the user's sites, listed even when there is only this one
+			window.location.href = isMounted ? appURL("/sites?all=1") : "/app";
 		} else {
 			window.location.href = loginURL();
 		}

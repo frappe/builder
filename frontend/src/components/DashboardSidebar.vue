@@ -1,6 +1,11 @@
 <template>
 	<Sidebar class="border-r border-outline-gray-1">
-		<SidebarHeader title="Builder" :logo="builderLogo" :menuItems="appMenuItems" class="px-1.5" />
+		<SidebarHeader
+			:title="isMounted ? fp.site_subdomain || 'Builder' : 'Builder'"
+			:subtitle="isMounted ? sessionUser : undefined"
+			:logo="builderLogo"
+			:menuItems="appMenuItems"
+			class="px-1.5" />
 
 		<ScrollArea class="min-h-0 flex-1" viewport-class="px-2 pt-0.5 pb-2">
 			<nav class="space-y-0.5">
@@ -116,7 +121,9 @@ import builderProjectFolder from "@/data/builderProjectFolder";
 import useBuilderStore from "@/stores/builderStore";
 import { BuilderProjectFolder } from "@/types/doctypes";
 import { promptCreateFolder } from "@/utils/dialogs";
-import { deskURL, isMounted } from "@/utils/frappePage";
+import { useFrappePageMenu } from "@/composables/useFrappePageMenu";
+import { sessionUser } from "@/router";
+import { fp, isMounted } from "@/utils/frappePage";
 import { confirm } from "@/utils/helpers";
 import { useDark, useToggle } from "@vueuse/core";
 import {
@@ -157,7 +164,11 @@ const appsSubmenu = computed(() => {
 	}));
 });
 
+// frappe.page: the menu names this site, picks another and signs out of frappe.page
+const { sitesGroup, accountGroup } = useFrappePageMenu();
+
 const appMenuItems = computed<SidebarHeaderProps["menuItems"]>(() => [
+	...sitesGroup.value,
 	{
 		group: "Builder",
 		hideLabel: true,
@@ -178,13 +189,6 @@ const appMenuItems = computed<SidebarHeaderProps["menuItems"]>(() => [
 				icon: "lucide-grid",
 				submenu: appsSubmenu.value,
 				condition: () => !isMounted,
-			},
-			{
-				// a frappe.page site has no Desk or other apps: its dashboard is where the user goes next
-				label: __("Dashboard"),
-				icon: "lucide-layout-dashboard",
-				onClick: () => window.open(deskURL(), "_self"),
-				condition: () => isMounted,
 			},
 			{
 				label: __("Toggle Theme"),
@@ -209,6 +213,7 @@ const appMenuItems = computed<SidebarHeaderProps["menuItems"]>(() => [
 			},
 		],
 	},
+	...accountGroup.value,
 ]);
 
 const isFolderActive = (folderName: string) => {

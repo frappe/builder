@@ -53,6 +53,9 @@
 				}
 
 				const fetch = window.fetch;
+				// the unwrapped fetch: /api on this origin is the app host's own control site, which the
+				// site settings call (frappePage.ts controlCall) with the control session's CSRF token
+				window.fp.appFetch = fetch.bind(window);
 				window.fetch = function (input, init) {
 					if (input instanceof Request) {
 						const url = mounted(input.url);
