@@ -1,11 +1,9 @@
 # Copyright (c) 2026, Frappe Technologies Pvt Ltd and contributors
 # For license information, please see license.txt
 
-import base64
 import shutil
 import uuid
 from pathlib import Path
-from typing import NamedTuple
 
 import frappe
 from frappe import _
@@ -25,13 +23,6 @@ from builder.plugins.package import ValidatedPackage
 
 STATE_DOCTYPE = "Builder Plugin State"
 KEPT_PREVIOUS_RELEASES = 1
-
-
-class PluginLocation(NamedTuple):
-	"""Where the editor loads a plugin's files from: the folder on disk, and its URL."""
-
-	path: Path
-	url: str
 
 
 class BuilderPlugin(Document):
@@ -94,40 +85,29 @@ class BuilderPlugin(Document):
 	def release_path(self) -> Path | None:
 		return self.install_path / self.checksum if self.checksum else None
 
-	@property
-	def location(self) -> PluginLocation | None:
-		"""An app's own build, or this site's copy of a Hub or Bob release."""
+	def get_file_url(self, file: str) -> str | None:
+		"""Where the editor gets one of this plugin's files. A new build gets a new URL, so no browser keeps the old one."""
 		if not self.checksum:
 			return None
-		if self.source == "App":
-			from builder.plugins.app_plugins import find_app_plugin
+		if self.source != "App":
+			return f"/files/{PLUGINS_FOLDER}/{self.name}/{self.checksum}/{file}"
+		from builder.plugins.app_plugins import find_app_plugin
 
-			plugin = find_app_plugin(self.source_app, self.plugin)
-			return PluginLocation(plugin.build_path, plugin.build_url) if plugin else None
-		return PluginLocation(self.release_path, f"/files/{PLUGINS_FOLDER}/{self.name}/{self.checksum}")
+		plugin = find_app_plugin(self.source_app, self.plugin)
+		# an app's build changes in place, so the checksum goes in the query
+		return f"{plugin.build_url}/{file}?v={self.checksum}" if plugin else None
 
 	@property
 	def entry_url(self) -> str | None:
-		"""Where the editor imports the entry. A new build gets a new URL, so no browser keeps the old one."""
-		location = self.location
-		if not location:
-			return None
-		url = f"{location.url}/{ENTRY_FILE}"
-		return f"{url}?v={self.checksum}" if self.source == "App" else url
+		return self.get_file_url(ENTRY_FILE)
 
 	@property
-	def icon_data_uri(self) -> str | None:
+	def icon_url(self) -> str | None:
 		"""None when the package ships no icon. The editor draws its own glyph then.
 
-		A data URI, so the panel draws it with no request of its own.
+		The package checks make sure that an icon the manifest names is in the files.
 		"""
-		location = self.location if self.icon else None
-		if not location:
-			return None
-		icon = location.path / self.icon
-		if not icon.is_file():
-			return None
-		return f"data:image/svg+xml;base64,{base64.b64encode(icon.read_bytes()).decode()}"
+		return self.get_file_url(self.icon) if self.icon else None
 
 	def validate_identity(self):
 		if not PLUGIN_NAME_PATTERN.fullmatch(self.plugin or ""):

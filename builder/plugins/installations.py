@@ -127,7 +127,7 @@ def describe_installation(installation: str) -> dict:
 		"name": row.plugin,
 		"label": row.label,
 		"description": row.description,
-		"icon": row.icon_data_uri,
+		"icon": row.icon_url,
 		"version": row.version,
 		"entry_url": row.entry_url,
 		"source": row.source,
