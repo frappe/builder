@@ -5,6 +5,7 @@ import usePageStore from "@/stores/pageStore";
 import { __ } from "@/translation";
 import { BuilderPage, BuilderProjectFolder } from "@/types/doctypes";
 import { webPages } from "@/data/webPage";
+import { getRootBlockTemplate } from "@/utils/helpers";
 import { createListResource, createResource, dialog } from "frappe-ui";
 import { ref } from "vue";
 
@@ -45,6 +46,13 @@ export const shortTitle = (page: BuilderPage) =>
 
 export function createPageIn(folder: string) {
 	router.push({ name: "builder", params: { pageId: "new" }, query: folder ? { folder } : {} });
+}
+
+/** A new empty page, saved: what opening "new" makes, for a caller that needs the page's name first. */
+export function insertBlankPage(folder = useBuilderStore().activeFolder): Promise<BuilderPage> {
+	const page = { page_title: "My Page", draft_blocks: [getRootBlockTemplate()] } as BuilderPage;
+	if (folder) page.project_folder = folder;
+	return webPages.insert.submit(page);
 }
 
 // the open page saves through the page store so its unsaved state stays consistent

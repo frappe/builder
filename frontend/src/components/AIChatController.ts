@@ -5,7 +5,7 @@ import { type AffectedItems, type PageCanvas, ToolDispatcher } from "@/component
 import { type Credits, creditsFor } from "@/components/ai/commands/shared";
 import { contextUsageOf } from "@/components/ai/contextUsage";
 import type { BuildPage } from "@/components/ai/pageChanges";
-import type { AIProvider, AITurnStep, ChatMessage } from "@/components/ai/types";
+import type { AIProvider, AITurnRequest, AITurnStep, ChatMessage } from "@/components/ai/types";
 import { buildLocalMessage } from "@/components/ai/blockFields";
 import type BuilderCanvas from "@/components/BuilderCanvas.vue";
 import useBuilderStore from "@/stores/builderStore";
@@ -13,7 +13,7 @@ import useCanvasStore from "@/stores/canvasStore";
 import usePageStore from "@/stores/pageStore";
 import { confirm, getErrorMessage } from "@/utils/helpers";
 import { useBuilderToken } from "@/utils/useBuilderToken";
-import { useLocalStorage } from "@vueuse/core";
+import { until, useLocalStorage } from "@vueuse/core";
 import { createResource, toast } from "frappe-ui";
 import { computed, inject, nextTick, ref, shallowRef, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
@@ -55,6 +55,8 @@ export class AIChatController {
 		contextUsageOf(this.messages.value.findLast((m) => m.metadata?.debug)?.metadata?.debug),
 	);
 	readonly isLoadingSession = ref(false);
+	// the page whose chat last finished loading: a turn started before that load lands is wiped by it
+	private readonly loadedChatPage = ref("");
 	// only the newest load may commit; older responses are stale
 	private loadSessionEpoch = 0;
 	// target of the newest in-flight load; refreshes follow it, not the current session
@@ -146,6 +148,8 @@ export class AIChatController {
 	// the CPU. The final generate_page op re-applies the authoritative tree, so this
 	// preview can render at a coarse cadence.
 	private static readonly STREAM_RENDER_MS = 200;
+	// a page, its chat and the model list load in a few seconds; past this the user has moved on
+	private static readonly REQUESTED_TURN_WAIT_MS = 60000;
 	private streamRenderTimer: ReturnType<typeof setTimeout> | null = null;
 	private lastStreamRenderAt = 0;
 
@@ -217,6 +221,20 @@ export class AIChatController {
 			this.isEditingPage.value &&
 			!!this.selectedModel.value &&
 			!this.selectedModelUnusable.value,
+	);
+
+	/** A turn could start now on the open page as if typed in: the page and its chat have loaded,
+	 * and the picked model is on offer with a key behind it. */
+	private readonly canStartTurn = computed(
+		() =>
+			!this.isUnsavedPage.value &&
+			this.pageStore.activePage?.name === this.pageId.value &&
+			!this.pageStore.settingPage &&
+			this.loadedChatPage.value === this.pageId.value &&
+			!this.isLoadingSession.value &&
+			!this.isSubmitting.value &&
+			this.isEditingPage.value &&
+			this.currentProviderModels.value.some((m) => m.name === this.selectedModel.value && m.ready !== false),
 	);
 
 	constructor() {
@@ -404,6 +422,7 @@ export class AIChatController {
 				is_running?: boolean;
 			};
 			this.sessionId.value = session.session_id;
+			this.loadedChatPage.value = pageId;
 			this.messages.value = (session.messages || []).map(
 				(m) => ({ ...m, role: m.role === "user" ? "user" : "assistant" }) as ChatMessage,
 			);
@@ -843,6 +862,17 @@ export class AIChatController {
 		this.prompt.value = option;
 		this.pendingDisplayText = display?.trim() || null;
 		this.submitPrompt();
+	};
+
+	/** Start the turn another screen asked for, once its page and chat have loaded here. A page
+	 * that never gets there (left, or no usable model) gets what the user wrote in its composer. */
+	startRequestedTurn = async (request: AITurnRequest) => {
+		const opened = () => this.pageId.value === request.pageId;
+		const ready = await until(() => opened() && this.canStartTurn.value).toBe(true, {
+			timeout: AIChatController.REQUESTED_TURN_WAIT_MS,
+		});
+		if (ready) this.selectOption(request.prompt, request.display);
+		else if (opened() && !this.prompt.value.trim()) this.prompt.value = request.display || request.prompt;
 	};
 
 	/** Apply or skip a sensitive action the agent proposed (create doctype, seed data,

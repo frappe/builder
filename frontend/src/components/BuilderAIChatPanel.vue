@@ -827,6 +827,17 @@ watch(
 	{ immediate: true },
 );
 
+// a turn another screen asked for on the page it opened, like onboarding's "Describe your website"
+watch(
+	() => builderStore.aiTurnRequest,
+	(request) => {
+		if (!request) return;
+		builderStore.aiTurnRequest = null;
+		chat.startRequestedTurn(request);
+	},
+	{ immediate: true },
+);
+
 /** Size the box to its content. Reset to auto first — scrollHeight only ever
  * grows while an explicit height is set, so without it the box could never
  * shrink back after the prompt is sent or cleared. The min/max come from the

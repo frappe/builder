@@ -80,7 +80,18 @@
 					:disabled="!answers[activeQuestion.key]"
 					@click="goNext" />
 			</template>
-			<StartChoice v-else-if="step === 'start'" :can-clone="canClone" @choose="choose" />
+			<StartChoice
+				v-else-if="step === 'start'"
+				:can-clone="canClone"
+				:ai-start="aiStartOffer"
+				@choose="choose" />
+			<DescribeSiteStep
+				v-else-if="step === 'describe'"
+				v-model="siteDescription"
+				:use-case="answers.use_case"
+				:starting="describeStarting"
+				:error="describeError"
+				@start="startDescribing" />
 			<CloneAddressStep
 				v-else-if="step === 'clone-address'"
 				v-model="cloneAddress"
@@ -111,8 +122,10 @@ import { __ } from "@/translation";
 import CloneAddressStep from "@/components/Onboarding/CloneAddressStep.vue";
 import CloneLookStep from "@/components/Onboarding/CloneLookStep.vue";
 import CloneProgressStep from "@/components/Onboarding/CloneProgressStep.vue";
+import DescribeSiteStep from "@/components/Onboarding/DescribeSiteStep.vue";
 import StartChoice from "@/components/Onboarding/StartChoice.vue";
 import TemplateGallery from "@/components/Templates/TemplateGallery.vue";
+import { useAIStart } from "@/composables/useAIStart";
 import { useDashboardState } from "@/composables/useDashboardState";
 import { type CloneLook, serverMessage, useSiteClone } from "@/composables/useSiteClone";
 import router, { sessionUser } from "@/router";
@@ -197,7 +210,8 @@ const otherText = reactive<Record<QuestionKey, string>>({
 	source: "",
 });
 
-type Step = QuestionKey | "start" | "clone-address" | "clone-look" | "clone-progress" | "templates";
+type CloneStep = "clone-address" | "clone-look" | "clone-progress";
+type Step = QuestionKey | "start" | "describe" | CloneStep | "templates";
 const questionKeys = questions.map((q) => q.key);
 const step = ref<Step>(questionKeys[0]);
 const history = ref<Step[]>([]);
@@ -221,6 +235,12 @@ const cloneLook = ref<CloneLook>("clean_up");
 const cloneStarting = ref(false);
 const cloneError = ref("");
 
+// asked on the first question, so the start step knows by the time it shows
+const { offer: aiStartOffer, start: startAI } = useAIStart();
+const siteDescription = ref("");
+const describeStarting = ref(false);
+const describeError = ref("");
+
 const otherInput = ref<InstanceType<typeof Textarea>>();
 
 // personal greeting; fullname is an email until the fetch lands (skip it then)
@@ -238,6 +258,13 @@ const screen = computed(() => {
 		return {
 			heading: __("How would you like to start?"),
 			subtitle: __("You're all set{0}. You can add pages any of these ways later too.", [greetingName.value]),
+		};
+	if (step.value === "describe")
+		return {
+			heading: __("What's your website about?"),
+			subtitle: __(
+				"A sentence or two is enough. Bob, Builder's AI, builds your first page from it while you watch.",
+			),
 		};
 	if (step.value === "clone-address")
 		return {
@@ -308,7 +335,8 @@ function skip() {
 	step.value = "start";
 }
 
-function choose(path: "clone" | "template" | "blank") {
+function choose(path: "describe" | "clone" | "template" | "blank") {
+	if (path === "describe") return goTo("describe");
 	if (path === "clone") return goTo("clone-address");
 	if (path === "template") return goTo("templates");
 	telemetry.capture("builder_blank_page_selected", { source: "onboarding" });
@@ -327,6 +355,19 @@ async function startCloning() {
 		cloneError.value = serverMessage(e, __("Couldn't start cloning. Try again in a moment."));
 	} finally {
 		cloneStarting.value = false;
+	}
+}
+
+async function startDescribing() {
+	describeStarting.value = true;
+	describeError.value = "";
+	try {
+		await startAI(siteDescription.value);
+		telemetry.capture("builder_describe_started", { source: "onboarding" });
+	} catch (e) {
+		describeError.value = serverMessage(e, __("Couldn't open a new page. Try again in a moment."));
+	} finally {
+		describeStarting.value = false;
 	}
 }
 

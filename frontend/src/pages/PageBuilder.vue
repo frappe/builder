@@ -133,7 +133,8 @@ import { editorDemo } from "@/utils/editorDemo";
 import blockController from "@/utils/blockController";
 import { offerPendingAssetImport } from "@/utils/builderBlockCopyPaste";
 import componentController from "@/utils/componentController.js";
-import { getPageUsageMessage, getRootBlockTemplate } from "@/utils/helpers";
+import { getPageUsageMessage } from "@/utils/helpers";
+import { insertBlankPage } from "@/utils/pageActions";
 import { useBuilderEvents } from "@/utils/useBuilderEvents";
 import { useDebounceFn } from "@vueuse/core";
 import { createResource, KeyboardShortcutsDialog, useKeyboardShortcut } from "frappe-ui";
@@ -295,15 +296,7 @@ watch(
 	route,
 	(to, from) => {
 		if (to.name === "builder" && to.params.pageId === "new") {
-			const pageInfo = {
-				page_title: "My Page",
-				draft_blocks: [getRootBlockTemplate()],
-			} as BuilderPage;
-			const folder = (to.query.folder as string) || builderStore.activeFolder;
-			if (folder) {
-				pageInfo["project_folder"] = folder;
-			}
-			webPages.insert.submit(pageInfo).then((data: BuilderPage) => {
+			insertBlankPage((to.query.folder as string) || builderStore.activeFolder).then((data: BuilderPage) => {
 				router.push({ name: "builder", params: { pageId: data.name }, force: true });
 				pageStore.setPage(data.name);
 			});

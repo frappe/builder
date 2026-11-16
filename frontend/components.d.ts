@@ -83,6 +83,7 @@ declare module 'vue' {
     DashboardToolbar: typeof import('./src/components/DashboardToolbar.vue')['default']
     DashboardTrialCard: typeof import('./src/components/DashboardTrialCard.vue')['default']
     DataLoaderBlock: typeof import('./src/components/DataLoaderBlock.vue')['default']
+    DescribeSiteStep: typeof import('./src/components/Onboarding/DescribeSiteStep.vue')['default']
     DevPluginDialog: typeof import('./src/components/LeftPanelTabs/Plugins/DevPluginDialog.vue')['default']
     Dialog: typeof import('./src/components/Controls/Dialog.vue')['default']
     DimensionInput: typeof import('./src/components/DimensionInput.vue')['default']

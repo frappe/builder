@@ -73,6 +73,14 @@ export interface AISetupState {
 	presets: AIPreset[];
 }
 
+/** A turn another screen asks Bob to start on a page it opened, as if the user had typed
+ * `prompt` there; the chat shows `display` for it. */
+export interface AITurnRequest {
+	pageId: string;
+	prompt: string;
+	display?: string;
+}
+
 /** One entry of a turn's timeline (see the event contract in agent/loop.py):
  * the model thinking, a tool running, or narration it wrote between rounds. */
 export interface AITurnStep {
