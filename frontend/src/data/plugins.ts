@@ -1,6 +1,6 @@
-import type { RunnablePlugin } from "@/plugins/context";
+import type { PluginSource, RunnablePlugin } from "@/plugins/context";
 import { devPlugin, isDevPlugin } from "@/plugins/devPlugin";
-import { loadPlugin, runningPlugins, unloadPlugin } from "@/plugins/loader";
+import { canRunFrom, loadPlugin, runningPlugins, unloadPlugin } from "@/plugins/loader";
 import { useStorage } from "@vueuse/core";
 import { call, createResource, getCachedResource, toast } from "frappe-ui";
 import { computed, reactive, shallowRef } from "vue";
@@ -23,7 +23,7 @@ type Installation = {
 	icon?: string;
 	version: string;
 	/** Where the files came from. */
-	source: "Hub" | "App" | "Development" | "Bob";
+	source: PluginSource;
 	/** The Builder Hub that it came from, when `source` is "Hub". */
 	hub_url?: string;
 	enabled: boolean;
@@ -82,13 +82,18 @@ const reloadInstallations = async () => {
 };
 
 const isRunnable = (row: Installation) =>
-	row.enabled && row.entry_url && !row.is_development && (row.install_state ?? "Ready") === "Ready";
+	row.enabled &&
+	row.entry_url &&
+	!row.is_development &&
+	canRunFrom(row.source) &&
+	(row.install_state ?? "Ready") === "Ready";
 
 const toRunnable = (row: Installation): RunnablePlugin => ({
 	name: row.name,
 	label: row.label ?? row.name,
 	version: row.version,
 	entryUrl: row.entry_url as string,
+	source: row.source,
 });
 
 /** The installed plugins this editor loads at startup. A dev plugin loads later, from its dialog. */
