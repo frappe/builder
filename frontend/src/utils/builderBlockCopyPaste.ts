@@ -22,7 +22,7 @@ import {
 	isJSONString,
 	showDialog,
 } from "@/utils/helpers";
-import { fp } from "@/utils/frappePage";
+import { pageEditorURL } from "@/utils/frappePage";
 import { createListResource, toast } from "frappe-ui";
 import { nextTick } from "vue";
 import { webPages } from "../data/webPage";
@@ -291,7 +291,7 @@ async function handlePagePaste(
 							JSON.stringify({ page: newPage.name, fonts: clipboardData.fonts || [] }),
 						);
 					}
-					window.location.href = `${fp.mount ?? ""}/builder/page/${encodeURIComponent(newPage.name)}`;
+					window.location.href = pageEditorURL(newPage.name);
 					await pageStore.setPage(newPage.name);
 					toast.success(__("Done"), { id: "paste-page" });
 				},

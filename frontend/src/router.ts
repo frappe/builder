@@ -3,7 +3,7 @@ import { ref } from "vue";
 import { NavigationGuardNext, RouteLocationNormalized, createRouter, createWebHistory } from "vue-router";
 import { __ } from "./translation";
 import { editorDemo } from "./utils/editorDemo";
-import { deskURL, loginURL } from "./utils/frappePage";
+import { deskURL, loginURL, shortEditorURLs } from "./utils/frappePage";
 
 let hasPermission: null | boolean = null;
 let sessionUser = ref("Guest");
@@ -56,6 +56,9 @@ function getSessionUser() {
 	return decodeURIComponent(document.cookie.split("user_id=")[1].split(";")[0]) || "Guest";
 }
 
+// frappe.page shows a page at frappe.page/<sub>/<page>, without Builder's /page segment
+const pagePath = shortEditorURLs ? "/:pageId" : "/page/:pageId";
+
 const routes = [
 	{
 		path: "/home",
@@ -74,13 +77,13 @@ const routes = [
 		component: () => import("@/pages/PageBuilderDashboard.vue"),
 	},
 	{
-		path: "/page/:pageId",
+		path: pagePath,
 		name: "builder",
 		beforeEnter: validateVisit,
 		component: () => import("@/pages/PageBuilder.vue"),
 	},
 	{
-		path: "/page/:pageId/preview",
+		path: `${pagePath}/preview`,
 		name: "preview",
 		beforeEnter: validateVisit,
 		component: () => import("@/pages/PagePreview.vue"),
@@ -91,6 +94,13 @@ const routes = [
 		beforeEnter: validateVisit,
 		component: () => import("@/pages/PagePersonaSurvey.vue"),
 	},
+	// older /page/<page> links keep working under short addresses
+	...(shortEditorURLs
+		? [
+				{ path: "/page/:pageId", redirect: (to) => ({ name: "builder", params: to.params, query: to.query }) },
+				{ path: "/page/:pageId/preview", redirect: (to) => ({ name: "preview", params: to.params, query: to.query }) },
+			]
+		: []),
 ];
 
 declare global {

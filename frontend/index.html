@@ -36,7 +36,8 @@
 			})();
 			(function (mount) {
 				if (!mount) return;
-				window.builder_path = mount + "/builder";
+				// a short mount (frappe.page/<sub>) puts Builder's routes right under it
+				window.builder_path = window.fp.editor_base || mount + "/builder";
 
 				function mounted(url) {
 					let parsed;
