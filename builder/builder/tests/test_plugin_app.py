@@ -17,6 +17,7 @@ from builder.builder.tests.plugin_fixtures import (
 )
 from builder.plugins.app_plugins import (
 	check_app_plugins,
+	get_plugin_folders,
 	install_app_plugins,
 	remove_app_plugins,
 	sync_app_plugins,
@@ -103,6 +104,13 @@ class TestAppPlugin(FrappeTestCase):
 
 		row = self.installed()
 		self.assertEqual([row.source, row.version, row.enabled], ["App", "1.0.0", 0])
+
+	def test_finds_a_plugin_folder_beside_hooks_py(self):
+		# the SDK's create --app writes the project there
+		with patch("frappe.get_hooks", return_value=["plugin"]):
+			(folder,) = get_plugin_folders(APP)
+
+		self.assertTrue((folder.parent / "hooks.py").is_file())
 
 	def test_refuses_the_app_without_a_build(self):
 		shutil.rmtree(self.build)

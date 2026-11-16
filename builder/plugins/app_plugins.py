@@ -126,8 +126,7 @@ class AppPlugin:
 
 def get_plugin_folders(app: str) -> list[Path]:
 	return [
-		Path(frappe.get_app_source_path(app), folder)
-		for folder in frappe.get_hooks("builder_plugins", app_name=app)
+		Path(frappe.get_app_path(app, folder)) for folder in frappe.get_hooks("builder_plugins", app_name=app)
 	]
 
 
