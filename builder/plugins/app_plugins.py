@@ -205,8 +205,9 @@ def sync_app_plugins() -> None:
 	fingerprint = hashlib.sha256(repr([plugin.fingerprint for plugin in plugins]).encode()).hexdigest()
 	if frappe.cache.get_value(APP_PLUGINS_FINGERPRINT_KEY) == fingerprint:
 		return
-	changed = [plugin.sync() for plugin in plugins]
+	# first, so a plugin that moved to another app gets a new row
 	dropped = drop_orphan_rows(plugins)
+	changed = [plugin.sync() for plugin in plugins]
 	keep = lambda: frappe.cache.set_value(APP_PLUGINS_FINGERPRINT_KEY, fingerprint)  # noqa: E731
 	if any(changed) or dropped:
 		frappe.local.flags.commit = True
@@ -216,11 +217,12 @@ def sync_app_plugins() -> None:
 
 
 def drop_orphan_rows(plugins: list[AppPlugin]) -> bool:
-	"""App rows whose plugin no installed app comes with now. True when it dropped one."""
-	names = [plugin.name for plugin in plugins] or [""]
-	orphans = frappe.get_all(
-		INSTALLATION_DOCTYPE, filters={"source": "App", "plugin": ["not in", names]}, pluck="name"
+	"""App rows whose app does not come with that plugin now. True when it dropped one."""
+	current = {(plugin.app, plugin.name) for plugin in plugins}
+	rows = frappe.get_all(
+		INSTALLATION_DOCTYPE, filters={"source": "App"}, fields=["name", "source_app", "plugin"]
 	)
+	orphans = [row.name for row in rows if (row.source_app, row.plugin) not in current]
 	for installation in orphans:
 		frappe.delete_doc(INSTALLATION_DOCTYPE, installation, ignore_permissions=True)
 	return bool(orphans)

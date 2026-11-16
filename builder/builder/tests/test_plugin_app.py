@@ -41,10 +41,10 @@ class TestAppPlugin(FrappeTestCase):
 		module.start()
 		self.addCleanup(module.stop)
 
-	def set_plugin_folders(self, folders: list[str]):
+	def set_plugin_folders(self, folders: list[str], app: str = APP):
 		plugin_folders = patch(
 			"builder.plugins.app_plugins.get_plugin_folders",
-			side_effect=lambda app: folders if app == APP else [],
+			side_effect=lambda installed_app: folders if installed_app == app else [],
 		)
 		plugin_folders.start()
 		self.addCleanup(plugin_folders.stop)
@@ -122,6 +122,15 @@ class TestAppPlugin(FrappeTestCase):
 		sync_app_plugins()
 
 		self.assertFalse(frappe.db.exists(INSTALLATION_DOCTYPE, {"plugin": PLUGIN}))
+
+	def test_another_app_gets_a_new_disabled_row_for_the_plugin(self):
+		sync_app_plugins()
+		frappe.db.set_value(INSTALLATION_DOCTYPE, self.installed().name, "enabled", 1)
+
+		self.set_plugin_folders(["plugin"], app="frappe")
+		sync_app_plugins()
+
+		self.assertEqual([self.installed().source_app, self.installed().enabled], ["frappe", 0])
 
 	def test_leaves_a_plugin_that_another_source_has(self):
 		make_installation(PLUGIN, source="Hub", hub_url="https://hub.example.com")
