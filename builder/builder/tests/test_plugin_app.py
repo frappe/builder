@@ -15,16 +15,9 @@ from builder.builder.tests.plugin_fixtures import (
 	drop_installations,
 	make_installation,
 )
-from builder.plugins.app_plugins import (
-	check_app_plugins,
-	get_plugin_folders,
-	install_app_plugins,
-	remove_app_plugins,
-	sync_app_plugins,
-	sync_built_apps,
-)
+from builder.plugins.app_plugins import sync_app_plugins
 from builder.plugins.constants import ENTRY_FILE
-from builder.plugins.installations import uninstall_plugin
+from builder.plugins.installations import get_installations, uninstall_plugin
 
 PLUGIN = "acme/bundled"
 APP = "builder"
@@ -34,20 +27,28 @@ class TestAppPlugin(FrappeTestCase):
 	def setUp(self):
 		drop_installations(PLUGIN)
 		self.addCleanup(drop_installations, PLUGIN)
-		self.project = Path(tempfile.mkdtemp())
-		self.addCleanup(shutil.rmtree, self.project, ignore_errors=True)
-		self.build = self.project / "dist"
-		self.build.mkdir()
+		self.module = Path(tempfile.mkdtemp())
+		self.addCleanup(shutil.rmtree, self.module, ignore_errors=True)
+		self.build = self.module / "public" / "builder_plugins" / "plugin"
+		self.build.mkdir(parents=True)
+		(self.module / "plugin").mkdir()
+		(self.module / "plugin" / "manifest.json").write_text(json.dumps(self.get_manifest("1.0.0")))
 		self.write_build("1.0.0")
-		folders = patch(
-			"builder.plugins.app_plugins.get_plugin_folders",
-			side_effect=lambda app: [self.project] if app == APP else [],
-		)
-		folders.start()
-		self.addCleanup(folders.stop)
+		self.ship(["plugin"])
+		module = patch("builder.plugins.app_plugins.get_app_folder", return_value=self.module)
+		module.start()
+		self.addCleanup(module.stop)
 
-	def write_build(self, version: str):
-		manifest = {
+	def ship(self, folders: list[str]):
+		shipped = patch(
+			"builder.plugins.app_plugins.get_plugin_folders",
+			side_effect=lambda app: folders if app == APP else [],
+		)
+		shipped.start()
+		self.addCleanup(shipped.stop)
+
+	def get_manifest(self, version: str) -> dict:
+		return {
 			"v": 1,
 			"name": PLUGIN,
 			"label": "Bundled",
@@ -55,43 +56,53 @@ class TestAppPlugin(FrappeTestCase):
 			"version": version,
 			"entry": ENTRY_FILE,
 		}
-		(self.build / "manifest.json").write_text(json.dumps(manifest))
+
+	def write_build(self, version: str):
+		(self.build / "manifest.json").write_text(json.dumps(self.get_manifest(version)))
 		(self.build / ENTRY_FILE).write_text(f"// {version}")
 
 	def installed(self):
 		return frappe.get_doc(INSTALLATION_DOCTYPE, {"plugin": PLUGIN})
 
-	def test_installs_an_app_plugin_disabled(self):
-		(self.project / "README.md").write_text("# For developers")
-		(self.project / "DESCRIPTION.md").write_text("# For users")
+	def test_lists_an_app_plugin_disabled_from_its_build(self):
+		(self.module / "plugin" / "DESCRIPTION.md").write_text("# For users")
 
-		install_app_plugins(APP)
+		(listed,) = [row for row in get_installations() if row["name"] == PLUGIN]
 
-		row = self.installed()
-		self.assertEqual([row.source, row.source_app, row.enabled, row.version], ["App", APP, 0, "1.0.0"])
-		self.assertEqual(row.readme, "# For users")
-		self.assertEqual(Path(row.release_path, ENTRY_FILE).read_text(), "// 1.0.0")
+		self.assertEqual([listed["source_app"], listed["enabled"], listed["version"]], [APP, False, "1.0.0"])
+		entry = f"/assets/builder/builder_plugins/plugin/main.js?v={self.installed().checksum}"
+		self.assertEqual(listed["entry_url"], entry)
+		self.assertEqual(self.installed().readme, "# For users")
 
-	def test_applies_only_a_new_build_and_keeps_enabled(self):
-		install_app_plugins(APP)
+	def test_applies_a_new_build_and_keeps_enabled(self):
+		sync_app_plugins()
 		frappe.db.set_value(INSTALLATION_DOCTYPE, self.installed().name, "enabled", 1)
-		modified = self.installed().modified
-
-		install_app_plugins(APP)
-		self.assertEqual(self.installed().modified, modified)
 
 		self.write_build("1.1.0")
-		install_app_plugins(APP)
+		sync_app_plugins()
+
+		self.assertEqual([self.installed().version, self.installed().enabled], ["1.1.0", 1])
+
+	def test_shows_a_plugin_without_a_build_as_failed(self):
+		shutil.rmtree(self.build)
+
+		sync_app_plugins()
 
 		row = self.installed()
-		self.assertEqual([row.version, row.enabled], ["1.1.0", 1])
-		self.assertEqual(Path(row.release_path, ENTRY_FILE).read_text(), "// 1.1.0")
+		self.assertEqual(row.install_state, "Failed")
+		self.assertIn("bench build --app builder", row.install_error)
 
-	def test_refuses_a_plugin_another_source_has_but_migrate_skips_it(self):
+	def test_drops_the_row_when_the_app_no_longer_ships_it(self):
+		sync_app_plugins()
+
+		self.ship([])
+		sync_app_plugins()
+
+		self.assertFalse(frappe.db.exists(INSTALLATION_DOCTYPE, {"plugin": PLUGIN}))
+
+	def test_leaves_a_plugin_that_another_source_has(self):
 		make_installation(PLUGIN, source="Hub", hub_url="https://hub.example.com")
 
-		with self.assertRaisesRegex(frappe.ValidationError, "hub.example.com"):
-			check_app_plugins(APP)
 		sync_app_plugins()
 
 		self.assertEqual(self.installed().source, "Hub")
@@ -99,43 +110,13 @@ class TestAppPlugin(FrappeTestCase):
 	def test_takes_over_a_development_row_disabled(self):
 		make_installation(PLUGIN, source="Development", version="0.0.0-dev", enabled=1)
 
-		check_app_plugins(APP)
-		install_app_plugins(APP)
+		sync_app_plugins()
 
 		row = self.installed()
 		self.assertEqual([row.source, row.version, row.enabled], ["App", "1.0.0", 0])
 
-	def test_finds_a_plugin_folder_beside_hooks_py(self):
-		# the SDK's create --app writes the project there
-		with patch("frappe.get_hooks", return_value=["plugin"]):
-			(folder,) = get_plugin_folders(APP)
-
-		self.assertTrue((folder.parent / "hooks.py").is_file())
-
-	def test_refuses_the_app_without_a_build(self):
-		shutil.rmtree(self.build)
-
-		with self.assertRaisesRegex(frappe.ValidationError, "bench build --app builder"):
-			check_app_plugins(APP)
-
-	def test_only_the_app_removes_its_plugin(self):
-		install_app_plugins(APP)
+	def test_a_manager_cannot_uninstall_an_app_plugin(self):
+		sync_app_plugins()
 
 		with self.assertRaisesRegex(frappe.ValidationError, "comes with builder"):
 			uninstall_plugin(PLUGIN)
-		remove_app_plugins(APP)
-
-		self.assertFalse(frappe.db.exists(INSTALLATION_DOCTYPE, {"plugin": PLUGIN}))
-
-	def test_a_build_syncs_each_site_only_for_apps_with_plugins(self):
-		with (
-			patch("builder.plugins.app_plugins.get_sites", return_value=["one.localhost"]),
-			patch("builder.plugins.app_plugins.subprocess.run") as run,
-		):
-			run.return_value.returncode = 0
-			sync_built_apps(["frappe"])
-			run.assert_not_called()
-
-			sync_built_apps([APP])
-
-		self.assertIn("one.localhost", run.call_args.args[0])

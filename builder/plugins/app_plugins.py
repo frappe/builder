@@ -4,182 +4,172 @@
 """Plugins that a Frappe app ships with its code.
 
 An app names its plugin project folders in the `builder_plugins` hook,
-relative to the app's source folder:
+relative to its module folder, the one that holds hooks.py:
 
     builder_plugins = ["plugin"]
 
-A project folder has the SDK's layout: the build in `dist/`, and a
-`README.md` beside it. `bench build` builds it through the app's root
-`package.json`. Builder
-installs each one disabled when the app installs, applies a new build on each
-migrate, and removes it with the app. The Hub plays no part.
+A project builds into `public/builder_plugins/<folder>` of the module. So the
+build ships as the app's other assets do, and `/assets` serves it. Builder runs
+no hook on install, build or migrate. When the editor lists plugins, each app
+plugin's row is made to match the build on disk. The Hub plays no part.
 """
 
 import hashlib
-import subprocess
-import sys
-from functools import cached_property
+import json
 from pathlib import Path
 
 import frappe
 from frappe import _
-from frappe.utils import get_sites
 
 from builder.plugins.access import INSTALLATION_DOCTYPE, find_installation
-from builder.plugins.constants import MANIFEST_FILE
-from builder.plugins.installations import describe_source
+from builder.plugins.constants import ENTRY_FILE, MANIFEST_FILE
 from builder.plugins.package import ValidatedPackage, validate_files
 
-# the SDK's names, so an app's project reads as any plugin project does
-BUILD_FOLDER = "dist"
+BUILDS_FOLDER = "builder_plugins"
 # in Builder Hub's order: DESCRIPTION.md is for users, README.md for developers
 README_FILES = ("DESCRIPTION.md", "README.md")
+SYNCED_FIELDS = (
+	"label",
+	"description",
+	"icon",
+	"version",
+	"checksum",
+	"readme",
+	"install_state",
+	"install_error",
+)
 
 
 class AppPlugin:
 	"""One plugin project folder that an app names in its hook."""
 
-	def __init__(self, app: str, folder: Path):
+	def __init__(self, app: str, folder: str):
 		self.app = app
 		self.folder = folder
+		# the project's own manifest, so a plugin with no build yet still has a row that says so
+		self.project_manifest = json.loads((self.project_path / MANIFEST_FILE).read_text())
+		self.name = self.project_manifest["name"]
 
 	@property
-	def build_folder(self) -> Path:
-		return self.folder / BUILD_FOLDER
+	def project_path(self) -> Path:
+		return get_app_folder(self.app) / self.folder
 
-	@cached_property
-	def package(self) -> ValidatedPackage:
-		"""The build's files, keyed by path, through the same rules as a Hub package."""
-		if not (self.build_folder / MANIFEST_FILE).is_file():
-			frappe.throw(
-				_("{0} has no built plugin at {1}. Run bench build --app {0}.").format(
-					self.app, self.build_folder
-				)
-			)
-		files = self.build_folder.rglob("*")
-		return validate_files(
-			{
-				file.relative_to(self.build_folder).as_posix(): file.read_bytes()
-				for file in sorted(files)
-				if file.is_file()
-			}
-		)
+	@property
+	def build_path(self) -> Path:
+		return get_app_folder(self.app) / "public" / BUILDS_FOLDER / self.folder
+
+	@property
+	def build_url(self) -> str:
+		return f"/assets/{self.app}/{BUILDS_FOLDER}/{self.folder}"
 
 	@property
 	def readme(self) -> str | None:
-		files = [self.folder / name for name in README_FILES]
+		files = [self.project_path / name for name in README_FILES]
 		return next((file.read_text() for file in files if file.is_file()), None)
 
+	def get_package(self) -> ValidatedPackage:
+		"""The build's files through the same rules as a Hub package."""
+		if not (self.build_path / MANIFEST_FILE).is_file():
+			raise frappe.ValidationError(_("Not built. Run bench build --app {0}.").format(self.app))
+		files = sorted(file for file in self.build_path.rglob("*") if file.is_file())
+		muted, frappe.flags.mute_messages = frappe.flags.mute_messages, True
+		try:
+			return validate_files(
+				{file.relative_to(self.build_path).as_posix(): file.read_bytes() for file in files}
+			)
+		finally:
+			frappe.flags.mute_messages = muted
+
 	@property
-	def name(self) -> str:
-		return self.package.manifest["name"]
-
-	@cached_property
-	def checksum(self) -> str:
-		digest = hashlib.sha256()
-		for path, content in self.package.files.items():
-			digest.update(path.encode() + b"\0" + content)
-		return digest.hexdigest()[:12]
-
-	@property
-	def conflict(self) -> str | None:
-		"""Why the site cannot take this plugin: the Hub or another app has its name.
-
-		A dev row is a throwaway record of a dev server load, so the app takes it over.
-		"""
-		row = frappe.db.get_value(
-			INSTALLATION_DOCTYPE,
-			{"plugin": self.name},
-			["source", "hub_url", "source_app"],
-			as_dict=True,
-		)
-		if not row or row.source_app == self.app or row.source == "Development":
-			return None
-		return _('{0} cannot install "{1}". The site has it from {2}.').format(
-			self.app, self.name, describe_source(row)
-		)
-
-	def assert_installable(self) -> None:
-		if self.conflict:
-			frappe.throw(self.conflict)
-
-	def install(self) -> None:
-		"""Insert it disabled, or apply a new build. An update keeps `enabled` as a manager left it.
-
-		A taken over dev row starts disabled too, so a manager sees the trust dialog before it runs.
-		"""
-		self.assert_installable()
-		installation = find_installation(self.name)
-		if installation:
-			doc = frappe.get_doc(INSTALLATION_DOCTYPE, installation)
+	def values(self) -> dict:
+		"""The row's synced fields. A missing or invalid build gives a failed row."""
+		try:
+			package = self.get_package()
+		except frappe.ValidationError as error:
+			manifest = self.project_manifest
+			state = {"checksum": None, "install_state": "Failed", "install_error": str(error)}
 		else:
-			doc = frappe.new_doc(INSTALLATION_DOCTYPE).update({"plugin": self.name})
-		if doc.checksum == self.checksum and doc.readme == self.readme and doc.release_path.is_dir():
-			return
+			manifest = package.manifest
+			state = {"checksum": get_checksum(package), "install_state": "Ready", "install_error": None}
+		return {
+			"label": manifest["label"],
+			"description": manifest["description"],
+			"icon": manifest.get("icon"),
+			"version": manifest["version"],
+			"readme": self.readme,
+			**state,
+		}
+
+	def can_take(self, doc) -> bool:
+		"""A dev row is a throwaway record of a dev server load, so the app takes it.
+
+		A row from the Hub or another app keeps the name, and this plugin waits.
+		"""
+		return doc.source == "Development" or (doc.source == "App" and doc.source_app == self.app)
+
+	def sync(self) -> bool:
+		"""Make the row match the build. True when it wrote.
+
+		A new row, or a taken over dev row, starts disabled, so a manager sees the trust dialog
+		first. An update keeps `enabled` as a manager left it.
+		"""
+		installation = find_installation(self.name)
+		if not installation:
+			doc = frappe.new_doc(INSTALLATION_DOCTYPE, plugin=self.name)
+		else:
+			doc = frappe.get_doc(INSTALLATION_DOCTYPE, installation)
+			if not self.can_take(doc):
+				return False
+		values = self.values
+		if doc.source == "App" and all(doc.get(field) == values[field] for field in SYNCED_FIELDS):
+			return False
 		if doc.source != "App":
 			doc.enabled = 0
-		doc.flags.ignore_permissions = True
-		doc.apply_package(
-			self.package, self.checksum, {"source": "App", "source_app": self.app, "readme": self.readme}
-		)
+		doc.update({**values, "source": "App", "source_app": self.app})
+		doc.save(ignore_permissions=True)
+		return True
 
 
-def get_plugin_folders(app: str) -> list[Path]:
-	return [
-		Path(frappe.get_app_path(app, folder)) for folder in frappe.get_hooks("builder_plugins", app_name=app)
-	]
+def get_checksum(package: ValidatedPackage) -> str:
+	digest = hashlib.sha256()
+	for path, content in package.files.items():
+		digest.update(path.encode() + b"\0" + content)
+	return digest.hexdigest()[:12]
+
+
+def get_app_folder(app: str) -> Path:
+	return Path(frappe.get_app_path(app))
+
+
+def get_plugin_folders(app: str) -> list[str]:
+	return frappe.get_hooks("builder_plugins", app_name=app)
 
 
 def get_app_plugins(app: str) -> list[AppPlugin]:
 	return [AppPlugin(app, folder) for folder in get_plugin_folders(app)]
 
 
-def check_app_plugins(app: str) -> None:
-	"""Runs before Frappe writes any of the app, so a refusal leaves nothing behind."""
-	for plugin in get_app_plugins(app):
-		plugin.assert_installable()
-
-
-def install_app_plugins(app: str) -> None:
-	for plugin in get_app_plugins(app):
-		plugin.install()
+def find_app_plugin(app: str, plugin: str) -> AppPlugin | None:
+	return next((found for found in get_app_plugins(app) if found.name == plugin), None)
 
 
 def sync_app_plugins() -> None:
-	"""On migrate. One app's plugin that fails must not stop the migrate for every app, so it is skipped."""
-	installed = frappe.get_installed_apps()
-	# a build syncs every site on the bench, and one without Builder has no plugins table
-	if "builder" not in installed:
-		return
-	for app in installed:
-		for plugin in get_app_plugins(app):
-			try:
-				plugin.install()
-			except frappe.ValidationError as error:
-				print(f"Skipped a plugin of {app}: {error}")
+	"""Make each app plugin's row match its build, and drop the rows of plugins no installed app ships.
 
-
-def sync_built_apps(built_apps: list[str]) -> None:
-	"""Apply new plugin builds to each site after `bench build`.
-
-	`bench update` runs migrate before it builds, so migrate still sees the old build.
-	The build process has no site connection, so each site syncs in its own process.
-	If a site cannot connect, as in a Docker image build, this skips it and prints a warning.
+	The editor's list is a GET, which Frappe rolls back. So a write asks Frappe to commit.
 	"""
-	if not any(get_plugin_folders(app) for app in built_apps):
-		return
-	for site in get_sites():
-		command = [sys.executable, "-m", "frappe.utils.bench_helper", "frappe", "--site", site, "execute"]
-		result = subprocess.run(
-			[*command, "builder.plugins.app_plugins.sync_app_plugins"],
-			cwd=frappe.local.sites_path,
-			capture_output=True,
-			text=True,
-		)
-		if result.returncode:
-			print(f"Skipped Builder plugins on {site}: {result.stderr.strip()[-300:]}")
+	plugins = [plugin for app in frappe.get_installed_apps() for plugin in get_app_plugins(app)]
+	changed = [plugin.sync() for plugin in plugins]
+	dropped = drop_unshipped_rows([plugin.name for plugin in plugins])
+	if any(changed) or dropped:
+		frappe.local.flags.commit = True
 
 
-def remove_app_plugins(app: str) -> None:
-	for installation in frappe.get_all(INSTALLATION_DOCTYPE, filters={"source_app": app}, pluck="name"):
+def drop_unshipped_rows(shipped: list[str]) -> bool:
+	"""True when it dropped a row."""
+	stale = frappe.get_all(
+		INSTALLATION_DOCTYPE, filters={"source": "App", "plugin": ["not in", shipped or [""]]}, pluck="name"
+	)
+	for installation in stale:
 		frappe.delete_doc(INSTALLATION_DOCTYPE, installation, ignore_permissions=True)
+	return bool(stale)

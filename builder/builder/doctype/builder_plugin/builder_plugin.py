@@ -87,11 +87,25 @@ class BuilderPlugin(Document):
 		return self.install_path / self.checksum if self.checksum else None
 
 	@property
-	def entry_url(self) -> str | None:
-		"""Where the editor imports the entry. The checksum names the build, so a new release gets a new URL."""
+	def build(self) -> tuple[Path, str] | None:
+		"""The folder of the files the editor loads, and its URL: an app's own build, or this site's release."""
 		if not self.checksum:
 			return None
-		return f"/files/{PLUGINS_FOLDER}/{self.name}/{self.checksum}/{ENTRY_FILE}"
+		if self.source == "App":
+			from builder.plugins.app_plugins import find_app_plugin
+
+			plugin = find_app_plugin(self.source_app, self.plugin)
+			return (plugin.build_path, plugin.build_url) if plugin else None
+		return self.release_path, f"/files/{PLUGINS_FOLDER}/{self.name}/{self.checksum}"
+
+	@property
+	def entry_url(self) -> str | None:
+		"""Where the editor imports the entry. A new build gets a new URL, so no browser keeps the old one."""
+		build = self.build
+		if not build:
+			return None
+		url = f"{build[1]}/{ENTRY_FILE}"
+		return f"{url}?v={self.checksum}" if self.source == "App" else url
 
 	@property
 	def icon_data_uri(self) -> str | None:
@@ -99,9 +113,10 @@ class BuilderPlugin(Document):
 
 		A data URI, so the panel draws it with no request of its own.
 		"""
-		if not self.icon or not self.release_path:
+		build = self.build if self.icon else None
+		if not build:
 			return None
-		icon = self.release_path / self.icon
+		icon = build[0] / self.icon
 		if not icon.is_file():
 			return None
 		return f"data:image/svg+xml;base64,{base64.b64encode(icon.read_bytes()).decode()}"
