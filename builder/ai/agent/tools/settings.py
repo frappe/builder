@@ -83,6 +83,8 @@ def emit_refetch(ctx, *resources: str) -> None:
 		# after_commit: the client re-READS these rows, so the emit must not outrun
 		# the round's commit (AgentRunner.checkpoint).
 		ctx.emit("refetch", resources=list(resources), after_commit=True)
+		if getattr(ctx, "off_screen", False):
+			ctx.emit_to_page("refetch", resources=list(resources), after_commit=True)
 
 
 def clean_variable_id(raw: str) -> str:

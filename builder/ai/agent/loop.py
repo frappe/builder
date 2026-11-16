@@ -51,6 +51,7 @@ import frappe
 
 from builder.ai import llm, locks, markup
 from builder.ai.agent.edits import EditScript, composition_notes
+from builder.ai.agent.page_changes import PageChanges, page_row
 from builder.ai.agent.registry import ToolRegistry, build_default_registry
 from builder.ai.agent.selectors import walk_blocks
 from builder.ai.agent.tree import WorkingTree
@@ -70,6 +71,14 @@ logger.setLevel(logging.INFO)
 # a runaway loop can't spin. When the cap IS hit the turn ends with a "continue" hint.
 MAX_ROUNDS = 40
 EVENT_PREFIX = "ai_chat"
+
+# A step can spend its whole max_tokens thinking, drafting the edit it never gets to
+# call. Ending the turn there leaves an empty reply, so the model is told to act.
+OUT_OF_ROOM_NUDGES = 2
+OUT_OF_ROOM_NUDGE = (
+	"Your last step ran out of output room while thinking, before it called a tool. "
+	"Act now: keep the planning short and make the change in smaller edits, a section at a time."
+)
 
 # A streaming round is retried on transient failure (litellm can't fall back mid-stream).
 # Backoff is STREAM_BACKOFF_BASE * 2**attempt → ~1s, 2s before the final give-up.
@@ -116,6 +125,11 @@ def redact_secrets(text: str) -> str:
 
 class CancelledError(Exception):
 	"""Raised inside the stream loops when the user cancels the turn."""
+
+
+class NotesSentNow(Exception):
+	"""Raised inside a model step when the user sends their notes now: the step is
+	dropped and run again with the notes read in."""
 
 
 # Skeletonising a page the model just wrote costs whole rounds re-reading its own
@@ -271,6 +285,7 @@ TOOL_LABELS = {
 	"set_home_page": ("Setting the home page", "Set the home page"),
 	"read_plugin": ("Reading the editor plugins", "Read the editor plugins"),
 	"read_editor_source": ("Reading the editor's code", "Read the editor's code"),
+	"create_page": ("Proposing a new page", "Proposed a new page"),
 }
 
 
@@ -299,6 +314,10 @@ def activity_summary(tool_name: str, args: dict, tree=None, done: bool = True) -
 
 	if pair := TOOL_LABELS.get(tool_name):
 		return voice(*pair)
+	if tool_name == "create_page" and args.get("title"):
+		return f"{voice('Proposing', 'Proposed')} a new page: {args['title']}"
+	if tool_name == "read_skill" and args.get("name"):
+		return f"{voice('Reading', 'Read')} skill: {args['name'].replace('-', ' ').capitalize()}"
 	if tool_name == "read_page" and args.get("ref"):
 		return f"{voice('Reading', 'Read')} block: {resolved_label(args.get('ref'))}"
 	if tool_name == "read_page":
@@ -347,11 +366,14 @@ class AgentRunner:
 		*,
 		user: str | None = None,
 		page_id: str | None = None,
+		open_page_id: str | None = None,
+		next_builds: list[dict] | None = None,
 		session_id: str | None = None,
 		selected_block_ids: list[str] | None = None,
 		image_url: str | None = None,
 		image_file_url: str | None = None,
 		canvas_theme: str | None = None,
+		effort: str | None = None,
 		registry: ToolRegistry | None = None,
 		system_prompt: str | None = None,
 	):
@@ -359,14 +381,26 @@ class AgentRunner:
 		self.model = model
 		self.api_key = api_key
 		self.user = user or frappe.session.user
+		# The page this turn works on, and the one open in the user's editor, where the
+		# chat lives. They differ only while Bob builds a page the user approved.
 		self.page_id = page_id
+		self.open_page_id = open_page_id or page_id
 		self.session_id = session_id
 		# The realtime channel: the page the chat is attached to.
-		self.channel = page_id or session_id
+		self.channel = self.open_page_id or session_id
+		# Edits to other pages and new pages, held for the user's OK at turn end.
+		folder = frappe.db.get_value("Builder Page", self.open_page_id, "project_folder") if page_id else ""
+		self.page_changes = PageChanges(folder)
+		# New pages the user approved that are still to build, one turn each.
+		self.next_builds = next_builds or []
+		# The page an off-screen turn builds: every event names it, so the chat can
+		# show the whole turn as one line about that page.
+		self.build_page = page_row(page_id) if self.off_screen else None
 		self.selected_block_ids = selected_block_ids or []
 		self.image_url = image_url
 		self.image_file_url = image_file_url
 		self.canvas_theme = canvas_theme
+		self.effort = llm.Effort(effort)
 		self.registry = registry or build_default_registry()
 		# Skills in context, including read_skill results; reset on every turn.
 		self.attached_skills: set[str] = set()
@@ -440,6 +474,7 @@ class AgentRunner:
 		# of each LLM call (="length" flags truncation — the usual cause of broken args).
 		self.args_repaired = 0
 		self.finish_reasons: list[str | None] = []
+		self.out_of_room_nudges = 0
 		# Client ops the WorkingTree rejected (bad ref, wrong parent, partial bulk miss).
 		# Each is fed back to the model to self-correct; also logged and surfaced here so a
 		# "why didn't my edit land" is traceable in the agent debugger, not just live logs.
@@ -451,6 +486,8 @@ class AgentRunner:
 		# Client ops a server tool queued mid-call (extract_component rewriting the
 		# page). Drained right after the handler returns — see drain_queued_ops.
 		self.pending_client_ops: list[dict] = []
+		# The generate_page step while it runs, for off-screen progress (show_build_progress).
+		self.build_step: dict | None = None
 		# The plugins write_plugin saved this turn, for the chat's plugin cards.
 		self.plugins_written: list[str] = []
 		# Tiered model selection: resolved in run() once we know the scenario.
@@ -490,6 +527,14 @@ class AgentRunner:
 		if key := self.cancel_key():
 			frappe.cache.delete_value(key)
 
+	def stop_requested(self) -> Exception | None:
+		"""A cancel ends the turn; notes sent now end only the step being streamed."""
+		if self.is_cancelled():
+			return CancelledError()
+		if AISession.notes_wanted_now(self.session_id):
+			return NotesSentNow()
+		return None
+
 	def interruptible_sleep(self, seconds: float) -> None:
 		"""Sleep in small steps so a cancel during retry backoff is honored within ~0.25s
 		instead of blocking the worker for the full delay."""
@@ -503,23 +548,36 @@ class AgentRunner:
 
 	# --- realtime ---------------------------------------------------------
 
-	def emit(self, suffix: str, *, after_commit: bool = False, **kwargs):
+	def emit(self, suffix: str, *, after_commit: bool = False, page_id: str | None = None, **kwargs):
 		# The channel is the page (in-editor chat) or, page-less, the session (dashboard
-		# chat + sub-agent progress). Fixed at construction — see self.channel.
+		# chat + sub-agent progress). Fixed at construction, see self.channel. A
+		# canvas event names the page it changes instead (emit_to_page).
 		#
 		# after_commit=True for any event whose handler READS what this turn just wrote
 		# (a reload, a refetch, the final transcript): frappe holds the emit until the
 		# transaction lands and drops it on rollback, so the client can never fetch
 		# state that doesn't exist yet. Live narration (stream/progress) emits at once.
+		page_id = page_id or self.open_page_id
 		event = f"{EVENT_PREFIX}_{suffix}"
-		if self.channel:
-			event = f"{event}_{self.channel}"
+		if channel := page_id or self.channel:
+			event = f"{event}_{channel}"
+		if self.build_page:
+			kwargs["build_page"] = self.build_page
 		frappe.publish_realtime(
 			event,
-			{"page_id": self.page_id, "session_id": self.session_id, **kwargs},
+			{"page_id": page_id, "session_id": self.session_id, **kwargs},
 			user=self.user,
 			after_commit=after_commit,
 		)
+
+	def emit_to_page(self, suffix: str, **kwargs):
+		"""Canvas events reach the editor of the page they change, which is not the
+		chat's while Bob builds a page off-screen: the user's canvas never shows it."""
+		self.emit(suffix, page_id=self.page_id, **kwargs)
+
+	@property
+	def off_screen(self) -> bool:
+		return bool(self.page_id and self.page_id != self.open_page_id)
 
 	def ensure_revert_snapshot(self) -> None:
 		"""Snapshot the page's pre-turn state the first time the turn mutates it —
@@ -619,6 +677,13 @@ class AgentRunner:
 			return ""
 		state = "live" if row.published else "staging" if row.staging else "draft"
 		route = "/" + (row.route or "").lstrip("/")
+		if self.off_screen:
+			return (
+				f"Working page: '{row.page_title or self.page_id}', id {self.page_id}, route {route}, "
+				f"{state}. A new page the user approved. They have '{page_row(self.open_page_id)['title']}' "
+				"open in the editor, where this chat is, so they follow your progress here, not on a "
+				"canvas. Everything this turn applies to the working page unless edit_page names another."
+			)
 		context = (
 			f"Open page: '{row.page_title or self.page_id}' — id {self.page_id}, route {route}, {state}."
 		)
@@ -774,7 +839,7 @@ class AgentRunner:
 		for attempt in range(STREAM_MAX_ATTEMPTS):
 			try:
 				return self.stream_tool_round(messages)
-			except CancelledError:
+			except (CancelledError, NotesSentNow):
 				raise
 			except Exception as exc:
 				if attempt == STREAM_MAX_ATTEMPTS - 1 or not llm.is_retryable(exc):
@@ -806,9 +871,10 @@ class AgentRunner:
 			self.loop_model,
 			messages,
 			self.registry.schemas(self.round_skills),
-			llm.TASK_PARAMS["agent"],
+			self.effort.params("agent"),
 			api_key=self.api_key,
 			stream=True,
+			timeout=self.effort.stall_timeout,
 		)
 
 		content_parts: list[str] = []
@@ -828,12 +894,12 @@ class AgentRunner:
 
 		try:
 			for chunk in stream:
-				if self.is_cancelled():
+				if stop := self.stop_requested():
 					try:
 						stream.close()
 					except Exception:
 						pass
-					raise CancelledError
+					raise stop
 				self.record_usage(chunk)
 				# The final include_usage chunk carries usage but no choices.
 				if not chunk.choices:
@@ -950,7 +1016,7 @@ class AgentRunner:
 				op["args"]["blocks"] = page_writer.normalize_component_instances(op["args"]["blocks"])
 				self.tree.root = op["args"]["blocks"]
 		self.applied_operations.extend(ops)
-		self.emit("tool_batch", operations=ops)
+		self.emit_to_page("tool_batch", operations=ops)
 		if self.page_id and self.tree and self.tree.root:
 			page_writer.save_draft_blocks(self.page_id, self.tree.root)
 		return ops
@@ -969,7 +1035,7 @@ class AgentRunner:
 		from builder.ai import page_writer
 
 		key = locks.page_key(page_id)
-		token = locks.acquire(key, locks.PAGE_LOCK_TTL)
+		token = locks.acquire(key, self.effort.lock_ttl)
 		if token is None:
 			return (
 				f"FAILED: page {page_id} is being edited by another AI task right now. Try again in a moment."
@@ -1099,6 +1165,8 @@ class AgentRunner:
 		(apply to the working tree + mirror to the canvas). A client tool with a
 		server twin (page scripts) always runs as a server op — see
 		SCRIPT_TWIN_TOOLS."""
+		if self.other_page(op):
+			return "other_page"
 		tool = self.registry.get(op["tool_name"])
 		if tool and tool.artifact:
 			return "artifact"
@@ -1106,6 +1174,37 @@ class AgentRunner:
 		if side == "client" and tool and tool.handler and op["tool_name"] in SCRIPT_TWIN_TOOLS:
 			return "server"
 		return side
+
+	def other_page(self, op: dict) -> tuple[str | None, str] | None:
+		"""(page id or None, why it didn't resolve) when an edit_page call names a page
+		other than this turn's, None otherwise. Resolved once per call."""
+		if "target" not in op:
+			from builder.ai.agent.tools.query import resolve_page_reference
+
+			ref = str(op["args"].get("page") or "").strip() if op["tool_name"] == "edit_page" else ""
+			target = resolve_page_reference(ref) if ref else (self.page_id, "")
+			op["target"] = None if target[0] == self.page_id else target
+		return op["target"]
+
+	def edit_other_page(self, op: dict) -> str:
+		"""Check an edit to another page against it and hold it for the user's OK. The
+		step names the page and what changes, since none of it shows on the canvas."""
+		page_id, why = op["target"]
+		if not page_id:
+			return f"FAILED: {why}. Nothing was changed."
+		title = page_row(page_id)["title"]
+		step = self.add_step(
+			"tool", tool="edit_page", summary=f"Preparing changes to {title}", status="running"
+		)
+		started = time.monotonic()
+		content, changes = self.page_changes.edit(page_id, op["args"].get("ops") or "", self.style_sets)
+		if "FAILED" in content:
+			self.tool_failures.append(f"edit_page({page_id}): {content}")
+		summary = (
+			f"Prepared for {title}: {'; '.join(changes)}" if changes else f"No changes landed on {title}"
+		)
+		self.finish_step(step, started=started, summary=summary)
+		return content
 
 	def apply_client_ops(self, ops: list[dict]) -> tuple[dict[int, str], list[dict]]:
 		"""Apply this round's client ops to the working tree, the source of truth,
@@ -1134,7 +1233,7 @@ class AgentRunner:
 			# after_commit: an op can reference a doc this round created (a component
 			# extract) — mirrored early, the canvas fetches it before the checkpoint
 			# commit lands and caches a Missing placeholder.
-			self.emit("tool_batch", operations=applied, after_commit=True)
+			self.emit_to_page("tool_batch", operations=applied, after_commit=True)
 			if self.page_id and self.tree.root:
 				from builder.ai import page_writer
 
@@ -1177,6 +1276,8 @@ class AgentRunner:
 		kind = self.op_kind(op)
 		if kind == "client":
 			return client_results[id(op)]
+		if kind == "other_page":
+			return self.edit_other_page(op)
 		tool = self.registry.get(op["tool_name"])
 		if kind == "terminal":
 			# A terminal handler may DECLINE by returning a string (e.g. "that DocType
@@ -1193,7 +1294,7 @@ class AgentRunner:
 			if ops:
 				# The authoritative op replaces the throwaway streamed preview with
 				# the server's block tree (shared ids).
-				self.emit("tool_batch", operations=ops)
+				self.emit_to_page("tool_batch", operations=ops)
 			return content
 		entry = self.begin_activity(op["tool_name"], op["args"])
 		if op["tool_name"] in SNAPSHOT_TOOLS:
@@ -1210,7 +1311,7 @@ class AgentRunner:
 				# script list / undo tracking — flagged so the canvas does NO DB work.
 				op["args"]["server_applied"] = True
 				self.applied_operations.append(op)
-				self.emit("tool_batch", operations=[op])
+				self.emit_to_page("tool_batch", operations=[op])
 		return content
 
 	def commit_round_text(self, text: str, applied: list[dict]) -> None:
@@ -1240,10 +1341,26 @@ class AgentRunner:
 			)
 		self.pending_images.clear()
 
+	def read_notes(self, messages: list[dict]) -> None:
+		"""Messages the user sent while this turn ran, read in between rounds. Each is
+		saved as a user message of its own so later turns see it too."""
+		for note in AISession.pop_notes(self.session_id):
+			AISession.try_append_message(
+				self.session_id,
+				"user",
+				note,
+				message_type="chat",
+				task_type="agent",
+				metadata={"canvasTheme": self.canvas_theme, "effort": self.effort.level},
+			)
+			messages.append({"role": "user", "content": f"(Sent while you were working.)\n{note}"})
+			self.emit("note", text=note)
+
 	# --- orchestration ----------------------------------------------------
 
 	def emit_cancelled(self) -> None:
 		msg = "Stopped. Kept what was built so far." if self.applied_operations else "Cancelled."
+		msg += self.page_changes.dropped_note()
 		AISession.try_append_message(
 			self.session_id, "assistant", msg, message_type="status", metadata={"status": "cancelled"}
 		)
@@ -1251,14 +1368,16 @@ class AgentRunner:
 
 	def fail_turn(self, message: str) -> None:
 		"""End the turn with a persisted error message + error event."""
+		message += self.page_changes.dropped_note()
 		AISession.try_append_message(
 			self.session_id, "assistant", message, message_type="status", metadata={"status": "error"}
 		)
 		self.emit("error", message=message, after_commit=True)
 
 	def run(self):
-		# Clear any stale cancel flag from a previous turn before starting.
+		# Clear any stale cancel flag or notes from a previous turn before starting.
 		self.clear_cancel_flag()
+		AISession.clear_notes(self.session_id)
 		started = time.monotonic()
 		logger.info(
 			f"AgentRunner.run: page_id={self.page_id}, model={self.model}, "
@@ -1268,7 +1387,7 @@ class AgentRunner:
 		# One turn per session at a time — an atomic Redis lock with a TTL, so a
 		# crashed worker can never brick the session (the old is_running DB flag did).
 		if self.session_id:
-			self.run_token = AISession.start_run(self.session_id)
+			self.run_token = AISession.start_run(self.session_id, self.effort.lock_ttl)
 			if self.run_token is None:
 				logger.warning(f"AgentRunner.run: session {self.session_id} already running, rejecting")
 				self.emit(
@@ -1280,6 +1399,8 @@ class AgentRunner:
 			self.run_turn(started)
 		finally:
 			self.clear_cancel_flag()
+			# Unread ones go back to the chat, which sends them as the next turn.
+			AISession.clear_notes(self.session_id)
 			for key, token in self.held_locks:
 				locks.release(key, token)
 			self.held_locks = []
@@ -1313,10 +1434,17 @@ class AgentRunner:
 				if round_index and self.is_cancelled():
 					raise CancelledError
 				self.refresh_cache_markers(messages)
-				tool_operations, summary_text, raw_tool_calls = self.call_tool_llm(messages)
+				try:
+					tool_operations, summary_text, raw_tool_calls = self.call_tool_llm(messages)
+				except NotesSentNow:
+					self.read_notes(messages)
+					continue
 				self.record_round(round_index, tool_operations, summary_text)
 
 				if not tool_operations:
+					if self.ran_out_of_room(summary_text):
+						messages.append({"role": "user", "content": OUT_OF_ROOM_NUDGE})
+						continue
 					self.stop_reason = "model_finished"
 					break
 
@@ -1349,6 +1477,7 @@ class AgentRunner:
 					self.checkpoint()
 					break
 				self.flush_pending_images(messages)
+				self.read_notes(messages)
 				self.checkpoint()
 			else:
 				# Loop ran the full MAX_ROUNDS without the model finishing — a very large
@@ -1367,6 +1496,13 @@ class AgentRunner:
 			return
 
 		self.finish_turn(summary_text, started)
+
+	def ran_out_of_room(self, text: str) -> bool:
+		"""The step hit max_tokens before saying or calling anything."""
+		if text or self.finish_reasons[-1:] != ["length"] or self.out_of_room_nudges >= OUT_OF_ROOM_NUDGES:
+			return False
+		self.out_of_room_nudges += 1
+		return True
 
 	def turn_reply(self, ops: list[dict], results: list[str]) -> str:
 		"""The reply that ends the turn now, if any: never while a page generated this
@@ -1398,6 +1534,8 @@ class AgentRunner:
 
 	def finish_turn(self, summary_text: str, started: float):
 		"""Wrap up a completed loop: pick/emit the final summary and persist the turn."""
+		if self.page_changes and not summary_text:
+			summary_text = self.page_changes.reply()
 		if not self.applied_operations and not summary_text:
 			# A soft miss, not a failure: the model may have done real tool work (reads)
 			# and just failed to write its reply. Warn — and persist, so the turn doesn't
@@ -1472,6 +1610,7 @@ class AgentRunner:
 			"debug": {
 				"stopReason": self.stop_reason or "model_finished",
 				"loopModel": self.loop_model,
+				"effort": self.effort.level,
 				"rounds": len(self.trace),
 				"argsRepaired": self.args_repaired,
 				"finishReasons": self.finish_reasons,
@@ -1485,8 +1624,13 @@ class AgentRunner:
 				"trace": self.trace,
 			},
 		}
-		if self.revert_snapshot:
+		if self.build_page:
+			# Revert restores onto the open canvas, and this turn's page isn't on it.
+			final_metadata["buildPage"] = {**self.build_page, "built": bool(self.applied_operations)}
+		elif self.revert_snapshot:
 			final_metadata["revertSnapshot"] = self.revert_snapshot
+			# a chat goes on across pages, and a snapshot only restores onto its own
+			final_metadata["pageId"] = self.page_id
 		if self.plugins_written:
 			final_metadata["plugins"] = self.plugins_written
 		if self.web_sources:
@@ -1503,8 +1647,36 @@ class AgentRunner:
 			task_type="agent",
 			metadata=final_metadata,
 		)
+		self.propose_page_changes()
 		self.maybe_name_session()
+		self.build_next_page()
 		self.emit("complete", message=summary_text or "Done", after_commit=True)
+
+	def propose_page_changes(self) -> None:
+		"""The confirm card for the turn's other-page edits and new pages, after the
+		reply so it is the chat's last message (only that one takes a click). The
+		complete event's session reload brings it in."""
+		if not self.page_changes:
+			return
+		AISession.try_append_message(
+			self.session_id,
+			"assistant",
+			self.page_changes.card_text(),
+			message_type="clarification",
+			task_type="agent",
+			metadata={
+				"status": "pending_action",
+				"kind": "page_changes",
+				"payload": self.page_changes.payload(),
+			},
+		)
+
+	def build_next_page(self) -> None:
+		"""Approved new pages are built one turn each; this turn hands on the rest."""
+		if self.next_builds:
+			from builder.ai.api import queue_page_build
+
+			queue_page_build(self.session_id, self.next_builds, self.user)
 
 	def maybe_name_session(self) -> None:
 		"""The first completed turn names the chat: a short generated title reads
@@ -1551,6 +1723,12 @@ class AgentRunner:
 		tool = self.registry.get(op["tool_name"])
 		if missing := self.skill_missing(tool):
 			return missing
+		if self.page_changes:
+			return (
+				"FAILED: this turn prepared changes to other pages, and the card asking the user to "
+				"confirm them only appears when the turn ends normally. Finish with your reply now; "
+				"ask anything else on your next turn."
+			)
 		if tool and tool.handler:
 			return tool.handler(self, op["args"])
 		return None
@@ -1563,9 +1741,10 @@ class AgentRunner:
 			return ("FAILED: no page is open.", [])
 		if missing := self.require_skill("new-page"):
 			return missing, []
-		entry = self.begin_activity(op["tool_name"], op["args"])
+		entry = self.build_step = self.begin_activity(op["tool_name"], op["args"])
 		self.ensure_revert_snapshot()  # generation replaces the block tree
 		ops = tool.generator(self, op["args"])
+		self.build_step = None
 		self.end_activity(entry)
 		if not ops:
 			return ("FAILED: generation produced nothing. Retry generate_page with a fuller brief.", [])
@@ -1579,6 +1758,17 @@ class AgentRunner:
 			f"{render_page_context(root, sets=self.style_sets)}",
 			ops,
 		)
+
+	def show_build_progress(self, blocks: list) -> None:
+		"""Off-screen there is no canvas to watch the page grow on, so the build step
+		names the section being written."""
+		if not (self.off_screen and self.build_step and blocks):
+			return
+		sections = [s for s in blocks[0].get("children") or [] if isinstance(s, dict)]
+		if not sections:
+			return
+		self.build_step["summary"] = f"Section {len(sections)}: {block_label(sections[-1])}"
+		self.emit("step", **self.build_step)
 
 	def dropped_lines_note(self) -> str:
 		if not (errors := self.generation_errors):

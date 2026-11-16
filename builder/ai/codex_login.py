@@ -55,16 +55,22 @@ def start() -> dict:
 
 
 def poll(state: str) -> dict:
-	"""Where a device sign-in stands: pending, connected (with the models found), or expired."""
+	"""Where a device sign-in stands: pending, approved, connected (with the models found), or expired.
+	An approval is reported at once, so the slow exchange and model lookup run on the next poll."""
 	login = load_login(state)
 	if not login or "device_auth_id" not in login:
 		return {"status": "expired"}
+	if approval := login.get("approval"):
+		clear_login(state)
+		credential = exchange_code(
+			approval["authorization_code"], approval["code_verifier"], DEVICE_REDIRECT_URI
+		)
+		return {"status": "connected", **install_provider(credential)}
 	approval = check_device(login)
 	if approval is None:
 		return {"status": "pending"}
-	clear_login(state)
-	credential = exchange_code(approval["authorization_code"], approval["code_verifier"], DEVICE_REDIRECT_URI)
-	return {"status": "connected", **install_provider(credential)}
+	save_login(state, {**login, "approval": approval})
+	return {"status": "approved"}
 
 
 def start_browser() -> dict:

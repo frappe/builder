@@ -4,7 +4,7 @@ from io import BytesIO
 from itertools import count
 from types import FunctionType, MethodType, ModuleType
 from typing import Any
-from urllib.parse import unquote, urlparse
+from urllib.parse import quote, unquote, urlparse
 
 import frappe
 from frappe import _
@@ -331,9 +331,12 @@ def check_app_permission():
 
 
 @frappe.whitelist()
-def open_editor() -> None:
+def open_editor(page: str | None = None) -> None:
+	location = f"/{get_builder_path()}"
+	if page:
+		location += f"/page/{quote(page, safe='')}"
 	frappe.local.response["type"] = "redirect"
-	frappe.local.response["location"] = f"/{get_builder_path()}"
+	frappe.local.response["location"] = location
 
 
 @frappe.whitelist()

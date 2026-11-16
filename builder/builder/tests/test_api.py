@@ -338,3 +338,8 @@ class TestOpenEditor(FrappeTestCase):
 			open_editor()
 			self.assertEqual(frappe.local.response["type"], "redirect")
 			self.assertEqual(frappe.local.response["location"], "/studio")
+
+	def test_redirects_to_a_page_in_the_editor(self):
+		with patch.dict(frappe.local.conf, builder_path="studio"), patch.dict(frappe.local.response):
+			open_editor(page="new")
+			self.assertEqual(frappe.local.response["location"], "/studio/page/new")

@@ -9,11 +9,13 @@ import logging
 
 import frappe
 from frappe import _
+from frappe.utils.telemetry import capture
 
 from builder.ai.agent.loop import run_agent_job
+from builder.ai.agent.page_changes import page_row
 from builder.ai.block_codec import BlockCodec
 from builder.ai.discovery import Discovery
-from builder.ai.llm import resolve_api_key, settings_api_key
+from builder.ai.llm import Effort, resolve_api_key, settings_api_key
 from builder.ai.models import GatewayListing, ModelRegistry, fetch_credits
 from builder.ai.presets import get_credits_url, get_site_ai_key
 from builder.ai.session import AISession
@@ -59,6 +61,7 @@ def run(
 	selected_block_context: list | None = None,
 	display_text: str | None = None,
 	canvas_theme: str | None = None,
+	effort: str | None = None,
 ):
 	"""Single entry point: run the agent for one user turn of the in-editor chat.
 
@@ -69,6 +72,7 @@ def run(
 
 	image_url = BlockCodec.validate_image_data(image_data) if image_data else None
 	canvas_theme = canvas_theme if canvas_theme in ("light", "dark") else None
+	thinking = Effort(effort)
 
 	# Guard concurrency for an established session first — nothing may persist on the
 	# busy path. The worker takes the atomic run lock; this check just gives a fast
@@ -85,9 +89,13 @@ def run(
 
 	if session_id:
 		session = AISession.get(session_id, page_id=page_id)
-		msg_meta: dict = {"selectedBlockContext": selected_block_context or []}
+		session.move_to(page_id)
+		# each message keeps the page it was sent from, since a chat goes on across pages
+		msg_meta: dict = {"selectedBlockContext": selected_block_context or [], "page": page_row(page_id)}
 		if canvas_theme:
 			msg_meta["canvasTheme"] = canvas_theme
+		if thinking.level:
+			msg_meta["effort"] = thinking.level
 		if image_data:
 			msg_meta["attachedImageUrl"] = image_file_url or image_data
 		# A card-composed reply (option tap, form submit) shows as this compact line
@@ -115,7 +123,7 @@ def run(
 	frappe.enqueue(
 		run_agent_job,
 		queue="default",
-		timeout=600,
+		timeout=thinking.job_timeout,
 		prompt=prompt,
 		model=resolved_model,
 		user=frappe.session.user,
@@ -126,7 +134,9 @@ def run(
 		image_url=image_url,
 		image_file_url=image_file_url,
 		canvas_theme=canvas_theme,
+		effort=thinking.level,
 	)
+	capture("builder_ai_used", "builder")
 	frappe.local.response.http_status_code = 202
 	return {"status": "accepted", "session_id": session_id}
 
@@ -140,14 +150,13 @@ def ensure_session_owner(session_id: str) -> None:
 
 
 @frappe.whitelist()
-def confirm_pending_settings(message_id: str, decision: str = "apply"):
+def confirm_pending_settings(message_id: str, decision: str = "apply", skip: list | None = None):
 	"""Apply (or skip) a sensitive action the agent proposed. The privileged write runs
 	HERE, on this user-triggered call — never inside the model's turn. Reads the stored
-	payload off the pending-action message and dispatches to apply_pending_action."""
+	payload off the pending-action message and dispatches to apply_pending_action.
+	`skip` names the rows of a page card the user unticked."""
 	from builder.ai.agent.pending import apply_pending_action
 
-	if not frappe.has_permission("Builder Settings", "write"):
-		frappe.throw(_("You are not permitted to apply this change"), frappe.PermissionError)
 	if not message_id or not frappe.db.exists(AISession.MESSAGE_DOCTYPE, message_id):
 		frappe.throw(_("Pending action not found"))
 
@@ -157,15 +166,26 @@ def confirm_pending_settings(message_id: str, decision: str = "apply"):
 		frappe.throw(_("This action does not belong to you"), frappe.PermissionError)
 	if msg.status != "pending_action":
 		frappe.throw(_("No pending action on this message"))
+	meta = AISession.load_metadata(msg.metadata_json)
+	# Page changes check each page's own permission as they apply.
+	on_pages = meta.get("kind") == "page_changes"
+	if not on_pages and not frappe.has_permission("Builder Settings", "write"):
+		frappe.throw(_("You are not permitted to apply this change"), frappe.PermissionError)
 
 	if decision != "apply":
 		frappe.db.set_value(AISession.MESSAGE_DOCTYPE, message_id, "status", "action_skipped")
 		outcome = "Skipped. Nothing was changed."
-		AISession.try_append_message(msg.session, "assistant", outcome, message_type="status")
-		resumed = resume_after_action(msg.session, outcome)
+		# a page card shows its own outcome, so its status line is for the model only
+		answers = {"card": msg.name} if on_pages else None
+		AISession.try_append_message(
+			msg.session, "assistant", outcome, message_type="status", metadata=answers
+		)
+		# Nothing waits on a page card: it comes once the turn's work is done.
+		resumed = not on_pages and resume_after_action(msg.session, outcome)
 		return {"status": "skipped", "resumed": resumed}
 
-	meta = AISession.load_metadata(msg.metadata_json)
+	if on_pages:
+		return confirm_page_changes(msg, meta, skip)
 	result = apply_pending_action(meta.get("kind"), meta.get("payload") or {})
 	frappe.db.set_value(AISession.MESSAGE_DOCTYPE, message_id, "status", "action_applied")
 	# The OUTCOME becomes part of the conversation — visible in the chat after a
@@ -173,6 +193,26 @@ def confirm_pending_settings(message_id: str, decision: str = "apply"):
 	AISession.try_append_message(msg.session, "assistant", result, message_type="status")
 	resumed = resume_after_action(msg.session, result)
 	return {"status": "applied", "message": result, "resumed": resumed}
+
+
+def confirm_page_changes(msg, meta: dict, skip: list | None = None) -> dict:
+	"""Apply a page card. Each page's result lands on the card itself, and new pages are
+	built next, one turn each, with the chat staying on the page it belongs to."""
+	from builder.ai.agent.page_changes import apply_page_changes
+
+	if AISession.is_session_running(msg.session):
+		frappe.throw(_("Bob is still working. Apply this once the current reply is done."))
+	outcome, pages = apply_page_changes(meta.get("payload") or {}, skip)
+	AISession.answer_card(msg.name, "action_applied", {**meta, "results": pages})
+	# the pages it changed list this chat, so opening one of them carries on here
+	changed = [p["page_id"] for p in pages if p["status"] in ("created", "changed")]
+	AISession(frappe.get_doc(AISession.DOCTYPE, msg.session)).add_pages(*changed)
+	AISession.try_append_message(
+		msg.session, "assistant", outcome, message_type="status", metadata={"card": msg.name}
+	)
+	builds = [p for p in pages if p["status"] == "created"]
+	resumed = bool(builds) and queue_page_build(msg.session, builds)
+	return {"status": "applied", "message": outcome, "pages": pages, "resumed": resumed}
 
 
 def resume_after_action(session_id: str, outcome: str) -> bool:
@@ -184,30 +224,79 @@ def resume_after_action(session_id: str, outcome: str) -> bool:
 	"""
 	if AISession.is_session_running(session_id):
 		return False
+	# run_agent_job does not persist its prompt, so no phantom "continue" in the chat
+	return continue_session(
+		session_id, f"{outcome}\n\nContinue with what you were doing. Do not repeat this step."
+	)
+
+
+def queue_page_build(session_id: str, builds: list[dict], user: str | None = None) -> bool:
+	"""Build the first of the approved new pages off-screen; its turn hands on the rest."""
+	page = builds[0]
+	prompt = (
+		f"The user approved the new page “{page['title']}” ({page['route']}). It now exists and is "
+		"empty. Build it now: it is your working page this turn. They already said yes, so don't ask "
+		"anything first and keep its title and route; read the site pages you need to match, then "
+		"build it from the brief you "
+		f"proposed:\n{page.get('brief') or '(no brief, use the conversation)'}\n\n"
+		"Finish with a short summary of what you built."
+	)
+	return continue_session(session_id, prompt, page_id=page["page_id"], next_builds=builds[1:], user=user)
+
+
+def continue_session(session_id: str, prompt: str, page_id: str | None = None, **job) -> bool:
+	"""Queue a turn the server starts itself, on the session's model and effort. The
+	chat stays on the session's page; `page_id` is the page that turn works on."""
 	try:
-		page_id, model = frappe.db.get_value(AISession.DOCTYPE, session_id, ["page", "selected_model"])
-		if not page_id:
+		open_page, model = frappe.db.get_value(AISession.DOCTYPE, session_id, ["page", "selected_model"])
+		if not open_page:
 			return False
 		resolved_model = ModelRegistry.get_default(model or "openrouter")
 		# A job that can't find its key fails out of sight, so check before queueing it.
 		resolve_api_key(resolved_model)
+		turn = AISession.latest_turn_metadata(session_id)
+		thinking = Effort(turn.get("effort"))
 		frappe.enqueue(
 			run_agent_job,
 			queue="default",
-			timeout=600,
-			# run_agent_job does not persist its prompt, so no phantom "continue" in the chat
-			prompt=f"{outcome}\n\nContinue with what you were doing. Do not repeat this step.",
+			timeout=thinking.job_timeout,
+			prompt=prompt,
 			model=resolved_model,
-			user=frappe.session.user,
-			page_id=page_id,
+			user=job.pop("user", None) or frappe.session.user,
+			page_id=page_id or open_page,
+			open_page_id=open_page,
 			session_id=session_id,
-			canvas_theme=AISession.latest_canvas_theme(session_id),
+			canvas_theme=turn.get("canvasTheme"),
+			effort=thinking.level,
 			enqueue_after_commit=True,
+			**job,
 		)
 		return True
 	except Exception:
-		logger.warning(f"could not resume session {session_id} after a confirmed action", exc_info=True)
+		logger.warning(f"could not continue session {session_id}", exc_info=True)
 		return False
+
+
+@frappe.whitelist()
+def steer(session_id: str, prompt: str = "", now: bool = False):
+	"""Queue a message for the running turn; the loop reads it in at its next round,
+	or with `now` drops the step it is on to read it straight away. With no turn
+	running nothing would read it, so the chat sends it as a turn."""
+	ensure_session_owner(session_id)
+	if not (prompt.strip() or now) or not AISession.is_session_running(session_id):
+		return {"status": "not_running"}
+	if prompt.strip():
+		AISession.queue_note(session_id, prompt.strip())
+	if now:
+		AISession.send_notes_now(session_id)
+	return {"status": "queued"}
+
+
+@frappe.whitelist()
+def take_back_notes(session_id: str):
+	"""The notes the running turn hasn't read yet, out of its queue, to edit or drop."""
+	ensure_session_owner(session_id)
+	return {"notes": AISession.pop_notes(session_id)}
 
 
 @frappe.whitelist()
@@ -452,7 +541,7 @@ def start_codex_login():
 @frappe.whitelist()
 @has_page_write()
 def poll_codex_login(state: str):
-	"""Where a ChatGPT sign-in stands: pending, connected (with its models), failed or expired."""
+	"""Where a ChatGPT sign-in stands: pending, approved, connected (with its models), failed or expired."""
 	from builder.ai import codex_login
 	from builder.ai.codex import CodexError
 
@@ -495,8 +584,8 @@ def get_ai_session(page_id: str, model: str | None = None, session_id: str | Non
 	if not page_id or page_id == "new" or not frappe.db.exists("Builder Page", page_id):
 		return blank_session(page_id, model)
 
-	if not (session_id and frappe.db.exists(AISession.DOCTYPE, session_id)):
-		session_id = AISession.last_used({"page": page_id, "session_user": frappe.session.user})
+	if not (session_id and AISession.can_open(session_id, page_id)):
+		session_id = AISession.last_used(AISession.on_page(page_id))
 	if not session_id:
 		return blank_session(page_id, model)
 	session = AISession.get(session_id, page_id=page_id)
@@ -529,7 +618,7 @@ def list_page_ai_sessions(page_id: str, limit: int = 20):
 		return []
 	rows = frappe.get_all(
 		AISession.DOCTYPE,
-		filters={"page": page_id, "session_user": frappe.session.user, "status": "Active"},
+		filters={**AISession.on_page(page_id), "status": "Active"},
 		fields=["name", "title", "last_interaction_on"],
 		order_by="last_interaction_on desc",
 		limit=min(int(limit), 50),

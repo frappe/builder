@@ -1,4 +1,5 @@
 import { chatsLevel } from "@/components/ai/commands/chats";
+import { effortLevel } from "@/components/ai/commands/effort";
 import { modelLevel } from "@/components/ai/commands/models";
 import { providersLevel } from "@/components/ai/commands/providers";
 import type { BobContext } from "@/components/ai/commands/shared";
@@ -13,6 +14,14 @@ export function registerBobCommands(ctx: BobContext): () => void {
 			icon: "lucide-cpu",
 			submenu: true,
 			run: (arg) => modelLevel(ctx, arg),
+		},
+		{
+			name: "effort",
+			aliases: ["thinking", "think"],
+			description: "How hard Bob thinks",
+			icon: "lucide-brain",
+			submenu: true,
+			run: () => effortLevel(ctx),
 		},
 		{
 			name: "providers",

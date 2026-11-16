@@ -98,7 +98,7 @@ export function chatGPTLevel(ctx: BobContext): MenuLevel {
 function copyAndOpen(ctx: BobContext, login: DeviceSignIn): MenuStep {
 	navigator.clipboard?.writeText(login.code).catch(() => null);
 	window.open(login.url, "_blank", "noopener");
-	ctx.menu.setNote("Code copied. Paste it on the ChatGPT tab and approve; this finishes by itself.");
+	ctx.menu.setNote("Code copied. Waiting for you to approve it on ChatGPT…", "progress");
 	return "stay";
 }
 
@@ -122,9 +122,12 @@ function watchDeviceSignIn(ctx: BobContext, menu: CommandMenu, begin: () => Prom
 			await connected(ctx, status);
 			// connecting takes a moment, and a menu opened meanwhile is not ours to close
 			if (menu.level.value === level) menu.close();
+		} else if (status?.status === "approved") {
+			menu.setNote("Approved. Connecting to ChatGPT…", "progress");
+			poll(login);
 		} else if (status?.status === "failed" || status?.status === "expired") {
 			stop();
-			menu.setNote(status.message || "The code expired. Go back and start again.", true);
+			menu.setNote(status.message || "The code expired. Go back and start again.", "error");
 		} else {
 			timer = window.setTimeout(() => poll(login), login.interval * 1000);
 		}

@@ -1,10 +1,10 @@
 <template>
 	<div class="flex h-full min-h-full flex-col bg-surface-base">
-		<div class="flex items-center justify-between border-b border-outline-gray-1 px-3 py-2.5">
+		<!-- fixed height, so a title arriving later doesn't push the chat down -->
+		<div class="flex h-14 shrink-0 items-center justify-between border-b border-outline-gray-1 px-3">
 			<div class="flex min-w-0 flex-col gap-1">
-				<div class="mt-1 text-sm font-semibold text-ink-gray-9">Bob AI</div>
-				<!-- min-h holds the row while the title is still blank -->
-				<div class="min-h-4 truncate text-p-xs leading-4 text-ink-gray-5">
+				<div class="text-sm font-semibold text-ink-gray-9">Bob AI</div>
+				<div v-if="isSubmitting || currentSessionTitle" class="truncate text-p-xs leading-4 text-ink-gray-5">
 					{{ isSubmitting ? currentActivity : currentSessionTitle }}
 				</div>
 			</div>
@@ -93,7 +93,17 @@
 						">
 						<!-- ui-card messages persist the full card as text (for model replay);
 						     the bubble shows only the short lead-in — the card renders the rest -->
-						<template v-if="message.role === 'assistant'">
+						<AIPageBuild
+							v-if="message.role === 'assistant' && message.metadata?.buildPage"
+							:page="message.metadata.buildPage"
+							:steps="message.metadata.steps || []"
+							:text="message.metadata?.status === 'running' ? '' : message.content"
+							:running="turnRunning(message)"
+							:elapsed-ms="message.metadata.debug?.elapsedMs"
+							:debug="!!message.metadata.debug"
+							@open="chat.openPage"
+							@inspect="openDebug(message.metadata.debug)" />
+						<template v-else-if="message.role === 'assistant'">
 							<!-- What Bob thought, ran and said on the way to this answer. Steps
 							     carry their own running state; the row below covers the stretches
 							     where no step is on the clock. -->
@@ -134,10 +144,11 @@
 						</div>
 						<div
 							v-if="
-								message.metadata?.affectedBlocks?.length ||
-								message.metadata?.affectedScripts?.length ||
-								message.metadata?.revertSnapshot ||
-								message.metadata?.debug
+								!message.metadata?.buildPage &&
+								(message.metadata?.affectedBlocks?.length ||
+									message.metadata?.affectedScripts?.length ||
+									message.metadata?.revertSnapshot ||
+									message.metadata?.debug)
 							"
 							class="mb-2 mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] text-ink-gray-4">
 							<AIAffectedItems
@@ -147,7 +158,7 @@
 								@select-block="selectBlockById"
 								@open-script="openScriptByName" />
 
-							<Tooltip v-if="message.metadata?.revertSnapshot" text="Revert the page to before this AI edit">
+							<Tooltip v-if="canRevert(message)" text="Revert the page to before this AI edit">
 								<button
 									class="inline-flex items-center gap-1 transition-colors hover:text-ink-gray-7 disabled:cursor-not-allowed disabled:opacity-40"
 									:disabled="isSubmitting || !isEditingPage"
@@ -177,29 +188,39 @@
 								</div>
 							</template>
 						</div>
-						<!-- Sensitive action — needs the user's OK. Calm neutral surface with a
-						     small amber eyebrow: the QUESTION is the content, and it appears once
-						     (the model-facing summary text is suppressed above), so the card
-						     reads as a decision, not an alarm. -->
+						<!-- Bob's changes to other pages: asks per page, then shows how each went -->
+						<AIPageCard
+							v-if="message.metadata?.kind === 'page_changes'"
+							:metadata="message.metadata"
+							:interactive="message.id === lastMessageId"
+							:busy="isSubmitting"
+							:confirming="confirmingAction"
+							class="mt-2"
+							@apply="(skip) => confirmPendingAction(message, 'apply', skip)"
+							@skip="confirmPendingAction(message, 'skip')"
+							@open="chat.openPage" />
+						<!-- A sensitive action waits for the user's OK. The question is the whole
+						     card (the model-facing summary is suppressed above), so it reads as a
+						     decision, not an alarm. -->
 						<div
-							v-if="message.metadata?.status === 'pending_action'"
+							v-else-if="message.metadata?.status === 'pending_action'"
 							class="mt-2 w-full rounded-6 border border-outline-gray-2 bg-surface-gray-1 p-3">
-							<p class="text-p-xs font-medium text-ink-amber-8">Needs your OK</p>
-							<p class="mt-1 text-p-sm leading-snug text-ink-gray-8">
+							<p class="text-p-sm font-medium text-ink-gray-8">
 								{{ pendingPreview(message.metadata) }}
 							</p>
-							<div v-if="message.id === lastMessageId" class="mt-3 flex gap-2">
+							<div v-if="message.id === lastMessageId" class="mt-2.5 flex gap-2">
 								<Button
 									variant="solid"
 									size="sm"
 									:loading="confirmingAction"
+									:disabled="isSubmitting"
 									@click="confirmPendingAction(message, 'apply')">
-									{{ applyLabel(message.metadata?.kind) }}
+									{{ applyLabel(message.metadata) }}
 								</Button>
 								<Button
 									variant="subtle"
 									size="sm"
-									:disabled="confirmingAction"
+									:disabled="confirmingAction || isSubmitting"
 									@click="confirmPendingAction(message, 'skip')">
 									Skip
 								</Button>
@@ -215,13 +236,23 @@
 							:lead="message.metadata.text"
 							@submit="selectOption" />
 					</div>
-					<!-- Block + image chips below the bubble -->
+					<!-- Page, block and image chips below the bubble -->
 					<div
 						v-if="
 							message.role === 'user' &&
-							(message.metadata?.selectedBlockContext?.length || message.metadata?.attachedImageUrl)
+							(sentFrom(message) ||
+								message.metadata?.selectedBlockContext?.length ||
+								message.metadata?.attachedImageUrl)
 						"
 						class="mt-1 flex max-w-[88%] flex-wrap items-center gap-1">
+						<!-- sent from another page: the chat went on from there -->
+						<button
+							v-if="sentFrom(message)"
+							class="inline-flex items-center gap-1 rounded-4 bg-surface-gray-2 px-1.5 py-0.5 text-[10px] text-ink-gray-6 transition-colors hover:bg-surface-gray-3 hover:text-ink-gray-8"
+							@click="chat.openPage(sentFrom(message)!.page_id)">
+							<span class="lucide-file size-2.5" />
+							{{ sentFrom(message)!.title }}
+						</button>
 						<!-- image chip -->
 						<span
 							v-if="message.metadata?.attachedImageUrl"
@@ -305,6 +336,25 @@
 					</span>
 				</div>
 			</Transition>
+			<div
+				v-for="(note, i) in queuedNotes"
+				:key="i"
+				class="mb-2 flex items-center gap-2 rounded-5 bg-surface-gray-2 px-2.5 py-1.5 text-p-xs text-ink-gray-6">
+				<span class="lucide-clock size-3.5 shrink-0" />
+				<span class="flex-1 truncate">{{ note }}</span>
+				<span class="shrink-0 text-ink-gray-4">Bob reads this next</span>
+				<Tooltip v-if="i === queuedNotes.length - 1">
+					<template #content>
+						<span class="flex items-center gap-1.5">
+							Stop the step Bob is on and read this now
+							<KeyboardShortcut combo="Mod+Enter" class="!text-xs !text-ink-gray-4" />
+						</span>
+					</template>
+					<button class="shrink-0 font-medium underline underline-offset-2" @click="sendNotesNow">
+						Send now
+					</button>
+				</Tooltip>
+			</div>
 			<!-- Say it before a prompt is typed, not after the send fails on the server. -->
 			<div
 				v-if="selectedModelUnusable"
@@ -343,10 +393,14 @@
 					size="md"
 					:rows="1"
 					class="no-scrollbar max-h-60 min-h-14 resize-none placeholder-ink-gray-4 disabled:border-0 disabled:bg-transparent"
-					:disabled="isSubmitting || !isEditingPage"
+					:disabled="!isEditingPage"
 					:placeholder="composerPlaceholder"
 					@keydown="menu.onKeydown"
-					@keydown.enter.exact="onEnter" />
+					@keydown.enter.exact="onEnter"
+					@keydown.enter.ctrl.exact="onSendNow"
+					@keydown.enter.meta.exact="onSendNow"
+					@keydown.up.exact="onArrow"
+					@keydown.down.exact="onArrow" />
 				<div class="flex items-center gap-0.5 p-1.5">
 					<Button
 						variant="ghost"
@@ -363,14 +417,24 @@
 						:label="modelLabel"
 						class="min-w-0 !shrink"
 						@click="menu.open(modelLevel(bob))" />
+					<Button
+						variant="ghost"
+						size="xs"
+						:icon="selectedEffort ? undefined : 'lucide-brain'"
+						:icon-left="selectedEffort ? 'lucide-brain' : undefined"
+						:label="selectedEffort ? effortLabel(selectedEffort) : undefined"
+						tooltip="Thinking effort"
+						class="shrink-0"
+						@click="menu.open(effortLevel(bob))" />
 					<Tooltip v-if="credits" :text="credits.spent === null ? '' : `${money(credits.spent)} spent`">
 						<Badge variant="subtle" :theme="creditsTheme(credits)" :label="creditsLabel(credits)" />
 					</Tooltip>
+					<span class="flex-1" />
+					<AIContextMeter v-if="contextUsage" :usage="contextUsage" />
 					<Button
 						v-if="isSubmitting"
 						variant="solid"
 						icon="lucide-square"
-						class="ml-auto"
 						:loading="isCancelling"
 						:tooltip="isCancelling ? 'Cancelling…' : 'Cancel generation'"
 						@click="chat.cancel" />
@@ -381,12 +445,7 @@
 								<KeyboardShortcut combo="Enter" class="!text-xs !text-ink-gray-4" />
 							</span>
 						</template>
-						<Button
-							variant="solid"
-							icon="lucide-arrow-up"
-							class="ml-auto"
-							:disabled="!canSubmit"
-							@click="submitPrompt" />
+						<Button variant="solid" icon="lucide-arrow-up" :disabled="!canSubmit" @click="submitPrompt" />
 					</Tooltip>
 				</div>
 				<AICommandMenu v-if="menuOpen" :menu="menu" />
@@ -412,13 +471,18 @@
 
 <script setup lang="ts">
 import AIAffectedItems from "@/components/AIAffectedItems.vue";
+import AIPageBuild from "@/components/ai/AIPageBuild.vue";
+import AIPageCard from "@/components/ai/AIPageCard.vue";
 import AIPluginCard from "@/components/ai/AIPluginCard.vue";
 import AICommandMenu from "@/components/ai/AICommandMenu.vue";
+import AIContextMeter from "@/components/ai/AIContextMeter.vue";
 import AITurnTimeline from "@/components/ai/AITurnTimeline.vue";
 import { registerBobCommands } from "@/components/ai/bobCommands";
 import { useCommandMenu } from "@/components/ai/commandMenu";
 import { connectLevel } from "@/components/ai/commands/connect";
+import { effortLabel, effortLevel } from "@/components/ai/commands/effort";
 import { modelLevel } from "@/components/ai/commands/models";
+import { caretAtEdge, usePromptHistory } from "@/components/ai/promptHistory";
 import { providersLevel } from "@/components/ai/commands/providers";
 import { type BobContext, creditsLabel, creditsTheme, money } from "@/components/ai/commands/shared";
 import AIUISpec from "@/components/ai/AIUISpec.vue";
@@ -432,14 +496,16 @@ import { cardAnswers } from "@/components/ai/cardAnswers";
 import { renderMarkdown } from "@/components/ai/markdown";
 import type { AITurnStep, ChatMessage } from "@/components/ai/types";
 import { reloadAIRegistry } from "@/data/aiModels";
+import { __ } from "@/translation";
 import useBuilderStore from "@/stores/builderStore";
 import useCanvasStore from "@/stores/canvasStore";
-import { Badge, Button, Dropdown, KeyboardShortcut, Textarea, Tooltip } from "frappe-ui";
+import { Badge, Button, Dropdown, KeyboardShortcut, Textarea, Tooltip, useKeyboardShortcut } from "frappe-ui";
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from "vue";
 
 const chat = new AIChatController();
 
 const { prompt, isSubmitting, isCancelling, messages, modelLabel, canSubmit, credits } = chat;
+const { selectedEffort, contextUsage, queuedNotes, sentPrompts } = chat;
 const { isEditingPage } = chat;
 const { selectedModelUnusable } = chat;
 const { progressMessage } = chat;
@@ -495,10 +561,10 @@ const { imagePreviewUrl, imageFileName, isDragging, isVisionModel } = chat;
 const { clearImage, attachImageFile } = chat;
 
 const confirmingAction = ref(false);
-async function confirmPendingAction(message: ChatMessage, decision: "apply" | "skip") {
+async function confirmPendingAction(message: ChatMessage, decision: "apply" | "skip", skip: string[] = []) {
 	confirmingAction.value = true;
 	try {
-		await chat.confirmPendingAction(message, decision);
+		await chat.confirmPendingAction(message, decision, skip);
 	} finally {
 		confirmingAction.value = false;
 	}
@@ -544,7 +610,7 @@ const APPLY_LABELS: Record<string, string> = {
 	home_page: "Set home page",
 	global_settings: "Apply",
 };
-const applyLabel = (kind?: string) => APPLY_LABELS[kind || ""] || "Apply";
+const applyLabel = (m: Record<string, any> = {}) => APPLY_LABELS[m.kind || ""] || "Apply";
 const builderStore = useBuilderStore();
 const canvasStore = useCanvasStore();
 
@@ -556,7 +622,8 @@ const lastMessageId = computed(() => messages.value.at(-1)?.id ?? null);
  * the model-facing summary, and the card already asks the question in human terms;
  * rendering both put the same ask on screen twice, once in jargon. */
 function assistantText(message: ChatMessage): string {
-	if (message.metadata?.status === "pending_action") return "";
+	// a page card's text is for the model; its rows say it for the user
+	if (message.metadata?.status === "pending_action" || message.metadata?.kind === "page_changes") return "";
 	return message.metadata?.status === "ui" ? (message.metadata?.text ?? message.content) : message.content;
 }
 
@@ -570,6 +637,23 @@ function stillWorking(message: ChatMessage): boolean {
 	if (!isSubmitting.value || message.id !== lastMessageId.value) return false;
 	if (message.metadata?.status !== "running") return false;
 	return !(message.metadata.steps || []).some((step: AITurnStep) => step.status === "running");
+}
+
+/** This tab's turn, still running: a build line moves with it. */
+function turnRunning(message: ChatMessage): boolean {
+	return isSubmitting.value && message.id === lastMessageId.value && message.metadata?.status === "running";
+}
+
+/** A turn's snapshot restores onto its own page, and a chat goes on across pages. */
+function canRevert(message: ChatMessage): boolean {
+	const page = message.metadata?.pageId;
+	return !!message.metadata?.revertSnapshot && (!page || page === chat.pageId.value);
+}
+
+/** The page a message was sent from, when that's not the page open now. */
+function sentFrom(message: ChatMessage): { page_id: string; title: string } | null {
+	const page = message.metadata?.page;
+	return page?.page_id && page.page_id !== chat.pageId.value ? page : null;
 }
 
 /** The reply a card was answered with: the user message right after it. That
@@ -586,6 +670,8 @@ function replyTo(message: ChatMessage): string | undefined {
  * button, an unlabelled question) is left to speak for itself. */
 const visibleMessages = computed(() =>
 	messages.value.filter((message, i) => {
+		// the outcome of a page card, which the card itself shows
+		if (message.metadata?.card) return false;
 		if (message.role !== "user") return true;
 		const card = messages.value[i - 1]?.metadata;
 		if (card?.status !== "ui" || !card?.ui?.length) return true;
@@ -795,12 +881,21 @@ const bob: BobContext = {
 onUnmounted(registerBobCommands(bob));
 // runs the open level's cleanup, like a sign-in still polling
 onUnmounted(menu.close);
+// the composer stops its own Escape, so this only hears one pressed after focus left it
+useKeyboardShortcut({
+	combo: "Escape",
+	description: __("Close Bob's Menu"),
+	group: __("General"),
+	enabled: () => menuOpen.value && builderStore.leftPanelActiveTab === "Chat",
+	handler: (event) => menu.onKeydown(event),
+});
 
-const composerPlaceholder = computed(() =>
-	menuLevel.value && !menuLevel.value.input
-		? "Type to filter"
-		: "Ask to create or edit this page, or type / for commands",
-);
+const composerPlaceholder = computed(() => {
+	if (menuLevel.value && !menuLevel.value.input) return "Type to filter";
+	if (isSubmitting.value && queuedNotes.value.length) return "Press ↑ to edit what Bob hasn't read";
+	if (isSubmitting.value) return "Tell Bob something while it works";
+	return "Ask to create or edit this page, or type / for commands";
+});
 
 // a key or URL is typed into a field inside the menu; hand focus back after
 watch(menuLevel, (level) => {
@@ -810,7 +905,8 @@ watch(menuLevel, (level) => {
 const submitPrompt = () => {
 	// while the menu is open, the prompt is a "/" command or a filter, not a message
 	if (menuOpen.value) return;
-	chat.submitPrompt();
+	if (isSubmitting.value) chat.steer();
+	else chat.submitPrompt();
 };
 
 // Enter sends. Shift+Enter is the textarea default (newline), .exact skips it.
@@ -818,6 +914,32 @@ const onEnter = (event: KeyboardEvent) => {
 	if (event.isComposing) return;
 	event.preventDefault();
 	submitPrompt();
+};
+
+const sendNotesNow = () => chat.steer(true);
+
+// Mod+Enter while Bob works sends the draft and every queued note straight away
+const onSendNow = (event: KeyboardEvent) => {
+	if (event.isComposing || event.defaultPrevented) return;
+	event.preventDefault();
+	if (isSubmitting.value) sendNotesNow();
+	else submitPrompt();
+};
+
+const history = usePromptHistory(prompt, () => sentPrompts.value);
+
+// Up first takes back what Bob hasn't read yet, then steps through earlier prompts
+const onArrow = (event: KeyboardEvent) => {
+	const el = event.target;
+	if (event.isComposing || event.defaultPrevented || menuOpen.value) return;
+	if (!(el instanceof HTMLTextAreaElement)) return;
+	const up = event.key === "ArrowUp";
+	if (up && queuedNotes.value.length && caretAtEdge(el, true)) {
+		event.preventDefault();
+		chat.takeBackNotes();
+	} else if (history.step(up, el)) {
+		event.preventDefault();
+	}
 };
 
 const messageContainer = ref<HTMLElement | null>(null);

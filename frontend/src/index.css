@@ -98,8 +98,9 @@ p:empty::before {
 }
 
 /* surface-base resolves to dark-gray-950 (#171717); pin it to the deeper
-   gray-950 (#0f0f0f) in dark mode for a darker base/page background. */
-[data-theme='dark'] .bg-surface-base {
+   gray-950 (#0f0f0f) in dark mode for a darker base/page background. A ticked
+   checkbox keeps its fill: :where adds no specificity, so the dialog rule below still wins. */
+[data-theme='dark'] .bg-surface-base:not(:where(:checked, :indeterminate)) {
 	background-color: var(--gray-950);
 }
 
