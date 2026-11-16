@@ -14,6 +14,7 @@ no_cache = 1
 def get_context(context):
 	context.builder_path = get_builder_path()
 	context.boot = get_boot()
+	context.fp = get_editor_boot()
 	if demo := EditorDemo.from_app_path(frappe.form_dict.app_path):
 		# no csrf token or session details: the demo must stay inert for signed-in visitors too
 		demo.set_context(context)
@@ -47,6 +48,15 @@ def get_boot() -> dict:
 		# content blockers stop the Pulse client, so onboarding reads the server's verdict instead
 		"telemetry_enabled": is_telemetry_enabled(),
 	}
+
+
+def get_editor_boot() -> dict:
+	"""What hosting apps tell the editor, merged in hook order. frappe.page sets `mount` when it
+	serves the editor under a path prefix; with no hook the dict is empty and nothing changes."""
+	boot = {}
+	for method in frappe.get_hooks("builder_editor_boot"):
+		boot.update(frappe.get_attr(method)() or {})
+	return boot
 
 
 def get_cloud_settings() -> dict:

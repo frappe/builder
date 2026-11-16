@@ -11,6 +11,7 @@
 		<div id="app"></div>
 		<div id="popovers"></div>
 		<script type="application/json" id="editor-demo">{% if editor_demo %}{{ editor_demo | tojson }}{% endif %}</script>
+		<script type="application/json" id="fp-boot">{{ fp | tojson }}</script>
 
 		<script>
 			window.csrf_token = "{{ csrf_token }}";
@@ -21,6 +22,54 @@
 			window.is_fc_site = "{{ is_fc_site }}";
 			window.is_developer_mode = "{{ is_developer_mode }}";
 			window.is_read_only_mode = "{{ is_read_only_mode }}";
+		</script>
+		<script>
+			// frappe.page serves the editor under a path of its app host (fp.mount, such as /s/<sub>),
+			// and its edge strips that prefix. The bundle and frappe-ui call root-relative URLs (/api/...),
+			// so each same-origin request gets the prefix before it leaves. Without a mount nothing changes.
+			window.fp = (function () {
+				try {
+					return JSON.parse(document.getElementById("fp-boot").textContent) || {};
+				} catch (error) {
+					return {}; // the vite dev server serves this file without jinja
+				}
+			})();
+			(function (mount) {
+				if (!mount) return;
+				window.builder_path = mount + "/builder";
+
+				function mounted(url) {
+					let parsed;
+					try {
+						parsed = new URL(url, window.location.href);
+					} catch (error) {
+						return url;
+					}
+					const path = parsed.pathname;
+					const isMounted = path === mount || path.startsWith(mount + "/");
+					if (parsed.origin !== window.location.origin || isMounted || path.startsWith("/assets/")) return url;
+					return mount + path + parsed.search + parsed.hash;
+				}
+
+				const fetch = window.fetch;
+				window.fetch = function (input, init) {
+					if (input instanceof Request) {
+						const url = mounted(input.url);
+						return fetch(url === input.url ? input : new Request(url, input), init);
+					}
+					return fetch(mounted(String(input)), init);
+				};
+
+				const open = XMLHttpRequest.prototype.open;
+				XMLHttpRequest.prototype.open = function (method, url, ...rest) {
+					return open.call(this, method, mounted(String(url)), ...rest);
+				};
+
+				if (navigator.sendBeacon) {
+					const sendBeacon = navigator.sendBeacon.bind(navigator);
+					navigator.sendBeacon = (url, data) => sendBeacon(mounted(String(url)), data);
+				}
+			})(window.fp.mount);
 		</script>
 		<script type="module" src="/src/main.ts"></script>
 	</body>

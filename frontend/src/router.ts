@@ -3,6 +3,7 @@ import { ref } from "vue";
 import { NavigationGuardNext, RouteLocationNormalized, createRouter, createWebHistory } from "vue-router";
 import { __ } from "./translation";
 import { editorDemo } from "./utils/editorDemo";
+import { deskURL, loginURL } from "./utils/frappePage";
 
 let hasPermission: null | boolean = null;
 let sessionUser = ref("Guest");
@@ -13,9 +14,9 @@ function validatePermission(next: NavigationGuardNext) {
 	} else {
 		alert(__("You do not have permission to access this page"));
 		if (isUserLoggedIn()) {
-			window.location.href = "/app";
+			window.location.href = deskURL();
 		} else {
-			window.location.href = "/login?redirect-to=/builder";
+			window.location.href = loginURL();
 		}
 	}
 }

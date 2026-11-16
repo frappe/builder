@@ -4,7 +4,7 @@ from unittest.mock import patch
 import frappe
 from frappe.tests.utils import FrappeTestCase
 
-from builder.www._builder import get_context
+from builder.www._builder import get_context, get_editor_boot
 
 CLOUD_SETTINGS = "frappe.integrations.frappe_providers.cloud_settings"
 
@@ -34,3 +34,21 @@ class TestEditorPage(FrappeTestCase):
 		# a None entry makes the import fail, as it does on frappe v15
 		with patch.dict(sys.modules, {CLOUD_SETTINGS: None}):
 			self.assertEqual(self.editor_context(dev_server=0).boot["cloud_settings"], {"enabled": False})
+
+	def test_editor_boot_merges_the_hooks_in_order(self):
+		boots = {
+			"app_a.boot": lambda: {"mount": "/s/a", "live_origin": "http://a.example"},
+			"app_b.boot": lambda: {"live_origin": "http://b.example"},
+		}
+		with (
+			patch.object(frappe, "get_hooks", return_value=list(boots)),
+			patch.object(frappe, "get_attr", side_effect=boots.get),
+		):
+			self.assertEqual(get_editor_boot(), {"mount": "/s/a", "live_origin": "http://b.example"})
+
+	def test_editor_context_carries_the_boot(self):
+		with patch("builder.www._builder.get_editor_boot", return_value={"mount": "/s/a"}):
+			self.assertEqual(self.editor_context(dev_server=0).fp, {"mount": "/s/a"})
+		# with no hosting app the boot is empty, so the shell changes nothing
+		with patch.object(frappe, "get_hooks", return_value=[]):
+			self.assertEqual(get_editor_boot(), {})
