@@ -17,6 +17,7 @@ from builder.builder.tests.plugin_fixtures import (
 )
 from builder.plugins.app_plugins import sync_app_plugins
 from builder.plugins.constants import APP_PLUGINS_FINGERPRINT_KEY, ENTRY_FILE
+from builder.plugins.hub import assert_installable
 from builder.plugins.installations import get_installations, uninstall_plugin
 
 PLUGIN = "acme/bundled"
@@ -101,6 +102,18 @@ class TestAppPlugin(FrappeTestCase):
 		row = self.installed()
 		self.assertEqual(row.install_state, "Failed")
 		self.assertIn("bench build --app builder", row.install_error)
+
+	def test_lists_without_a_plugin_whose_manifest_is_invalid(self):
+		(self.module / "plugin" / "manifest.json").write_text("{")
+
+		self.assertNotIn(PLUGIN, [row["name"] for row in get_installations()])
+
+	def test_the_hub_cannot_take_a_failed_app_plugin(self):
+		shutil.rmtree(self.build)
+		sync_app_plugins()
+
+		with self.assertRaisesRegex(frappe.ValidationError, "already installed from builder"):
+			assert_installable(PLUGIN)
 
 	def test_drops_an_orphan_row(self):
 		sync_app_plugins()

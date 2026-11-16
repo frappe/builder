@@ -32,6 +32,8 @@ export const addPluginHook = (hooksPath, folder) => {
 		return;
 	}
 	if (match[1].includes(JSON.stringify(folder))) return;
+	// the list is written again on one line, so a comment in it would swallow the items after it
+	if (match[1].includes("#")) fail(`add ${JSON.stringify(folder)} to builder_plugins in ${hooksPath}`);
 	const items = match[1].trim().replace(/,$/, "");
 	const list = items ? `${items}, ${JSON.stringify(folder)}` : JSON.stringify(folder);
 	fs.writeFileSync(hooksPath, source.replace(HOOK_PATTERN, `builder_plugins = [${list}]`));

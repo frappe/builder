@@ -103,10 +103,8 @@ def open_archive(package_bytes: bytes) -> zipfile.ZipFile:
 def read_entries(archive: zipfile.ZipFile) -> dict[str, zipfile.ZipInfo]:
 	"""Every entry, checked and keyed by its normalized path. No two share a path."""
 	infos = archive.infolist()
-	if len(infos) > MAX_PACKAGE_FILES:
-		frappe.throw(_("The package holds more than {0} files.").format(MAX_PACKAGE_FILES))
+	assert_package_size([info.file_size for info in infos if not info.is_dir()])
 
-	extracted = 0
 	entries: dict[str, zipfile.ZipInfo] = {}
 	for info in infos:
 		# a ZIP tool adds an entry for each folder. The files inside carry the paths
@@ -115,12 +113,16 @@ def read_entries(archive: zipfile.ZipFile) -> dict[str, zipfile.ZipInfo]:
 
 		path = normalized_path(info.filename)
 		assert_safe_entry(info, path, entries)
-
-		extracted += info.file_size
-		if extracted > MAX_EXTRACTED_BYTES:
-			frappe.throw(_("The package unpacks to more than Builder allows."))
 		entries[path] = info
 	return entries
+
+
+def assert_package_size(sizes: list[int]) -> None:
+	"""Checks the file sizes before any file is read."""
+	if len(sizes) > MAX_PACKAGE_FILES:
+		frappe.throw(_("The package holds more than {0} files.").format(MAX_PACKAGE_FILES))
+	if sum(sizes) > MAX_EXTRACTED_BYTES:
+		frappe.throw(_("The package unpacks to more than Builder allows."))
 
 
 def assert_safe_entry(info: zipfile.ZipInfo, path: str, seen: dict) -> None:

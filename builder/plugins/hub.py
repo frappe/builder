@@ -318,7 +318,8 @@ def assert_installable(name: str) -> None:
 	plugins, a bad name, or a name the site already has installed or
 	installing.
 
-	A `Failed` row is not a block, so the panel's Retry starts a fresh job on it.
+	A `Failed` row is not a block, so the panel's Retry starts a fresh job on it. A row
+	that comes with an app is, as its build fixes it.
 	Nor is an `Installing` row whose job is gone: a crashed worker cannot mark the
 	row itself. While the job is queued or running, a retry would start a second
 	job on the same row, and the one that ends last would win.
@@ -337,7 +338,7 @@ def assert_installable(name: str) -> None:
 	)
 	if row.install_state == "Installing" and is_job_enqueued(install_job_id(existing)):
 		frappe.throw(_('"{0}" is already installing.').format(name))
-	if row.install_state not in ("Failed", "Installing"):
+	if row.source == "App" or row.install_state not in ("Failed", "Installing"):
 		frappe.throw(_('"{0}" is already installed from {1}.').format(name, describe_source(row)))
 
 

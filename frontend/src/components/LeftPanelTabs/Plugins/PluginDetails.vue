@@ -76,7 +76,8 @@
 
 				<div v-else-if="isFailed" class="flex flex-col gap-2">
 					<p class="text-p-sm text-ink-red-6">{{ details.install_error || "The install did not finish." }}</p>
-					<div v-if="canManagePlugins" class="flex gap-2">
+					<!-- an app plugin's build fixes it, so neither action applies -->
+					<div v-if="canManagePlugins && details.source !== 'App'" class="flex gap-2">
 						<Button
 							variant="solid"
 							size="sm"
@@ -133,7 +134,7 @@
 				<div class="flex flex-col gap-1 border-t border-outline-gray-1 pt-4 text-xs text-ink-gray-5">
 					<p v-if="!isInstalled">{{ details.repository_url || "From the Builder Hub" }}</p>
 					<p v-else-if="details.is_development">Served by {{ details.development_server }}</p>
-					<template v-else-if="isReady">
+					<template v-else-if="isReady || details.source === 'App'">
 						<p v-if="details.source === 'Hub'">{{ details.hub_url }}</p>
 						<p v-else-if="details.source === 'App'">Comes with {{ details.source_app }}</p>
 						<p>Installed on {{ installedOn }}</p>

@@ -15,7 +15,7 @@ plugin's row is made to match the build on disk. The Hub plays no part.
 """
 
 import hashlib
-import json
+from contextlib import contextmanager
 from functools import cached_property
 from pathlib import Path
 
@@ -24,7 +24,7 @@ from frappe import _
 
 from builder.plugins.access import INSTALLATION_DOCTYPE, find_installation
 from builder.plugins.constants import APP_PLUGINS_FINGERPRINT_KEY, ENTRY_FILE, MANIFEST_FILE
-from builder.plugins.package import ValidatedPackage, validate_files
+from builder.plugins.package import ValidatedPackage, assert_package_size, parse_manifest, validate_files
 
 BUILDS_FOLDER = "builder_plugins"
 # in Builder Hub's order: DESCRIPTION.md is for users, README.md for developers
@@ -51,7 +51,16 @@ class AppPlugin:
 	@cached_property
 	def project_manifest(self) -> dict:
 		"""The project's own manifest, so a plugin with no build yet still has a row that says so."""
-		return json.loads((self.project_path / MANIFEST_FILE).read_text())
+		return parse_manifest((self.project_path / MANIFEST_FILE).read_bytes())
+
+	@cached_property
+	def has_valid_manifest(self) -> bool:
+		try:
+			with muted_messages():
+				self.project_manifest
+		except (OSError, frappe.ValidationError):
+			return False
+		return True
 
 	@property
 	def name(self) -> str:
@@ -86,13 +95,11 @@ class AppPlugin:
 		if not (self.build_path / MANIFEST_FILE).is_file():
 			raise frappe.ValidationError(_("Not built. Run bench build --app {0}.").format(self.app))
 		files = sorted(file for file in self.build_path.rglob("*") if file.is_file())
-		muted, frappe.flags.mute_messages = frappe.flags.mute_messages, True
-		try:
+		with muted_messages():
+			assert_package_size([file.stat().st_size for file in files])
 			return validate_files(
 				{file.relative_to(self.build_path).as_posix(): file.read_bytes() for file in files}
 			)
-		finally:
-			frappe.flags.mute_messages = muted
 
 	@property
 	def values(self) -> dict:
@@ -144,6 +151,16 @@ class AppPlugin:
 		return True
 
 
+@contextmanager
+def muted_messages():
+	"""The panel shows a plugin's error on its row, so the list request shows no message."""
+	muted, frappe.flags.mute_messages = frappe.flags.mute_messages, True
+	try:
+		yield
+	finally:
+		frappe.flags.mute_messages = muted
+
+
 def get_stat(file: Path) -> tuple[int, int] | None:
 	try:
 		stat = file.stat()
@@ -168,7 +185,9 @@ def get_plugin_folders(app: str) -> list[str]:
 
 
 def get_app_plugins(app: str) -> list[AppPlugin]:
-	return [AppPlugin(app, folder) for folder in get_plugin_folders(app)]
+	"""Leaves out a plugin with a missing or invalid manifest. Its own build fails on it and says why."""
+	plugins = [AppPlugin(app, folder) for folder in get_plugin_folders(app)]
+	return [plugin for plugin in plugins if plugin.has_valid_manifest]
 
 
 def find_app_plugin(app: str, plugin: str) -> AppPlugin | None:
