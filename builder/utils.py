@@ -52,6 +52,12 @@ def get_builder_path() -> str:
 	return frappe.conf.builder_path or "builder"
 
 
+def is_mounted() -> bool:
+	"""Whether this request is a frappe.page tenant editor, which the edge serves under /s/<sub>/ and marks
+	with X-FP-Mount (the edge always overwrites the header, so a client cannot set it)."""
+	return bool(frappe.get_request_header("X-FP-Mount"))
+
+
 def get_installed_app_path(app_name) -> str | None:
 	"""Path of an installed app, or None if it is unset or not installed.
 

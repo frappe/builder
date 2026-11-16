@@ -39,6 +39,7 @@ from builder.export_import_standard_page import export_page_as_standard
 from builder.html_preview_image import generate_preview
 from builder.template_sync import delete_template_page_fixture, export_template_group
 from builder.utils import (
+	is_mounted,
 	ColonRule,
 	camel_case_to_kebab_case,
 	clean_data,
@@ -1877,6 +1878,10 @@ def get_web_pages_with_dynamic_routes() -> list[dict]:
 
 
 def resolve_path(path):
+	# under frappe.page the editor path always opens the editor: a tenant page routed builder/* or :slug
+	# must never render in its place on the app host
+	if is_mounted() and (editor := resolve_editor_path(path)):
+		return editor
 	try:
 		if find_page_with_path(path):
 			return path

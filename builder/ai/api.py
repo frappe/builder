@@ -529,6 +529,7 @@ def add_ai_model(provider: str, model_id: str):
 @has_page_write()
 def start_codex_login():
 	"""Begin a ChatGPT sign-in: the code to show, the page to enter it on, and the state to poll."""
+	_refuse_codex_when_mounted()
 	from builder.ai import codex_login
 	from builder.ai.codex import CodexError
 
@@ -542,6 +543,7 @@ def start_codex_login():
 @has_page_write()
 def poll_codex_login(state: str):
 	"""Where a ChatGPT sign-in stands: pending, approved, connected (with its models), failed or expired."""
+	_refuse_codex_when_mounted()
 	from builder.ai import codex_login
 	from builder.ai.codex import CodexError
 
@@ -705,3 +707,11 @@ def get_active_build(page_id: str):
 
 	raw = frappe.cache().get_value(stream_buffer_key(page_id))
 	return frappe.parse_json(raw) if raw else None
+
+
+def _refuse_codex_when_mounted():
+	"""frappe.page gives tenants operator-managed AI; a ChatGPT plan login must not be stored on a shared host."""
+	from builder.utils import is_mounted
+
+	if is_mounted():
+		frappe.throw(_("ChatGPT sign-in is not available on this site."), frappe.PermissionError)
