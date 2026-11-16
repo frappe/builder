@@ -28,11 +28,13 @@ npx frappe-builder-plugin-sdk create --app apps/my_app
 The command writes the project into the app's source folder, for example `apps/my_app/my_app/seo-tools`. Then it changes two files of the app:
 
 - `hooks.py` gets `builder_plugins = ["seo-tools"]`. This hook tells Builder which folders hold plugins.
-- The root `package.json` gets a `build:seo-tools` script, and `build` runs it. `bench build` runs the root `build` script, so it also builds the plugin into `dist/`.
+- The root `package.json` gets a `build:seo-tools` script, and `build` runs it. `bench build` runs the root `build` script, so it also builds the plugin.
+
+The build goes into `my_app/public/builder_plugins/seo-tools`, and the app's `.gitignore` gets that folder. So the build ships as the app's other assets do, and `/assets/my_app/` serves it.
 
 To use a different folder name, give it after `--app`: `create --app apps/my_app seo`.
 
-Commit the project, but not `dist/`. Builder installs the plugin disabled when the app installs, so a manager approves it before it runs. Builder applies each new build after `bench build` and on `bench migrate`. It removes the plugin when the app is uninstalled. An app's plugin does not use Builder Hub, so the project has no release workflow.
+Commit the project, but not the build. When the editor opens, Builder lists the plugin from the build that the app ships. A new plugin starts disabled, so a manager approves it before it runs. A new build applies on the next editor load. The plugin goes when the app is uninstalled. An app's plugin does not use Builder Hub, so the project has no release workflow.
 
 ## The entry module
 

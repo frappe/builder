@@ -83,7 +83,7 @@ try {
 		console.log(`  cd ${JSON.stringify(created.directory)}`);
 		console.log("  yarn install");
 		console.log("  yarn dev");
-		console.log("\nbench build builds it, and Builder installs it with the app.");
+		console.log("\nbench build builds it. Builder lists it when the editor opens.");
 	} else {
 		const created = createPlugin(await promptForCreateOptions(options));
 		console.log(`\nCreated ${created.pluginId} in ${created.directory}`);

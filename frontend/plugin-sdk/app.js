@@ -6,6 +6,8 @@ import process from "node:process";
 import { createPlugin, slugify } from "./create.js";
 
 const HOOKS_FILE = "hooks.py";
+/** Under the module's `public` folder, so the build ships and is served as the app's other assets are. */
+const BUILDS_FOLDER = "public/builder_plugins";
 const HOOK_PATTERN = /^builder_plugins\s*=\s*\[([^\]]*)\]/m;
 
 const fail = (message) => {
@@ -51,6 +53,22 @@ export const addBuildScript = (packagePath, projectPath, folder) => {
 	fs.writeFileSync(packagePath, `${JSON.stringify(manifest, null, indent)}\n`);
 };
 
+/** Vite writes the build outside the project, so it must also be told to empty the folder first. */
+export const setBuildFolder = (configPath, folder) => {
+	const source = fs.readFileSync(configPath, "utf8");
+	const build = `\tbuild: { outDir: "../${BUILDS_FOLDER}/${folder}", emptyOutDir: true },\n`;
+	fs.writeFileSync(configPath, source.replace("\tplugins: [", `${build}\tplugins: [`));
+};
+
+/** The build is not committed. Prebuilt asset archives carry the ignored files under `public`. */
+export const ignoreBuilds = (gitignorePath, module) => {
+	const line = `${module}/${BUILDS_FOLDER}/`;
+	const source = fs.existsSync(gitignorePath) ? fs.readFileSync(gitignorePath, "utf8") : "";
+	if (source.split("\n").includes(line)) return;
+	const separator = source && !source.endsWith("\n") ? "\n" : "";
+	fs.writeFileSync(gitignorePath, `${source}${separator}${line}\n`);
+};
+
 export const createAppPlugin = ({ app, directory, cwd = process.cwd(), ...options }) => {
 	const appRoot = path.resolve(cwd, app);
 	const module = findAppModule(appRoot);
@@ -63,6 +81,8 @@ export const createAppPlugin = ({ app, directory, cwd = process.cwd(), ...option
 		initializeGit: false,
 		releaseWorkflow: false,
 	});
+	setBuildFolder(path.join(created.directory, "vite.config.ts"), folder);
+	ignoreBuilds(path.join(appRoot, ".gitignore"), module);
 	addPluginHook(path.join(appRoot, module, HOOKS_FILE), folder);
 	addBuildScript(path.join(appRoot, "package.json"), `${module}/${folder}`, folder);
 	return { ...created, app: appRoot, folder };
