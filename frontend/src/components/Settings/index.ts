@@ -2,6 +2,7 @@ import { createRegistry, type RegistryItem } from "@/utils/createRegistry";
 import { defineAsyncComponent, type Component } from "vue";
 import { __ } from "@/translation";
 import { isCloudBillingAvailable } from "@/composables/useCloudBilling";
+import { isMounted } from "@/utils/frappePage";
 
 export type SettingsGroup = "Current Page" | "Global";
 
@@ -115,10 +116,14 @@ const panes: SettingsPane[] = [
 		title: __("Custom Domains"),
 		icon: "lucide-globe",
 		group: "Global",
-		load: () => import("@/components/Settings/GlobalDomains.vue"),
+		// frappe.page adds and verifies domains on its own dashboard
+		load: () =>
+			isMounted
+				? import("@/components/Settings/FrappePageDomains.vue")
+				: import("@/components/Settings/GlobalDomains.vue"),
 		// the boot data renders the Python bool, so "False" is a truthy string.
 		// v2 sites show Cloud Settings' Domains panel below instead.
-		condition: () => window.is_fc_site === "True" && !isCloudBillingAvailable.value,
+		condition: () => isMounted || (window.is_fc_site === "True" && !isCloudBillingAvailable.value),
 	},
 	{
 		name: "global_cloud_domains",
@@ -127,7 +132,7 @@ const panes: SettingsPane[] = [
 		icon: "lucide-globe",
 		group: "Global",
 		load: () => import("@/components/Settings/GlobalCloudDomains.vue"),
-		condition: () => isCloudBillingAvailable.value,
+		condition: () => !isMounted && isCloudBillingAvailable.value,
 		bare: true,
 	},
 	{
