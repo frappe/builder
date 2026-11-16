@@ -5,8 +5,9 @@ import type { DropdownGroupOption } from "frappe-ui";
 import { computed, h } from "vue";
 
 /**
- * The app menu's frappe.page part, shared by the dashboard sidebar and the page editor: a picker of the
- * user's sites (only when there is more than one), New Site and Sign Out. Empty for stock Builder.
+ * The app menu's frappe.page part, shared by the dashboard sidebar and the page editor: a Sites submenu (the
+ * user's sites, the current one checked, then New Site), so a long list never pushes the rest of the menu down,
+ * and Sign Out. Empty for stock Builder.
  */
 export function useFrappePageMenu() {
 	const { session, signOut } = useFrappePageSite();
@@ -14,17 +15,28 @@ export function useFrappePageMenu() {
 	const sitesGroup = computed<DropdownGroupOption[]>(() => {
 		if (!isMounted) return [];
 		const sites = session.value?.sites ?? [];
-		const picker = sites.length > 1 ? sites.map(siteOption) : [];
 		return [
 			{
 				group: __("Sites"),
-				hideLabel: !picker.length,
+				hideLabel: true,
 				options: [
-					...picker,
 					{
-						label: __("New Site"),
-						icon: "lucide-plus",
-						onClick: () => (window.location.href = appURL("/onboarding")),
+						label: __("Sites"),
+						icon: "lucide-globe",
+						submenu: [
+							...(sites.length ? [{ group: __("Your sites"), options: sites.map(siteOption) }] : []),
+							{
+								group: __("New"),
+								hideLabel: true,
+								options: [
+									{
+										label: __("New Site"),
+										icon: "lucide-plus",
+										onClick: () => (window.location.href = appURL("/onboarding")),
+									},
+								],
+							},
+						],
 					},
 				],
 			},
