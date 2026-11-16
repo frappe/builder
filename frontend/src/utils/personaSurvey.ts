@@ -10,13 +10,14 @@ import type { RouteLocationNormalized, RouteLocationRaw } from "vue-router";
 const PENDING_KEY = "builder_persona_survey_pending";
 // the Pulse client loads from a remote script, and a content blocker can stop it for good
 const CLIENT_WAIT_MS = 30_000;
-// Builder Settings starts loading with the app, so the home route mostly finds it loaded already.
-// A load slower than this opens the dashboard, and the survey waits for the next visit.
+// Only the vite dev server, which renders no boot data, asks Builder Settings. A load slower than
+// this opens the dashboard, and the survey shows the next time the user opens it.
 const SETTINGS_WAIT_MS = 3_000;
 
 declare global {
 	interface Window {
 		telemetry_enabled?: boolean;
+		persona_survey_done?: boolean;
 	}
 }
 
@@ -31,9 +32,20 @@ export async function personaSurveyRedirect(
 	const forced = to.query.persona_survey === "test";
 	if (!isCloudSite() && !forced) return;
 	if (!user || user === "Guest") return;
-	const settings = await loadedBuilderSettings();
-	if (!settings || (settings.persona_survey_done && !forced)) return;
+	if (!forced && (await isPersonaSurveyDone())) return;
 	return { name: "persona-survey", query: forced ? { persona_survey: "test" } : {} };
+}
+
+// Leaving the questions settles the survey, so the guard lets the user through from now on.
+// A failed save must never block the user from moving on.
+export function markPersonaSurveyDone() {
+	window.persona_survey_done = true;
+	// the survey can open before Builder Settings has loaded, and its resource can't save until then
+	call("frappe.client.set_value", {
+		doctype: "Builder Settings",
+		name: "Builder Settings",
+		fieldname: { persona_survey_done: 1 },
+	}).catch((e: unknown) => console.error("[persona-survey] failed to persist", e));
 }
 
 export function submitPersonaSurvey(answers: PersonaAnswers) {
@@ -82,6 +94,13 @@ function save(answers: PersonaAnswers) {
 // is_fc_site reads a key only Frappe Cloud V1 sites have, and V2 sites carry Cloud Settings instead
 function isCloudSite() {
 	return window.is_fc_site === "True" || Boolean(window.cloud_settings?.enabled) || isMounted;
+}
+
+// The page renders the flag as it stood on load, so the guard decides with no request.
+async function isPersonaSurveyDone() {
+	if (window.persona_survey_done !== undefined) return window.persona_survey_done;
+	const settings = await loadedBuilderSettings();
+	return !settings || Boolean(settings.persona_survey_done);
 }
 
 // The server's copy: the one cached in this browser still says "not done" after the survey, as a save
