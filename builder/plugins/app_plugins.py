@@ -16,13 +16,14 @@ plugin's row is made to match the build on disk. The Hub plays no part.
 
 import hashlib
 import json
+from functools import cached_property
 from pathlib import Path
 
 import frappe
 from frappe import _
 
 from builder.plugins.access import INSTALLATION_DOCTYPE, find_installation
-from builder.plugins.constants import ENTRY_FILE, MANIFEST_FILE
+from builder.plugins.constants import APP_PLUGINS_FINGERPRINT_KEY, ENTRY_FILE, MANIFEST_FILE
 from builder.plugins.package import ValidatedPackage, validate_files
 
 BUILDS_FOLDER = "builder_plugins"
@@ -46,9 +47,22 @@ class AppPlugin:
 	def __init__(self, app: str, folder: str):
 		self.app = app
 		self.folder = folder
-		# the project's own manifest, so a plugin with no build yet still has a row that says so
-		self.project_manifest = json.loads((self.project_path / MANIFEST_FILE).read_text())
-		self.name = self.project_manifest["name"]
+
+	@cached_property
+	def project_manifest(self) -> dict:
+		"""The project's own manifest, so a plugin with no build yet still has a row that says so."""
+		return json.loads((self.project_path / MANIFEST_FILE).read_text())
+
+	@property
+	def name(self) -> str:
+		return self.project_manifest["name"]
+
+	@property
+	def fingerprint(self) -> list:
+		"""Changes with each build, as a build writes its manifest again. Reads no file."""
+		files = [self.build_path / MANIFEST_FILE, self.project_path / MANIFEST_FILE]
+		files += [self.project_path / name for name in README_FILES]
+		return [(str(file), get_stat(file)) for file in files]
 
 	@property
 	def project_path(self) -> Path:
@@ -130,6 +144,14 @@ class AppPlugin:
 		return True
 
 
+def get_stat(file: Path) -> tuple[int, int] | None:
+	try:
+		stat = file.stat()
+	except FileNotFoundError:
+		return None
+	return stat.st_mtime_ns, stat.st_size
+
+
 def get_checksum(package: ValidatedPackage) -> str:
 	digest = hashlib.sha256()
 	for path, content in package.files.items():
@@ -156,13 +178,26 @@ def find_app_plugin(app: str, plugin: str) -> AppPlugin | None:
 def sync_app_plugins() -> None:
 	"""Make each app plugin's row match its build, and drop the rows of plugins no installed app ships.
 
-	The editor's list is a GET, which Frappe rolls back. So a write asks Frappe to commit.
+	It skips all of that while no plugin file changed since the last sync. The editor's list
+	is a GET, which Frappe rolls back. So a write asks Frappe to commit, and the fingerprint
+	is kept only after that commit.
 	"""
 	plugins = [plugin for app in frappe.get_installed_apps() for plugin in get_app_plugins(app)]
+	fingerprint = get_fingerprint(plugins)
+	if frappe.cache.get_value(APP_PLUGINS_FINGERPRINT_KEY) == fingerprint:
+		return
 	changed = [plugin.sync() for plugin in plugins]
 	dropped = drop_unshipped_rows([plugin.name for plugin in plugins])
+	keep = lambda: frappe.cache.set_value(APP_PLUGINS_FINGERPRINT_KEY, fingerprint)  # noqa: E731
 	if any(changed) or dropped:
 		frappe.local.flags.commit = True
+		frappe.db.after_commit.add(keep)
+	else:
+		keep()
+
+
+def get_fingerprint(plugins: list[AppPlugin]) -> str:
+	return hashlib.sha256(repr([plugin.fingerprint for plugin in plugins]).encode()).hexdigest()
 
 
 def drop_unshipped_rows(shipped: list[str]) -> bool:

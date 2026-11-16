@@ -16,7 +16,7 @@ from builder.builder.tests.plugin_fixtures import (
 	make_installation,
 )
 from builder.plugins.app_plugins import sync_app_plugins
-from builder.plugins.constants import ENTRY_FILE
+from builder.plugins.constants import APP_PLUGINS_FINGERPRINT_KEY, ENTRY_FILE
 from builder.plugins.installations import get_installations, uninstall_plugin
 
 PLUGIN = "acme/bundled"
@@ -27,6 +27,7 @@ class TestAppPlugin(FrappeTestCase):
 	def setUp(self):
 		drop_installations(PLUGIN)
 		self.addCleanup(drop_installations, PLUGIN)
+		frappe.cache.delete_value(APP_PLUGINS_FINGERPRINT_KEY)
 		self.module = Path(tempfile.mkdtemp())
 		self.addCleanup(shutil.rmtree, self.module, ignore_errors=True)
 		self.build = self.module / "public" / "builder_plugins" / "plugin"

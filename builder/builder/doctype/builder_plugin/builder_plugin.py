@@ -11,6 +11,7 @@ from frappe.model.document import Document
 from frappe.utils import get_files_path, now
 
 from builder.plugins.constants import (
+	APP_PLUGINS_FINGERPRINT_KEY,
 	CHECKSUM_PATTERN,
 	ENTRY_FILE,
 	ICON_PATTERN,
@@ -73,6 +74,8 @@ class BuilderPlugin(Document):
 
 	def on_trash(self):
 		self.delete_plugin_state()
+		# an app plugin may wait for this name, so the next list syncs again
+		frappe.cache.delete_value(APP_PLUGINS_FINGERPRINT_KEY)
 		# the rows roll back with a failed delete, and files would not
 		frappe.db.after_commit.add(self.delete_plugin_files)
 
