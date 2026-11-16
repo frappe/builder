@@ -46,6 +46,10 @@ def get_boot() -> dict:
 		"cloud_settings": get_cloud_settings(),
 		# content blockers stop the Pulse client, so onboarding reads the server's verdict instead
 		"telemetry_enabled": is_telemetry_enabled(),
+		# the home route decides on the persona survey with this, before the settings request lands
+		"persona_survey_done": bool(
+			frappe.get_cached_value("Builder Settings", "Builder Settings", "persona_survey_done")
+		),
 	}
 
 
