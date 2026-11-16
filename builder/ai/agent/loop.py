@@ -61,6 +61,7 @@ from builder.ai.prompts import Prompts
 from builder.ai.session import AISession
 from builder.ai.skills import Skills
 from builder.ai.snapshots import capture_page_state, save_revert_snapshot
+from builder.ai.turns import TurnQueue
 
 logger = frappe.logger("builder.ai.agent.loop")
 logger.setLevel(logging.INFO)
@@ -376,8 +377,11 @@ class AgentRunner:
 		effort: str | None = None,
 		registry: ToolRegistry | None = None,
 		system_prompt: str | None = None,
+		turn_ticket: str | None = None,
 	):
 		self.prompt = prompt
+		# the site's slot for this turn (builder/ai/turns.py), until the job ends or hands it on
+		self.turn_ticket = turn_ticket
 		self.model = model
 		self.api_key = api_key
 		self.user = user or frappe.session.user
@@ -1681,7 +1685,9 @@ class AgentRunner:
 		if self.next_builds:
 			from builder.ai.api import queue_page_build
 
-			queue_page_build(self.session_id, self.next_builds, self.user)
+			# the next build takes over this turn's slot, so a busy site can't break the chain
+			if queue_page_build(self.session_id, self.next_builds, self.user, self.turn_ticket):
+				self.turn_ticket = None
 
 	def maybe_name_session(self) -> None:
 		"""The first completed turn names the chat: a short generated title reads
@@ -1836,7 +1842,12 @@ class AgentRunner:
 		return " ".join(parts)
 
 
-def run_agent_job(prompt: str, model: str, **kwargs):
+def run_agent_job(prompt: str, model: str, turn_ticket: str | None = None, **kwargs):
 	# Resolved here so the key never sits in Redis; jobs queued by older code still pass one.
 	kwargs.pop("api_key", None)
-	AgentRunner(prompt, model, llm.resolve_api_key(model), **kwargs).run()
+	runner = None
+	try:
+		runner = AgentRunner(prompt, model, llm.resolve_api_key(model), turn_ticket=turn_ticket, **kwargs)
+		runner.run()
+	finally:
+		TurnQueue.release(runner.turn_ticket if runner else turn_ticket)

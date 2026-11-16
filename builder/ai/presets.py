@@ -137,21 +137,21 @@ def get_site_ai_key(fresh: bool = False) -> dict | None:
 
 
 def sync_site_provider() -> None:
-	"""Keep the Frappe provider in step with site config: on with its gateway while
-	`ai_keys` has a key, off when it has none. Site config keeps the key itself.
-	A newly registered provider also lists its models and sets the default model.
-	Frappe Cloud can add the key after install, so without the provider the config
-	files are read past the request cache."""
+	"""Keep the Frappe provider in step with site config: on while `ai_keys` has a key,
+	off when it has none. Site config keeps the key and the gateway's address, which
+	the host may not want members to read, so the row holds neither: calls go to the
+	address site config names (base_url()). A newly registered provider also lists its
+	models and sets the default model. Frappe Cloud can add the key after install, so
+	without the provider the config files are read past the request cache."""
 	doc = get_site_provider()
 	entry = get_site_ai_key(fresh=not doc)
 	if not doc and entry:
 		doc = new_site_provider()
 	if not doc:
 		return
-	api_base = get_gateway_base(entry["gateway_url"]) if entry else doc.api_base
 	# the routing is re-asserted too, should anything have changed the row behind validation
 	fields = {
-		"api_base": api_base,
+		"api_base": None,
 		"enabled": int(bool(entry)),
 		"litellm_provider": SITE_CONFIG_LITELLM_PROVIDER,
 		"route_prefix": SITE_PROVIDER["route_prefix"],

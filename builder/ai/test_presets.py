@@ -71,7 +71,16 @@ class TestSiteProvider(FrappeTestCase):
 
 	def test_a_site_config_key_connects_the_frappe_provider(self):
 		provider = self.sync(SITE_KEY)
-		self.assertEqual((provider.name, provider.api_base, provider.enabled), ("Frappe", GATEWAY_BASE, 1))
+		self.assertEqual((provider.name, provider.enabled), ("Frappe", 1))
+		with site_config(SITE_KEY):
+			self.assertEqual(provider.base_url(), GATEWAY_BASE)
+
+	def test_the_row_never_holds_the_gateway_address(self):
+		# members can read the row; the address is the host's
+		provider = self.sync(SITE_KEY)
+		self.assertIsNone(provider.api_base)
+		modified = provider.modified
+		self.assertEqual(self.sync(SITE_KEY).modified, modified)  # nothing left to put back
 
 	def test_the_key_is_read_from_site_config_and_never_stored(self):
 		provider = self.sync(SITE_KEY)
@@ -83,7 +92,9 @@ class TestSiteProvider(FrappeTestCase):
 	def test_a_new_gateway_url_follows_site_config(self):
 		self.sync(SITE_KEY)
 		moved = {"ai_keys": [{"gateway_url": "https://moved.test", "api_key": "grove-key"}]}
-		self.assertEqual(self.sync(moved).api_base, "https://moved.test/openai/v1")
+		provider = self.sync(moved)
+		with site_config(moved):
+			self.assertEqual(provider.base_url(), "https://moved.test/openai/v1")
 
 	def test_the_balance_is_read_from_the_gateway_host(self):
 		provider = self.sync(SITE_KEY)
@@ -243,7 +254,7 @@ class TestSiteProviderIsLocked(FrappeTestCase):
 		self.as_member(delete_ai_provider, "Frappe")
 		self.as_member(frappe.rename_doc, "Builder AI Provider", "Frappe", "Mine")
 		provider = frappe.get_doc("Builder AI Provider", "Frappe")
-		self.assertEqual((provider.enabled, provider.api_base), (1, GATEWAY_BASE))
+		self.assertEqual((provider.enabled, provider.api_base), (1, None))
 		self.assertTrue(frappe.db.exists("Builder AI Model", "frappe/openai/gpt-6-luna"))
 
 	def test_no_other_row_can_claim_the_site_key(self):
@@ -306,7 +317,7 @@ class TestSiteProviderIsLocked(FrappeTestCase):
 			sync_site_provider()
 		provider = frappe.get_doc("Builder AI Provider", "Frappe")
 		self.assertEqual(
-			(provider.api_base, provider.litellm_provider, provider.enabled), (GATEWAY_BASE, "openai", 1)
+			(provider.api_base, provider.litellm_provider, provider.enabled), (None, "openai", 1)
 		)
 
 

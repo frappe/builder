@@ -3,13 +3,15 @@
 Frappe Cloud writes `ai_keys` into a site's config (frappe.page writes it into the bench's common
 config, for every site), and the Frappe provider (builder/ai/presets.py) calls the gateway with it.
 The key belongs to whoever hosts the site, not to the site: it is sent to that gateway and nowhere
-else, it is kept out of every text a user can read, and a host app can hold what a site spends with it
-to an allowance by implementing the hook `builder_ai_site_key_allowance`.
+else, it and the gateway's address are kept out of every text a user can read, and a host app can hold
+what a site spends with it to an allowance by implementing the hook `builder_ai_site_key_allowance`.
 
 The hook names a callable that returns the allowance for the current site, or None when that site is
 not metered. An allowance has:
 - `reserve(tokens: int)`: hold `tokens` against what is left, atomically, and return a reservation; or
   raise UsageLimitError, whose message the user reads, when nothing is left.
+- `check()`: raise that same UsageLimitError when nothing is left, holding nothing. A turn is checked
+  before it is queued, since one that can only fail would still hold a worker.
 - `status() -> dict`: what is used and left, for the AI panel.
 A reservation has `settle(usage: Usage)`, called once when the call's usage is known.
 """
@@ -18,11 +20,13 @@ import hmac
 import json
 import math
 from dataclasses import dataclass
+from urllib.parse import urlsplit
 
 import frappe
 
 ALLOWANCE_HOOK = "builder_ai_site_key_allowance"
 REDACTED = "[the site's AI key]"
+REDACTED_GATEWAY = "[the site's AI gateway]"
 # a rough count, on the high side: a held estimate that is too low lets parallel calls overspend
 CHARS_PER_TOKEN = 3
 IMAGE_TOKENS = 1500
@@ -47,11 +51,17 @@ class Usage:
 
 
 def site_key() -> str | None:
-	"""The key itself. Site config cached by the request can miss a key that was just added."""
+	"""The key itself."""
+	entry = site_entry()
+	return entry["api_key"] if entry else None
+
+
+def site_entry() -> dict | None:
+	"""The site config entry, {gateway_url, api_key}. Site config cached by the request can miss a key
+	that was just added."""
 	from builder.ai.presets import get_site_ai_key
 
-	entry = get_site_ai_key() or get_site_ai_key(fresh=True)
-	return entry["api_key"] if entry else None
+	return get_site_ai_key() or get_site_ai_key(fresh=True)
 
 
 def is_site_key(api_key: str | None) -> bool:
@@ -63,32 +73,50 @@ def is_site_key(api_key: str | None) -> bool:
 
 
 def redact(text: str) -> str:
-	"""`text` without the site key, for anything a user or a log reader may see."""
-	key = site_key()
-	if not key or not isinstance(text, str) or key not in text:
+	"""`text` without the site key or its gateway's address, for anything a user or a log reader may see."""
+	if not isinstance(text, str):
 		return text
-	return text.replace(key, REDACTED)
+	for secret, stand_in in hidden():
+		text = text.replace(secret, stand_in)
+	return text
 
 
 def scrub_exception(exc: BaseException) -> BaseException:
-	"""Take the site key out of an exception and the ones chained to it. A gateway can echo the
-	request's Authorization header in an error, and an exception's text reaches the chat, the error
-	log and tracebacks."""
-	key = site_key()
-	if not key:
+	"""Take the site key and its gateway's address out of an exception and the ones chained to it. A
+	gateway can echo the request's Authorization header in an error, and an exception's text reaches the
+	chat, the error log and tracebacks."""
+	if not hidden():
 		return exc
 	seen = set()
-	current = exc
-	while current is not None and id(current) not in seen:
+	pending = [exc]
+	while pending:
+		current = pending.pop()
+		if current is None or id(current) in seen:
+			continue
 		seen.add(id(current))
-		current.args = tuple(a.replace(key, REDACTED) if isinstance(a, str) else a for a in current.args)
+		current.args = tuple(redact(a) for a in current.args)
 		if isinstance(getattr(current, "message", None), str):
 			try:
-				current.message = current.message.replace(key, REDACTED)
+				current.message = redact(current.message)
 			except AttributeError:
 				pass
-		current = current.__cause__ or current.__context__
+		# requests wraps urllib3's error, which names the host, in its args rather than its cause
+		pending += [a for a in current.args if isinstance(a, BaseException)]
+		pending += [current.__cause__, current.__context__]
 	return exc
+
+
+def hidden() -> list[tuple[str, str]]:
+	"""What site config holds that no user may read, each with what stands in for it, longest first.
+	The gateway's host goes as well: it is the host's, and errors name it without the scheme."""
+	entry = site_entry()
+	if not entry:
+		return []
+	parts = urlsplit(entry["gateway_url"])
+	hosts = {a for a in (parts.netloc, parts.hostname) if a and "." in a}
+	addresses = {f"{parts.scheme}://{parts.netloc}", *hosts}
+	found = [(entry["api_key"], REDACTED)] + [(a, REDACTED_GATEWAY) for a in addresses]
+	return sorted(found, key=lambda pair: len(pair[0]), reverse=True)
 
 
 def allowance():
@@ -100,6 +128,13 @@ def allowance():
 def allowance_status() -> dict | None:
 	meter = allowance()
 	return meter.status() if meter else None
+
+
+def ensure_allowance_left(api_key: str | None) -> None:
+	"""Raise UsageLimitError, holding nothing, when a call with `api_key` is paid with the site key and the
+	host's allowance has nothing left."""
+	if is_site_key(api_key) and (meter := allowance()):
+		meter.check()
 
 
 class Charge:
@@ -124,22 +159,25 @@ class Charge:
 	def __init__(self, reservation, prompt_estimate: int):
 		self.reservation = reservation
 		self.prompt_estimate = prompt_estimate
-		self.streamed_chars = 0
-		self.chunks = 0
+		self.answer_chars = 0
+		self.answered = False
 		self.reported = None
 		self.settled = False
 
 	def observe(self, chunk) -> None:
 		"""Note a streamed chunk: its usage, when it is the final one, and the text it carried."""
-		self.chunks += 1
+		self.answered = True
 		if usage := getattr(chunk, "usage", None):
 			self.reported = usage
 		for choice in getattr(chunk, "choices", None) or []:
-			delta = getattr(choice, "delta", None)
-			self.streamed_chars += len(getattr(delta, "content", None) or "")
-			self.streamed_chars += len(getattr(delta, "reasoning_content", None) or "")
-			for call in getattr(delta, "tool_calls", None) or []:
-				self.streamed_chars += len(getattr(getattr(call, "function", None), "arguments", None) or "")
+			self.answer_chars += text_length(getattr(choice, "delta", None))
+
+	def receive(self, response) -> None:
+		"""Note a response that came back whole: its usage and the text it carried."""
+		self.answered = True
+		self.reported = getattr(response, "usage", None)
+		for choice in getattr(response, "choices", None) or []:
+			self.answer_chars += text_length(getattr(choice, "message", None))
 
 	def settle(self, usage=None) -> None:
 		"""Charge what the call used: `usage` as the model reported it, else what was observed. A call
@@ -150,15 +188,16 @@ class Charge:
 		self.reservation.settle(self.used(usage or self.reported))
 
 	def used(self, reported) -> Usage:
-		if reported:
+		# a gateway that reports nothing can still get an empty usage object from litellm
+		if reported and (getattr(reported, "prompt_tokens", 0) or getattr(reported, "completion_tokens", 0)):
 			return Usage(
 				prompt_tokens=getattr(reported, "prompt_tokens", 0) or 0,
 				completion_tokens=getattr(reported, "completion_tokens", 0) or 0,
 				cached_tokens=cached_prompt_tokens(reported),
 			)
-		if not self.chunks:
+		if not self.answered:
 			return Usage(0, 0)
-		return Usage(self.prompt_estimate, math.ceil(self.streamed_chars / CHARS_PER_TOKEN), measured=False)
+		return Usage(self.prompt_estimate, math.ceil(self.answer_chars / CHARS_PER_TOKEN), measured=False)
 
 	def stream(self, stream) -> "MeteredStream":
 		return MeteredStream(stream, self)
@@ -194,6 +233,14 @@ class MeteredStream:
 				close()
 		finally:
 			self.charge.settle()
+
+
+def text_length(part) -> int:
+	"""Characters of text, reasoning and tool arguments in a message or a streamed delta."""
+	texts = [getattr(part, "content", None), getattr(part, "reasoning_content", None)]
+	calls = getattr(part, "tool_calls", None) or []
+	texts += [getattr(getattr(c, "function", None), "arguments", None) for c in calls]
+	return sum(len(t) for t in texts if isinstance(t, str))
 
 
 def cached_prompt_tokens(usage) -> int:

@@ -173,6 +173,10 @@ def lookup_metadata(qualified_name: str, model_id: str) -> dict:
 
 
 LISTING_TTL = 5 * 60
+# The site config key is the host's: someone asking for the latest models sends it to the gateway at
+# most this often, however often they ask.
+SITE_KEY_LISTING_INTERVAL = 60
+SITE_KEY_LISTING_KEY = "builder_ai_site_key_listing"
 # Embeddings and rerankers answer /models too, and fail as chat models.
 NON_CHAT_MARKERS = ("embed", "embedding", "rerank", "reranker", "whisper", "tts", "moderation")
 
@@ -191,9 +195,7 @@ class GatewayListing:
 	def refresh_in_background(cls) -> None:
 		"""Queue a sync when any gateway's listing is stale. A slow gateway never holds up the
 		picker this way: it shows what is stored, and what changed on its next load."""
-		names = frappe.get_all(
-			"Builder AI Provider", filters={"enabled": 1, "api_base": ["is", "set"]}, pluck="name"
-		)
+		names = cls.provider_names()
 		if any(frappe.cache.get_value(cls.cache_key(name)) is None for name in names):
 			frappe.enqueue(
 				sync_stale_gateways,
@@ -205,12 +207,9 @@ class GatewayListing:
 
 	@classmethod
 	def sync_all(cls, force: bool = False) -> None:
-		"""Sync every enabled gateway whose listing is stale (or all, when forced)."""
-		names = frappe.get_all(
-			"Builder AI Provider", filters={"enabled": 1, "api_base": ["is", "set"]}, pluck="name"
-		)
-		listings = [cls(frappe.get_doc("Builder AI Provider", name)) for name in names]
-		stale = [listing for listing in listings if force or not listing.is_fresh()]
+		"""Sync every enabled gateway whose listing is stale (or all that may be asked, when forced)."""
+		listings = [cls(frappe.get_doc("Builder AI Provider", name)) for name in cls.provider_names()]
+		stale = [listing for listing in listings if not listing.is_fresh() or (force and listing.may_ask())]
 		if not stale:
 			return
 		# side by side, so one unreachable gateway can't stall the picker for the rest
@@ -222,6 +221,16 @@ class GatewayListing:
 				listing.remember(None)
 			else:
 				listing.apply(outcome)
+
+	@staticmethod
+	def provider_names() -> list[str]:
+		"""Enabled providers that list their models at a gateway: their own api_base, or site config's."""
+		return frappe.get_all(
+			"Builder AI Provider",
+			filters={"enabled": 1},
+			or_filters={"api_base": ["is", "set"], "from_site_config": 1},
+			pluck="name",
+		)
 
 	@classmethod
 	def served_ids(cls, provider_name: str) -> set[str] | None:
@@ -237,13 +246,30 @@ class GatewayListing:
 	def is_fresh(self) -> bool:
 		return frappe.cache.get_value(self.cache_key(self.provider.name)) is not None
 
+	def refresh(self) -> dict:
+		"""sync(), for someone asking for the latest. Within SITE_KEY_LISTING_INTERVAL of the last time
+		the site config key listed its gateway, what that listing found stands."""
+		if not self.may_ask():
+			return {"added": [], "skipped": [], "found": len(self.served_ids(self.provider.name) or [])}
+		return self.sync()
+
+	def may_ask(self) -> bool:
+		if not self.provider.from_site_config:
+			return True
+		cache = frappe.cache
+		key = cache.make_key(SITE_KEY_LISTING_KEY)
+		return bool(cache.set(key, 1, nx=True, ex=SITE_KEY_LISTING_INTERVAL))
+
 	def sync(self) -> dict:
 		"""Add a row for every listed chat model that has none. Existing rows are
 		left alone, so a model someone switched off stays off."""
 		outcome = fetch_listing(self.request())
 		if isinstance(outcome, Exception):
+			from builder.ai.site_key import scrub_exception
+
 			self.remember(None)
-			raise outcome
+			# the error, and the traceback a member may be shown, name the gateway
+			raise scrub_exception(outcome)
 		return self.apply(outcome)
 
 	def apply(self, listed: list[str]) -> dict:
@@ -368,7 +394,7 @@ class ModelRegistry:
 			if not (m.get("api_base") or provider_api_key(m) or (fallback and uses_settings_key(m))):
 				continue
 			grouped.setdefault(m["provider"], []).append(
-				{**m, "ready": True, "default": m["name"] == default}
+				{**public_model(m), "ready": True, "default": m["name"] == default}
 			)
 		return [{"provider": provider, "models": models} for provider, models in grouped.items()]
 
@@ -427,6 +453,13 @@ class ModelRegistry:
 	@classmethod
 	def is_known_model(cls, model: str) -> bool:
 		return cls.find(model) is not None
+
+
+def public_model(m: dict) -> dict:
+	"""A model as the browser sees it. Where it is called and how stay on the server: the site config
+	gateway's address is the host's, not the site's. `gateway` says it may report credits."""
+	public = {k: v for k, v in m.items() if k not in ("api_base", "litellm_provider")}
+	return {**public, "gateway": bool(m.get("api_base"))}
 
 
 def get_configured_default() -> str | None:

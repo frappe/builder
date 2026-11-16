@@ -11,7 +11,6 @@ import frappe
 from frappe import _
 from frappe.utils.telemetry import capture
 
-from builder.ai.agent.loop import run_agent_job
 from builder.ai.agent.page_changes import page_row
 from builder.ai.block_codec import BlockCodec
 from builder.ai.discovery import Discovery
@@ -19,6 +18,7 @@ from builder.ai.llm import Effort, resolve_api_key, settings_api_key
 from builder.ai.models import GatewayListing, ModelRegistry, fetch_credits
 from builder.ai.presets import get_credits_url, get_site_ai_key
 from builder.ai.session import AISession
+from builder.ai.turns import TurnQueue
 from builder.utils import has_page_write
 
 logger = frappe.logger("builder.ai.api")
@@ -80,30 +80,6 @@ def run(
 	if session_id and AISession.is_session_running(session_id):
 		frappe.throw(_("Another AI request is still processing. Please wait."), frappe.TooManyRequestsError)
 
-	# A pasted image is a one-turn data URI: saved as a site file it gains a real URL
-	# that later turns can replay and a generation brief can carry as REFERENCE IMAGE.
-	image_file_url = save_attached_image(image_url) if image_url else None
-
-	if not session_id:
-		session_id = AISession.create({"page": page_id}, model).name
-
-	if session_id:
-		session = AISession.get(session_id, page_id=page_id)
-		session.move_to(page_id)
-		# each message keeps the page it was sent from, since a chat goes on across pages
-		msg_meta: dict = {"selectedBlockContext": selected_block_context or [], "page": page_row(page_id)}
-		if canvas_theme:
-			msg_meta["canvasTheme"] = canvas_theme
-		if thinking.level:
-			msg_meta["effort"] = thinking.level
-		if image_data:
-			msg_meta["attachedImageUrl"] = image_file_url or image_data
-		# A card-composed reply (option tap, form submit) shows as this compact line
-		# in the chat; the full labelled text stays the message content for the model.
-		if display_text:
-			msg_meta["displayText"] = display_text.strip()[:300]
-		session.append_message("user", prompt, message_type="chat", task_type="agent", metadata=msg_meta)
-
 	resolved_model = ModelRegistry.get_default(model or "openrouter")
 	if not ModelRegistry.is_known_model(resolved_model):
 		frappe.throw(_("Unknown AI model: {0}").format(resolved_model))
@@ -113,25 +89,43 @@ def run(
 				resolved_model
 			)
 		)
-	# Fails fast on a missing key; the job resolves its own copy so the key never sits in the queue.
-	resolve_api_key(resolved_model)
+	ticket = queue_ticket(resolved_model, thinking)
+
+	# A pasted image is a one-turn data URI: saved as a site file it gains a real URL
+	# that later turns can replay and a generation brief can carry as REFERENCE IMAGE.
+	image_file_url = save_attached_image(image_url) if image_url else None
+
+	if not session_id:
+		session_id = AISession.create({"page": page_id}, model).name
+
+	session = AISession.get(session_id, page_id=page_id)
+	session.move_to(page_id)
+	# each message keeps the page it was sent from, since a chat goes on across pages
+	msg_meta: dict = {"selectedBlockContext": selected_block_context or [], "page": page_row(page_id)}
+	if canvas_theme:
+		msg_meta["canvasTheme"] = canvas_theme
+	if thinking.level:
+		msg_meta["effort"] = thinking.level
+	if image_data:
+		msg_meta["attachedImageUrl"] = image_file_url or image_data
+	# A card-composed reply (option tap, form submit) shows as this compact line
+	# in the chat; the full labelled text stays the message content for the model.
+	if display_text:
+		msg_meta["displayText"] = display_text.strip()[:300]
+	session.append_message("user", prompt, message_type="chat", task_type="agent", metadata=msg_meta)
 
 	# Background queue (not now=True): a streaming generation can run 30-60s, and
 	# now=True would hold this web worker open for the entire stream — exhausting the
 	# worker pool under concurrency. Realtime events flow over Redis pub/sub regardless
 	# of which process runs the job.
-	frappe.enqueue(
-		run_agent_job,
-		queue="default",
-		# someone is watching the chat: on a busy bench this turn goes before the scheduler's backlog
-		at_front=True,
-		timeout=thinking.job_timeout,
+	TurnQueue.enqueue(
+		ticket,
+		thinking.job_timeout,
 		prompt=prompt,
 		model=resolved_model,
 		user=frappe.session.user,
 		page_id=page_id,
 		session_id=session_id,
-		enqueue_after_commit=True,
 		selected_block_ids=selected_block_ids,
 		image_url=image_url,
 		image_file_url=image_file_url,
@@ -141,6 +135,23 @@ def run(
 	capture("builder_ai_used", "builder")
 	frappe.local.response.http_status_code = 202
 	return {"status": "accepted", "session_id": session_id}
+
+
+def queue_ticket(model: str, thinking: Effort) -> str:
+	"""The site's ticket for a turn on `model` (builder/ai/turns.py), taken before anything is saved.
+	Refused with a message the user reads when the model has no key, the site's allowance for the
+	site key is spent (a turn that can only fail would still hold a worker), or the site already
+	has as many turns queued as it may."""
+	from builder.ai.site_key import UsageLimitError, ensure_allowance_left
+
+	try:
+		# the job resolves its own copy of the key, so the key never sits in the queue
+		ensure_allowance_left(resolve_api_key(model))
+	except UsageLimitError as e:
+		frappe.throw(str(e), UsageLimitError)
+	if not (ticket := TurnQueue.claim(thinking.job_timeout)):
+		frappe.throw(TurnQueue.busy_message(), frappe.TooManyRequestsError)
+	return ticket
 
 
 def ensure_session_owner(session_id: str) -> None:
@@ -232,8 +243,11 @@ def resume_after_action(session_id: str, outcome: str) -> bool:
 	)
 
 
-def queue_page_build(session_id: str, builds: list[dict], user: str | None = None) -> bool:
-	"""Build the first of the approved new pages off-screen; its turn hands on the rest."""
+def queue_page_build(
+	session_id: str, builds: list[dict], user: str | None = None, turn_ticket: str | None = None
+) -> bool:
+	"""Build the first of the approved new pages off-screen; its turn hands on the rest, and
+	its `turn_ticket` with them."""
 	page = builds[0]
 	prompt = (
 		f"The user approved the new page “{page['title']}” ({page['route']}). It now exists and is "
@@ -243,26 +257,41 @@ def queue_page_build(session_id: str, builds: list[dict], user: str | None = Non
 		f"proposed:\n{page.get('brief') or '(no brief, use the conversation)'}\n\n"
 		"Finish with a short summary of what you built."
 	)
-	return continue_session(session_id, prompt, page_id=page["page_id"], next_builds=builds[1:], user=user)
+	return continue_session(
+		session_id,
+		prompt,
+		page_id=page["page_id"],
+		turn_ticket=turn_ticket,
+		next_builds=builds[1:],
+		user=user,
+	)
 
 
-def continue_session(session_id: str, prompt: str, page_id: str | None = None, **job) -> bool:
+def continue_session(
+	session_id: str, prompt: str, page_id: str | None = None, turn_ticket: str | None = None, **job
+) -> bool:
 	"""Queue a turn the server starts itself, on the session's model and effort. The
-	chat stays on the session's page; `page_id` is the page that turn works on."""
+	chat stays on the session's page; `page_id` is the page that turn works on. A turn
+	queued by a running one takes over its `turn_ticket`. A turn that can't be queued
+	says why in the chat."""
+	from builder.ai.site_key import UsageLimitError, ensure_allowance_left
+
 	try:
 		open_page, model = frappe.db.get_value(AISession.DOCTYPE, session_id, ["page", "selected_model"])
 		if not open_page:
 			return False
 		resolved_model = ModelRegistry.get_default(model or "openrouter")
-		# A job that can't find its key fails out of sight, so check before queueing it.
-		resolve_api_key(resolved_model)
 		turn = AISession.latest_turn_metadata(session_id)
 		thinking = Effort(turn.get("effort"))
-		frappe.enqueue(
-			run_agent_job,
-			queue="default",
-			at_front=True,  # as in run(): someone is waiting on it
-			timeout=thinking.job_timeout,
+		# A job that can't find its key fails out of sight, so check before queueing it.
+		ensure_allowance_left(resolve_api_key(resolved_model))
+		if turn_ticket:
+			ticket = TurnQueue.take_over(turn_ticket, thinking.job_timeout)
+		elif not (ticket := TurnQueue.claim(thinking.job_timeout)):
+			return refuse_turn(session_id, TurnQueue.busy_message())
+		TurnQueue.enqueue(
+			ticket,
+			thinking.job_timeout,
 			prompt=prompt,
 			model=resolved_model,
 			user=job.pop("user", None) or frappe.session.user,
@@ -271,13 +300,22 @@ def continue_session(session_id: str, prompt: str, page_id: str | None = None, *
 			session_id=session_id,
 			canvas_theme=turn.get("canvasTheme"),
 			effort=thinking.level,
-			enqueue_after_commit=True,
 			**job,
 		)
 		return True
+	except UsageLimitError as e:
+		return refuse_turn(session_id, str(e))
 	except Exception:
 		logger.warning(f"could not continue session {session_id}", exc_info=True)
 		return False
+
+
+def refuse_turn(session_id: str, message: str) -> bool:
+	"""End a turn that was never queued the way a failed one ends: with its reason in the chat."""
+	AISession.try_append_message(
+		session_id, "assistant", message, message_type="status", metadata={"status": "error"}
+	)
+	return False
 
 
 @frappe.whitelist()
@@ -382,12 +420,14 @@ def import_provider_models(provider: str) -> dict:
 	if not doc.base_url():
 		frappe.throw(_("This provider has no API Base to ask"))
 	try:
-		return GatewayListing(doc).sync()
+		return GatewayListing(doc).refresh()
 	except Exception as e:
 		from builder.ai.site_key import redact
 
 		logger.warning(f"import_provider_models failed for {provider}: {redact(str(e))}")
-		frappe.throw(_("Could not reach {0}: {1}").format(doc.base_url(), redact(str(e))[:200]))
+		# the site config gateway's address is the host's, so it goes by its name
+		where = doc.name if doc.from_site_config else doc.base_url()
+		frappe.throw(_("Could not reach {0}: {1}").format(where, redact(str(e))[:200]))
 
 
 @frappe.whitelist()
@@ -419,8 +459,8 @@ def sync_one_provider(doc) -> None:
 
 	discovery = Discovery(doc)
 	try:
-		if doc.api_base:
-			GatewayListing(doc).sync()
+		if doc.base_url():
+			GatewayListing(doc).refresh()
 		elif discovery.preset:
 			discovery.sync()
 	except Exception as e:

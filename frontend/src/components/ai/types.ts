@@ -4,8 +4,9 @@ export interface AIModel {
 	vision?: boolean;
 	/** Has a usable key — its provider's own, or the shared one in Builder Settings. */
 	ready?: boolean;
-	/** Set for a gateway with its own base URL, the only kind that can report credits. */
-	api_base?: string | null;
+	/** Its provider is a gateway with a base URL, the only kind that can report credits. The URL stays
+	 * on the server. */
+	gateway?: boolean;
 	/** Builder Settings names this model as the one to start with. */
 	default?: boolean;
 }

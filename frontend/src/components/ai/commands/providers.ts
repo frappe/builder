@@ -29,7 +29,8 @@ export function providersLevel(ctx: BobContext): MenuLevel {
 				allowance = await loadAllowance();
 				return aiProviders.data || [];
 			},
-			(providers) => providers.filter((p) => p.api_base).map((p) => p.name),
+			// the provider that comes with the site keeps its gateway's address on the server
+			(providers) => providers.filter((p) => p.api_base || p.from_site_config).map((p) => p.name),
 			(providers, credits) => [
 				...providers.map((p): MenuItem => ({
 					key: p.name,

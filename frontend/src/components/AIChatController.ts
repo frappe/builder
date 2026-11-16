@@ -188,7 +188,7 @@ export class AIChatController {
 	readonly selectedGateway = computed(
 		() =>
 			this.availableModels.value.find((group) =>
-				group.models.some((m) => m.name === this.selectedModel.value && m.api_base),
+				group.models.some((m) => m.name === this.selectedModel.value && m.gateway),
 			)?.provider,
 	);
 	readonly credits = ref<Credits | null>(null);

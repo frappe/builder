@@ -275,7 +275,10 @@ class TestPageChangesInATurn(FrappeTestCase):
 			"Shall I?",
 		)
 
-		with patch("frappe.enqueue") as enqueue, patch("builder.ai.api.resolve_api_key"):
+		with (
+			patch("frappe.enqueue") as enqueue,
+			patch("builder.ai.api.resolve_api_key", return_value="sk-key"),
+		):
 			result = confirm_pending_settings(self.messages()[-1]["id"], "apply")
 
 		created = result["pages"][0]["page_id"]
@@ -313,4 +316,4 @@ class TestPageChangesInATurn(FrappeTestCase):
 		with patch("builder.ai.api.queue_page_build") as queue:
 			self.run_turn("Built it.", next_builds=builds)
 
-		queue.assert_called_once_with(self.session_id, builds, "Administrator")
+		queue.assert_called_once_with(self.session_id, builds, "Administrator", None)

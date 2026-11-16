@@ -420,5 +420,6 @@ def call_metered(charge: Charge | None, streaming: bool, call, /, **kwargs):
 		return resp
 	if streaming:
 		return charge.stream(resp)
-	charge.settle(getattr(resp, "usage", None))
+	charge.receive(resp)
+	charge.settle()
 	return resp
