@@ -211,6 +211,20 @@ class TestSiteAICredits(FrappeTestCase):
 MEMBER = "builder-ai-member@example.com"
 
 
+def ensure_member() -> None:
+	"""A Website Manager, as every member of a frappe.page site is."""
+	if not frappe.db.exists("User", MEMBER):
+		frappe.get_doc(
+			{
+				"doctype": "User",
+				"email": MEMBER,
+				"first_name": "Member",
+				"send_welcome_email": 0,
+				"roles": [{"role": "Website Manager"}],
+			}
+		).insert(ignore_permissions=True)
+
+
 class TestSiteProviderIsLocked(FrappeTestCase):
 	"""Site config owns the Frappe provider: a member (or a script) can't change, switch off, remove or
 	impersonate it, and an edited row still sends the key only to the gateway site config names."""
@@ -224,16 +238,7 @@ class TestSiteProviderIsLocked(FrappeTestCase):
 			sync_site_provider()
 		self.addCleanup(frappe.set_user, "Administrator")
 		self.addCleanup(ModelRegistry.clear_cache)
-		if not frappe.db.exists("User", MEMBER):
-			frappe.get_doc(
-				{
-					"doctype": "User",
-					"email": MEMBER,
-					"first_name": "Member",
-					"send_welcome_email": 0,
-					"roles": [{"role": "Website Manager"}],
-				}
-			).insert(ignore_permissions=True)
+		ensure_member()
 
 	def as_member(self, call, *args, **kwargs):
 		frappe.set_user(MEMBER)
@@ -318,6 +323,74 @@ class TestSiteProviderIsLocked(FrappeTestCase):
 		provider = frappe.get_doc("Builder AI Provider", "Frappe")
 		self.assertEqual(
 			(provider.api_base, provider.litellm_provider, provider.enabled), (None, "openai", 1)
+		)
+
+
+class TestTheFrappeNameIsKept(FrappeTestCase):
+	"""No other row can take the Frappe provider's name or route prefix, and one that took either before
+	they were kept moves aside, so a site's config key can always be connected."""
+
+	def setUp(self):
+		TestSiteProvider.setUp(self)
+		self.addCleanup(frappe.set_user, "Administrator")
+		self.addCleanup(ModelRegistry.clear_cache)
+		ensure_member()
+
+	def test_a_member_cannot_take_them_before_the_site_config_key_is_connected(self):
+		from builder.ai.api import save_ai_provider
+
+		mine = {"api_base": "https://mine.test/v1", "api_key": "member-key"}
+		frappe.set_user(MEMBER)
+		for taken in (
+			{"provider_name": "Frappe"},
+			{"provider_name": "frappe "},
+			{"provider_name": "Mine", "route_prefix": "frappe"},
+		):
+			with self.subTest(taken=taken), self.assertRaises(frappe.ValidationError):
+				save_ai_provider({**mine, **taken})
+		# a name whose slug is the reserved prefix gets a prefix of its own
+		name = save_ai_provider({**mine, "provider_name": "Frappe!"})
+		with self.assertRaises(frappe.ValidationError):
+			frappe.rename_doc("Builder AI Provider", name, "Frappe")
+		frappe.set_user("Administrator")
+		self.assertEqual(frappe.db.get_value("Builder AI Provider", name, "route_prefix"), "frappe-2")
+		self.assertFalse(frappe.db.exists("Builder AI Provider", "Frappe"))
+
+	def test_a_row_that_took_them_before_moves_aside_for_the_site_config_key(self):
+		# saved as it could be before the name and prefix were kept
+		squatter = frappe.get_doc(
+			{
+				"doctype": "Builder AI Provider",
+				"provider_name": "Frappe",
+				"route_prefix": "frappe",
+				"litellm_provider": "openai",
+				"api_base": "https://mine.test/v1",
+				"api_key": "member-key",
+			}
+		)
+		squatter.flags.ignore_validate = True
+		squatter.insert(ignore_permissions=True)
+		model = frappe.get_doc(
+			{"doctype": "Builder AI Model", "provider": "Frappe", "model_id": "my-model", "label": "Mine"}
+		)
+		model.flags.ignore_validate = True
+		model.insert(ignore_permissions=True)
+		self.assertEqual(model.name, "frappe/my-model")
+
+		with (
+			site_config(SITE_KEY),
+			patch("builder.ai.models.fetch_listing", return_value=["openai/gpt-6-luna"]),
+		):
+			sync_site_provider()
+
+		site = frappe.get_doc("Builder AI Provider", {"from_site_config": 1})
+		self.assertEqual((site.name, site.route_prefix), ("Frappe", "frappe"))
+		self.assertTrue(frappe.db.exists("Builder AI Model", "frappe/openai/gpt-6-luna"))
+		moved = frappe.get_doc("Builder AI Provider", "Frappe (own key)")
+		self.assertEqual((moved.provider_name, moved.route_prefix), ("Frappe (own key)", "frappe-own-key"))
+		self.assertEqual(moved.get_password("api_key"), "member-key")
+		self.assertEqual(
+			frappe.db.get_value("Builder AI Model", "frappe-own-key/my-model", "provider"), "Frappe (own key)"
 		)
 
 

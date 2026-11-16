@@ -9,23 +9,30 @@ to an allowance by implementing the hook `builder_ai_site_key_allowance`.
 
 The hook names a callable that returns the allowance for the current site, or None when that site is
 not metered. An allowance has:
-- `reserve(tokens: int)`: hold `tokens` against what is left, atomically, and return a reservation; or
-  raise UsageLimitError, whose message the user reads, when nothing is left.
+- `reserve(tokens: int, model: str | None)`: hold `tokens` against what is left, atomically, and return
+  a reservation; or raise UsageLimitError, whose message the user reads, when nothing is left. `model` is
+  the name the call goes out with (anthropic/claude-opus-5-5, say), so a host can count a token of a
+  dearer model for more.
 - `check()`: raise that same UsageLimitError when nothing is left, holding nothing. A turn is checked
   before it is queued, since one that can only fail would still hold a worker.
 - `status() -> dict`: what is used and left, for the AI panel.
 A reservation has `settle(usage: Usage)`, called once when the call's usage is known.
+
+A host can also cap how hard a turn paid with the key may think (site config
+`builder_ai_site_key_max_effort`, see max_effort()).
 """
 
 import hmac
 import json
 import math
+import traceback
 from dataclasses import dataclass, field
 from urllib.parse import urlsplit
 
 import frappe
 
 ALLOWANCE_HOOK = "builder_ai_site_key_allowance"
+MAX_EFFORT_CONFIG = "builder_ai_site_key_max_effort"
 ANTHROPIC = "anthropic"
 GATEWAY = "gateway"
 # the only address an Anthropic site key is sent to, whatever else the entry or a row says
@@ -166,6 +173,12 @@ def redact(text: str) -> str:
 	return text
 
 
+def redacted_traceback() -> str:
+	"""The traceback of the exception being handled, without the site key or its gateway's address. What
+	logging's exc_info prints holds the exception's text as it is."""
+	return redact(traceback.format_exc())
+
+
 def scrub_exception(exc: BaseException) -> BaseException:
 	"""Take the site key and its gateway's address out of an exception and the ones chained to it. A
 	gateway can echo the request's Authorization header in an error, and an exception's text reaches the
@@ -220,6 +233,13 @@ def allowance_status() -> dict | None:
 	return meter.status() if meter else None
 
 
+def max_effort(api_key: str | None) -> str | None:
+	"""The deepest effort a turn paid with the site key may think at (site config
+	`builder_ai_site_key_max_effort`), or None for no cap. The deepest levels hold a worker for up to an
+	hour, and the host's workers serve every site's turns on its key."""
+	return frappe.conf.get(MAX_EFFORT_CONFIG) if is_site_key(api_key) else None
+
+
 def ensure_allowance_left(api_key: str | None) -> None:
 	"""Raise UsageLimitError, holding nothing, when a call with `api_key` is paid with the site key and the
 	host's allowance has nothing left."""
@@ -234,9 +254,11 @@ class Charge:
 	hold for what the model reports, or for an estimate from what streamed when it reports nothing."""
 
 	@classmethod
-	def open(cls, api_key: str | None, messages: list, params: dict, tools: list | None = None):
-		"""A charge for this call, or None when it isn't paid with the site key or nothing meters it.
-		Raises UsageLimitError when the allowance is spent."""
+	def open(
+		cls, api_key: str | None, messages: list, params: dict, tools: list | None = None, *, model: str
+	):
+		"""A charge for a call to `model` (the name it goes out with), or None when it isn't paid with
+		the site key or nothing meters it. Raises UsageLimitError when the allowance is spent."""
 		if not is_site_key(api_key):
 			return None
 		meter = allowance()
@@ -244,7 +266,7 @@ class Charge:
 			return None
 		prompt = estimate_tokens(messages) + estimate_tokens(tools or [])
 		hold = prompt + int(params.get("max_tokens") or DEFAULT_COMPLETION_TOKENS)
-		return cls(meter.reserve(hold), prompt)
+		return cls(meter.reserve(hold, model=model), prompt)
 
 	def __init__(self, reservation, prompt_estimate: int):
 		self.reservation = reservation

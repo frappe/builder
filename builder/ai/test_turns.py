@@ -89,7 +89,10 @@ class TestQueueingATurn(TurnsTestCase):
 	def test_a_turn_goes_to_the_queue_site_config_names_once_the_bench_declares_it(self):
 		queues = "frappe.utils.background_jobs.get_queues_timeout"
 		builtin = {"short": 300, "default": 300, "long": 1500}
-		with patch.dict(frappe.local.conf, {"builder_ai_queue": "builder_ai_test"}):
+		with (
+			patch.dict(frappe.local.conf, {"builder_ai_queue": "builder_ai_test"}),
+			patch.object(turns, "has_worker", return_value=True),
+		):
 			with patch(queues, return_value={**builtin, "builder_ai_test": 3660}):
 				api.run("hi", self.page, model=MODEL["name"])
 			self.assertEqual(self.enqueue.call_args.kwargs["queue"], "builder_ai_test")
@@ -97,6 +100,37 @@ class TestQueueingATurn(TurnsTestCase):
 			with patch(queues, return_value=builtin):
 				api.run("hi", self.page, model=MODEL["name"])
 			self.assertEqual(self.enqueue.call_args.kwargs["queue"], turns.DEFAULT_QUEUE)
+
+	def test_a_turn_goes_to_the_default_queue_while_no_worker_serves_the_named_one(self):
+		queues = "frappe.utils.background_jobs.get_queues_timeout"
+		declared = {"short": 300, "default": 300, "long": 1500, "builder_ai_test": 3660}
+		with (
+			patch.dict(frappe.local.conf, {"builder_ai_queue": "builder_ai_test"}),
+			patch(queues, return_value=declared),
+		):
+			# nothing listens on builder_ai_test: RQ knows of no worker for it
+			api.run("hi", self.page, model=MODEL["name"])
+			self.assertEqual(self.enqueue.call_args.kwargs["queue"], turns.DEFAULT_QUEUE)
+			with patch.object(turns, "has_worker", return_value=True):
+				api.run("hi", self.page, model=MODEL["name"])
+			self.assertEqual(self.enqueue.call_args.kwargs["queue"], "builder_ai_test")
+
+	def test_a_turn_on_the_site_key_holds_a_worker_no_longer_than_the_host_allows(self):
+		with (
+			patch("builder.ai.site_key.is_site_key", return_value=True),
+			patch("builder.ai.site_key.allowance", return_value=None),
+			patch.dict(frappe.local.conf, {"builder_ai_site_key_max_effort": "high"}),
+		):
+			api.run("hi", self.page, model=MODEL["name"], effort="xhigh")
+		job = self.enqueue.call_args.kwargs
+		self.assertEqual((job["effort"], job["timeout"]), ("high", 1800))
+
+	def test_a_queue_has_a_worker_while_rq_knows_a_live_one(self):
+		with patch("frappe.utils.background_jobs.get_workers", return_value=[object()]) as workers:
+			self.assertTrue(turns.has_worker("long"))
+		self.assertTrue(workers.call_args.args[0].name.endswith(":long"))
+		with patch("frappe.utils.background_jobs.get_workers", return_value=[]):
+			self.assertFalse(turns.has_worker("long"))
 
 	def test_a_site_with_every_turn_queued_is_refused_before_anything_is_saved(self):
 		for _ in range(turns.DEFAULT_TURNS_IN_FLIGHT):

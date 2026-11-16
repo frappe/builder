@@ -11,9 +11,11 @@ site on one), so two limits keep a site from taking it over:
 
 Turns go to the RQ queue `builder_ai_queue` names (site config, default "default"). A bench that serves
 many sites gives them one of their own, so AI turns and every other background job stop waiting on each
-other: declare it in common_site_config.json (`"workers": {"<name>": {"timeout": 3660}}`) and run a
-worker for it alone (`bench worker --queue <name>`). A name no worker config declares falls back to
-"default", which every bench has.
+other: declare it in common_site_config.json (`"workers": {"<name>": {"timeout": 3660}}`) and run workers
+for it alone (`bench worker-pool --queue <name> --num-workers <n>`, which starts again any that die). Give
+it more workers than `builder_ai_turns_in_flight`, so no one site can hold them all. Turns go to "default",
+which every bench serves, while no worker config declares that queue or no worker is serving it: a turn
+queued where nothing takes it would wait until its ticket lapses.
 """
 
 import secrets
@@ -106,14 +108,20 @@ class TurnQueue:
 
 	@staticmethod
 	def queue() -> str:
-		"""The queue AI turns go to: `builder_ai_queue`, when the bench declares it."""
+		"""The queue AI turns go to: `builder_ai_queue`, when the bench declares it and a worker serves it."""
 		from frappe.utils.background_jobs import get_queues_timeout
 
 		name = (frappe.conf.get(QUEUE_CONFIG) or DEFAULT_QUEUE).strip()
-		if name in get_queues_timeout():
+		if name == DEFAULT_QUEUE:
+			return name
+		if name not in get_queues_timeout():
+			problem = "which no `workers` config declares"
+		elif not has_worker(name):
+			problem = "which no worker serves right now"
+		else:
 			return name
 		frappe.logger("builder.ai.turns").error(
-			f"{QUEUE_CONFIG} names the queue {name!r}, which no `workers` config declares: using {DEFAULT_QUEUE!r}"
+			f"{QUEUE_CONFIG} names the queue {name!r}, {problem}: using {DEFAULT_QUEUE!r}"
 		)
 		return DEFAULT_QUEUE
 
@@ -131,3 +139,10 @@ class TurnQueue:
 		return _(
 			"Bob is already working on {0} requests on this site. Try again once one of them is done."
 		).format(cls.limit())
+
+
+def has_worker(queue: str) -> bool:
+	"""Whether a live worker listens on `queue`. RQ forgets a worker that stopped sending heartbeats."""
+	from frappe.utils.background_jobs import get_queue, get_workers
+
+	return bool(get_workers(get_queue(queue)))

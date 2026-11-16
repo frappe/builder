@@ -244,10 +244,8 @@ def get_site_provider():
 
 
 def new_site_provider(entry: SiteAIKey):
-	"""A new unsaved provider for the site config key, or None when its name is taken."""
-	if frappe.db.exists("Builder AI Provider", SITE_PROVIDER["provider_name"]):
-		logger.error("a provider named Frappe already exists, so the site config key is not connected")
-		return None
+	"""A new unsaved provider for the site config key. A row of a member's in its way moves aside."""
+	make_room_for_site_provider()
 	return frappe.get_doc(
 		{
 			"doctype": "Builder AI Provider",
@@ -256,6 +254,52 @@ def new_site_provider(entry: SiteAIKey):
 			**SITE_PROVIDER,
 		}
 	)
+
+
+def make_room_for_site_provider() -> None:
+	"""Move another row off the Frappe provider's name and route prefix, keeping its key and models. Both
+	are reserved (BuilderAIProvider.guard_reserved_name), but a row saved before they were could hold
+	either, and the site config key could then never be connected."""
+	name, prefix = SITE_PROVIDER["provider_name"], SITE_PROVIDER["route_prefix"]
+	in_the_way = frappe.get_all(
+		"Builder AI Provider",
+		filters={"from_site_config": 0},
+		or_filters={"name": name, "route_prefix": prefix},
+		pluck="name",
+	)
+	for row in in_the_way:
+		if row.lower() == name.lower():
+			row = rename("Builder AI Provider", row, free_name(f"{name} (own key)"))
+		doc = frappe.get_doc("Builder AI Provider", row)
+		if doc.route_prefix == prefix:
+			move_route_prefix(doc)
+		logger.warning(f"moved the provider {row} out of the way of the site config key's")
+
+
+def free_name(base: str) -> str:
+	name, suffix = base, 2
+	while frappe.db.exists("Builder AI Provider", name):
+		name, suffix = f"{base} {suffix}", suffix + 1
+	return name
+
+
+def move_route_prefix(provider) -> None:
+	"""Give the provider a route prefix of its own, from its name, and its models the names that go with it."""
+	provider.route_prefix = None
+	provider.save(ignore_permissions=True)
+	models = frappe.get_all(
+		"Builder AI Model", filters={"provider": provider.name}, fields=["name", "model_id"]
+	)
+	for model in models:
+		rename("Builder AI Model", model.name, f"{provider.route_prefix}/{model.model_id}")
+	ModelRegistry.clear_cache()
+
+
+def rename(doctype: str, old: str, new: str) -> str:
+	"""Rename a row, and every link to it, whoever's request runs the sync."""
+	from frappe.model.rename_doc import rename_doc
+
+	return rename_doc(doctype, old, new, force=True, ignore_permissions=True, show_alert=False)
 
 
 def find_preset(preset_id: str) -> dict | None:

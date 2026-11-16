@@ -72,7 +72,6 @@ def run(
 
 	image_url = BlockCodec.validate_image_data(image_data) if image_data else None
 	canvas_theme = canvas_theme if canvas_theme in ("light", "dark") else None
-	thinking = Effort(effort)
 
 	# Guard concurrency for an established session first — nothing may persist on the
 	# busy path. The worker takes the atomic run lock; this check just gives a fast
@@ -89,6 +88,7 @@ def run(
 				resolved_model
 			)
 		)
+	thinking = turn_effort(effort, resolved_model)
 	ticket = queue_ticket(resolved_model, thinking)
 
 	# A pasted image is a one-turn data URI: saved as a site file it gains a real URL
@@ -135,6 +135,14 @@ def run(
 	capture("builder_ai_used", "builder")
 	frappe.local.response.http_status_code = 202
 	return {"status": "accepted", "session_id": session_id}
+
+
+def turn_effort(level: str | None, model: str) -> Effort:
+	"""The effort a turn on `model` thinks at: the level picked in the chat, no deeper than the host lets
+	a turn paid with the site key go (site_key.max_effort)."""
+	from builder.ai.site_key import max_effort
+
+	return Effort(level).at_most(max_effort(resolve_api_key(model)))
 
 
 def queue_ticket(model: str, thinking: Effort) -> str:
@@ -282,7 +290,7 @@ def continue_session(
 			return False
 		resolved_model = ModelRegistry.get_default(model or "openrouter")
 		turn = AISession.latest_turn_metadata(session_id)
-		thinking = Effort(turn.get("effort"))
+		thinking = turn_effort(turn.get("effort"), resolved_model)
 		# A job that can't find its key fails out of sight, so check before queueing it.
 		ensure_allowance_left(resolve_api_key(resolved_model))
 		if turn_ticket:
@@ -741,7 +749,7 @@ def test_api_key(provider: str | None = None, api_key: str | None = None):
 	import litellm
 
 	from builder.ai.llm import call_metered, prepare_request, route
-	from builder.ai.site_key import Charge, UsageLimitError, redact
+	from builder.ai.site_key import Charge, UsageLimitError, redact, redacted_traceback
 
 	# route() prefers the provider's stored key, and the typed one is what's under test
 	call_model, overrides, routed_key = route(actual_model, api_key)
@@ -750,7 +758,7 @@ def test_api_key(provider: str | None = None, api_key: str | None = None):
 	params = prepare_request(call_model, messages, {"max_tokens": 10})
 	try:
 		call_metered(
-			Charge.open(key, messages, params),
+			Charge.open(key, messages, params, model=call_model),
 			False,
 			litellm.completion,
 			model=call_model,
@@ -764,7 +772,7 @@ def test_api_key(provider: str | None = None, api_key: str | None = None):
 	except UsageLimitError as e:
 		return {"success": False, "message": str(e)}
 	except Exception as e:
-		logger.error(f"test_api_key failed: {redact(str(e))}", exc_info=True)
+		logger.error(f"test_api_key failed: {redacted_traceback()}")
 		return {"success": False, "message": redact(str(e))}
 
 

@@ -1,6 +1,7 @@
 from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
 
+import frappe
 from frappe.tests.utils import FrappeTestCase
 
 from builder.ai import llm
@@ -30,12 +31,14 @@ class Meter:
 	def __init__(self, refuse: str | None = None):
 		self.refuse = refuse
 		self.holds: list[int] = []
+		self.models: list[str] = []
 		self.settled: list[Usage] = []
 
-	def reserve(self, tokens: int):
+	def reserve(self, tokens: int, model: str | None = None):
 		if self.refuse:
 			raise UsageLimitError(self.refuse)
 		self.holds.append(tokens)
+		self.models.append(model)
 		return SimpleNamespace(settle=self.settled.append)
 
 	def check(self) -> None:
@@ -195,5 +198,63 @@ class TestMeteredCalls(SiteKeyTestCase):
 	def test_a_host_without_an_allowance_meters_nothing(self):
 		self.allowance.stop()
 		with patch("builder.ai.site_key.allowance", return_value=None):
-			self.assertIsNone(Charge.open(KEY, MESSAGES, {}))
+			self.assertIsNone(Charge.open(KEY, MESSAGES, {}, model="openai/gpt-x"))
 		self.allowance.start()
+
+	def test_the_allowance_is_told_the_model_each_call_goes_to(self):
+		# so a host can count a token of a dearer model for more
+		response = MagicMock(choices=[MagicMock(message=MagicMock(content="hi"))], usage=usage())
+		with patch("litellm.completion", return_value=response):
+			llm.complete("frappe/openai/gpt-6.1-sol", list(MESSAGES), {}, stream=False)
+		with patch("litellm.completion", return_value=iter([chunk(None, usage(50, 2))])):
+			list(llm.complete_with_tools("frappe/openai/gpt-6.1-sol", list(MESSAGES), [], {}, stream=True))
+		self.assertEqual(self.meter.models, ["openai/openai/gpt-6.1-sol"] * 2)
+
+
+class TestSiteKeyEffort(SiteKeyTestCase):
+	def test_a_turn_on_the_site_key_thinks_no_deeper_than_the_host_allows(self):
+		from builder.ai.api import turn_effort
+
+		with (
+			patch("builder.ai.api.resolve_api_key", return_value=KEY),
+			patch.dict(frappe.local.conf, {"builder_ai_site_key_max_effort": "high"}),
+		):
+			capped = turn_effort("xhigh", "frappe/openai/gpt-6.1-sol")
+			self.assertEqual((capped.level, capped.job_timeout), ("high", llm.Effort.JOB_TIMEOUT["high"]))
+			self.assertEqual(turn_effort("low", "frappe/openai/gpt-6.1-sol").level, "low")
+			self.assertIsNone(turn_effort(None, "frappe/openai/gpt-6.1-sol").level)
+		with patch("builder.ai.api.resolve_api_key", return_value="my-own-key"):
+			with patch.dict(frappe.local.conf, {"builder_ai_site_key_max_effort": "high"}):
+				self.assertEqual(turn_effort("xhigh", "openai/gpt-x").level, "xhigh")
+		with patch("builder.ai.api.resolve_api_key", return_value=KEY):
+			with patch.dict(frappe.local.conf, {"builder_ai_site_key_max_effort": None}):
+				self.assertEqual(turn_effort("xhigh", "frappe/openai/gpt-6.1-sol").level, "xhigh")
+
+
+class TestKeyCheckLog(SiteKeyTestCase):
+	def test_a_failed_key_check_logs_its_traceback_without_the_key(self):
+		import logging
+
+		from builder.ai import api
+
+		class Echo(Exception):
+			# an error whose text a provider builds from the request, past what scrub_exception reaches
+			def __str__(self):
+				return f"rejected Bearer {KEY}"
+
+		records: list[str] = []
+		handler = logging.Handler()
+		handler.emit = lambda record: records.append(logging.Formatter().format(record))
+		api.logger.addHandler(handler)
+		self.addCleanup(api.logger.removeHandler, handler)
+		with (
+			patch("builder.ai.api.settings_api_key", return_value=KEY),
+			patch("builder.ai.api.ModelRegistry.get_default", return_value="frappe/openai/gpt-6.1-sol"),
+			patch("litellm.completion", side_effect=Echo()),
+		):
+			result = api.test_api_key()
+		self.assertFalse(result["success"])
+		[logged] = [r for r in records if "test_api_key failed" in r]
+		self.assertIn("Traceback", logged)
+		self.assertIn(REDACTED, logged)
+		self.assertNotIn(KEY, logged + result["message"])

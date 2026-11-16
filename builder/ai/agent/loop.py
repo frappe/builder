@@ -59,7 +59,7 @@ from builder.ai.block_codec import BlockCodec
 from builder.ai.models import ModelRegistry
 from builder.ai.prompts import Prompts
 from builder.ai.session import AISession
-from builder.ai.site_key import cache_write_tokens
+from builder.ai.site_key import cache_write_tokens, redacted_traceback
 from builder.ai.skills import Skills
 from builder.ai.snapshots import capture_page_state, save_revert_snapshot
 from builder.ai.turns import TurnQueue
@@ -1513,7 +1513,7 @@ class AgentRunner:
 			self.fail_turn(llm.user_facing_error(e))
 			return
 		except Exception as e:
-			logger.error(f"Agent LLM call failed: {e!s}", exc_info=True)
+			logger.error(f"Agent LLM call failed: {redacted_traceback()}")
 			frappe.log_error(f"Agent LLM call failed: {e}", "AgentRunner.run")
 			# Never the raw provider/exception string: it can leak internals (keys, model
 			# ids, stack detail). Full error is logged above.

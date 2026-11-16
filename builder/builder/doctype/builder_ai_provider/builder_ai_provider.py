@@ -12,6 +12,7 @@ class BuilderAIProvider(Document):
 	def validate(self):
 		self.guard_site_config_row()
 		self.derive_routing()
+		self.guard_reserved_name()
 
 	def guard_site_config_row(self):
 		"""Site config owns the Frappe provider (builder/ai/presets.py): only syncing it with site config
@@ -28,6 +29,22 @@ class BuilderAIProvider(Document):
 				frappe.PermissionError,
 			)
 
+	def guard_reserved_name(self):
+		"""The Frappe provider's name and route prefix are kept for it: under either, another row would stop
+		site config's provider from ever being registered on the site."""
+		takes_name = self.has_value_changed("provider_name") and is_reserved_name(self.provider_name)
+		takes_prefix = self.has_value_changed("route_prefix") and self.route_prefix == reserved_prefix()
+		if takes_name or takes_prefix:
+			self.refuse_reserved_name()
+
+	def refuse_reserved_name(self):
+		if not self.from_site_config:
+			frappe.throw(
+				_("{0} is the name of the AI that comes with this site. Pick another name.").format(
+					reserved_name()
+				)
+			)
+
 	def derive_routing(self):
 		"""Only the name and (for a custom endpoint) the API base are worth asking
 		for. The prefix is a slug of the name, and a provider with a base URL is an
@@ -41,9 +58,16 @@ class BuilderAIProvider(Document):
 
 	def unique_prefix(self, base: str) -> str:
 		prefix, suffix = base, 2
-		while frappe.db.exists("Builder AI Provider", {"route_prefix": prefix, "name": ["!=", self.name]}):
+		while self.prefix_taken(prefix):
 			prefix, suffix = f"{base}-{suffix}", suffix + 1
 		return prefix
+
+	def prefix_taken(self, prefix: str) -> bool:
+		if prefix == reserved_prefix() and not self.from_site_config:
+			return True
+		return bool(
+			frappe.db.exists("Builder AI Provider", {"route_prefix": prefix, "name": ["!=", self.name]})
+		)
 
 	def resolved_key(self) -> str | None:
 		"""This provider's key, or None when it has none. Site config owns the Frappe provider's key.
@@ -75,6 +99,8 @@ class BuilderAIProvider(Document):
 
 	def before_rename(self, old, new, merge=False):
 		self.guard_site_config_row()
+		if is_reserved_name(new):
+			self.refuse_reserved_name()
 
 	def on_update(self):
 		clear_registry_cache()
@@ -86,6 +112,22 @@ class BuilderAIProvider(Document):
 				_("{0} models still use this provider: {1}").format(len(models), ", ".join(models[:5]))
 			)
 		clear_registry_cache()
+
+
+def reserved_name() -> str:
+	from builder.ai.presets import SITE_PROVIDER
+
+	return SITE_PROVIDER["provider_name"]
+
+
+def reserved_prefix() -> str:
+	from builder.ai.presets import SITE_PROVIDER
+
+	return SITE_PROVIDER["route_prefix"]
+
+
+def is_reserved_name(name: str | None) -> bool:
+	return (name or "").strip().lower() == reserved_name().lower()
 
 
 def slugify(value: str) -> str:

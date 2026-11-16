@@ -148,6 +148,12 @@ class Effort:
 	def __init__(self, level: str | None = None):
 		self.level = level if level in self.LEVELS else None
 
+	def at_most(self, level: str | None) -> "Effort":
+		"""This effort, or `level` when that is shallower. No level, or one Builder doesn't know, caps nothing."""
+		if not self.level or level not in self.LEVELS:
+			return self
+		return Effort(min(self.level, level, key=self.LEVELS.index))
+
 	def params(self, tier: str) -> dict:
 		params = TASK_PARAMS[tier]
 		if not self.level:
@@ -377,7 +383,7 @@ def complete(
 		f"LLM | model={model} stream={stream} params={params}\n"
 		+ "\n".join(f"[{m['role']}] {m['content']!s}" for m in messages)
 	)
-	charge = Charge.open(api_key, messages, params)
+	charge = Charge.open(api_key, messages, params, model=model)
 	import litellm
 
 	resp = call_metered(
@@ -429,7 +435,7 @@ def complete_with_tools(
 		f"LLM tools | model={model} stream={stream} tools={[t['function']['name'] for t in tools]}\n"
 		+ "\n".join(f"[{m['role']}] {m['content']}" for m in messages)
 	)
-	charge = Charge.open(api_key, messages, params, tools)
+	charge = Charge.open(api_key, messages, params, tools, model=model)
 	import litellm
 
 	request = dict(
