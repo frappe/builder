@@ -85,7 +85,7 @@
 import { __ } from "@/translation";
 import { useDashboardState } from "@/composables/useDashboardState";
 import builderProjectFolder from "@/data/builderProjectFolder";
-import { notifyPagesChanged } from "@/utils/pageActions";
+import { existingFolder, notifyPagesChanged } from "@/utils/pageActions";
 import { templateGroups } from "@/data/webPage";
 import router from "@/router";
 import useBuilderStore from "@/stores/builderStore";
@@ -195,13 +195,13 @@ const creatingPage = ref(false);
 const useTemplate = (page: TemplatePageSummary) => {
 	if (creatingPage.value) return;
 	creatingPage.value = true;
-	const promise = createResource({
-		url: "builder.api.create_page_from_template",
-	})
-		.submit({
-			template_page: page.name,
-			project_folder: targetFolder() || undefined,
-		})
+	const promise = existingFolder(targetFolder())
+		.then((folder) =>
+			createResource({ url: "builder.api.create_page_from_template" }).submit({
+				template_page: page.name,
+				project_folder: folder || undefined,
+			}),
+		)
 		.then((newPageName: string) => {
 			capture("builder_page_template_used", {
 				page: newPageName,

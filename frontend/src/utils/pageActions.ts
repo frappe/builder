@@ -48,10 +48,27 @@ export function createPageIn(folder: string) {
 	router.push({ name: "builder", params: { pageId: "new" }, query: folder ? { folder } : {} });
 }
 
+/**
+ * `folder` while it exists, else no folder: the remembered one may have been deleted since, and a page
+ * can't be saved into a folder that isn't there. A folder that is gone also stops being the selected one.
+ */
+export async function existingFolder(folder: string | null | undefined): Promise<string> {
+	if (!folder) return "";
+	const count = await createResource({ url: "frappe.client.get_count" }).submit({
+		doctype: "Builder Project Folder",
+		filters: { name: folder },
+	});
+	if (count) return folder;
+	const builderStore = useBuilderStore();
+	if (builderStore.activeFolder === folder) builderStore.activeFolder = "";
+	return "";
+}
+
 /** A new empty page, saved: what opening "new" makes, for a caller that needs the page's name first. */
-export function insertBlankPage(folder = useBuilderStore().activeFolder): Promise<BuilderPage> {
+export async function insertBlankPage(folder = useBuilderStore().activeFolder): Promise<BuilderPage> {
 	const page = { page_title: "My Page", draft_blocks: [getRootBlockTemplate()] } as BuilderPage;
-	if (folder) page.project_folder = folder;
+	const projectFolder = await existingFolder(folder);
+	if (projectFolder) page.project_folder = projectFolder;
 	return webPages.insert.submit(page);
 }
 
