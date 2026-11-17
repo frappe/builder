@@ -100,6 +100,14 @@ describe("starting from a description", () => {
 		expect(router.push).toHaveBeenCalledWith({ name: "builder", params: { pageId: "page-1" } });
 	});
 
+	it("lets the screen that asked hear whether Bob accepted the turn", async () => {
+		siteAI(true, null);
+		vi.mocked(insertBlankPage).mockResolvedValue({ name: "page-1" } as never);
+		const settled = vi.fn();
+		await useAIStart().start("A bakery in Pune called Crumb.", settled);
+		expect(builderStore.aiTurnRequest).toMatchObject({ pageId: "page-1", settled });
+	});
+
 	it("asks Bob for nothing when the page can't be made", async () => {
 		siteAI(true, null);
 		vi.mocked(insertBlankPage).mockRejectedValue(new Error("no permission"));

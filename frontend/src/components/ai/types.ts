@@ -79,6 +79,8 @@ export interface AITurnRequest {
 	pageId: string;
 	prompt: string;
 	display?: string;
+	/** told once whether Bob accepted the turn, or it never started (the words are back in the composer) */
+	settled?: (accepted: boolean) => void;
 }
 
 /** One entry of a turn's timeline (see the event contract in agent/loop.py):

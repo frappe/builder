@@ -1,4 +1,4 @@
-import type { AISetupState } from "@/components/ai/types";
+import type { AISetupState, AITurnRequest } from "@/components/ai/types";
 import router from "@/router";
 import useBuilderStore from "@/stores/builderStore";
 import { isMounted } from "@/utils/frappePage";
@@ -41,15 +41,19 @@ export function firstMessage(description: string): { prompt: string; display: st
 }
 
 /** Onboarding's AI start: offered once the site's AI answers, and started on a new page that opens with
- * Bob already building it. */
+ * Bob already building it. `settled` hears whether Bob accepted that first turn (AITurnRequest). */
 export function useAIStart() {
 	const offer = ref<AIStartOffer>(HIDDEN);
 	const loaded = loadAIStartOffer().then((found) => (offer.value = found));
 
-	async function start(description: string) {
+	async function start(description: string, settled?: AITurnRequest["settled"]) {
 		const page = await insertBlankPage();
 		const builderStore = useBuilderStore();
-		builderStore.aiTurnRequest = { pageId: page.name, ...firstMessage(description) };
+		builderStore.aiTurnRequest = {
+			pageId: page.name,
+			...firstMessage(description),
+			...(settled && { settled }),
+		};
 		builderStore.leftPanelActiveTab = "Chat";
 		builderStore.showLeftPanel = true;
 		await router.push({ name: "builder", params: { pageId: page.name } });

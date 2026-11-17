@@ -857,22 +857,25 @@ export class AIChatController {
 	/** Submit a reply composed by an agent UI card (option tap, action button,
 	 * collected form values) as the user's next ordinary message. `display` is
 	 * the compact line the chat shows instead of the full relay — the model
-	 * still receives the full reply. */
+	 * still receives the full reply. Resolves with whether Bob accepted the turn. */
 	selectOption = (option: string, display?: string) => {
 		this.prompt.value = option;
 		this.pendingDisplayText = display?.trim() || null;
-		this.submitPrompt();
+		return this.submitPrompt();
 	};
 
 	/** Start the turn another screen asked for, once its page and chat have loaded here. A page
-	 * that never gets there (left, or no usable model) gets what the user wrote in its composer. */
+	 * that never gets there (left, or no usable model) gets what the user wrote in its composer.
+	 * The screen that asked hears whether Bob accepted it. */
 	startRequestedTurn = async (request: AITurnRequest) => {
 		const opened = () => this.pageId.value === request.pageId;
 		const ready = await until(() => opened() && this.canStartTurn.value).toBe(true, {
 			timeout: AIChatController.REQUESTED_TURN_WAIT_MS,
 		});
-		if (ready) this.selectOption(request.prompt, request.display);
-		else if (opened() && !this.prompt.value.trim()) this.prompt.value = request.display || request.prompt;
+		if (!ready && opened() && !this.prompt.value.trim())
+			this.prompt.value = request.display || request.prompt;
+		const accepted = ready && (await this.selectOption(request.prompt, request.display));
+		request.settled?.(accepted);
 	};
 
 	/** Apply or skip a sensitive action the agent proposed (create doctype, seed data,
@@ -1010,8 +1013,9 @@ export class AIChatController {
 		this.cancelWatchdog = setTimeout(resetStuckCancel, 20000);
 	};
 
-	submitPrompt = async () => {
-		if (!this.canSubmit.value || !this.pageId.value || this.isUnsavedPage.value) return;
+	/** Send the composer's prompt. Resolves with whether the server accepted the turn. */
+	submitPrompt = async (): Promise<boolean> => {
+		if (!this.canSubmit.value || !this.pageId.value || this.isUnsavedPage.value) return false;
 		// submitting pins the current chat over any session choice still in flight
 		this.sessionIntentEpoch++;
 		const pageId = this.pageId.value;
@@ -1059,7 +1063,7 @@ export class AIChatController {
 			// unsaved canvas changes first so the turn (and its revert snapshot) starts
 			// from exactly what the user sees.
 			await this.pageStore.savePage();
-			if (!stillOwned()) return;
+			if (!stillOwned()) return false;
 			const result = await createResource({
 				url: "builder.ai.api.run",
 				makeParams: () => ({
@@ -1075,13 +1079,15 @@ export class AIChatController {
 					...(this.selectedEffort.value ? { effort: this.selectedEffort.value } : {}),
 				}),
 			}).submit();
-			if (!stillOwned()) return;
+			if (!stillOwned()) return true;
 			const response = result as { session_id?: string; status?: string; message?: string };
 			if (response.session_id) this.sessionId.value = response.session_id;
 			// a blank chat's first send created its session; list it in the switcher
 			if (!sessionId) this.loadSessions();
+			return true;
 		} catch (error) {
 			if (stillOwned()) this.failSend([userMessage.id, assistantMessage.id], displayText || userText, error);
+			return false;
 		} finally {
 			if (this.liveSend === turn) {
 				this.liveSend = 0;

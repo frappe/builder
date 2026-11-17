@@ -13,15 +13,32 @@ import { PromptStart, pendingStartDescription, promptStartRedirect } from "./pro
 const DESCRIPTION = "A bakery in Pune called Crumb.";
 const READY = { state: "ready" } as const;
 
-/** The site's copy: take() hands it over once, then there is none. */
-function siteKeeps(description: string | null) {
-	let kept = description;
+/** The site's copy (frappe_page.tenant.start): take holds it for one tab, give_back frees it, done forgets it. */
+const site = { text: null as string | null, held: false };
+
+function siteKeeps(description: string | null, held = false) {
+	Object.assign(site, { text: description, held });
 	vi.mocked(call).mockImplementation(async (method: string) => {
-		if (method !== "frappe_page.tenant.start.take") throw new Error(`unexpected call ${method}`);
-		const taken = kept;
-		kept = null;
-		return taken;
+		if (method === "frappe_page.tenant.start.take") {
+			if (!site.text || site.held) return null;
+			site.held = true;
+			return site.text;
+		}
+		if (method === "frappe_page.tenant.start.give_back") return void (site.held = false);
+		if (method === "frappe_page.tenant.start.done") return void (site.text = null);
+		throw new Error(`unexpected call ${method}`);
 	});
+}
+
+const calls = () => vi.mocked(call).mock.calls.map(([method]) => method.split(".").pop());
+
+/** A start that opens the page and hands Bob the turn; `bob` says how the turn went. */
+function opensPage() {
+	const bob = { settled: undefined as undefined | ((accepted: boolean) => void) };
+	const start = vi.fn(async (_description: string, settled: (accepted: boolean) => void) => {
+		bob.settled = settled;
+	});
+	return { start, bob };
 }
 
 beforeEach(() => {
@@ -52,22 +69,27 @@ describe("the pending description", () => {
 });
 
 describe("starting Bob on it", () => {
-	it("takes it from the site, then starts Bob on it", async () => {
-		const start = vi.fn().mockResolvedValue(undefined);
-		const outcome = await new PromptStart().begin(READY, start);
-		expect(outcome).toEqual({ kind: "started" });
-		expect(call).toHaveBeenCalledWith("frappe_page.tenant.start.take");
-		expect(start).toHaveBeenCalledWith(DESCRIPTION);
+	it("holds it while a page opens and Bob gets the turn, and the site forgets it once he accepts", async () => {
+		const { start, bob } = opensPage();
+		expect(await new PromptStart().begin(READY, start)).toEqual({ kind: "started" });
+		expect(start).toHaveBeenCalledWith(DESCRIPTION, expect.any(Function));
+		// another tab, or a reload, finds none meanwhile
+		expect(site).toEqual({ text: DESCRIPTION, held: true });
+		expect(await new PromptStart().begin(READY, vi.fn())).toEqual({ kind: "elsewhere" });
+
+		await bob.settled!(true);
+		expect(site.text).toBeNull();
+		expect(calls()).toEqual(["take", "take", "done"]);
 	});
 
 	it("runs once: after it is taken, a reload's boot names none and the home route stays", async () => {
-		await new PromptStart().begin(READY, vi.fn().mockResolvedValue(undefined));
+		await new PromptStart().begin(READY, opensPage().start);
 		expect(frappePage.fp.start).toBeUndefined();
 		expect(promptStartRedirect()).toBeUndefined();
 	});
 
-	it("starts nothing when another tab took it first", async () => {
-		siteKeeps(null);
+	it("starts nothing when another tab holds it", async () => {
+		siteKeeps(DESCRIPTION, true);
 		const start = vi.fn();
 		expect(await new PromptStart().begin(READY, start)).toEqual({ kind: "elsewhere" });
 		expect(start).not.toHaveBeenCalled();
@@ -83,34 +105,59 @@ describe("starting Bob on it", () => {
 		expect(frappePage.fp.start).toEqual({ description: DESCRIPTION });
 	});
 
-	it("starts again from what it took when opening the page failed, without taking twice", async () => {
+	it("gives it back when the page couldn't open, so a reload offers it again, and a retry takes it again", async () => {
 		const promptStart = new PromptStart();
 		const failing = vi.fn().mockRejectedValue(new Error("no permission"));
-		const outcome = await promptStart.begin(READY, failing);
-		expect(outcome).toMatchObject({ kind: "failed" });
+		expect(await promptStart.begin(READY, failing)).toMatchObject({ kind: "failed" });
+		expect(site).toEqual({ text: DESCRIPTION, held: false });
 
-		const start = vi.fn().mockResolvedValue(undefined);
+		const { start, bob } = opensPage();
 		expect(await promptStart.startWith("A bakery called Crumb, in Pune.", start)).toEqual({
 			kind: "started",
 		});
-		expect(start).toHaveBeenCalledWith("A bakery called Crumb, in Pune.");
-		expect(call).toHaveBeenCalledTimes(1);
+		expect(start).toHaveBeenCalledWith("A bakery called Crumb, in Pune.", expect.any(Function));
+		await bob.settled!(true);
+		expect(calls()).toEqual(["take", "give_back", "take", "done"]);
+		expect(site.text).toBeNull();
+	});
+
+	it("gives it back when Bob never accepted the turn, since only the composer has it now", async () => {
+		const { start, bob } = opensPage();
+		expect(await new PromptStart().begin(READY, start)).toEqual({ kind: "started" });
+		await bob.settled!(false);
+		expect(site).toEqual({ text: DESCRIPTION, held: false });
+	});
+
+	it("settles once: a word after the first changes nothing", async () => {
+		const { start, bob } = opensPage();
+		await new PromptStart().begin(READY, start);
+		await bob.settled!(false);
+		await bob.settled!(true);
+		expect(calls()).toEqual(["take", "give_back"]);
+		expect(site.text).toBe(DESCRIPTION);
 	});
 
 	it("asks the site again when the take itself failed", async () => {
 		vi.mocked(call).mockRejectedValueOnce(new Error("offline"));
 		const promptStart = new PromptStart();
-		const start = vi.fn().mockResolvedValue(undefined);
+		const { start } = opensPage();
 		expect(await promptStart.begin(READY, start)).toMatchObject({ kind: "failed" });
 		expect(start).not.toHaveBeenCalled();
 		expect(await promptStart.startWith(DESCRIPTION, start)).toEqual({ kind: "started" });
+	});
+
+	it("still starts when the site can't hear how it went: the site settles it itself", async () => {
+		const { start, bob } = opensPage();
+		await new PromptStart().begin(READY, start);
+		vi.mocked(call).mockRejectedValue(new Error("offline"));
+		await expect(bob.settled!(true)).resolves.toBeUndefined();
 	});
 });
 
 describe("starting another way", () => {
 	it("has the site forget it, so no later open runs it", async () => {
 		await new PromptStart().discard();
-		expect(call).toHaveBeenCalledWith("frappe_page.tenant.start.take");
+		expect(calls()).toEqual(["done"]);
 		expect(frappePage.fp.start).toBeUndefined();
 		expect(await new PromptStart().begin(READY, vi.fn())).toEqual({ kind: "elsewhere" });
 	});
@@ -118,9 +165,11 @@ describe("starting another way", () => {
 	it("still lets the user come back and start from it on the same screen, without asking the site again", async () => {
 		const promptStart = new PromptStart();
 		await promptStart.discard();
-		const start = vi.fn().mockResolvedValue(undefined);
+		const { start, bob } = opensPage();
 		expect(await promptStart.startWith(DESCRIPTION, start)).toEqual({ kind: "started" });
-		expect(call).toHaveBeenCalledTimes(1);
+		// the site has nothing left to settle
+		await bob.settled!(false);
+		expect(calls()).toEqual(["done"]);
 	});
 
 	it("never throws when the site can't be reached", async () => {

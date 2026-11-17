@@ -382,8 +382,8 @@ async function startFromDescription() {
 	settle(await promptStart.begin(await aiStartLoaded, describe));
 }
 
-async function describe(description: string) {
-	await startAI(description);
+async function describe(description: string, settled?: (accepted: boolean) => void) {
+	await startAI(description, settled);
 	telemetry.capture("builder_describe_started", { source: promptStart.pending ? "prompt" : "onboarding" });
 }
 
