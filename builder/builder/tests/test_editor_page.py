@@ -2,6 +2,7 @@ import sys
 from unittest.mock import patch
 
 import frappe
+from frappe.client import set_value
 from frappe.tests.utils import FrappeTestCase
 
 from builder.www._builder import get_context
@@ -29,6 +30,14 @@ class TestEditorPage(FrappeTestCase):
 	def test_boot_carries_the_cloud_settings_context(self):
 		with patch(f"{CLOUD_SETTINGS}.get_boot_context", return_value={"enabled": True}):
 			self.assertEqual(self.editor_context(dev_server=0).boot["cloud_settings"], {"enabled": True})
+
+	def test_boot_says_whether_the_persona_survey_is_done(self):
+		# the survey saves its flag this way, and the next page load must see it
+		was_done = frappe.db.get_single_value("Builder Settings", "persona_survey_done")
+		self.addCleanup(set_value, "Builder Settings", "Builder Settings", "persona_survey_done", was_done)
+		for done in (0, 1):
+			set_value("Builder Settings", "Builder Settings", "persona_survey_done", done)
+			self.assertIs(self.editor_context(dev_server=0).boot["persona_survey_done"], bool(done))
 
 	def test_the_editor_opens_on_a_frappe_without_cloud_settings(self):
 		# a None entry makes the import fail, as it does on frappe v15

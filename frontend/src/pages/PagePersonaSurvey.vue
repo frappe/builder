@@ -115,10 +115,9 @@ import StartChoice from "@/components/Onboarding/StartChoice.vue";
 import TemplateGallery from "@/components/Templates/TemplateGallery.vue";
 import { useDashboardState } from "@/composables/useDashboardState";
 import { type CloneLook, serverMessage, useSiteClone } from "@/composables/useSiteClone";
-import { builderSettings } from "@/data/builderSettings";
 import router, { sessionUser } from "@/router";
 import { getUserInfo } from "@/usersInfo";
-import { submitPersonaSurvey } from "@/utils/personaSurvey";
+import { markPersonaSurveyDone, submitPersonaSurvey } from "@/utils/personaSurvey";
 import { Button, Textarea } from "frappe-ui";
 import { useTelemetry } from "@framework/ui/telemetry";
 import { computed, nextTick, reactive, ref } from "vue";
@@ -342,16 +341,7 @@ function finishQuestions(skipped = false) {
 	submitted = true;
 	const category = answers.use_case && useCaseToCategory[answers.use_case];
 	if (category) templateCategoryFilter.value = category;
-	// Optimistically flag done so the dashboard's redirect guard sees it before the async save lands.
-	// A failed save/capture must never block the user from moving on.
-	try {
-		if (builderSettings.doc) builderSettings.doc.persona_survey_done = 1;
-		Promise.resolve(builderSettings.setValue.submit({ persona_survey_done: 1 })).catch((e: unknown) => {
-			console.error("[persona-survey] failed to persist", e);
-		});
-	} catch (e) {
-		console.error("[persona-survey] failed to persist", e);
-	}
+	markPersonaSurveyDone();
 
 	const props = {
 		role: answers.role || null,
