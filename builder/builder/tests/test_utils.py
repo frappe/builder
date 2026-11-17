@@ -183,7 +183,9 @@ class TestBuilderUtils(FrappeTestCase):
 					execute_script(script, {"data": frappe._dict()}, "page-1")
 				self.assertEqual([m["message"] for m in frappe.local.message_log], [message])
 
-	def test_a_script_that_throws_keeps_its_own_message(self):
+	# frappe.throw is in the full sandbox, which a site with server scripts on gives data scripts
+	@patch("builder.utils.is_safe_exec_enabled", return_value=True)
+	def test_a_script_that_throws_keeps_its_own_message(self, _):
 		frappe.local.message_log = []
 		with self.assertRaises(frappe.ValidationError), script_errors_as_messages():
 			execute_script('frappe.throw("Pick a category first")', {"data": frappe._dict()}, "page-1")

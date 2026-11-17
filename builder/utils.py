@@ -57,8 +57,10 @@ def get_builder_path() -> str:
 
 def is_mounted() -> bool:
 	"""Whether this request is a frappe.page tenant editor, which the edge serves under /s/<sub>/ and marks
-	with X-FP-Mount (the edge always overwrites the header, so a client cannot set it)."""
-	return bool(frappe.get_request_header("X-FP-Mount"))
+	with X-FP-Mount (the edge always overwrites the header, so a client cannot set it). Outside a request (a
+	job, a test) it is not."""
+	request = getattr(frappe.local, "request", None)
+	return bool(request and request.headers.get("X-FP-Mount"))
 
 
 def get_installed_app_path(app_name) -> str | None:
@@ -664,7 +666,8 @@ def describe_script_error(error: Exception) -> str:
 	"""Such as `NameError on line 2: name 'x' is not defined`, the line being the script's last one the error
 	passed through."""
 	if isinstance(error, SyntaxError) and error.args and isinstance(error.args[0], tuple | list):
-		return "\n".join(map(str, error.args[0]))  # RestrictedPython's, each "Line <n>: ..." already
+		# RestrictedPython's, each "Line <n>: ..." already
+		return "\n".join(str(line) for line in error.args[0])
 	frames = traceback.extract_tb(error.__traceback__)
 	lines = [frame.lineno for frame in frames if frame.filename.startswith(SERVER_SCRIPT_FILE_PREFIX)]
 	name = type(error).__name__

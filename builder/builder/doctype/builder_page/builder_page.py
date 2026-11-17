@@ -40,7 +40,6 @@ from builder.export_import_standard_page import export_page_as_standard
 from builder.html_preview_image import generate_preview
 from builder.template_sync import delete_template_page_fixture, export_template_group
 from builder.utils import (
-	is_mounted,
 	ColonRule,
 	camel_case_to_kebab_case,
 	clean_data,
@@ -52,6 +51,7 @@ from builder.utils import (
 	get_builder_path,
 	is_bulk_import,
 	is_component_used,
+	is_mounted,
 	merge_raw_styles_into_base_styles,
 	normalize_legacy_raw_styles,
 	sanitize_style_value,
