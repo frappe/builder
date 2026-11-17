@@ -17,6 +17,8 @@ export type FrappePageBoot = {
 	user?: string;
 	/** the description the site was created from, for its owner until onboarding hands it to Bob (promptStart.ts) */
 	start?: { description: string };
+	/** stylesheets index.html adds to the editor, such as how the hosting app's own blocks look in the canvas */
+	stylesheets?: string[];
 	/** index.html: forgets what every site's editor kept in this browser for `user`, as Sign Out does */
 	forgetUser?: () => Promise<void>;
 	/** fetch as it was before index.html prefixed same-origin URLs with the mount: it reaches the app host */
