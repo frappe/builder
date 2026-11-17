@@ -133,13 +133,17 @@ async function change<T = unknown>(
 	}
 }
 
-/** Control logout signs the user out of every site's editor too; this editor's own session ends at once. */
+/**
+ * Control logout signs the user out of every site's editor too; this editor's own session ends at once. What every
+ * site's editor kept in this browser for the user goes with it, so the next person to sign in here finds none of it.
+ */
 async function signOut() {
 	if (!state.session) await load();
 	await controlCall("logout", {}, { post: true }).catch(() => null);
 	await createResource({ url: "logout" })
 		.submit()
 		.catch(() => null);
+	await fp.forgetUser?.().catch(() => null);
 	window.location.href = appURL("/");
 }
 

@@ -13,6 +13,10 @@ export type FrappePageBoot = {
 	/** the app host page that signs the user in to this site, then comes back to `redirect-to` */
 	open_url?: string;
 	site_subdomain?: string;
+	/** who the editor was rendered for: index.html keeps each member's browser storage apart under it */
+	user?: string;
+	/** index.html: forgets what every site's editor kept in this browser for `user`, as Sign Out does */
+	forgetUser?: () => Promise<void>;
 	/** fetch as it was before index.html prefixed same-origin URLs with the mount: it reaches the app host */
 	appFetch?: typeof fetch;
 };

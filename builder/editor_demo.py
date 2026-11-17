@@ -70,6 +70,8 @@ class EditorDemo:
 				"is_developer_mode": 0,
 				"is_fc_site": 0,
 				"is_read_only_mode": 0,
+				# the host's boot (_builder.get_editor_boot), less the signed-in user it may name
+				"fp": {key: value for key, value in (context.get("fp") or {}).items() if key != "user"},
 			}
 		)
 		frappe.local.response_headers.update(
