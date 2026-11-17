@@ -458,6 +458,26 @@ class TestBuilderPage(FrappeTestCase):
 		finally:
 			page.delete()
 
+	def test_the_editor_hears_why_a_page_data_script_failed(self):
+		page = insert_page("test-page-data-broken", "Broken")
+		page.page_data_script = "data.title = 'ok'\ndata.items = undefined_name_xyz"
+		page.save()
+		try:
+			frappe.local.message_log = []
+			with self.assertRaises(NameError):
+				page.get_page_data()
+			messages = [m["message"] for m in frappe.local.message_log]
+			self.assertEqual(messages, ["NameError on line 2: name 'undefined_name_xyz' is not defined"])
+
+			# a visitor's render fails as before, with no message of the script's
+			frappe.local.message_log = []
+			with self.assertRaises(NameError):
+				page._get_page_data(for_render=True)
+			self.assertEqual(frappe.local.message_log, [])
+		finally:
+			frappe.local.message_log = []
+			page.delete()
+
 	def test_page_data_script_can_set_the_page_language(self):
 		page = insert_page("test-page-language", "Language")
 		page.page_data_script = 'data.language = "ar"'

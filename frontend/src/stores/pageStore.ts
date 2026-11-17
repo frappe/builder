@@ -16,6 +16,7 @@ import {
 	generateId,
 	getBlockInstance,
 	getCopyWithoutParent,
+	getErrorMessage,
 	getRouteVariables,
 } from "@/utils/helpers";
 import { createDocumentResource, createListResource, createResource, toast } from "frappe-ui";
@@ -426,10 +427,10 @@ const usePageStore = defineStore("pageStore", {
 				.then((data: { message: { [key: string]: [] } }) => {
 					this.pageData = data.message;
 				})
-				.catch((e: { exc: string | null }) => {
-					const error_message = e.exc?.split("\n").slice(-2)[0];
+				.catch((error: unknown) => {
+					// the server's message names the script's error and line; a traceback is not always sent
 					toast.error(__("There was an error while fetching page data"), {
-						description: error_message,
+						description: getErrorMessage(error),
 					});
 				});
 		},

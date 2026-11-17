@@ -4,6 +4,7 @@
 import copy
 import hashlib
 import re
+from contextlib import nullcontext
 from typing import Any
 from urllib.parse import quote_plus
 
@@ -54,6 +55,7 @@ from builder.utils import (
 	merge_raw_styles_into_base_styles,
 	normalize_legacy_raw_styles,
 	sanitize_style_value,
+	script_errors_as_messages,
 	split_styles,
 )
 
@@ -717,7 +719,9 @@ class BuilderPage(WebsiteGenerator):
 					raise frappe.Redirect(http_status_code)
 
 			_locals = dict(data=page_data, redirect=redirect)
-			execute_script(self.page_data_script, _locals, self.name)
+			# the editor's toast says why the script failed; a visitor only gets the error page
+			with nullcontext() if for_render else script_errors_as_messages():
+				execute_script(self.page_data_script, _locals, self.name)
 			page_data.update(_locals["data"])
 
 		# do not let users replace __content

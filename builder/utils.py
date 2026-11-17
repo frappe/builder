@@ -1,7 +1,10 @@
+import html
 import inspect
 import os
 import re
 import shutil
+import traceback
+from contextlib import contextmanager
 from dataclasses import dataclass
 from functools import wraps
 from os.path import join
@@ -641,6 +644,32 @@ def execute_script(script, _locals, script_filename):
 		safe_exec(script, None, _locals, script_filename=script_filename)  # nosemgrep
 	else:
 		safer_exec(script, None, _locals, script_filename=script_filename)
+
+
+@contextmanager
+def script_errors_as_messages():
+	"""A failing data script's reason as a message the editor shows: the error's type, text and script line.
+	Otherwise only the traceback carries it, and Frappe sends that just to a System User on a site that allows
+	tracebacks. An error the script raised with frappe.throw has a message of its own already."""
+	try:
+		yield
+	except Exception as error:
+		if not getattr(error, "__frappe_exc_id", None):
+			message = html.escape(describe_script_error(error), quote=False)  # messages are HTML
+			frappe.msgprint(message, title=frappe._("Data script error"), indicator="red")
+		raise
+
+
+def describe_script_error(error: Exception) -> str:
+	"""Such as `NameError on line 2: name 'x' is not defined`, the line being the script's last one the error
+	passed through."""
+	if isinstance(error, SyntaxError) and error.args and isinstance(error.args[0], tuple | list):
+		return "\n".join(map(str, error.args[0]))  # RestrictedPython's, each "Line <n>: ..." already
+	frames = traceback.extract_tb(error.__traceback__)
+	lines = [frame.lineno for frame in frames if frame.filename.startswith(SERVER_SCRIPT_FILE_PREFIX)]
+	name = type(error).__name__
+	head = frappe._("{0} on line {1}").format(name, lines[-1]) if lines else name
+	return f"{head}: {error}" if str(error) else head
 
 
 def clean_data(data):

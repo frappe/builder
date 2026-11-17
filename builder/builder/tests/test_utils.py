@@ -28,6 +28,7 @@ from builder.utils import (
 	remove_unsafe_fields,
 	safe_segment,
 	sanitize_style_value,
+	script_errors_as_messages,
 	split_styles,
 )
 
@@ -167,6 +168,26 @@ class TestBuilderUtils(FrappeTestCase):
 		data = frappe._dict({})
 		execute_script("data.sum = a + b", {"data": data, "a": 2, "b": 2}, "test.py")
 		self.assertEqual(data.sum, 4)
+
+	def test_a_failing_script_says_why_in_a_message(self):
+		cases = {
+			"x = 1\ndata.items = undefined_name": "NameError on line 2: name 'undefined_name' is not defined",
+			"data.items = {}['missing']": "KeyError on line 1: 'missing'",
+			"data.x = ": "Line 1: SyntaxError: invalid syntax at statement: 'data.x ='",
+			"data.x = 1 < None": "TypeError on line 1: '&lt;' not supported between instances of 'int' and 'NoneType'",
+		}
+		for script, message in cases.items():
+			with self.subTest(script=script):
+				frappe.local.message_log = []
+				with self.assertRaises(Exception), script_errors_as_messages():
+					execute_script(script, {"data": frappe._dict()}, "page-1")
+				self.assertEqual([m["message"] for m in frappe.local.message_log], [message])
+
+	def test_a_script_that_throws_keeps_its_own_message(self):
+		frappe.local.message_log = []
+		with self.assertRaises(frappe.ValidationError), script_errors_as_messages():
+			execute_script('frappe.throw("Pick a category first")', {"data": frappe._dict()}, "page-1")
+		self.assertEqual([m["message"] for m in frappe.local.message_log], ["Pick a category first"])
 
 	def test_execute_script_can_translate(self):
 		data = frappe._dict({})
