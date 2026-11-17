@@ -34,6 +34,14 @@
 					return {}; // the vite dev server serves this file without jinja
 				}
 			})();
+			// stylesheets the hosting app adds to the editor, such as how its own blocks look in the canvas;
+			// written here, not as <link>s in the head, because vite would try to bundle a templated href
+			for (const href of window.fp.stylesheets || []) {
+				const link = document.createElement("link");
+				link.rel = "stylesheet";
+				link.href = href;
+				document.head.append(link);
+			}
 			(function (mount) {
 				if (!mount) return;
 				// a short mount (frappe.page/<sub>) puts Builder's routes right under it
