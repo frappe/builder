@@ -36,6 +36,13 @@ export async function personaSurveyRedirect(
 	return { name: "persona-survey", query: forced ? { persona_survey: "test" } : {} };
 }
 
+// The survey's own address, on a site that has taken it, opens the dashboard: entering it by hand never asks
+// again. ?persona_survey=test still shows it.
+export async function finishedSurveyRedirect(to: RouteLocationNormalized): Promise<RouteLocationRaw | undefined> {
+	if (to.query.persona_survey === "test") return;
+	if (await isPersonaSurveyDone()) return { name: "home" };
+}
+
 // Leaving the questions settles the survey, so the guard lets the user through from now on.
 // A failed save must never block the user from moving on.
 export function markPersonaSurveyDone() {

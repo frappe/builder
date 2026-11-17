@@ -14,7 +14,7 @@ vi.mock("@/data/builderSettings", async () => {
 });
 
 import { builderSettings } from "@/data/builderSettings";
-import { markPersonaSurveyDone, personaSurveyRedirect } from "./personaSurvey";
+import { finishedSurveyRedirect, markPersonaSurveyDone, personaSurveyRedirect } from "./personaSurvey";
 
 const USER = "user@example.com";
 const SURVEY = { name: "persona-survey", query: {} };
@@ -161,5 +161,31 @@ describe("persona survey redirect without boot data", () => {
 		await vi.advanceTimersByTimeAsync(3_000);
 
 		expect(await redirect).toBeUndefined();
+	});
+});
+
+describe("the survey's own address", () => {
+	const survey = (query = {}) =>
+		({ name: "persona-survey", path: "/persona-survey", query }) as unknown as RouteLocationNormalized;
+
+	it("opens the dashboard once the site has taken the survey", async () => {
+		vi.stubGlobal("window", { is_fc_site: "True", persona_survey_done: true });
+		expect(await finishedSurveyRedirect(survey())).toEqual({ name: "home" });
+	});
+
+	it("shows the survey to a site that still owes it", async () => {
+		vi.stubGlobal("window", { is_fc_site: "True", persona_survey_done: false });
+		expect(await finishedSurveyRedirect(survey())).toBeUndefined();
+	});
+
+	it("opens the dashboard right after the questions, before any reload", async () => {
+		vi.stubGlobal("window", { is_fc_site: "True", persona_survey_done: false });
+		markPersonaSurveyDone();
+		expect(await finishedSurveyRedirect(survey())).toEqual({ name: "home" });
+	});
+
+	it("still shows the survey with ?persona_survey=test", async () => {
+		vi.stubGlobal("window", { is_fc_site: "True", persona_survey_done: true });
+		expect(await finishedSurveyRedirect(survey({ persona_survey: "test" }))).toBeUndefined();
 	});
 });

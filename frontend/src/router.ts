@@ -4,8 +4,8 @@ import { NavigationGuardNext, RouteLocationNormalized, createRouter, createWebHi
 import { __ } from "./translation";
 import { editorDemo } from "./utils/editorDemo";
 import { appURL, isMounted, loginURL, shortEditorURLs } from "./utils/frappePage";
-import { personaSurveyRedirect } from "./utils/personaSurvey";
-import { promptStartRedirect } from "./utils/promptStart";
+import { finishedSurveyRedirect, personaSurveyRedirect } from "./utils/personaSurvey";
+import { pendingStartDescription, promptStartRedirect } from "./utils/promptStart";
 
 let hasPermission: null | boolean = null;
 let sessionUser = ref("Guest");
@@ -55,6 +55,10 @@ const validateVisit = async function (
 const personaSurveyFirst = (to: RouteLocationNormalized) => personaSurveyRedirect(to, sessionUser.value);
 // frappe.page: a site created from a description opens with Bob building from it, ahead of the survey
 const promptStartFirst = () => promptStartRedirect();
+// a finished survey doesn't ask again at its own address, which opens the dashboard; it stays while a site's
+// description waits for Bob, as promptStartFirst sends the home page there to start it
+const surveyOnce = (to: RouteLocationNormalized) =>
+	pendingStartDescription() ? undefined : finishedSurveyRedirect(to);
 
 function isUserLoggedIn() {
 	return document.cookie.includes("user_id") && !document.cookie.includes("user_id=Guest");
@@ -99,7 +103,7 @@ const routes = [
 	{
 		path: "/persona-survey",
 		name: "persona-survey",
-		beforeEnter: validateVisit,
+		beforeEnter: [validateVisit, surveyOnce],
 		component: () => import("@/pages/PagePersonaSurvey.vue"),
 	},
 	// older /page/<page> links keep working under short addresses
