@@ -47,6 +47,13 @@ class TestBuilderPlugin(FrappeTestCase):
 		with self.assertRaises(frappe.ValidationError):
 			installation.save()
 
+	def test_a_dev_row_becomes_an_app_plugin_only_through_the_app_sync(self):
+		# builder.plugins.app_plugins takes over a dev server's row with the app's build; a plain save cannot
+		installation = make_installation(PLUGIN, source="Development", version="0.0.0-dev")
+		installation.source = "App"
+		with self.assertRaisesRegex(frappe.ValidationError, "cannot change"):
+			installation.save()
+
 	def test_a_delete_removes_the_files_after_the_commit(self):
 		installation = make_installation(PLUGIN, entry="// 1")
 

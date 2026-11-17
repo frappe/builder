@@ -147,7 +147,12 @@ class AppPlugin:
 		if doc.source != "App":
 			doc.enabled = 0
 		doc.update({**values, "source": "App", "source_app": self.app})
-		doc.save(ignore_permissions=True)
+		# a taken over dev row changes its source, which Builder Plugin allows only for this sync
+		frappe.flags.app_plugin_sync = True
+		try:
+			doc.save(ignore_permissions=True)
+		finally:
+			frappe.flags.app_plugin_sync = False
 		return True
 
 
