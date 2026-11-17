@@ -4,6 +4,7 @@ Anthropic site config key goes to api.anthropic.com only, and a refusal ends a t
 import json
 import threading
 from http.server import BaseHTTPRequestHandler, HTTPServer
+from types import SimpleNamespace
 from typing import ClassVar
 from unittest.mock import MagicMock, patch
 
@@ -237,6 +238,54 @@ class TestRefusal(FrappeTestCase):
 		):
 			generate_page_markup(runner, {"brief": "A pricing page"})
 		self.assertEqual(texts(self.page)["head1"], "Welcome")
+
+
+def thought(text):
+	"""A chunk of Claude's thinking summary, which comes before any of the answer."""
+	delta = SimpleNamespace(content=None, tool_calls=None, reasoning_content=text)
+	return SimpleNamespace(choices=[SimpleNamespace(delta=delta, finish_reason=None)], usage=None)
+
+
+class TestPageGenerationThinking(FrappeTestCase):
+	"""Claude plans a whole page before it writes a line of it, which can take a minute or more: its thinking
+	streams into a thinking step meanwhile, so neither the chat nor the canvas sits silent."""
+
+	def setUp(self):
+		self.tag = frappe.generate_hash(length=6)
+		self.page = make_page("Home", f"thinking-{self.tag}", [heading("head1", "Welcome")])
+		self.session_id = AISession.create({"page": self.page}).name
+
+	def generate(self, stream):
+		from builder.ai.agent.artifact import generate_page_markup
+
+		events = []
+		runner = AgentRunner("build it", "m", "k", page_id=self.page, session_id=self.session_id)
+		with (
+			patch.object(llm, "complete", return_value=iter(stream)),
+			patch("frappe.publish_realtime", lambda event, message, **kw: events.append((event, message))),
+		):
+			generate_page_markup(runner, {"brief": "A page for a bakery"})
+		return runner, events
+
+	def test_the_plan_streams_into_a_thinking_step_that_ends_when_the_page_starts(self):
+		runner, events = self.generate(
+			[
+				thought("A warm hero, "),
+				thought("then three breads."),
+				chunk(content='section\n  h1 "Crumb"\n', finish_reason="stop"),
+			]
+		)
+		[step] = [s for s in runner.steps if s["kind"] == "thinking"]
+		self.assertEqual(step["text"], "A warm hero, then three breads.")
+		self.assertEqual(step["status"], "done")
+		streamed = "".join(m["chunk"] for _, m in events if m.get("kind") == "reasoning")
+		self.assertEqual(streamed, step["text"])
+		self.assertIn(step, runner.timeline())
+
+	def test_a_model_that_shows_no_thinking_leaves_no_thinking_on_the_message(self):
+		runner, _ = self.generate([chunk(content='section\n  h1 "Crumb"\n', finish_reason="stop")])
+		self.assertFalse([s for s in runner.timeline() if s["kind"] == "thinking"])
+		self.assertTrue(all(s["status"] == "done" for s in runner.steps if s["kind"] == "thinking"))
 
 
 class TestAnthropicSiteKey(FrappeTestCase):

@@ -287,6 +287,11 @@ def generate_page_markup(ctx, args: dict) -> list[dict]:
 	text = ""
 	finish_reason = None
 	preview = PagePreview(ctx)
+	# Claude plans the whole page before it writes a line of it, a minute or more in which only its thinking
+	# summary streams and the canvas has nothing to show. That goes into a thinking step, as in a round of the
+	# loop, ending when the page starts; a model that shows no thinking leaves the step empty, off the message.
+	thinking = ctx.add_step("thinking", status="running")
+	thinking_since: float | None = time.monotonic()
 	stream = llm.complete(
 		ctx.model,  # heavy model — generation quality
 		messages,
@@ -312,10 +317,20 @@ def generate_page_markup(ctx, args: dict) -> list[dict]:
 				continue
 			if fr := chunk.choices[0].finish_reason:
 				finish_reason = fr
-			if delta := chunk.choices[0].delta.content:
-				text += delta
+			delta = chunk.choices[0].delta
+			if reasoning := getattr(delta, "reasoning_content", None):
+				thinking["text"] = (thinking.get("text") or "") + reasoning
+				ctx.emit("stream", chunk=reasoning, kind="reasoning")
+			if content := getattr(delta, "content", None):
+				if thinking_since is not None:
+					ctx.finish_step(thinking, started=thinking_since)
+					thinking_since = None
+				text += content
 				preview.update(text)
 	finally:
+		# a cancel or a dropped stream must not leave the step spinning
+		if thinking_since is not None:
+			ctx.finish_step(thinking, started=thinking_since)
 		# The buffer only serves mid-build refreshes; once this function returns the
 		# draft is persisted (or the turn failed/cancelled) and the DB is the truth.
 		clear_stream_buffer(ctx.page_id)
