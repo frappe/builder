@@ -13,6 +13,8 @@ import re
 PLUGINS_FOLDER = "builder_plugins"
 MANIFEST_FILE = "manifest.json"
 ENTRY_FILE = "main.js"
+# the app plugin files as of the last sync, so an editor load with no change reads none
+APP_PLUGINS_FINGERPRINT_KEY = "builder_app_plugins_fingerprint"
 
 # The files a package may hold, by suffix. The editor imports the scripts as
 # modules, and the rest are what those scripts load

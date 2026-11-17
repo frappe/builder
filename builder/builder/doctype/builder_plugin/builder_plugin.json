@@ -8,6 +8,7 @@
   "plugin",
   "source",
   "hub_url",
+  "source_app",
   "enabled",
   "label",
   "description",
@@ -48,6 +49,14 @@
    "fieldname": "hub_url",
    "fieldtype": "Data",
    "label": "Hub URL",
+   "read_only": 1
+  },
+  {
+   "depends_on": "eval:doc.source == \"App\"",
+   "description": "The Frappe app that this plugin comes with.",
+   "fieldname": "source_app",
+   "fieldtype": "Data",
+   "label": "Source App",
    "read_only": 1
   },
   {
@@ -127,7 +136,7 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 0,
  "links": [],
- "modified": "2026-10-29 12:00:00.000000",
+ "modified": "2026-11-16 13:19:40.763633",
  "modified_by": "Administrator",
  "module": "Builder",
  "name": "Builder Plugin",
