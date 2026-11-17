@@ -5,7 +5,7 @@
 			:subtitle="isMounted ? sessionUser : undefined"
 			:logo="builderLogo"
 			:menuItems="appMenuItems"
-			class="px-1.5" />
+			class="px-1.5 !h-14 [&_button]:!h-12 [&_button]:!px-2" />
 
 		<ScrollArea class="min-h-0 flex-1" viewport-class="px-2 pt-0.5 pb-2">
 			<nav class="space-y-0.5">
