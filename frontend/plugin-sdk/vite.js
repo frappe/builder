@@ -22,7 +22,7 @@ const MANIFEST = "manifest.json";
  * name to the editor's copy, so a plugin shares its Vue, stores and
  * frappe-ui. The build must never bundle them.
  */
-export const SHARED_MODULES = ["builder", "vue", "pinia", "frappe-ui"];
+export const SHARED_MODULES = ["builder", "vue", "pinia", "frappe-ui", "frappe-ui/editor", "frappe-ui/list"];
 
 /** Every other module of the editor, by its path under `src/`. These carry no promise. */
 const INTERNAL_PREFIX = "builder/internal/";
