@@ -75,6 +75,109 @@
 				}
 			})(window.fp.mount);
 		</script>
+		<script id="fp-site-storage">
+			// Stock Builder has an origin per site, so whatever it keeps in the browser is that site's alone. frappe.page
+			// serves every site's editor from one origin, which has one localStorage, sessionStorage, set of IndexedDB
+			// databases and namespace of BroadcastChannels for all of them: a folder picked on one site was the folder
+			// a new page on another went into. So each mounted site stores its keys, database and channel names under
+			// its own prefix, and never sees another's. The prefix is the site's internal name, which a rename keeps and
+			// no other site ever takes. The color scheme stays shared: it is the user's, and frappe.page's pages read it.
+			(function (site) {
+				if (!window.fp.mount || !site) return;
+				const prefix = "fp:" + site + ":";
+				const shared = new Set(["vueuse-color-scheme", "theme"]);
+				const stored = (key) => (shared.has(key) ? key : prefix + key);
+				const isOwn = (key) => typeof key === "string" && key.startsWith(prefix);
+				const unscoped = (key) => (isOwn(key) ? key.slice(prefix.length) : key);
+				const getter = (proto, name) => Object.getOwnPropertyDescriptor(proto, name).get;
+				const redefine = (proto, name, get) =>
+					Object.defineProperty(proto, name, { configurable: true, enumerable: true, get });
+
+				// localStorage and sessionStorage stay the browser's own objects, so storage events keep naming them
+				const storage = window.Storage.prototype;
+				const { getItem, setItem, removeItem, key: keyAt } = storage;
+				const lengthOf = getter(storage, "length");
+				const visibleKeys = (area) => {
+					const keys = [];
+					for (let index = 0, length = lengthOf.call(area); index < length; index++) {
+						const key = keyAt.call(area, index);
+						if (isOwn(key) || shared.has(key)) keys.push(unscoped(key));
+					}
+					return keys;
+				};
+				storage.getItem = function (key) {
+					return getItem.call(this, stored(String(key)));
+				};
+				storage.setItem = function (key, value) {
+					setItem.call(this, stored(String(key)), value);
+				};
+				storage.removeItem = function (key) {
+					removeItem.call(this, stored(String(key)));
+				};
+				storage.key = function (index) {
+					const key = visibleKeys(this)[index];
+					return key === undefined ? null : key;
+				};
+				// the shared keys and the other sites' keys stay
+				storage.clear = function () {
+					for (const key of visibleKeys(this)) if (!shared.has(key)) removeItem.call(this, prefix + key);
+				};
+				redefine(storage, "length", function () {
+					return visibleKeys(this).length;
+				});
+
+				// another tab's write reaches this one under the key as stored: this site's keys read as the app wrote
+				// them, and other sites' never get past here. An event the app dispatches itself has the app's key already.
+				const eventKey = getter(window.StorageEvent.prototype, "key");
+				redefine(window.StorageEvent.prototype, "key", function () {
+					const key = eventKey.call(this);
+					return this.isTrusted ? unscoped(key) : key;
+				});
+				window.addEventListener(
+					"storage",
+					(event) => {
+						const key = eventKey.call(event);
+						if (event.isTrusted && key !== null && !isOwn(key) && !shared.has(key)) event.stopImmediatePropagation();
+					},
+					true,
+				);
+
+				// frappe-ui keeps its resource cache in IndexedDB (idb-keyval's "keyval-store")
+				if (window.IDBFactory) {
+					const factory = window.IDBFactory.prototype;
+					const { open, deleteDatabase, databases } = factory;
+					factory.open = function (name, ...rest) {
+						return open.call(this, prefix + name, ...rest);
+					};
+					factory.deleteDatabase = function (name) {
+						return deleteDatabase.call(this, prefix + name);
+					};
+					if (databases) {
+						factory.databases = function () {
+							return databases
+								.call(this)
+								.then((list) => list.filter((db) => isOwn(db.name)).map((db) => ({ ...db, name: unscoped(db.name) })));
+						};
+					}
+					const databaseName = getter(window.IDBDatabase.prototype, "name");
+					redefine(window.IDBDatabase.prototype, "name", function () {
+						return unscoped(databaseName.call(this));
+					});
+				}
+
+				if (window.BroadcastChannel) {
+					const Channel = window.BroadcastChannel;
+					window.BroadcastChannel = class BroadcastChannel extends Channel {
+						constructor(name) {
+							super(prefix + name);
+						}
+						get name() {
+							return unscoped(super.name);
+						}
+					};
+				}
+			})(window.site_name);
+		</script>
 		<script type="module" src="/src/main.ts"></script>
 	</body>
 </html>
