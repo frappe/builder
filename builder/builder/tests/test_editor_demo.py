@@ -74,7 +74,13 @@ class TestEditorDemo(FrappeTestCase):
 		self.assertNotIn("unpublished", frappe.as_json(payload))
 
 	def test_shell_has_no_session_and_no_way_out(self):
-		context = frappe._dict(fp={"mount": "/acme", "user": "member@example.com"})
+		context = frappe._dict(
+			fp={
+				"mount": "/acme",
+				"user": "member@example.com",
+				"start": {"description": "A bakery called Crumb"},
+			}
+		)
 		self.open_demo().set_context(context)
 
 		self.assertEqual(context.csrf_token, "")

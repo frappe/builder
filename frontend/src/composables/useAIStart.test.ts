@@ -76,6 +76,15 @@ describe("the first message", () => {
 	});
 });
 
+describe("the offer onboarding waits on", () => {
+	it("resolves with what the offer settled on, so a start from a carried description can wait for it", async () => {
+		siteAI(true, { percent_left: 0, resets_in: "in about 2 hours" });
+		const { offer, loaded } = useAIStart();
+		expect(await loaded).toEqual({ state: "spent", resetsIn: "in about 2 hours" });
+		expect(offer.value).toEqual({ state: "spent", resetsIn: "in about 2 hours" });
+	});
+});
+
 describe("starting from a description", () => {
 	it("opens a new page with Bob's chat showing and the turn waiting for that page", async () => {
 		siteAI(true, null);

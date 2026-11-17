@@ -44,7 +44,7 @@ export function firstMessage(description: string): { prompt: string; display: st
  * Bob already building it. */
 export function useAIStart() {
 	const offer = ref<AIStartOffer>(HIDDEN);
-	loadAIStartOffer().then((found) => (offer.value = found));
+	const loaded = loadAIStartOffer().then((found) => (offer.value = found));
 
 	async function start(description: string) {
 		const page = await insertBlankPage();
@@ -55,5 +55,5 @@ export function useAIStart() {
 		await router.push({ name: "builder", params: { pageId: page.name } });
 	}
 
-	return { offer, start };
+	return { offer, loaded, start };
 }

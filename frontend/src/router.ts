@@ -5,6 +5,7 @@ import { __ } from "./translation";
 import { editorDemo } from "./utils/editorDemo";
 import { appURL, isMounted, loginURL, shortEditorURLs } from "./utils/frappePage";
 import { personaSurveyRedirect } from "./utils/personaSurvey";
+import { promptStartRedirect } from "./utils/promptStart";
 
 let hasPermission: null | boolean = null;
 let sessionUser = ref("Guest");
@@ -52,6 +53,8 @@ const validateVisit = async function (
 
 // before the dashboard renders, so a user who owes the persona survey never sees the dashboard first
 const personaSurveyFirst = (to: RouteLocationNormalized) => personaSurveyRedirect(to, sessionUser.value);
+// frappe.page: a site created from a description opens with Bob building from it, ahead of the survey
+const promptStartFirst = () => promptStartRedirect();
 
 function isUserLoggedIn() {
 	return document.cookie.includes("user_id") && !document.cookie.includes("user_id=Guest");
@@ -78,7 +81,7 @@ const routes = [
 	{
 		path: "/",
 		name: "home",
-		beforeEnter: [validateVisit, personaSurveyFirst],
+		beforeEnter: [validateVisit, promptStartFirst, personaSurveyFirst],
 		component: () => import("@/pages/PageBuilderDashboard.vue"),
 	},
 	{

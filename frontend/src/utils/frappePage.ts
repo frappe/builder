@@ -15,6 +15,8 @@ export type FrappePageBoot = {
 	site_subdomain?: string;
 	/** who the editor was rendered for: index.html keeps each member's browser storage apart under it */
 	user?: string;
+	/** the description the site was created from, for its owner until onboarding hands it to Bob (promptStart.ts) */
+	start?: { description: string };
 	/** index.html: forgets what every site's editor kept in this browser for `user`, as Sign Out does */
 	forgetUser?: () => Promise<void>;
 	/** fetch as it was before index.html prefixed same-origin URLs with the mount: it reaches the app host */

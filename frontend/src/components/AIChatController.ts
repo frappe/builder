@@ -1081,7 +1081,7 @@ export class AIChatController {
 			// a blank chat's first send created its session; list it in the switcher
 			if (!sessionId) this.loadSessions();
 		} catch (error) {
-			if (stillOwned()) this.failSend([userMessage.id, assistantMessage.id], userText, error);
+			if (stillOwned()) this.failSend([userMessage.id, assistantMessage.id], displayText || userText, error);
 		} finally {
 			if (this.liveSend === turn) {
 				this.liveSend = 0;
@@ -1091,7 +1091,8 @@ export class AIChatController {
 	};
 
 	/** The send failed before any turn started, so nothing reached the chat: take
-	 * the optimistic bubbles back out and hand the prompt back to the composer. */
+	 * the optimistic bubbles back out and hand the prompt back to the composer, as the
+	 * user wrote it (a requested turn's words, not what was added to them for Bob). */
 	private failSend(messageIds: string[], userText: string, error: unknown) {
 		this.messages.value = this.messages.value.filter((m) => !messageIds.includes(m.id));
 		this.pendingAssistantId.value = null;
