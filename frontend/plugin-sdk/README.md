@@ -64,6 +64,7 @@ export default {
 | ----------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
 | `leftPanelTabs`, `toolbarItems`, `blockContextMenuOptions`, `propertySections`, `settingsItems` | The registries of the editor surfaces. `register` answers with its own unregister. |
 | `blockTemplates`                                                                                | Block templates in the Block Templates panel. `getBlock()` gives the block to insert. |
+| `dashboardItems`                                                                                | Views of the dashboard, beside All Pages. Each opens at `/dashboard/<name>`.      |
 | `usePageStore`, `useCanvasStore`, `useBuilderStore`                                             | The editor's stores                                                                |
 | `blockController`, `Block`                                                                      | The selected blocks, and the block tree                                            |
 | `lucideIcon(name)`                                                                              | Any lucide icon, as a component for an `icon` field                                |

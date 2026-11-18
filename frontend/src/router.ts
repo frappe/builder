@@ -77,6 +77,13 @@ const routes = [
 		component: () => import("@/pages/PageBuilderDashboard.vue"),
 	},
 	{
+		path: "/dashboard/:item/:path(.*)*",
+		name: "dashboard-item",
+		// a dashboard view is the dashboard too, so a user who owes the survey goes there first
+		beforeEnter: [validateVisit, personaSurveyFirst],
+		component: () => import("@/pages/PageBuilderDashboard.vue"),
+	},
+	{
 		path: "/page/:pageId",
 		name: "builder",
 		beforeEnter: validateVisit,
