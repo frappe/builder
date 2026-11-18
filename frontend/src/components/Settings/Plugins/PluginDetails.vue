@@ -110,7 +110,7 @@
 					@uninstall="uninstall" />
 
 				<Button
-					v-if="details.source === 'Bob' && builderStore.isAIEnabled"
+					v-if="isChangeWithBobShown && details.source === 'Bob' && builderStore.isAIEnabled"
 					class="self-start"
 					variant="subtle"
 					size="sm"
@@ -223,6 +223,9 @@ const stop = async () => {
 const readme = computed(() => (details.value?.readme ? renderMarkdown(details.value.readme) : ""));
 
 const builderStore = useBuilderStore();
+
+/** Off for now: Settings stays open over the Chat tab, and the dashboard has no Chat tab. */
+const isChangeWithBobShown = false;
 
 const changeWithBob = () => {
 	builderStore.leftPanelActiveTab = "Chat";
