@@ -14,6 +14,8 @@ export const HOST_MODULES = {
 	vue: "src/host/vue.ts",
 	pinia: "src/host/pinia.ts",
 	"frappe-ui": "src/host/frappe-ui.ts",
+	"frappe-ui/editor": "src/host/frappe-ui-editor.ts",
+	"frappe-ui/list": "src/host/frappe-ui-list.ts",
 };
 
 /**
