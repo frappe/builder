@@ -122,9 +122,14 @@ const readManifest = (root) => {
 	return { manifest: validateManifest(parseJson(MANIFEST, source)), source };
 };
 
+/** As an installed plugin reads them, in Builder Hub's order: DESCRIPTION.md is for users, README.md for developers. */
+const README_FILES = ["DESCRIPTION.md", "README.md"];
+
 const readReadme = (root) => {
-	const file = path.join(root, "README.md");
-	return fs.statSync(file, { throwIfNoEntry: false })?.isFile() ? fs.readFileSync(file, "utf8") : undefined;
+	const file = README_FILES.map((name) => path.join(root, name)).find((candidate) =>
+		fs.statSync(candidate, { throwIfNoEntry: false })?.isFile(),
+	);
+	return file ? fs.readFileSync(file, "utf8") : undefined;
 };
 
 /**
