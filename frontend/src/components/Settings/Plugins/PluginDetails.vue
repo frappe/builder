@@ -1,16 +1,16 @@
 <template>
 	<div class="flex h-full min-h-0 flex-col">
-		<div class="flex shrink-0 items-center gap-1 bg-surface-base px-2 py-3">
+		<div class="-ml-2 flex shrink-0 items-center gap-1 bg-surface-base pb-3">
 			<Button variant="ghost" size="sm" icon-left="lucide-arrow-left" label="Back" @click="emit('back')" />
 		</div>
 
 		<div class="no-scrollbar flex min-h-0 flex-1 flex-col overflow-y-auto">
-			<p v-if="error" class="px-3 pb-3 text-p-sm text-ink-red-6">{{ error }}</p>
+			<p v-if="error" class="pb-3 text-p-sm text-ink-red-6">{{ error }}</p>
 			<div v-else-if="!details" class="flex flex-1 items-center justify-center">
 				<LoadingIndicator class="size-5 text-ink-gray-5" />
 			</div>
 
-			<div v-else class="flex flex-col gap-5 px-3 pb-5">
+			<div v-else class="flex flex-col gap-5 pb-5">
 				<div class="flex items-start gap-3">
 					<img
 						v-if="details.icon"

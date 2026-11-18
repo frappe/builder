@@ -112,6 +112,8 @@ The editor loads the plugin's styles before its own. Where a plugin class and an
 
 A manifest has no `permissions` field. A plugin runs with the access of the user who opens the editor.
 
+The plugin's details page in **Settings** > **Plugins** shows `DESCRIPTION.md`, written for its users. Without one, it shows `README.md`, which is for developers.
+
 ## Develop
 
 1. Set `builderUrl` in `vite.config.ts` to the origin that serves Builder.
