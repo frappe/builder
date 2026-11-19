@@ -75,7 +75,7 @@ const open = ref(false);
 
 const icon = computed(() => {
 	if (props.running) return "lucide-file-plus text-ink-gray-5";
-	return props.page.built ? "lucide-check text-ink-green-6" : "lucide-circle-alert text-ink-red-5";
+	return props.page.built ? "lucide-check text-ink-gray-6" : "lucide-circle-alert text-ink-red-5";
 });
 
 /** What the build is on right now: the running step, else the last one. */

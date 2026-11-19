@@ -198,6 +198,7 @@
 							v-if="message.metadata?.kind === 'page_changes'"
 							:metadata="message.metadata"
 							:interactive="message.id === lastMessageId"
+							:builds="builds"
 							:busy="isSubmitting"
 							:confirming="confirmingAction"
 							class="mt-2"
@@ -511,6 +512,7 @@ import Dialog from "@/components/Controls/Dialog.vue";
 import SparklesIcon from "@/components/Icons/Sparkles.vue";
 import { cardAnswers } from "@/components/ai/cardAnswers";
 import { renderMarkdown } from "@/components/ai/markdown";
+import { pageBuilds } from "@/components/ai/pageChanges";
 import type { AITurnStep, ChatMessage } from "@/components/ai/types";
 import { reloadAIRegistry } from "@/data/aiModels";
 import { __ } from "@/translation";
@@ -633,6 +635,7 @@ const builderStore = useBuilderStore();
 const canvasStore = useCanvasStore();
 
 const lastMessageId = computed(() => messages.value.at(-1)?.id ?? null);
+const builds = computed(() => pageBuilds(messages.value));
 
 /** The answer itself, without the timeline that led to it. A card message persists
  * its whole card as text so the model sees it on replay — the chat shows only the
