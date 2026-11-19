@@ -80,6 +80,7 @@
 					:disabled="!answers[activeQuestion.key]"
 					@click="goNext" />
 			</template>
+			<PasswordStep v-else-if="step === 'password'" @done="finishPassword" />
 			<!-- a site created from a description: Bob gets it at once -->
 			<template v-else-if="step === 'starting'">
 				<StartDescriptionCard :description="siteDescription" />
@@ -134,6 +135,7 @@ import CloneAddressStep from "@/components/Onboarding/CloneAddressStep.vue";
 import CloneLookStep from "@/components/Onboarding/CloneLookStep.vue";
 import CloneProgressStep from "@/components/Onboarding/CloneProgressStep.vue";
 import DescribeSiteStep from "@/components/Onboarding/DescribeSiteStep.vue";
+import PasswordStep from "@/components/Onboarding/PasswordStep.vue";
 import StartChoice from "@/components/Onboarding/StartChoice.vue";
 import StartDescriptionCard from "@/components/Onboarding/StartDescriptionCard.vue";
 import TemplateGallery from "@/components/Templates/TemplateGallery.vue";
@@ -226,12 +228,15 @@ const otherText = reactive<Record<QuestionKey, string>>({
 });
 
 type CloneStep = "clone-address" | "clone-look" | "clone-progress";
-type Step = QuestionKey | "starting" | "start" | "describe" | CloneStep | "templates";
+type Step = QuestionKey | "password" | "starting" | "start" | "describe" | CloneStep | "templates";
 const questionKeys = questions.map((q) => q.key);
 // frappe.page: a site created from a description opens with Bob building from it. The questions wait for the user's
 // next visit to the dashboard: they already said what they want, and came here to watch it built.
 const promptStart = new PromptStart();
-const step = ref<Step>(promptStart.pending ? "starting" : questionKeys[0]);
+// Frappe Cloud v2: a first user signed in without a password sets one before anything else
+const step = ref<Step>(
+	window.is_password_needed ? "password" : promptStart.pending ? "starting" : questionKeys[0]
+);
 const history = ref<Step[]>([]);
 const activeQuestion = computed(() => questions.find((q) => q.key === step.value));
 const isOtherSelected = computed(
@@ -277,6 +282,11 @@ const greetingName = computed(() => {
 const screen = computed(() => {
 	if (activeQuestion.value)
 		return { heading: activeQuestion.value.heading, subtitle: activeQuestion.value.subtitle };
+	if (step.value === "password")
+		return {
+			heading: __("Set a password"),
+			subtitle: __("You sign in as {0} with it.", [sessionUser.value]),
+		};
 	if (step.value === "start")
 		return {
 			heading: __("How would you like to start?"),
@@ -356,6 +366,11 @@ function goNext() {
 	finishQuestions();
 	if (siteHasPages.value) return router.replace({ name: "home" });
 	goTo("start");
+}
+
+function finishPassword() {
+	if (window.persona_survey_done) return router.replace({ name: "home" });
+	step.value = questionKeys[0];
 }
 
 function skip() {

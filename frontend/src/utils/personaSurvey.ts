@@ -18,6 +18,8 @@ declare global {
 	interface Window {
 		telemetry_enabled?: boolean;
 		persona_survey_done?: boolean;
+		// Frappe Cloud v2 signs the first user in without a password, and onboarding asks for one
+		is_password_needed?: boolean;
 	}
 }
 
@@ -32,7 +34,7 @@ export async function personaSurveyRedirect(
 	const forced = to.query.persona_survey === "test";
 	if (!isCloudSite() && !forced) return;
 	if (!user || user === "Guest") return;
-	if (!forced && (await isPersonaSurveyDone())) return;
+	if (!forced && !window.is_password_needed && (await isPersonaSurveyDone())) return;
 	return { name: "persona-survey", query: forced ? { persona_survey: "test" } : {} };
 }
 

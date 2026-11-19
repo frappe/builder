@@ -37,11 +37,15 @@ def get_context(context):
 
 
 def get_boot() -> dict:
+	from builder.account_onboarding import is_password_needed  # it imports this module
+
 	# only Builder's own catalog, the editor never looks up another app's strings
 	lang = frappe.local.lang
 	messages = get_translations_from_apps(lang, ["builder"])
 	messages.update(get_user_translations(lang) or {})
 	return {
+		# Frappe Cloud v2 signs the first user in without one, and onboarding asks for it
+		"is_password_needed": is_password_needed(),
 		"translated_messages": messages,
 		# the trial card opens Cloud Settings with this context, so the SDK skips its own lookup
 		"cloud_settings": get_cloud_settings(),
