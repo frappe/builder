@@ -15,9 +15,9 @@ class Ctx:
 
 class TestCreamGround(FrappeTestCase):
 	def test_tells_the_stock_cream_from_other_light_grounds(self):
-		for cream in ("#F4F0E8", "#F1E9DB", "#F3F0E6", "#f5efe6"):
+		for cream in ("#F4F0E8", "#F1E9DB", "#F3F0E6", "#f5efe6", "#E9D8C1"):
 			self.assertTrue(is_cream(cream), cream)
-		for other in ("#FFFFFF", "#F8F8F6", "#F2F4F7", "#263B35", "#B97857", "not a colour"):
+		for other in ("#FFFFFF", "#F8F8F6", "#F2F4F7", "#263B35", "#B97857", "#D9C8AF", "#FAD7A0", "x"):
 			self.assertFalse(is_cream(other), other)
 
 	def test_a_cream_token_is_turned_back_once_then_saved(self):
