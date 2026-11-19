@@ -54,7 +54,12 @@
 		</div>
 
 		<template v-else>
-			<div ref="messageContainer" class="no-scrollbar flex-1 space-y-4 overflow-y-auto px-4 py-4">
+			<!-- overflow-wrap is inherited, so this reaches every message and card. `anywhere`, not
+			     break-words: break-words keeps a flex item as wide as its longest word, so a
+			     pasted URL ran off the panel. -->
+			<div
+				ref="messageContainer"
+				class="no-scrollbar flex-1 space-y-4 overflow-y-auto px-4 py-4 [overflow-wrap:anywhere]">
 				<div v-if="!messages.length" class="flex h-full flex-col items-center justify-center gap-5 px-4 pb-8">
 					<div class="flex flex-col items-center gap-2.5">
 						<span class="bob-hero-orb">
@@ -114,7 +119,7 @@
 								class="mb-2" />
 							<div
 								v-if="assistantText(message)"
-								class="ai-prose prose prose-sm max-w-none break-words text-p-sm"
+								class="ai-prose prose prose-sm max-w-none text-p-sm"
 								v-html="renderMarkdown(assistantText(message))" />
 							<div v-if="cardPlugins(message).length" class="mt-2 flex flex-col gap-2">
 								<AIPluginCard v-for="plugin in cardPlugins(message)" :key="plugin" :plugin="plugin" />
@@ -138,7 +143,7 @@
 						<div v-else>
 							<!-- Card-composed replies relay a long labelled text to the model;
 							     the chat shows only the compact display line. -->
-							<div class="whitespace-pre-wrap break-words">
+							<div class="whitespace-pre-wrap">
 								{{ message.metadata?.displayText || message.content }}
 							</div>
 						</div>
@@ -250,13 +255,13 @@
 							</Button>
 						</div>
 					</div>
-					<!-- Page, block and image chips below the bubble -->
+					<!-- Page, block and attachment chips below the bubble -->
 					<div
 						v-if="
 							message.role === 'user' &&
 							(sentFrom(message) ||
 								message.metadata?.selectedBlockContext?.length ||
-								message.metadata?.attachedImageUrl)
+								sentAttachmentChips(message.metadata).length)
 						"
 						class="mt-1 flex max-w-[88%] flex-wrap items-center gap-1">
 						<!-- sent from another page: the chat went on from there -->
@@ -267,12 +272,12 @@
 							<span class="lucide-file size-2.5" />
 							{{ sentFrom(message)!.title }}
 						</button>
-						<!-- image chip -->
 						<span
-							v-if="message.metadata?.attachedImageUrl"
+							v-for="chip in sentAttachmentChips(message.metadata)"
+							:key="chip.key"
 							class="inline-flex items-center gap-1 rounded-4 bg-surface-gray-2 px-1.5 py-0.5 text-[10px] text-ink-gray-6">
-							<img :src="message.metadata.attachedImageUrl" class="h-3 w-3 rounded-4 object-cover" alt="" />
-							Image
+							<img :src="chip.thumb" class="h-3 w-3 rounded-4 object-cover" alt="" />
+							{{ chip.kind === "video" ? "Video" : "Image" }}
 						</span>
 						<!-- block chips -->
 						<button
@@ -334,16 +339,20 @@
 				</button>
 			</div>
 			<Transition name="fade">
-				<div v-if="imagePreviewUrl" class="mb-1.5 flex flex-wrap gap-1">
+				<div v-if="attachedItems.length" class="mb-1.5 flex flex-wrap gap-1">
 					<span
+						v-for="item in attachedItems"
+						:key="item.id"
 						class="inline-flex items-center gap-1 rounded-4 bg-surface-gray-2 px-1.5 py-0.5 text-xs text-ink-gray-7">
-						<img :src="imagePreviewUrl" class="h-3 w-3 rounded-4 object-cover" alt="" />
-						<span class="max-w-[120px] truncate">{{ imageFileName }}</span>
-						<Tooltip text="Remove image">
+						<span v-if="!item.images.length" class="lucide-loader-circle h-3 w-3 animate-spin" />
+						<img v-else :src="item.images[0].data" class="h-3 w-3 rounded-4 object-cover" alt="" />
+						<span v-if="item.kind === 'video'" class="lucide-film h-3 w-3 text-ink-gray-5" />
+						<span class="max-w-[120px] truncate">{{ item.name }}</span>
+						<Tooltip :text="item.kind === 'video' ? 'Remove video' : 'Remove image'">
 							<button
 								type="button"
 								class="ml-0.5 flex items-center text-ink-gray-4 hover:text-ink-red-7"
-								@click="clearImage">
+								@click="chat.attachments.remove(item.id)">
 								<span class="lucide-x h-3 w-3" />
 							</button>
 						</Tooltip>
@@ -394,6 +403,7 @@
 			</div>
 			<!-- one box: the field on top, its controls along the bottom edge -->
 			<div
+				ref="composer"
 				class="relative rounded-6 border border-outline-gray-2 bg-surface-base transition-colors focus-within:border-outline-gray-4 focus-within:shadow-sm hover:border-outline-gray-3 hover:shadow-sm"
 				@paste.stop="handlePaste"
 				@dragover.prevent="isDragging = isVisionModel ? true : isDragging"
@@ -419,11 +429,17 @@
 					<Button
 						variant="ghost"
 						icon="lucide-plus"
-						label="Attach image"
-						:tooltip="isVisionModel ? 'Attach image' : `${modelLabel} can't read images`"
+						label="Attach images or a video"
+						:tooltip="isVisionModel ? 'Attach images or a video' : `${modelLabel} can't read images`"
 						:disabled="!isVisionModel || !isEditingPage"
 						@click="imageInput?.click()" />
-					<input ref="imageInput" type="file" accept="image/*" class="hidden" @change="pickImage" />
+					<input
+						ref="imageInput"
+						type="file"
+						accept="image/*,video/*"
+						multiple
+						class="hidden"
+						@change="pickFiles" />
 					<Button
 						variant="ghost"
 						size="xs"
@@ -469,7 +485,7 @@
 						class="pointer-events-none absolute inset-0 flex items-center justify-center rounded-6 border-2 border-dashed border-outline-blue-3 bg-surface-blue-1/60">
 						<div class="flex items-center gap-1.5 text-xs font-medium text-ink-blue-4">
 							<span class="lucide-image h-3.5 w-3.5" />
-							{{ __("Drop image to attach") }}
+							{{ __("Drop images or a video to attach") }}
 						</div>
 					</div>
 				</Transition>
@@ -491,6 +507,7 @@ import AIPluginCard from "@/components/ai/AIPluginCard.vue";
 import AICommandMenu from "@/components/ai/AICommandMenu.vue";
 import AIContextMeter from "@/components/ai/AIContextMeter.vue";
 import AITurnTimeline from "@/components/ai/AITurnTimeline.vue";
+import { sentAttachmentChips } from "@/components/ai/attachments";
 import { registerBobCommands } from "@/components/ai/bobCommands";
 import { useCommandMenu } from "@/components/ai/commandMenu";
 import { connectLevel } from "@/components/ai/commands/connect";
@@ -514,6 +531,7 @@ import { __ } from "@/translation";
 import useBuilderStore from "@/stores/builderStore";
 import useCanvasStore from "@/stores/canvasStore";
 import { Badge, Button, Dropdown, KeyboardShortcut, Textarea, Tooltip, useKeyboardShortcut } from "frappe-ui";
+import { onClickOutside } from "@vueuse/core";
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from "vue";
 
 const chat = new AIChatController();
@@ -571,8 +589,8 @@ const sessionOptions = computed(() => {
 });
 const { selectBlockById, openScriptByName } = chat;
 const { attachedBlocks, attachableBlocks } = chat;
-const { imagePreviewUrl, imageFileName, isDragging, isVisionModel } = chat;
-const { clearImage, attachImageFile } = chat;
+const { isDragging, isVisionModel } = chat;
+const attachedItems = chat.attachments.items;
 
 const confirmingAction = ref(false);
 async function confirmPendingAction(message: ChatMessage, decision: "apply" | "skip", skip: string[] = []) {
@@ -901,6 +919,9 @@ const bob: BobContext = {
 onUnmounted(registerBobCommands(bob));
 // runs the open level's cleanup, like a sign-in still polling
 onUnmounted(menu.close);
+// the menu sits inside the composer, and the prompt is its filter, so clicks there keep it open
+const composer = ref<HTMLElement | null>(null);
+onClickOutside(composer, menu.dismiss);
 // the composer stops its own Escape, so this only hears one pressed after focus left it
 useKeyboardShortcut({
 	combo: "Escape",
@@ -917,9 +938,11 @@ const composerPlaceholder = computed(() => {
 	return "Ask to create or edit this page, or type / for commands";
 });
 
-// a key or URL is typed into a field inside the menu; hand focus back after
+// a list filters on the prompt, and a field inside the menu hands focus back as it goes;
+// after a click away, focus stays wherever the click put it
 watch(menuLevel, (level) => {
-	if (!level?.input) nextTick(() => promptInput.value?.focus());
+	if (level?.input) return;
+	if (level || composer.value?.contains(document.activeElement)) nextTick(() => promptInput.value?.focus());
 });
 
 const submitPrompt = () => {
@@ -966,7 +989,7 @@ const messageContainer = ref<HTMLElement | null>(null);
 watch(
 	messageContainer,
 	(el) => {
-		chat.messageContainer.value = el;
+		chat.scroll.container.value = el;
 	},
 	{ immediate: true },
 );
@@ -983,36 +1006,30 @@ useAIStatePoll(() => builderStore.leftPanelActiveTab === "Chat", builderStore);
 watch(
 	() => builderStore.leftPanelActiveTab,
 	(tab) => {
-		if (tab === "Chat") chat.flushPendingScroll();
+		if (tab === "Chat") chat.scroll.flushPending();
 	},
 );
 
 onUnmounted(() => chat.unmount());
 
 function handlePaste(event: ClipboardEvent) {
-	if (!isVisionModel.value) return;
-	const items = Array.from(event.clipboardData?.items || []);
-	const imageItem = items.find((item) => item.type.startsWith("image/"));
-	if (!imageItem) return;
+	const files = Array.from(event.clipboardData?.files || []);
+	if (!files.length) return;
 	event.preventDefault();
-	const file = imageItem.getAsFile();
-	if (file) attachImageFile(file);
+	chat.attachFiles(files);
 }
 
 const imageInput = ref<HTMLInputElement | null>(null);
 
-function pickImage(event: Event) {
+function pickFiles(event: Event) {
 	const input = event.target as HTMLInputElement;
-	const file = input.files?.[0];
-	if (file) attachImageFile(file);
+	chat.attachFiles(Array.from(input.files || []));
 	input.value = "";
 }
 
 function handleDrop(event: DragEvent) {
 	isDragging.value = false;
-	if (!isVisionModel.value) return;
-	const file = Array.from(event.dataTransfer?.files || []).find((f) => f.type.startsWith("image/"));
-	if (file) attachImageFile(file);
+	chat.attachFiles(Array.from(event.dataTransfer?.files || []));
 }
 
 const MAX_VISIBLE_CHIPS = 3;
