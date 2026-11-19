@@ -80,6 +80,7 @@
 					:disabled="!answers[activeQuestion.key]"
 					@click="goNext" />
 			</template>
+			<PasswordStep v-else-if="step === 'password'" @done="finishPassword" />
 			<StartChoice v-else-if="step === 'start'" :can-clone="canClone" @choose="choose" />
 			<CloneAddressStep
 				v-else-if="step === 'clone-address'"
@@ -111,6 +112,7 @@ import { __ } from "@/translation";
 import CloneAddressStep from "@/components/Onboarding/CloneAddressStep.vue";
 import CloneLookStep from "@/components/Onboarding/CloneLookStep.vue";
 import CloneProgressStep from "@/components/Onboarding/CloneProgressStep.vue";
+import PasswordStep from "@/components/Onboarding/PasswordStep.vue";
 import StartChoice from "@/components/Onboarding/StartChoice.vue";
 import TemplateGallery from "@/components/Templates/TemplateGallery.vue";
 import { useDashboardState } from "@/composables/useDashboardState";
@@ -197,9 +199,10 @@ const otherText = reactive<Record<QuestionKey, string>>({
 	source: "",
 });
 
-type Step = QuestionKey | "start" | "clone-address" | "clone-look" | "clone-progress" | "templates";
+type Step =
+	QuestionKey | "password" | "start" | "clone-address" | "clone-look" | "clone-progress" | "templates";
 const questionKeys = questions.map((q) => q.key);
-const step = ref<Step>(questionKeys[0]);
+const step = ref<Step>(window.is_password_needed ? "password" : questionKeys[0]);
 const history = ref<Step[]>([]);
 const activeQuestion = computed(() => questions.find((q) => q.key === step.value));
 const isOtherSelected = computed(
@@ -234,6 +237,11 @@ const greetingName = computed(() => {
 const screen = computed(() => {
 	if (activeQuestion.value)
 		return { heading: activeQuestion.value.heading, subtitle: activeQuestion.value.subtitle };
+	if (step.value === "password")
+		return {
+			heading: __("Set a password"),
+			subtitle: __("You sign in as {0} with it.", [sessionUser.value]),
+		};
 	if (step.value === "start")
 		return {
 			heading: __("How would you like to start?"),
@@ -300,6 +308,11 @@ function goNext() {
 	// of the start step (clone, template, blank, or closing the tab) won't re-trigger the survey
 	finishQuestions();
 	goTo("start");
+}
+
+function finishPassword() {
+	if (window.persona_survey_done) return router.replace({ name: "home" });
+	step.value = questionKeys[0];
 }
 
 function skip() {

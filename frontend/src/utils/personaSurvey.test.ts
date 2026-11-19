@@ -61,6 +61,13 @@ describe("persona survey redirect", () => {
 		expect(builderSettings.reload).not.toHaveBeenCalled();
 	});
 
+	it("sends a user who took the survey but has no password to onboarding", async () => {
+		window.persona_survey_done = true;
+		window.is_password_needed = true;
+
+		expect(await atOnce(personaSurveyRedirect(home(), USER))).toEqual(SURVEY);
+	});
+
 	// the boot data says "not done" for the rest of the page's life
 	it("lets the user through once the survey is left, and saves that", async () => {
 		markPersonaSurveyDone();
