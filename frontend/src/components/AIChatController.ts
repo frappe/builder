@@ -463,6 +463,16 @@ export class AIChatController {
 		await this.loadSession(); // falls back to the next most recent (or a blank chat)
 	};
 
+	/** Files dropped, pasted or picked into the composer. */
+	attachFiles = (files: File[]) => {
+		if (!files.length) return;
+		if (!this.isVisionModel.value) {
+			toast.error(`${this.modelLabel.value} can't read images or video. Pick another model to attach them.`);
+			return;
+		}
+		this.attachments.add(files);
+	};
+
 	// --- realtime handlers ------------------------------------------------
 
 	/** All events on this page's channel carry the session that produced them.

@@ -988,25 +988,23 @@ watch(
 onUnmounted(() => chat.unmount());
 
 function handlePaste(event: ClipboardEvent) {
-	if (!isVisionModel.value) return;
 	const files = Array.from(event.clipboardData?.files || []);
-	if (!files.some((f) => f.type.startsWith("image/") || f.type.startsWith("video/"))) return;
+	if (!files.length) return;
 	event.preventDefault();
-	chat.attachments.add(files);
+	chat.attachFiles(files);
 }
 
 const imageInput = ref<HTMLInputElement | null>(null);
 
 function pickFiles(event: Event) {
 	const input = event.target as HTMLInputElement;
-	chat.attachments.add(Array.from(input.files || []));
+	chat.attachFiles(Array.from(input.files || []));
 	input.value = "";
 }
 
 function handleDrop(event: DragEvent) {
 	isDragging.value = false;
-	if (!isVisionModel.value) return;
-	chat.attachments.add(Array.from(event.dataTransfer?.files || []));
+	chat.attachFiles(Array.from(event.dataTransfer?.files || []));
 }
 
 const MAX_VISIBLE_CHIPS = 3;

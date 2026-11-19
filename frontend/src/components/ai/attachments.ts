@@ -5,8 +5,10 @@ import { computed, ref } from "vue";
 const LIMITS = { image: 6, video: 1 };
 const MAX_FRAMES = 8;
 const SECONDS_PER_FRAME = 3;
-// Models scale anything larger down to about this long edge, so sending more only
-// adds bytes: Anthropic rejects a request over 32 MB.
+// Past this, eight frames are too far apart to follow what happens between them.
+const MAX_VIDEO_SECONDS = 120;
+// Claude reads up to 2576px, but an image's tokens grow with its area: this keeps a
+// screenshot near 1.8k tokens and a full message well inside one request.
 const MAX_EDGE = 1568;
 const PASS_THROUGH_BYTES = 1024 * 1024;
 const PASS_THROUGH_TYPES = ["image/png", "image/jpeg", "image/webp", "image/gif"];
@@ -46,19 +48,18 @@ export class ChatAttachments {
 	readonly items = ref<Attachment[]>([]);
 	readonly reading = computed(() => this.items.value.some((a) => !a.images.length));
 
+	/** Attach what fits; one warning per kind of file left out, however many were. */
 	add = (files: File[]) => {
+		let unsupported = false;
+		let over = false;
 		for (const file of files) {
 			const kind = kindOf(file);
-			if (!kind) continue;
-			if (this.items.value.filter((a) => a.kind === kind).length >= LIMITS[kind]) {
-				toast.error(`Attach up to ${LIMITS.image} images and ${LIMITS.video} video per message`);
-				continue;
-			}
-			// listed at once, empty, so the chip shows while a video is read
-			const id = `${Date.now()}-${Math.random()}`;
-			this.items.value.push({ id, kind, name: file.name || `pasted-${kind}`, images: [] });
-			this.read(id, file, kind);
+			if (!kind) unsupported = true;
+			else if (this.count(kind) >= LIMITS[kind]) over = true;
+			else this.start(file, kind);
 		}
+		if (over) toast.error(`Attach up to ${LIMITS.image} images and ${LIMITS.video} video per message`);
+		if (unsupported) toast.error("Only images and videos can be attached");
 	};
 
 	remove = (id: string) => {
@@ -72,18 +73,34 @@ export class ChatAttachments {
 		return images;
 	}
 
+	private count(kind: Kind): number {
+		return this.items.value.filter((a) => a.kind === kind).length;
+	}
+
+	/** Listed at once, empty, so the chip shows while a video is read. */
+	private start(file: File, kind: Kind) {
+		const id = `${Date.now()}-${Math.random()}`;
+		this.items.value.push({ id, kind, name: file.name || `pasted-${kind}`, images: [] });
+		this.read(id, file, kind);
+	}
+
 	private async read(id: string, file: File, kind: Kind) {
 		try {
 			const images = kind === "video" ? await videoFrames(file) : [{ data: await imageData(file) }];
 			const item = this.items.value.find((a) => a.id === id);
 			if (item) item.images = images;
-		} catch {
+		} catch (error) {
 			this.remove(id);
-			toast.error(
-				kind === "video" ? `Couldn't read ${file.name}. Try an MP4 or WebM.` : `Couldn't read ${file.name}`,
-			);
+			toast.error(error instanceof AttachError ? error.message : unreadable(file, kind));
 		}
 	}
+}
+
+/** A file read fine but can't be attached; its message is for the user. */
+class AttachError extends Error {}
+
+function unreadable(file: File, kind: Kind): string {
+	return kind === "video" ? `Couldn't read ${file.name}. Try an MP4 or WebM.` : `Couldn't read ${file.name}`;
 }
 
 /** Chips for a sent message: one per image, one per video. */
@@ -135,6 +152,10 @@ async function videoFrames(file: File): Promise<AttachedImage[]> {
 		video.src = url;
 		await loaded(video, "loadeddata");
 		const duration = await durationOf(video);
+		if (duration > MAX_VIDEO_SECONDS) {
+			const limit = `${MAX_VIDEO_SECONDS / 60} minutes`;
+			throw new AttachError(`${file.name} is ${clock(duration)} long. Attach a video up to ${limit}.`);
+		}
 		const count =
 			duration > 0 ? Math.min(MAX_FRAMES, Math.max(3, Math.ceil(duration / SECONDS_PER_FRAME))) : 1;
 		const frames: AttachedImage[] = [];
@@ -159,6 +180,11 @@ async function durationOf(video: HTMLVideoElement): Promise<number> {
 	video.currentTime = Number.MAX_SAFE_INTEGER;
 	await loaded(video, "seeked");
 	return Number.isFinite(video.duration) ? video.duration : 0;
+}
+
+function clock(seconds: number): string {
+	const whole = Math.round(seconds);
+	return `${Math.floor(whole / 60)}:${String(whole % 60).padStart(2, "0")}`;
 }
 
 function encode(source: CanvasImageSource, width: number, height: number, type: string): string {
