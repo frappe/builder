@@ -24,6 +24,7 @@ page_writer.convert_node), so the normalizers and guards on that path
 apply to markup unchanged.
 """
 
+import hashlib
 import json
 import re
 from collections import Counter
@@ -433,6 +434,13 @@ def dump_block(
 	if sets is not None:
 		sets.update(dumper.sets_table())
 	return text
+
+
+def page_mark(root: dict | None) -> str:
+	"""A digest of the page as the model reads it, so the editor saving its copy of an
+	unchanged page leaves the mark as it was and any edit the markup shows changes it."""
+	text = dump_block(root, set_prefix=None) if root else ""
+	return hashlib.sha1(text.encode()).hexdigest()[:12]
 
 
 # --- writing: markup -> codec nodes ------------------------------------------

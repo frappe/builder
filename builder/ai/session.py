@@ -170,6 +170,22 @@ class AISession:
 		return list(dict.fromkeys(written))
 
 	@classmethod
+	def page_mark(cls, session_id: str | None, page_id: str | None) -> str | None:
+		"""How this conversation last left the page (markup.page_mark), or None when it
+		never worked on it."""
+		if not (session_id and page_id):
+			return None
+		rows = frappe.db.get_all(
+			cls.MESSAGE_DOCTYPE,
+			filters=[["session", "=", session_id], ["metadata_json", "like", f'%"pageMarks":%"{page_id}"%']],
+			pluck="metadata_json",
+			order_by="creation desc",
+			limit_page_length=5,
+		)
+		marks = (cls.load_metadata(row).get("pageMarks") or {} for row in rows)
+		return next((mark[page_id] for mark in marks if page_id in mark), None)
+
+	@classmethod
 	def latest_turn_metadata(cls, session_id: str) -> dict:
 		"""What the user's latest message was sent with: editor theme, thinking effort."""
 		metadata_json = frappe.db.get_value(
