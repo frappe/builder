@@ -21,6 +21,7 @@ import time
 import frappe
 
 from builder.ai import llm
+from builder.ai.block_codec import BlockCodec
 from builder.ai.models import ModelRegistry
 from builder.ai.prompts import Prompts
 from builder.ai.session import AISession
@@ -33,7 +34,8 @@ logger.setLevel(logging.INFO)
 # (not just place): the user's reference and the chosen hero shot.
 IMAGE_MARKER_RE = re.compile(r"(?:REFERENCE|HERO) IMAGE:\s*(\S+)", re.IGNORECASE)
 MAX_ATTACHED_IMAGES = 2
-MAX_IMAGE_BYTES = 3 * 1024 * 1024
+# As large as an image a chat message may carry: a turn's job reads its own images back from their files.
+MAX_IMAGE_BYTES = BlockCodec.MAX_IMAGE_DATA_URL * 3 // 4
 IMAGE_CHECK_TIMEOUT = 5
 
 
@@ -88,14 +90,8 @@ def brief_image_parts(brief: str, skip: set[str] | None = None) -> list[dict]:
 
 def read_site_image(file_url: str) -> str | None:
 	try:
-		name = frappe.db.get_value("File", {"file_url": file_url}, "name")
-		if not name:
-			return None
-		file = frappe.get_doc("File", name)
-		# The path may come out of a model-written brief, so a private file is only
-		# inlined when the user this run acts for may actually read it.
-		if file.is_private and not file.has_permission("read"):
-			logger.warning(f"read_site_image: {file_url} is private and not readable here")
+		file = readable_file(file_url)
+		if not file:
 			return None
 		content = file.get_content()
 		if isinstance(content, str):
@@ -110,6 +106,22 @@ def read_site_image(file_url: str) -> str | None:
 	except Exception as e:
 		logger.warning(f"read_site_image failed for {file_url}: {e}")
 		return None
+
+
+def readable_file(file_url: str):
+	"""A File at `file_url` the user this run acts for may read. The path may come out of a model-written
+	brief, so a private file is only inlined when they may. Files with the same content share one address,
+	so a user's own image can sit at an address an earlier upload of someone else's took first."""
+	names = frappe.get_all(
+		"File", filters={"file_url": file_url}, pluck="name", order_by="creation", limit=20
+	)
+	for name in names:
+		file = frappe.get_doc("File", name)
+		if not file.is_private or file.has_permission("read"):
+			return file
+	if names:
+		logger.warning(f"read_site_image: {file_url} is private and not readable here")
+	return None
 
 
 def found_photo_list(ctx) -> str:

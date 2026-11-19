@@ -14,7 +14,7 @@ from frappe.utils.telemetry import capture
 from builder.ai.agent.page_changes import page_row
 from builder.ai.attachments import TurnImages
 from builder.ai.discovery import Discovery
-from builder.ai.llm import Effort, resolve_api_key, settings_api_key
+from builder.ai.llm import Effort, resolve_api_key, route, settings_api_key
 from builder.ai.models import GatewayListing, ModelRegistry, fetch_credits
 from builder.ai.presets import get_site_ai_key
 from builder.ai.session import AISession
@@ -65,7 +65,7 @@ def run(
 			)
 		)
 	thinking = turn_effort(effort, resolved_model)
-	ticket = queue_ticket(resolved_model, thinking)
+	ticket = queue_ticket(resolved_model, thinking, images=len(attached))
 
 	# Attached images are one-turn data URIs: saved as site files they gain real URLs
 	# that later turns can replay and a generation brief can carry as REFERENCE IMAGE.
@@ -120,16 +120,17 @@ def turn_effort(level: str | None, model: str) -> Effort:
 	return Effort(level).at_most(max_effort(resolve_api_key(model)))
 
 
-def queue_ticket(model: str, thinking: Effort) -> str:
+def queue_ticket(model: str, thinking: Effort, images: int = 0) -> str:
 	"""The site's ticket for a turn on `model` (builder/ai/turns.py), taken before anything is saved.
 	Refused with a message the user reads when the model has no key, the site's allowance for the
-	site key is spent (a turn that can only fail would still hold a worker), or the site already
-	has as many turns queued as it may."""
+	site key is spent or has no room for the turn's `images` (a turn that can only fail would still
+	hold a worker), or the site already has as many turns queued as it may."""
 	from builder.ai.site_key import UsageLimitError, ensure_allowance_left
 
 	try:
 		# the job resolves its own copy of the key, so the key never sits in the queue
-		ensure_allowance_left(resolve_api_key(model))
+		api_key = resolve_api_key(model)
+		ensure_allowance_left(api_key, images, model=route(model, api_key)[0])
 	except UsageLimitError as e:
 		frappe.throw(str(e), UsageLimitError)
 	if not (ticket := TurnQueue.claim(thinking.job_timeout)):

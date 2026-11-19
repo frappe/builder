@@ -39,6 +39,10 @@ class AttachedImage:
 		video = str(d.get("video") or "")[:140]
 		return cls(d.get("data") or "", d.get("url") or "", video, frame_at(d.get("at")))
 
+	@property
+	def saved(self) -> bool:
+		return self.url.startswith("/")
+
 	def to_dict(self, with_data: bool = False) -> dict:
 		d = {"url": self.url or self.data}
 		if with_data:
@@ -49,7 +53,7 @@ class AttachedImage:
 
 	def label(self, number: int) -> str:
 		name = f"Frame at {self.timestamp()} of {self.video}" if self.video else f"Image {number}"
-		return f"{name} (saved at {self.url})" if self.url.startswith("/") else name
+		return f"{name} (saved at {self.url})" if self.saved else name
 
 	def timestamp(self) -> str:
 		seconds = int(float(self.at or 0))
@@ -146,13 +150,16 @@ class TurnImages:
 		return [image.to_dict() for image in self.images]
 
 	def payload(self) -> list[dict]:
-		return [image.to_dict(with_data=True) for image in self.images]
+		"""What the turn's job is queued with: a saved image by its address, which the job reads back as a
+		later turn's replay does, and only one that could not be saved by its data. A message's images are up
+		to 20 MB of data, and the queue keeps a finished job for minutes and a failed one for days."""
+		return [image.to_dict(with_data=not image.saved) for image in self.images]
 
 	def first(self, count: int) -> "TurnImages":
 		return TurnImages(self.images[:count])
 
 	def file_urls(self) -> set[str]:
-		return {image.url for image in self.images if image.url.startswith("/")}
+		return {image.url for image in self.images if image.saved}
 
 	def parts(self) -> list[dict]:
 		"""Provider content parts, each image after a label naming it, so the model

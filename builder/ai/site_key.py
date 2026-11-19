@@ -14,7 +14,9 @@ not metered. An allowance has:
   the name the call goes out with (anthropic/claude-opus-5-5, say), so a host can count a token of a
   dearer model for more.
 - `check()`: raise that same UsageLimitError when nothing is left, holding nothing. A turn is checked
-  before it is queued, since one that can only fail would still hold a worker.
+  before it is queued, since one that can only fail would still hold a worker. A turn that carries images
+  is asked as a reserve() of what they cost instead, settled at once at nothing: its images are stored and
+  queued only once they fit.
 - `status() -> dict`: what is used and left, for the AI panel.
 A reservation has `settle(usage: Usage)`, called once when the call's usage is known.
 
@@ -243,10 +245,17 @@ def max_effort(api_key: str | None) -> str | None:
 	return frappe.conf.get(MAX_EFFORT_CONFIG) if is_site_key(api_key) else None
 
 
-def ensure_allowance_left(api_key: str | None) -> None:
-	"""Raise UsageLimitError, holding nothing, when a call with `api_key` is paid with the site key and the
-	host's allowance has nothing left."""
-	if is_site_key(api_key) and (meter := allowance()):
+def ensure_allowance_left(api_key: str | None, images: int = 0, model: str | None = None) -> None:
+	"""Raise UsageLimitError when a call with `api_key` is paid with the site key and the host's allowance
+	has nothing left. A turn that carries `images` must have room for them too: what they and an answer cost
+	is held as a call to `model` (the name it goes out with) holds it, and let go at once (a host that counts
+	calls counts it as one). A refused call moves no counter, so without it a turn whose first call cannot
+	fit would store and queue its images as often as it is sent."""
+	if not is_site_key(api_key) or not (meter := allowance()):
+		return
+	if images:
+		meter.reserve(images * IMAGE_TOKENS + DEFAULT_COMPLETION_TOKENS, model=model).settle(Usage(0, 0))
+	else:
 		meter.check()
 
 
