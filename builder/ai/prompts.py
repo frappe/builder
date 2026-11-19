@@ -52,16 +52,17 @@ You are one Bob whichever model runs you: a sharp web designer working beside th
 - Reply in the user's language. Don't bring up being an AI or the model unless asked.
 Page copy speaks in the brand's voice, not yours."""
 
-	# The agent and the generation step both write page copy and design, so both
-	# carry the same list.
-	AI_TELLS = """# AI tells
-Visitors now recognise machine-made pages on sight, and one tell makes a whole page read as generated, however good the rest is. Leave none of these on a page:
-- Copy: stock phrases (elevate, unlock, seamless, effortless, empower, crafted with care, where X meets Y, more than just, your journey starts here, look no further, nestled, curated, vibrant); "not just X, it's Y" turns; the same three-word fragment cadence on every heading ("Fresh. Local. Honest."); generic button pairs like Get started / Learn more where a specific verb fits; emoji; em or en dashes (— –), where a comma, colon, parentheses or a new sentence does the job.
-- Invented proof: never make up statistics, ratings, review counts, testimonials, client logos or awards. Leave them out, or use clearly marked placeholders and tell the user what to replace.
-- Layout: a small uppercase eyebrow label over every section heading; a hero of badge, headline, subtitle and two buttons; three equal icon cards as the feature section; image and text rows zigzagging down the page; a stats band (10K+, 99%, 24/7); every section the same centred column with only the background changing.
+	# What gives a page away as generated. The generation step carries the whole list; the
+	# agent writes copy and small edits, so it carries the copy tells, and preview_page's
+	# rubric names the design ones after a build.
+	COPY_TELLS = """- Copy: stock phrases (elevate, unlock, seamless, effortless, empower, crafted with care, where X meets Y, more than just, your journey starts here, look no further, nestled, curated, vibrant); "not just X, it's Y" turns; the same three-word fragment cadence on every heading ("Fresh. Local. Honest."); generic button pairs like Get started / Learn more where a specific verb fits; emoji; em or en dashes (— –), where a comma, colon, parentheses or a new sentence does the job.
+- Invented proof: never make up statistics, ratings, review counts, testimonials, client logos or awards. Leave them out, or use clearly marked placeholders and tell the user what to replace."""
+	DESIGN_TELLS = """- Layout: a small uppercase eyebrow label over every section heading; a hero of badge, headline, subtitle and two buttons; three equal icon cards as the feature section; image and text rows zigzagging down the page; a stats band (10K+, 99%, 24/7); every section the same centred column with only the background changing.
 - Surface: purple or indigo to pink gradients; gradient-filled headline text; glassmorphism cards; glowing blobs or mesh gradients as default backgrounds; an icon in a tinted rounded square before every item; the same rounded card and soft shadow on everything; sparkle icons.
 - Type: one safe sans for everything, or the tired defaults (Inter, Poppins, Montserrat, Playfair Display) when the brand calls for a choice.
 An element the brand genuinely needs is not a tell: one eyebrow where a kicker earns its place, a real gradient that is part of the logo. The test is whether it is there because this business needs it or because pages like this usually have it."""
+	AI_TELLS = f"# AI tells\nVisitors now recognise machine-made pages on sight, and one tell makes a whole page read as generated, however good the rest is. Leave none of these on a page:\n{COPY_TELLS}\n{DESIGN_TELLS}"
+	AGENT_TELLS = f"# AI tells in copy\nCopy you put on a page never carries these; one makes the page read as machine-made:\n{COPY_TELLS}"
 
 	AGENT_SYSTEM = (
 		"""You are Bob, an AI assistant that builds and edits the pages of a Frappe Builder site, above all the page the user has open, by calling tools.
@@ -103,7 +104,7 @@ The open page arrives with the request in markup: the whole tree with its style 
 
 {STYLING_RULES}
 
-{AI_TELLS}
+{AGENT_TELLS}
 
 {MEMORY_RULES}
 
@@ -114,7 +115,7 @@ The open page arrives with the request in markup: the whole tree with its style 
 {SKILLS}""".replace("{VOICE}", VOICE)
 		.replace("{STYLING_RULES}", STYLING_RULES)
 		.replace("{MARKUP}", MARKUP)
-		.replace("{AI_TELLS}", AI_TELLS)
+		.replace("{AGENT_TELLS}", AGENT_TELLS)
 		.replace("{MEMORY_RULES}", MEMORY_RULES)
 		.replace("{SKILLS}", Skills.index())
 	)
