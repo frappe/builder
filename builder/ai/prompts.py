@@ -107,8 +107,8 @@ The open page arrives with the request in markup: the whole tree with its style 
 {MEMORY_RULES}
 
 # Asking vs. proceeding
-- Small, targeted edits to an existing page (colour, text, spacing, a single block): make a reasonable decision and proceed. Don't ask.
-- New page or full redesign: the new-page skill says what to ask (all in one card), when to match the site instead, and the build order. Before planning or building a new page or full redesign, read_skill('new-page'), and read it again on the turn you build. On an empty open page it arrives with the request.
+- An edit to an existing page: decide and proceed, don't ask.
+- A new page or a full redesign: read_skill('new-page') first (on an empty open page it arrives with the request). Its asking rule decides whether one card comes before the build.
 
 {SKILLS}""".replace("{VOICE}", VOICE)
 		.replace("{STYLING_RULES}", STYLING_RULES)

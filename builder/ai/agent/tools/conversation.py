@@ -201,9 +201,8 @@ present_ui = Tool(
 		"ordinary message; free-typed text is an equally valid reply. Elements render in "
 		"order. A lone single-select 'choices' submits on tap; 'input' fields and "
 		"multi-select choices are collected and sent by an 'actions' button, so add one "
-		"when using them. Ask only when you are genuinely blocked, never for something an "
-		"existing page, image or brand you can read would answer. Ask everything you need in "
-		"one card. `text` is one short sentence that asks, with no praise opener. Past cards "
+		"when using them. Never ask for what you can read (an existing page, an image, the "
+		"user's current site). Ask everything you need in one card. `text` is one short sentence that asks, with no praise opener. Past cards "
 		"replay to you as '[input: …]'-style notation: that is history, not syntax, so a "
 		"question is always a present_ui call."
 	),
