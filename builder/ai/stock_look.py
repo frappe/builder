@@ -50,6 +50,17 @@ def is_cream(colour: str) -> bool:
 	return 20 <= hue * 360 <= 60 and lightness >= 0.85 and 0.15 <= saturation <= 0.8
 
 
+def unseen_creams(ctx, colours) -> list[str]:
+	"""Cream grounds a tool hasn't turned back yet this turn, marked as turned back now:
+	the same value sent again is deliberate, so it passes."""
+	seen = getattr(ctx, "stock_grounds", None)
+	if seen is None:
+		return []
+	fresh = [colour for colour in dict.fromkeys(colours) if is_cream(colour) and colour.lower() not in seen]
+	seen.update(colour.lower() for colour in fresh)
+	return fresh
+
+
 class FontDraw:
 	"""A handful of Google Fonts families for one chat's new pages, drawn at random from
 	the editor's own catalogue past its most popular head, without reflex or tired faces

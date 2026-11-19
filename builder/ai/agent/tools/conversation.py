@@ -19,6 +19,7 @@ import frappe
 
 from builder.ai.agent.registry import Tool
 from builder.ai.session import AISession
+from builder.ai.stock_look import unseen_creams
 
 ELEMENT_KINDS = frozenset(
 	{
@@ -42,6 +43,14 @@ MAX_ELEMENTS = 30
 MAX_UI_JSON = 24000
 
 
+STOCK_TILES = (
+	"FAILED: {colours} on the direction tiles is a warm near-white, the ground of the stock "
+	"generated look under any name. Unless the user asked for it or their brand already uses it, "
+	"give those tiles pure white, near-black or a colour you'd name and call present_ui again. If "
+	"they did, send the same card again and it shows."
+)
+
+
 def run_present_ui(ctx, args: dict) -> str | None:
 	text = (args.get("text") or "").strip()
 	ui = sanitize_ui(args.get("ui"))
@@ -63,6 +72,11 @@ def run_present_ui(ctx, args: dict) -> str | None:
 			"answer. `ui` must be an ARRAY of element objects, e.g. "
 			"[{'kind': 'choices', 'options': [...]}]. Call present_ui again with real elements."
 		)
+	tiles = [
+		colour for el in ui for option in el.get("options") or [] for colour in option.get("colors") or []
+	]
+	if creams := unseen_creams(ctx, tiles):
+		return STOCK_TILES.format(colours=", ".join(creams))
 	content = render_ui_text(text, ui)
 	metadata = {"status": "ui", "text": text, "ui": ui}
 	if timeline := ctx.timeline():

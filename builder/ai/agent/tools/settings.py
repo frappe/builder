@@ -13,7 +13,7 @@ import frappe
 
 from builder.ai.agent import pending
 from builder.ai.agent.registry import Tool
-from builder.ai.stock_look import is_cream
+from builder.ai.stock_look import unseen_creams
 
 PAGE_SETTING_FIELDS = {
 	"page_title",
@@ -102,15 +102,6 @@ STOCK_GROUND = (
 )
 
 
-def stock_ground(ctx, value: str) -> str | None:
-	"""Turns a cream ground back once a turn: the same value set again is deliberate."""
-	seen = getattr(ctx, "stock_grounds", None)
-	if seen is None or not is_cream(value) or value.lower() in seen:
-		return None
-	seen.add(value.lower())
-	return STOCK_GROUND.format(value=value)
-
-
 def set_design_token(ctx, args: dict) -> str:
 	"""Create or update a site theme token (Builder Token). The CSS handle is
 	var(--<doc name>); token_name is only the human label. An explicit `id`
@@ -134,8 +125,8 @@ def set_design_token(ctx, args: dict) -> str:
 		value = value.split(",")[0].strip().strip("'\"")
 		if not value or value.startswith("var("):
 			return "FAILED: a Font token's value must be a bare font family name, e.g. 'Fraunces'."
-	if token_type == "Color" and (refusal := stock_ground(ctx, value)):
-		return refusal
+	if token_type == "Color" and unseen_creams(ctx, [value]):
+		return STOCK_GROUND.format(value=value)
 	fields = {
 		"type": token_type,
 		"value": value,

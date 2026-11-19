@@ -1,7 +1,9 @@
 import frappe
 from frappe.tests.utils import FrappeTestCase
 
+from builder.ai.agent.tools.conversation import run_present_ui
 from builder.ai.agent.tools.settings import set_design_token
+from builder.ai.session import AISession
 from builder.ai.skills import Skills
 from builder.ai.stock_look import REFLEX_FACES, TIRED_FACES, FontDraw, is_cream
 
@@ -35,6 +37,34 @@ class TestCreamGround(FrappeTestCase):
 		)
 
 		self.assertIn("var(--test-kiln-ink)", out)
+
+
+class CardCtx(Ctx):
+	def __init__(self):
+		super().__init__()
+		self.session_id = AISession.create({"page": None})._doc.name
+		self.web_sources = []
+
+	def timeline(self):
+		return []
+
+	def emit(self, *args, **kwargs):
+		pass
+
+
+class TestCreamTiles(FrappeTestCase):
+	def test_a_card_with_a_cream_tile_is_turned_back_once_then_shown(self):
+		ctx = CardCtx()
+		options = [
+			{"label": "The Kiln Ledger", "colors": ["#F4EEE2", "#272B25", "#C64C2F"]},
+			{"label": "Glaze Atlas", "colors": ["#DCE5E1", "#283C3A"]},
+		]
+		args = {"text": "Which direction?", "ui": [{"kind": "choices", "options": options}]}
+
+		first = run_present_ui(ctx, args)
+
+		self.assertTrue(first.startswith("FAILED: #F4EEE2 on the direction tiles"), first)
+		self.assertIsNone(run_present_ui(ctx, args))
 
 
 class TestFontDraw(FrappeTestCase):
