@@ -2,11 +2,16 @@
 	<form class="flex flex-col gap-5" @submit.prevent="save">
 		<Password v-model="password" size="md" :description="hint" autocomplete="new-password" autofocus>
 			<template #label>
-				<span class="flex justify-between gap-2">
+				<span class="flex items-center justify-between gap-2">
 					{{ __("Password") }}
-					<span v-if="level">
-						{{ __("Strength:") }}
-						<span class="font-medium" :class="level.color">{{ level.label }}</span>
+					<span v-if="level" class="flex items-center gap-1.5">
+						<span class="text-xs-semibold" :class="level.textColor">{{ level.label }}</span>
+						<span class="h-1.5 w-24 overflow-hidden rounded-full bg-surface-gray-3">
+							<span
+								class="block h-full rounded-full"
+								:class="level.barColor"
+								:style="{ width: level.width }" />
+						</span>
 					</span>
 				</span>
 			</template>
@@ -38,13 +43,14 @@ import { computed, ref } from "vue";
 
 type Strength = { score: number; feedback: { warning: string; suggestions: string[] } };
 
-// the labels and colors of Frappe's update-password page
+// the labels, colors and widths of Desk's password control, by score
+const weak = { label: __("Weak"), textColor: "text-ink-red-5", barColor: "bg-surface-red-6", width: "25%" };
 const levels = [
-	{ label: __("Poor"), color: "text-ink-red-8" },
-	{ label: __("Poor"), color: "text-ink-red-8" },
-	{ label: __("Average"), color: "text-ink-amber-8" },
-	{ label: __("Good"), color: "text-ink-blue-8" },
-	{ label: __("Great"), color: "text-ink-green-8" },
+	weak,
+	weak,
+	{ label: __("Average"), textColor: "text-ink-amber-5", barColor: "bg-surface-amber-6", width: "50%" },
+	{ label: __("Strong"), textColor: "text-ink-blue-5", barColor: "bg-surface-blue-6", width: "75%" },
+	{ label: __("Excellent"), textColor: "text-ink-green-5", barColor: "bg-surface-green-6", width: "100%" },
 ];
 
 const emit = defineEmits<{ done: [] }>();
