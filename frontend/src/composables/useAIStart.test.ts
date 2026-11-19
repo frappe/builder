@@ -68,11 +68,10 @@ describe("the AI start offer", () => {
 });
 
 describe("the first message", () => {
-	it("shows the user's own words and asks Bob to build without a round of questions", () => {
+	it("shows the user's own words and leaves Bob free to ask what the description left open", () => {
 		const { prompt, display } = firstMessage("  A bakery in Pune called Crumb.  ");
 		expect(display).toBe("A bakery in Pune called Crumb.");
-		expect(prompt.startsWith("A bakery in Pune called Crumb.\n\n")).toBe(true);
-		expect(prompt).toContain("without asking me anything first");
+		expect(prompt).toBe("A bakery in Pune called Crumb.\n\nThis is my new site's first page.");
 	});
 });
 
