@@ -79,6 +79,22 @@ class TestAttachedImages(FrappeTestCase):
 		self.assertTrue(labels[1].startswith("Frame at 1:04 of demo.mp4"))
 		self.assertEqual(sum(p["type"] == "image_url" for p in images.parts()), 2)
 
+	def test_a_frame_time_that_is_no_time_in_a_video_is_dropped(self):
+		for at in (float("inf"), float("-inf"), float("nan"), -1, 10**9, True, "12"):
+			with self.subTest(at=at):
+				image = AttachedImage.from_dict({"url": "/files/a.png", "video": "demo.mp4", "at": at})
+				self.assertIsNone(image.at)
+				self.assertEqual(image.label(1), "Frame at 0:00 of demo.mp4 (saved at /files/a.png)")
+		self.assertEqual(AttachedImage.from_dict({"video": "demo.mp4", "at": 64.5}).at, 64.5)
+
+	def test_a_message_stored_with_an_infinite_frame_time_still_replays(self):
+		# JSON carries Infinity both ways: a request's body, and a message's metadata as it was stored
+		meta = json.dumps({"attachedImages": [{"url": saved().url, "video": "demo.mp4", "at": float("inf")}]})
+		history = [{"role": "user", "content": "hi", "metadata_json": meta}]
+		parts = self.session().images_to_replay(history)[0].parts()
+		self.assertTrue(parts[0]["text"].startswith("Frame at 0:00 of demo.mp4"))
+		self.assertEqual(parts[1]["image_url"]["url"], DATA_URL)
+
 	def test_replay_keeps_to_the_image_budget(self):
 		limit = AISession.IMAGE_REPLAY_LIMIT
 		history = [

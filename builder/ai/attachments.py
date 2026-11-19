@@ -5,6 +5,7 @@ video: few models Bob drives read video, but every vision model reads its frames
 """
 
 import logging
+import math
 
 import frappe
 from frappe import _
@@ -17,6 +18,8 @@ logger.setLevel(logging.INFO)
 # What vision models read and all read_site_image hands back on a later turn. The file an image is saved
 # as takes its name from the type, so nothing else (an .svg, an .html) is stored from a chat.
 MEDIA_TYPES = ("png", "jpeg", "webp", "gif")
+# A frame's time in a video, in seconds; the editor takes frames from videos of up to two minutes.
+MAX_FRAME_AT = 24 * 60 * 60
 
 
 def media_type(data_url: str) -> str:
@@ -33,8 +36,8 @@ class AttachedImage:
 
 	@classmethod
 	def from_dict(cls, d: dict) -> "AttachedImage":
-		at = d.get("at") if isinstance(d.get("at"), int | float) else None
-		return cls(d.get("data") or "", d.get("url") or "", str(d.get("video") or "")[:140], at)
+		video = str(d.get("video") or "")[:140]
+		return cls(d.get("data") or "", d.get("url") or "", video, frame_at(d.get("at")))
 
 	def to_dict(self, with_data: bool = False) -> dict:
 		d = {"url": self.url or self.data}
@@ -86,6 +89,14 @@ class AttachedImage:
 
 			return read_site_image(self.url)
 		return None
+
+
+def frame_at(value) -> float | None:
+	"""A frame's time as the request or a stored message gives it, or None when it is no time a video has:
+	JSON can carry Infinity and NaN, and a label made from either would fail every later turn's replay."""
+	if isinstance(value, bool) or not isinstance(value, int | float):
+		return None
+	return float(value) if math.isfinite(value) and 0 <= value <= MAX_FRAME_AT else None
 
 
 class TurnImages:
