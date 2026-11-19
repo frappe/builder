@@ -993,6 +993,37 @@ class TestBuilderPage(FrappeTestCase):
 		self.assertIn('title="A\\"', rendered)
 		self.assertIn("' ~ (7*7) }}", rendered)
 
+	def test_a_dynamic_prop_default_with_a_backslash_or_quote_stays_a_string(self):
+		"""A dynamic prop's default is a Jinja literal of its own type (to_jinja_literal), not a value through
+		escape_single_quotes: a backslash at its end, or a quote in it, must still leave it a string that reads
+		back as itself, or the props after it run as Jinja"""
+		from frappe.utils.jinja import render_template
+
+		from builder.builder.doctype.builder_page.builder_page import get_block_html
+
+		def dynamic_prop(default):
+			return {
+				"isStandard": True,
+				"isDynamic": True,
+				"comesFrom": "props",
+				"value": "missing",
+				"propOptions": {"type": "string", "options": {"defaultValue": default}},
+			}
+
+		after = "' ~ (7*7) ~ '"
+		for default in ("A\\", "it's\\", "a\"b'c\\"):
+			with self.subTest(default=default):
+				block = {
+					"blockId": "default",
+					"element": "div",
+					"props": {"label": dynamic_prop(default), "after": dynamic_prop(after)},
+					"innerHTML": "{{ props.label }}|{{ props.after }}",
+				}
+				rendered = render_template(get_block_html([block])[0], {"props": {}})
+
+				self.assertIn(f"{default}|{after}", rendered)
+				self.assertNotIn("49", rendered)
+
 	def test_dynamic_value_wins_over_data_key(self):
 		"""dataKey is the legacy home for a binding. When both record the same (property, type)
 		with different keys, the dynamicValues key resolves first and dataKey stays behind it as a
