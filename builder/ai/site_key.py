@@ -50,6 +50,10 @@ CHARS_PER_TOKEN = 3
 # (six images and a video's frames, builder/ai/attachments.py) and a turn replays 8 more, so an image counted low
 # would leave each round holding tens of thousands of tokens too few
 IMAGE_TOKENS = 4784
+# what an image is charged at when a call ends without the model reporting its usage (a stopped turn, a broken
+# stream): the editor sends images and video frames at most 1568 px on the long edge (frontend/src/components/
+# ai/attachments.ts), and a 16:9 one costs about this on Claude (width x height / 750). Held, it is IMAGE_TOKENS.
+ESTIMATED_IMAGE_TOKENS = math.ceil(1568 * 882 / 750)
 # what a call may write when it sets no max_tokens
 DEFAULT_COMPLETION_TOKENS = 4096
 
@@ -276,9 +280,9 @@ class Charge:
 		meter = allowance()
 		if not meter:
 			return None
-		prompt = estimate_tokens(messages) + estimate_tokens(tools or [])
-		hold = prompt + int(params.get("max_tokens") or DEFAULT_COMPLETION_TOKENS)
-		return cls(meter.reserve(hold, model=model), prompt)
+		text, images = prompt_size([messages, tools or []])
+		hold = text + images * IMAGE_TOKENS + int(params.get("max_tokens") or DEFAULT_COMPLETION_TOKENS)
+		return cls(meter.reserve(hold, model=model), text + images * ESTIMATED_IMAGE_TOKENS)
 
 	def __init__(self, reservation, prompt_estimate: int):
 		self.reservation = reservation
@@ -395,6 +399,12 @@ def part(value, name: str):
 def estimate_tokens(value) -> int:
 	"""Tokens in a request's messages or tools, counted from their text; an image counts IMAGE_TOKENS
 	(its data URL would count as megabytes of text)."""
+	text, images = prompt_size(value)
+	return text + images * IMAGE_TOKENS
+
+
+def prompt_size(value) -> tuple[int, int]:
+	"""(tokens of text, images) in a request's messages or tools."""
 	images = 0
 
 	def strip_images(node):
@@ -409,4 +419,4 @@ def estimate_tokens(value) -> int:
 		return node
 
 	text = json.dumps(strip_images(value), default=str)
-	return math.ceil(len(text) / CHARS_PER_TOKEN) + images * IMAGE_TOKENS
+	return math.ceil(len(text) / CHARS_PER_TOKEN), images

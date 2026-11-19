@@ -7,6 +7,7 @@ from frappe.tests.utils import FrappeTestCase
 
 from builder.ai import llm
 from builder.ai.site_key import (
+	ESTIMATED_IMAGE_TOKENS,
 	IMAGE_TOKENS,
 	REDACTED,
 	REDACTED_GATEWAY,
@@ -187,6 +188,23 @@ class TestMeteredCalls(SiteKeyTestCase):
 		[settled] = self.meter.settled
 		self.assertFalse(settled.measured)
 		self.assertEqual(settled.completion_tokens, 10)
+
+	def test_a_stopped_call_is_charged_an_image_at_what_an_editor_image_costs_not_the_most_one_can(self):
+		from builder.ai.attachments import AttachedImage, TurnImages
+
+		images = TurnImages([AttachedImage(data="data:image/png;base64,AAAA")] * 10)
+		messages = [{"role": "user", "content": [{"type": "text", "text": "Like these"}, *images.parts()]}]
+		provider_stream = MagicMock()
+		provider_stream.__iter__.return_value = iter([chunk("x" * 30), chunk("y" * 30)])
+		with patch("litellm.completion", return_value=provider_stream):
+			stream = llm.complete("frappe/openai/gpt-6.1-sol", messages, {"max_tokens": 1000}, stream=True)
+			next(stream)
+			stream.close()  # the user stopped the turn: no usage came
+		[settled] = self.meter.settled
+		self.assertFalse(settled.measured)
+		text = self.meter.holds[0] - 1000 - 10 * IMAGE_TOKENS
+		self.assertEqual(settled.prompt_tokens, text + 10 * ESTIMATED_IMAGE_TOKENS)
+		self.assertEqual(ESTIMATED_IMAGE_TOKENS, 1844)  # 1568 x 882 / 750, a 16:9 shot as the editor sends it
 
 	def test_a_call_that_fails_costs_no_tokens_and_loses_the_key_from_its_error(self):
 		with (
