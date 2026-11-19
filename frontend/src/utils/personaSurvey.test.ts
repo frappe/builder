@@ -2,8 +2,6 @@ import { call } from "frappe-ui";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { RouteLocationNormalized } from "vue-router";
 
-const frappePage = vi.hoisted(() => ({ isMounted: false }));
-vi.mock("@/utils/frappePage", () => frappePage);
 vi.mock("frappe-ui", () => ({ call: vi.fn() }));
 vi.mock("@framework/ui/telemetry", () => ({ useTelemetry: vi.fn() }));
 vi.mock("@/data/builderSettings", async () => {
@@ -14,7 +12,7 @@ vi.mock("@/data/builderSettings", async () => {
 });
 
 import { builderSettings } from "@/data/builderSettings";
-import { finishedSurveyRedirect, markPersonaSurveyDone, personaSurveyRedirect } from "./personaSurvey";
+import { markPersonaSurveyDone, personaSurveyRedirect } from "./personaSurvey";
 
 const USER = "user@example.com";
 const SURVEY = { name: "persona-survey", query: {} };
@@ -37,7 +35,6 @@ beforeEach(() => {
 	builderSettings.get.loading = false;
 	vi.mocked(builderSettings.reload).mockReset();
 	vi.mocked(call).mockReset().mockResolvedValue(undefined);
-	frappePage.isMounted = false;
 });
 
 afterEach(() => {
@@ -83,7 +80,7 @@ describe("persona survey redirect", () => {
 		});
 	});
 
-	// frappe.page sites share one origin, so the cached copy can be another site's
+	// the copy cached in this browser can be out of date
 	it("goes by the boot data, not the settings copy cached in this browser", async () => {
 		builderSettings.doc = { persona_survey_done: 1 };
 
@@ -98,14 +95,6 @@ describe("persona survey redirect", () => {
 			expect(await personaSurveyRedirect(home(), USER)).toEqual(SURVEY);
 		},
 	);
-
-	// frappe.page mounts the editor at frappe.page/<sub>, and every new site there owes the survey
-	it("runs on frappe.page sites", async () => {
-		vi.stubGlobal("window", { persona_survey_done: false });
-		frappePage.isMounted = true;
-
-		expect(await personaSurveyRedirect(home(), USER)).toEqual(SURVEY);
-	});
 
 	it("leaves other sites and guests alone", async () => {
 		expect(await personaSurveyRedirect(home(), "Guest")).toBeUndefined();
@@ -168,31 +157,5 @@ describe("persona survey redirect without boot data", () => {
 		await vi.advanceTimersByTimeAsync(3_000);
 
 		expect(await redirect).toBeUndefined();
-	});
-});
-
-describe("the survey's own address", () => {
-	const survey = (query = {}) =>
-		({ name: "persona-survey", path: "/persona-survey", query }) as unknown as RouteLocationNormalized;
-
-	it("opens the dashboard once the site has taken the survey", async () => {
-		vi.stubGlobal("window", { is_fc_site: "True", persona_survey_done: true });
-		expect(await finishedSurveyRedirect(survey())).toEqual({ name: "home" });
-	});
-
-	it("shows the survey to a site that still owes it", async () => {
-		vi.stubGlobal("window", { is_fc_site: "True", persona_survey_done: false });
-		expect(await finishedSurveyRedirect(survey())).toBeUndefined();
-	});
-
-	it("opens the dashboard right after the questions, before any reload", async () => {
-		vi.stubGlobal("window", { is_fc_site: "True", persona_survey_done: false });
-		markPersonaSurveyDone();
-		expect(await finishedSurveyRedirect(survey())).toEqual({ name: "home" });
-	});
-
-	it("still shows the survey with ?persona_survey=test", async () => {
-		vi.stubGlobal("window", { is_fc_site: "True", persona_survey_done: true });
-		expect(await finishedSurveyRedirect(survey({ persona_survey: "test" }))).toBeUndefined();
 	});
 });
