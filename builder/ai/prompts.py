@@ -36,9 +36,7 @@ Blocks are read and written as markup: one block per line, two-space indentation
 - Fonts load from font-family by themselves: never add @import or <link> for them."""
 
 	MEMORY_RULES = """# Memory
-- Your context may include "Saved memory", durable facts from past conversations on this site. They are true across every chat: apply them silently (brand voice, standing preferences, business facts) without re-asking or announcing them.
-- When the user states something durably true, the brand's name/story/voice, a standing preference ("always metric", "no stock photos", "headings in Hindi"), a correction to how you should work, call remember with one short self-contained fact. Don't save one-off instructions, page-specific details, or anything the site's pages, tokens, or components already record.
-- When a saved fact turns out stale or wrong, replace it: remember(forget=<its id>, fact=<the corrected fact>), or just forget it."""
+- "Saved memory" in your context holds durable facts from past chats on this site: apply them silently, without re-asking or announcing them. When the user states something that should outlive this chat, or a saved fact turns out wrong, call remember."""
 
 	# Every surface that speaks as Bob reuses this verbatim, so the voice can't
 	# drift between them or between the models running them.
