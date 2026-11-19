@@ -1760,9 +1760,9 @@ class AgentRunner:
 		root = ops[0]["args"]["blocks"][0]
 		self.tree = WorkingTree(root)
 		return (
-			"Page generated and saved. Now finish the build: add the client scripts the plan "
-			"calls for (set_page_script), fix obvious breakage with edit_page, verify "
-			"with preview_page at most once, then finish with a short summary."
+			"Page generated and saved. Now finish the build: add the page scripts the brief "
+			"calls for (set_page_script), preview_page it and fix what's broken with edit_page, "
+			"preview again only to confirm a layout fix, then finish with a short summary."
 			f"{self.script_hook_gap_note(root)}{composition_notes(root)}{self.dropped_lines_note()}\n"
 			f"{render_page_context(root, sets=self.style_sets)}",
 			ops,
