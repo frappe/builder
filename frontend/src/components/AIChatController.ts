@@ -13,6 +13,7 @@ import useCanvasStore from "@/stores/canvasStore";
 import usePageStore from "@/stores/pageStore";
 import { confirm, getErrorMessage } from "@/utils/helpers";
 import { useBuilderToken } from "@/utils/useBuilderToken";
+import { selectedAIModel } from "@/data/aiModels";
 import { useLocalStorage } from "@vueuse/core";
 import { createResource, toast } from "frappe-ui";
 import { computed, inject, nextTick, ref, shallowRef, watch } from "vue";
@@ -80,7 +81,7 @@ export class AIChatController {
 	// This page's chat sessions (most recent first) — the panel's session switcher.
 	readonly sessions = ref<Array<{ name: string; title: string | null }>>([]);
 	readonly availableModels = ref<AIProvider[]>([]);
-	readonly selectedModel = useLocalStorage("ai-selected-model", "");
+	readonly selectedModel = selectedAIModel;
 	readonly selectedEffort = useLocalStorage("ai-thinking-effort", "");
 
 	/** While a build stream owns this page's canvas, the editor's autosave stands

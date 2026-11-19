@@ -102,41 +102,66 @@ function copyAndOpen(ctx: BobContext, login: DeviceSignIn): MenuStep {
 	return "stay";
 }
 
-/** Polls at the pace OpenAI asked for. Leaving the level stops it; coming back resumes
- * the same code. */
+/** Leaving the level stops the polling; coming back resumes the same code. */
 function watchDeviceSignIn(ctx: BobContext, menu: CommandMenu, begin: () => Promise<DeviceSignIn>) {
 	let stopped = false;
-	let timer: number | undefined;
+	let stopPolling = () => {};
 	const level = menu.level.value;
+	begin()
+		.then((login) => {
+			if (stopped || !login.state) return;
+			stopPolling = pollDeviceSignIn(login, {
+				approved: () => menu.setNote("Approved. Connecting to ChatGPT…", "progress"),
+				connected: async (result) => {
+					await connected(ctx, result);
+					// connecting takes a moment, and a menu opened meanwhile is not ours to close
+					if (menu.level.value === level) menu.close();
+				},
+				failed: (message) => menu.setNote(message || "The code expired. Go back and start again.", "error"),
+			});
+		})
+		.catch(() => null); // the level's items report it
+	return () => {
+		stopped = true;
+		stopPolling();
+	};
+}
+
+/** Polls a ChatGPT device sign-in at the pace OpenAI asked for, until it connects or fails. */
+export function pollDeviceSignIn(
+	login: DeviceSignIn,
+	on: {
+		approved: () => void;
+		connected: (result: ConnectResult) => Promise<void>;
+		failed: (message?: string) => void;
+	},
+): () => void {
+	let stopped = false;
+	let timer: number | undefined;
 	const stop = () => {
 		stopped = true;
 		window.clearTimeout(timer);
 	};
-	const poll = async (login: DeviceSignIn) => {
+	const wait = () => (timer = window.setTimeout(poll, login.interval * 1000));
+	const poll = async () => {
 		const status = await api<SignInStatus>("builder.ai.api.poll_codex_login", { state: login.state }).catch(
 			() => null,
 		);
 		if (stopped) return;
 		if (status?.status === "connected") {
 			stop();
-			await connected(ctx, status);
-			// connecting takes a moment, and a menu opened meanwhile is not ours to close
-			if (menu.level.value === level) menu.close();
+			await on.connected(status);
 		} else if (status?.status === "approved") {
-			menu.setNote("Approved. Connecting to ChatGPT…", "progress");
-			poll(login);
+			on.approved();
+			poll();
 		} else if (status?.status === "failed" || status?.status === "expired") {
 			stop();
-			menu.setNote(status.message || "The code expired. Go back and start again.", "error");
+			on.failed(status.message);
 		} else {
-			timer = window.setTimeout(() => poll(login), login.interval * 1000);
+			wait();
 		}
 	};
-	begin()
-		.then((login) => {
-			if (!stopped && login.state) timer = window.setTimeout(() => poll(login), login.interval * 1000);
-		})
-		.catch(() => null); // the level's items report it
+	wait();
 	return stop;
 }
 
@@ -190,19 +215,27 @@ function endpointKeyLevel(ctx: BobContext, url: string): MenuLevel {
 			placeholder: "API key, or Enter if it needs none",
 			secret: true,
 			submit: async (key) => {
-				const provider = await api<string>("builder.ai.api.save_ai_provider", {
-					provider: { provider_name: nameFromUrl(url), api_base: url, api_key: key, enabled: 1 },
-				});
-				const imported = await api<ImportResult>("builder.ai.api.import_provider_models", { provider });
+				await connectEndpoint(url, key);
 				await ctx.refreshAI();
-				toast.success(`${provider} connected with ${imported.added.length} models`);
 			},
 		},
 	};
 }
 
+/** An OpenAI-compatible endpoint, such as a local Ollama, with the models it serves. */
+export async function connectEndpoint(url: string, apiKey: string) {
+	const provider = await api<string>("builder.ai.api.save_ai_provider", {
+		provider: { provider_name: nameFromUrl(url), api_base: url, api_key: apiKey, enabled: 1 },
+	});
+	const imported = await api<ImportResult>("builder.ai.api.import_provider_models", { provider });
+	toast.success(`${provider} connected with ${imported.added.length} models`);
+}
+
 /** After connecting: let the editor see it, switch to the provider's best model, and say so. */
-async function connected(ctx: BobContext, result: ConnectResult): Promise<MenuStep> {
+export async function connected(
+	ctx: Pick<BobContext, "refreshAI"> & { chat: Pick<BobContext["chat"], "selectedModel"> },
+	result: ConnectResult,
+): Promise<MenuStep> {
 	const best = result.models?.[0];
 	if (best) ctx.chat.selectedModel.value = best.name;
 	await ctx.refreshAI();
