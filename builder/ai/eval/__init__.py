@@ -41,9 +41,18 @@ from .scenarios import EDITS, SCENARIOS, Scenario
 MINTED = ("Builder Component", "Builder Client Script", "Builder Token", "Builder AI Memory")
 
 
-def run(model: str, fixture: str | None = None, label: str = "run", only=None, repeat: int = 1, out_dir=None):
+def run(
+	model: str,
+	fixture: str | None = None,
+	label: str = "run",
+	only=None,
+	repeat: int = 1,
+	out_dir=None,
+	keep: bool = False,
+):
 	"""Run every scenario (or those named in `only`) `repeat` times, writing one JSON
-	per attempt plus summary.json into `out_dir`. Returns the directory."""
+	per attempt plus summary.json into `out_dir`. Returns the directory. With `keep`, the
+	built pages and what they minted stay, to look at in the editor."""
 	stamp = frappe.utils.now_datetime().strftime("%Y%m%d-%H%M")
 	out_dir = out_dir or frappe.get_site_path("private", "bob-eval", f"{label}-{stamp}")
 	os.makedirs(out_dir, exist_ok=True)
@@ -52,7 +61,7 @@ def run(model: str, fixture: str | None = None, label: str = "run", only=None, r
 		if (only and scenario.name not in only) or (scenario.on_fixture and not fixture):
 			continue
 		for attempt in range(1, repeat + 1):
-			result = ScenarioRun(scenario, model, fixture, out_dir, attempt).execute()
+			result = ScenarioRun(scenario, model, fixture, out_dir, attempt, keep).execute()
 			results.append(result)
 			write_json(os.path.join(out_dir, f"{scenario.name}-{attempt}.json"), result)
 			print(summary_line(result))  # nosemgrep
@@ -107,8 +116,17 @@ def arm_line(results: list[dict]) -> str:
 
 
 class ScenarioRun:
-	def __init__(self, scenario: Scenario, model: str, fixture: str | None, out_dir: str, attempt: int = 1):
+	def __init__(
+		self,
+		scenario: Scenario,
+		model: str,
+		fixture: str | None,
+		out_dir: str,
+		attempt: int = 1,
+		keep: bool = False,
+	):
 		self.scenario = scenario
+		self.keep = keep
 		self.attempt = attempt
 		self.model = model
 		self.fixture = fixture
@@ -277,6 +295,15 @@ class ScenarioRun:
 
 	def clean_up(self, page_id: str, since):
 		frappe.db.rollback()
+		if self.keep:
+			frappe.db.set_value(
+				"Builder Page",
+				page_id,
+				"page_title",
+				f"Bob eval: {self.scenario.name} ({self.out_dir.rsplit('/', 1)[-1]})",
+			)
+			frappe.db.commit()  # nosemgrep
+			return
 		frappe.delete_doc("Builder Page", page_id, force=True, ignore_permissions=True)
 		for doctype in MINTED:
 			for name in frappe.get_all(doctype, {"creation": [">=", since]}, pluck="name"):
