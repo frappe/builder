@@ -883,6 +883,7 @@ class AgentRunner:
 			api_key=self.api_key,
 			stream=True,
 			timeout=self.effort.stall_timeout,
+			cache_key=self.session_id,
 		)
 
 		content_parts: list[str] = []
