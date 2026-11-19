@@ -4,6 +4,7 @@ import frappe
 from frappe import _
 
 from builder.ai import locks
+from builder.ai.attachments import TurnImages
 
 # How far back to look for a session worth reopening. Deep enough to see past a
 # run of empty "New chat" sessions, shallow enough to stay one small query.
@@ -15,7 +16,7 @@ class AISession:
 	MESSAGE_DOCTYPE = "Builder AI Message"
 	PAGE_DOCTYPE = "Builder AI Session Page"
 	CONTEXT_WINDOW = 10  # how many prior turns to feed back to the model
-	IMAGE_REPLAY_LIMIT = 2  # newest attached images re-shown to a vision model
+	IMAGE_REPLAY_LIMIT = 8  # newest attached images re-shown to a vision model
 
 	def __init__(self, doc):
 		self._doc = doc
@@ -244,7 +245,7 @@ class AISession:
 		)
 		# Skip the most recent row (current user msg) and reverse to chrono order.
 		history = list(reversed(rows[1:])) if rows else []
-		replay_images = self.image_rows_to_replay(history) if include_images else set()
+		replay_images = self.images_to_replay(history) if include_images else {}
 		out: list[dict] = []
 		for i, r in enumerate(history):
 			content = (r.get("content") or "").strip()
@@ -265,39 +266,26 @@ class AISession:
 				content = self.sources_context_content(content, r.get("metadata_json"))
 			if role == "user":
 				content = self.sent_from(content, r.get("metadata_json"))
-			if i in replay_images and (image := self.replay_image_part(r)):
-				out.append({"role": role, "content": [{"type": "text", "text": content}, image]})
+			if i in replay_images and (parts := replay_images[i].parts()):
+				out.append({"role": role, "content": [{"type": "text", "text": content}, *parts]})
 				continue
 			out.append({"role": role, "content": content})
 		return out
 
-	def image_rows_to_replay(self, history: list[dict]) -> set[int]:
-		"""Indices of the newest user turns whose attachment should be re-shown,
-		bounded so a long session doesn't resend its whole image history."""
-		picked: set[int] = set()
+	def images_to_replay(self, history: list[dict]) -> dict[int, TurnImages]:
+		"""The newest user turns' attachments to re-show, by row index, bounded so a
+		long session doesn't resend its whole image history."""
+		picked: dict[int, TurnImages] = {}
+		budget = self.IMAGE_REPLAY_LIMIT
 		for i in range(len(history) - 1, -1, -1):
-			row = history[i]
-			if row.get("role") != "user":
+			if budget <= 0:
+				break
+			if history[i].get("role") != "user":
 				continue
-			if self.load_metadata(row.get("metadata_json")).get("attachedImageUrl"):
-				picked.add(i)
-				if len(picked) >= self.IMAGE_REPLAY_LIMIT:
-					break
+			if images := TurnImages.from_metadata(self.load_metadata(history[i].get("metadata_json"))):
+				picked[i] = images.first(budget)
+				budget -= len(picked[i])
 		return picked
-
-	def replay_image_part(self, row: dict) -> dict | None:
-		"""The stored attachment as a provider image part. A /files/ path is inlined
-		as a data URL (the provider can't fetch this host); a legacy data URI, from
-		before attachments were saved as files, rides as-is."""
-		url = self.load_metadata(row.get("metadata_json")).get("attachedImageUrl") or ""
-		if url.startswith("data:image/"):
-			return {"type": "image_url", "image_url": {"url": url}}
-		if url.startswith(("/files/", "/private/files/")):
-			from builder.ai.agent.artifact import read_site_image
-
-			if data_url := read_site_image(url):
-				return {"type": "image_url", "image_url": {"url": data_url}}
-		return None
 
 	def sent_from(self, content: str, metadata_json: str | None) -> str:
 		"""A message sent from another page says so: its "this page" meant that one."""

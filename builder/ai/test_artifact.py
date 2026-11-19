@@ -73,6 +73,12 @@ class TestBriefImageParts(FrappeTestCase):
 
 		self.assertEqual(parts, [])
 
+	def test_skips_the_turns_own_images(self):
+		with responding(200):
+			parts = brief_image_parts(f"REFERENCE IMAGE: {PUBLIC}", skip={PUBLIC})
+
+		self.assertEqual(parts, [])
+
 	def test_stops_at_the_attachment_limit(self):
 		brief = "\n".join(f"HERO IMAGE: https://cdn.example.com/{i}.png" for i in range(4))
 		with responding(200):
