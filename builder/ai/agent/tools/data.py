@@ -257,59 +257,26 @@ def is_portable(name: str) -> bool:
 	)
 
 
-UNPACK_HINT = (
-	" This sandbox can't unpack in an assignment (`a, b = row`): index the values instead "
-	"(`a = row[0]`). Unpacking in a for loop works."
-)
-SCOPE_HINT = (
-	" Functions in a data script can't see its top-level names, `{name}` among them: pass it "
-	"in as an argument, or move that code out of the function."
-)
-
-
 class ScriptError:
-	"""A data script's exception, put so the model can fix it: the line it hit, and the sandbox
-	rule behind the two errors whose plain message points the wrong way."""
+	"""A data script's exception as a traceback of the script's own frames. The sandbox compiles
+	the script from a string, so its source lines come from the script, not linecache."""
 
 	def __init__(self, error: Exception, script: str | None):
 		self.error = error
 		self.script = script or ""
 
 	def __str__(self) -> str:
-		return f"{type(self.error).__name__}: {self.error}{self.where()}{self.hint()}"
+		frames = self.frames()
+		trace = ["Traceback (most recent call last):", *frames] if frames else []
+		return "\n".join([*trace, f"{type(self.error).__name__}: {self.error}"])
 
-	def where(self) -> str:
-		frames = traceback.extract_tb(self.error.__traceback__)
-		lines = [f.lineno for f in frames if f.filename.startswith(SERVER_SCRIPT_FILE_PREFIX)]
+	def frames(self) -> list[str]:
 		source = self.script.splitlines()
-		if not lines or not 0 < lines[-1] <= len(source):
-			return ""
-		return f" at line {lines[-1]}: `{source[lines[-1] - 1].strip()}`"
-
-	def hint(self) -> str:
-		if not isinstance(self.error, NameError):
-			return ""
-		if "_unpack_sequence_" in str(self.error):
-			return UNPACK_HINT
-		if (name := getattr(self.error, "name", None)) in top_level_names(self.script):
-			return SCOPE_HINT.format(name=name)
-		return ""
-
-
-def top_level_names(script: str) -> set[str]:
-	"""Names the script binds outside any function, which its functions can't see here."""
-	try:
-		body = ast.parse(script).body
-	except SyntaxError:
-		return set()
-	names = set()
-	for statement in body:
-		if isinstance(statement, ast.FunctionDef | ast.AsyncFunctionDef | ast.ClassDef):
-			names.add(statement.name)
-			continue
-		stored = (n for n in ast.walk(statement) if isinstance(n, ast.Name) and isinstance(n.ctx, ast.Store))
-		names.update(n.id for n in stored)
-	return names
+		return [
+			f"  line {frame.lineno}: {source[frame.lineno - 1].strip()}"
+			for frame in traceback.extract_tb(self.error.__traceback__)
+			if frame.filename.startswith(SERVER_SCRIPT_FILE_PREFIX) and 0 < frame.lineno <= len(source)
+		]
 
 
 class DataScriptTrial:
@@ -346,8 +313,8 @@ class DataScriptTrial:
 		if not self.error:
 			return ""
 		return (
-			f" A test run without URL or query params raised {ScriptError(self.error, self.script)}: "
-			"expected if the page always gets those params, otherwise fix it."
+			"\nA test run without URL or query params raised the error below: expected if the page "
+			f"always gets those params, otherwise fix it.\n{ScriptError(self.error, self.script)}"
 		)
 
 
@@ -389,14 +356,14 @@ def write_page_data_script(ctx, args: dict) -> str:
 	trial = DataScriptTrial(ctx.page_id, script)
 	if trial.blocks_save:
 		return (
-			f"FAILED: a test run of this data script raised {ScriptError(trial.error, script)}. "
-			"Nothing was saved, so the page keeps its previous script."
+			"FAILED: a test run of this data script raised the error below. Nothing was saved, so "
+			f"the page keeps its previous script.\n{ScriptError(trial.error, script)}"
 		)
 	frappe.db.set_value("Builder Page", ctx.page_id, "page_data_script", script)
 	from builder.ai.agent.tools.settings import emit_refetch
 
 	emit_refetch(ctx, "page_data")
-	return f"Saved the page data script (runs server-side to populate `data`).{trial.warning()}{LIVE_NOTE}"
+	return f"Saved the page data script (runs server-side to populate `data`).{LIVE_NOTE}{trial.warning()}"
 
 
 # --- writes (terminal, confirm-gated) -----------------------------------

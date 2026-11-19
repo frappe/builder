@@ -50,8 +50,8 @@ def page_error(page, error: Exception) -> str:
 	from builder.ai.agent.tools.data import ScriptError
 
 	return (
-		f"FAILED: the page itself fails to render, so its visitors get an error too: "
-		f"{ScriptError(error, page.page_data_script)}. Fix that, then preview again."
+		"FAILED: the page itself fails to render, so its visitors get the error below too. Fix "
+		f"it, then preview again.\n{ScriptError(error, page.page_data_script)}"
 	)
 
 

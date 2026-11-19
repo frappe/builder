@@ -89,16 +89,18 @@ class TestDataScriptTrial(FrappeTestCase):
 		out = self.write("data.year = 1\ny, m, d = '2026-05-03'.split('-')")
 
 		self.assertTrue(out.startswith("FAILED"), out)
-		self.assertIn("line 2", out)
-		self.assertIn("can't unpack in an assignment", out)
+		self.assertIn("line 2: y, m, d = '2026-05-03'.split('-')", out)
+		self.assertIn("NameError: name '_unpack_sequence_' is not defined", out)
 		self.assertFalse(self.saved_script())
 
-	def test_refuses_a_function_reading_a_top_level_name(self):
+	def test_forwards_every_script_frame_of_the_error(self):
 		out = self.write("rows = [1, 2]\ndef count():\n    return len(rows)\ndata.total = count()")
 
 		self.assertTrue(out.startswith("FAILED"), out)
-		self.assertIn("line 3: `return len(rows)`", out)
-		self.assertIn("can't see its top-level names, `rows`", out)
+		self.assertIn(
+			"  line 4: data.total = count()\n  line 3: return len(rows)\nNameError: name 'rows' is not defined",
+			out,
+		)
 		self.assertFalse(self.saved_script())
 
 	def test_a_missing_request_param_only_warns(self):
