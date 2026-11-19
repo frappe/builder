@@ -317,3 +317,37 @@ class TestPageChangesInATurn(FrappeTestCase):
 			self.run_turn("Built it.", next_builds=builds)
 
 		queue.assert_called_once_with(self.session_id, builds, "Administrator", None)
+
+	def test_a_build_turn_that_leaves_a_card_holds_the_next_build_until_it_is_answered(self):
+		builds = [{"page_id": self.other, "title": "About", "route": "/about", "brief": "b"}]
+
+		with patch("builder.ai.api.queue_page_build") as queue:
+			self.run_turn(
+				[("edit_page", {"page": self.other, "ops": '@abouthead2 "Our story"'})],
+				"Built it, and the About heading waits for your OK.",
+				next_builds=builds,
+			)
+
+		queue.assert_not_called()
+		card = self.messages()[-1]
+		self.assertEqual(card["metadata"]["status"], "pending_action")
+		with patch("builder.ai.api.queue_page_build", return_value=True) as queue:
+			result = confirm_pending_settings(card["id"], "skip")
+		queue.assert_called_once_with(self.session_id, builds)
+		self.assertTrue(result["resumed"])
+
+	def test_applying_a_card_builds_the_held_pages_then_the_new_ones(self):
+		held = [{"page_id": self.other, "title": "About", "route": "/about", "brief": "b"}]
+		route = f"mpt-jobs-{self.tag}"
+		with patch("builder.ai.api.queue_page_build"):
+			self.run_turn(
+				[("create_page", {"title": "Jobs", "route": route, "brief": "Open roles"})],
+				"Shall I?",
+				next_builds=held,
+			)
+
+		with patch("builder.ai.api.queue_page_build", return_value=True) as queue:
+			confirm_pending_settings(self.messages()[-1]["id"], "apply")
+
+		builds = queue.call_args.args[1]
+		self.assertEqual([b["route"] for b in builds], ["/about", f"/{route}"])

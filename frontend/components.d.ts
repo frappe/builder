@@ -161,6 +161,7 @@ declare module 'vue' {
     PageStatusPill: typeof import('./src/components/PageStatusPill.vue')['default']
     PageTitlePopover: typeof import('./src/components/ToolbarItems/PageTitlePopover.vue')['default']
     PanelResizer: typeof import('./src/components/PanelResizer.vue')['default']
+    PasswordStep: typeof import('./src/components/Onboarding/PasswordStep.vue')['default']
     PlacementControl: typeof import('./src/components/PlacementControl.vue')['default']
     Play: typeof import('./src/components/Icons/Play.vue')['default']
     PluginActions: typeof import('./src/components/Settings/Plugins/PluginActions.vue')['default']

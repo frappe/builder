@@ -177,8 +177,11 @@ def confirm_pending_settings(message_id: str, decision: str = "apply", skip: lis
 		AISession.try_append_message(
 			msg.session, "assistant", outcome, message_type="status", metadata=answers
 		)
-		# Nothing waits on a page card: it comes once the turn's work is done.
-		resumed = not on_pages and resume_after_action(msg.session, outcome)
+		# A page card comes once the turn's work is done; only approved pages it held back go on.
+		if on_pages:
+			resumed = queue_page_build(msg.session, meta.get("next_builds") or [])
+		else:
+			resumed = resume_after_action(msg.session, outcome)
 		return {"status": "skipped", "resumed": resumed}
 
 	if on_pages:
@@ -207,8 +210,8 @@ def confirm_page_changes(msg, meta: dict, skip: list | None = None) -> dict:
 	AISession.try_append_message(
 		msg.session, "assistant", outcome, message_type="status", metadata={"card": msg.name}
 	)
-	builds = [p for p in pages if p["status"] == "created"]
-	resumed = bool(builds) and queue_page_build(msg.session, builds)
+	created = [p for p in pages if p["status"] == "created"]
+	resumed = queue_page_build(msg.session, [*(meta.get("next_builds") or []), *created])
 	return {"status": "applied", "message": outcome, "pages": pages, "resumed": resumed}
 
 
@@ -232,6 +235,8 @@ def queue_page_build(
 ) -> bool:
 	"""Build the first of the approved new pages off-screen; its turn hands on the rest, and
 	its `turn_ticket` with them."""
+	if not builds:
+		return False
 	page = builds[0]
 	prompt = (
 		f"The user approved the new page “{page['title']}” ({page['route']}). It now exists and is "

@@ -56,7 +56,12 @@
 		</div>
 
 		<template v-else>
-			<div ref="messageContainer" class="no-scrollbar flex-1 space-y-4 overflow-y-auto px-4 py-4">
+			<!-- overflow-wrap is inherited, so this reaches every message and card. `anywhere`, not
+			     break-words: break-words keeps a flex item as wide as its longest word, so a
+			     pasted URL ran off the panel. -->
+			<div
+				ref="messageContainer"
+				class="no-scrollbar flex-1 space-y-4 overflow-y-auto px-4 py-4 [overflow-wrap:anywhere]">
 				<div v-if="!messages.length" class="flex h-full flex-col items-center justify-center gap-5 px-4 pb-8">
 					<div class="flex flex-col items-center gap-2.5">
 						<span class="bob-hero-orb">
@@ -116,7 +121,7 @@
 								class="mb-2" />
 							<div
 								v-if="assistantText(message)"
-								class="ai-prose prose prose-sm max-w-none break-words text-p-sm"
+								class="ai-prose prose prose-sm max-w-none text-p-sm"
 								v-html="renderMarkdown(assistantText(message))" />
 							<div v-if="cardPlugins(message).length" class="mt-2 flex flex-col gap-2">
 								<AIPluginCard v-for="plugin in cardPlugins(message)" :key="plugin" :plugin="plugin" />
@@ -140,7 +145,7 @@
 						<div v-else>
 							<!-- Card-composed replies relay a long labelled text to the model;
 							     the chat shows only the compact display line. -->
-							<div class="whitespace-pre-wrap break-words">
+							<div class="whitespace-pre-wrap">
 								{{ message.metadata?.displayText || message.content }}
 							</div>
 						</div>
@@ -195,6 +200,7 @@
 							v-if="message.metadata?.kind === 'page_changes'"
 							:metadata="message.metadata"
 							:interactive="message.id === lastMessageId"
+							:builds="builds"
 							:busy="isSubmitting"
 							:confirming="confirmingAction"
 							class="mt-2"
@@ -508,6 +514,7 @@ import Dialog from "@/components/Controls/Dialog.vue";
 import SparklesIcon from "@/components/Icons/Sparkles.vue";
 import { cardAnswers } from "@/components/ai/cardAnswers";
 import { renderMarkdown } from "@/components/ai/markdown";
+import { pageBuilds } from "@/components/ai/pageChanges";
 import type { AITurnStep, ChatMessage } from "@/components/ai/types";
 import { reloadAIRegistry } from "@/data/aiModels";
 import { __ } from "@/translation";
@@ -631,6 +638,7 @@ const builderStore = useBuilderStore();
 const canvasStore = useCanvasStore();
 
 const lastMessageId = computed(() => messages.value.at(-1)?.id ?? null);
+const builds = computed(() => pageBuilds(messages.value));
 
 /** The answer itself, without the timeline that led to it. A card message persists
  * its whole card as text so the model sees it on replay — the chat shows only the
@@ -978,7 +986,7 @@ const messageContainer = ref<HTMLElement | null>(null);
 watch(
 	messageContainer,
 	(el) => {
-		chat.messageContainer.value = el;
+		chat.scroll.container.value = el;
 	},
 	{ immediate: true },
 );
@@ -995,7 +1003,7 @@ useAIStatePoll(() => builderStore.leftPanelActiveTab === "Chat", builderStore);
 watch(
 	() => builderStore.leftPanelActiveTab,
 	(tab) => {
-		if (tab === "Chat") chat.flushPendingScroll();
+		if (tab === "Chat") chat.scroll.flushPending();
 	},
 );
 

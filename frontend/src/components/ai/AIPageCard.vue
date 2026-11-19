@@ -108,6 +108,8 @@ const props = defineProps<{
 	metadata: Record<string, any>;
 	/** The card still takes a click: it is the chat's last message. */
 	interactive: boolean;
+	/** How each page built off-screen came out, by page id (see pageBuilds). */
+	builds?: Record<string, boolean>;
 	busy?: boolean;
 	confirming?: boolean;
 }>();
@@ -121,7 +123,7 @@ const emit = defineEmits<{
 // rows past this fold behind "Show N more", so a card for many pages stays short
 const FOLD_AFTER = 6;
 
-const rows = computed(() => cardRows(props.metadata));
+const rows = computed(() => cardRows(props.metadata, props.builds));
 const pending = computed(() => props.metadata.status === "pending_action");
 const skippedAll = computed(() => props.metadata.status === "action_skipped");
 
@@ -153,10 +155,15 @@ const pageHref = (pageId: string) => router.resolve({ name: "builder", params: {
 
 const capitalise = (text: string) => text.charAt(0).toUpperCase() + text.slice(1);
 
+const NEW_PAGE_ICON = "lucide-file-plus text-ink-gray-5";
+
 function rowIcon(row: PageCardRow): string {
+	// a new page is created empty and built in a turn of its own: it is done once built
+	if (row.result?.status === "created" && !row.built)
+		return row.built === false ? RESULT_ICONS.failed : NEW_PAGE_ICON;
 	if (row.result) return RESULT_ICONS[row.result.status];
 	if (skippedAll.value) return RESULT_ICONS.skipped;
-	return row.isNew ? "lucide-file-plus text-ink-gray-5" : "lucide-file-pen-line text-ink-gray-5";
+	return row.isNew ? NEW_PAGE_ICON : "lucide-file-pen-line text-ink-gray-5";
 }
 
 function rowMeta(row: PageCardRow): string {

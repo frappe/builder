@@ -1682,7 +1682,8 @@ class AgentRunner:
 	def propose_page_changes(self) -> None:
 		"""The confirm card for the turn's other-page edits and new pages, after the
 		reply so it is the chat's last message (only that one takes a click). The
-		complete event's session reload brings it in."""
+		complete event's session reload brings it in. Approved pages still to build
+		wait for its answer: a build turn starting now would put the card out of reach."""
 		if not self.page_changes:
 			return
 		AISession.try_append_message(
@@ -1695,12 +1696,14 @@ class AgentRunner:
 				"status": "pending_action",
 				"kind": "page_changes",
 				"payload": self.page_changes.payload(),
+				"next_builds": self.next_builds,
 			},
 		)
 
 	def build_next_page(self) -> None:
-		"""Approved new pages are built one turn each; this turn hands on the rest."""
-		if self.next_builds:
+		"""Approved new pages are built one turn each; this turn hands on the rest,
+		or its card does once the user answers it."""
+		if self.next_builds and not self.page_changes:
 			from builder.ai.api import queue_page_build
 
 			# the next build takes over this turn's slot, so a busy site can't break the chain

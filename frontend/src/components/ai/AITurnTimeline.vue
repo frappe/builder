@@ -33,7 +33,7 @@
 			     aside you opened, not the answer. The rule hangs under the chevron. -->
 			<div
 				v-if="step.kind === 'thinking' && step.text && expanded.has(step.id)"
-				class="ai-thought prose prose-sm max-w-none break-words border-l border-outline-gray-2 pl-3 text-p-xs text-ink-gray-5"
+				class="ai-thought prose prose-sm max-w-none border-l border-outline-gray-2 pl-3 text-p-xs text-ink-gray-5"
 				v-html="renderMarkdown(step.text)" />
 
 			<!-- tool: what Bob actually ran -->
@@ -51,7 +51,7 @@
 			<!-- text: what Bob said on its way through -->
 			<div
 				v-else-if="step.kind === 'text' && step.text"
-				class="ai-prose prose prose-sm max-w-none break-words text-p-sm text-ink-gray-7"
+				class="ai-prose prose prose-sm max-w-none text-p-sm text-ink-gray-7"
 				v-html="renderMarkdown(step.text)" />
 		</template>
 
