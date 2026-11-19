@@ -30,13 +30,10 @@ export async function loadAIStartOffer(): Promise<AIStartOffer> {
 }
 
 /** What Bob gets for a description, and the line the chat shows for it: the user's own words. A short
- * description leaves most of a page open, which Bob would otherwise ask about before building. */
+ * description leaves most of a site open, so Bob may ask about it in one card before building. */
 export function firstMessage(description: string): { prompt: string; display: string } {
 	const display = description.trim();
-	const prompt = [
-		display,
-		"This is my new site's first page. Build it now, without asking me anything first: decide what I left open yourself, and keep every name and detail I gave.",
-	].join("\n\n");
+	const prompt = [display, "This is my new site's first page."].join("\n\n");
 	return { prompt, display };
 }
 
