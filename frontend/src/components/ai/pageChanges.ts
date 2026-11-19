@@ -14,6 +14,8 @@ export interface PageCardRow {
 	lines: string[];
 	count: number;
 	result?: { status: PageResultStatus; detail?: string };
+	/** A created page is empty until Bob builds it, a turn later: unset until then. */
+	built?: boolean;
 }
 
 interface CardPayload {
@@ -38,7 +40,21 @@ export interface BuildPage {
 
 const withSlash = (route: string) => "/" + (route || "").replace(/^\//, "");
 
-export function cardRows(meta: { payload?: CardPayload; results?: PageResult[] } = {}): PageCardRow[] {
+/** How each page Bob built off-screen came out, by page id. Its build turn's reply
+ * records it, so a page still being built has no entry. */
+export function pageBuilds(messages: { metadata?: Record<string, any> }[]): Record<string, boolean> {
+	const builds: Record<string, boolean> = {};
+	for (const message of messages) {
+		const page: BuildPage | undefined = message.metadata?.buildPage;
+		if (page && page.built !== undefined) builds[page.page_id] = page.built;
+	}
+	return builds;
+}
+
+export function cardRows(
+	meta: { payload?: CardPayload; results?: PageResult[] } = {},
+	builds: Record<string, boolean> = {},
+): PageCardRow[] {
 	const payload = meta.payload || {};
 	const rows: PageCardRow[] = [
 		...(payload.new_pages || []).map((p) => ({
@@ -66,6 +82,7 @@ export function cardRows(meta: { payload?: CardPayload; results?: PageResult[] }
 		if (!row) continue;
 		row.result = { status: result.status, detail: result.detail };
 		row.pageId = row.pageId || result.page_id;
+		if (result.status === "created" && row.pageId) row.built = builds[row.pageId];
 	}
 	return rows;
 }
