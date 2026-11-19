@@ -28,6 +28,7 @@ from .measures import (
 	authored_text,
 	card_measures,
 	changed_blocks,
+	motion_measures,
 	read_json,
 	reply_measures,
 	run_measures,
@@ -238,6 +239,7 @@ class ScenarioRun:
 			measure = PageMeasure(root, tokens)
 			result["page"] = measure.measures()
 			result["look"] = measure.look()
+			result["motion"] = motion_measures(self.page_css(page.name))
 			result["screenshot"] = self.screenshot(page.name)
 			# the tree itself, so a page can be re-measured after its scratch page is gone
 			write_json(os.path.join(self.out_dir, f"{self.scenario.name}-{self.attempt}.blocks.json"), root)
@@ -292,6 +294,18 @@ class ScenarioRun:
 		with open(path, "wb") as f:  # nosemgrep
 			f.write(image)
 		return path
+
+	def page_css(self, page_id: str) -> str:
+		scripts = frappe.get_all(
+			"Builder Page Client Script", {"parent": page_id}, pluck="builder_script", ignore_permissions=True
+		)
+		return "\n".join(
+			frappe.get_all(
+				"Builder Client Script",
+				{"name": ["in", scripts or [""]], "script_type": "CSS"},
+				pluck="script",
+			)
+		)
 
 	def clean_up(self, page_id: str, since):
 		frappe.db.rollback()

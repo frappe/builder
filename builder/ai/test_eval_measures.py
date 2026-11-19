@@ -3,7 +3,7 @@ import json
 from frappe.tests.utils import FrappeTestCase
 
 from builder.ai.eval import ScenarioRun
-from builder.ai.eval.measures import PageMeasure, card_measures, is_reflex, reply_measures
+from builder.ai.eval.measures import PageMeasure, card_measures, is_reflex, motion_measures, reply_measures
 from builder.ai.eval.scenarios import Scenario
 
 LABEL = {
@@ -38,6 +38,18 @@ class TestPageMeasures(FrappeTestCase):
 		self.assertTrue(is_reflex("Cormorant Garamond"))
 		self.assertTrue(is_reflex("IBM Plex Sans"))
 		self.assertFalse(is_reflex("Bodoni Moda"))
+
+	def test_tells_motion_that_hides_content_from_motion_that_adds_to_it(self):
+		css = (
+			"@media (prefers-reduced-motion: no-preference) { .x-track { animation: x 40s linear infinite } }"
+			"@keyframes x { to { transform: translateX(-50%) } }"
+			".x-reveal { opacity: 0 } .x-dim { opacity: 0.4 }"
+		)
+
+		self.assertEqual(
+			motion_measures(css),
+			{"keyframes": 1, "scroll_linked": 0, "reduced_motion_guard": 1, "hidden_start": 1},
+		)
 
 	def test_counts_replies_that_narrate_the_turn(self):
 		reply = "I tightened the layout; the latest preview couldn't be refreshed after a rejected edit."

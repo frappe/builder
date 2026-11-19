@@ -40,6 +40,7 @@ class PageMeasure:
 		return {
 			"sections": len(self.root.get("children") or []),
 			"photos": len({src for b in self.blocks if (src := photo_src(b))}),
+			"videos": sum(b.get("element") == "video" for b in self.blocks),
 			"words": len(text.split()),
 			"font_sizes": len({s for b in self.blocks if (s := styles(b).get("fontSize"))}),
 			"micro_labels": sum(is_micro_label(b) for b in self.blocks),
@@ -226,6 +227,17 @@ def styles(block: dict) -> dict:
 def block_text(block: dict) -> str:
 	# YAML reads a bare `2019` as a number
 	return re.sub(r"<[^>]+>", " ", str(block.get("innerHTML") or ""))
+
+
+def motion_measures(css: str) -> dict:
+	"""How a page's CSS scripts move it: what kind of motion, and whether any of it hides
+	content until it plays or ignores a visitor's reduced-motion setting."""
+	return {
+		"keyframes": len(re.findall(r"@keyframes", css)),
+		"scroll_linked": int("animation-timeline" in css),
+		"reduced_motion_guard": int("prefers-reduced-motion" in css),
+		"hidden_start": len(re.findall(r"opacity\s*:\s*0(?![.\d])", css)),
+	}
 
 
 def photo_src(block: dict) -> str | None:
