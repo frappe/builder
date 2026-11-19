@@ -1024,6 +1024,55 @@ class TestBuilderPage(FrappeTestCase):
 				self.assertIn(f"{default}|{after}", rendered)
 				self.assertNotIn("49", rendered)
 
+	def test_a_dynamic_prop_default_renders_as_its_own_type(self):
+		"""With nothing bound, a dynamic prop falls back to its default as a literal of the prop's type. A false or 0
+		default prints as itself (its quoted fallback used to print nothing) and still keeps a block it is the
+		visibility condition of hidden; a true, non-zero number or object default, which the quoted fallback could
+		not take, renders instead of failing the page"""
+		from frappe.utils.jinja import render_template
+
+		from builder.builder.doctype.builder_page.builder_page import get_block_html
+
+		def dynamic_prop(prop_type, default):
+			return {
+				"isStandard": True,
+				"isDynamic": True,
+				"comesFrom": "props",
+				"value": "missing",
+				"propOptions": {"type": prop_type, "options": {"defaultValue": default}},
+			}
+
+		def render(prop_type, default, html):
+			badge = {
+				"blockId": "badge",
+				"element": "span",
+				"props": {"value": dynamic_prop(prop_type, default)},
+				"visibilityCondition": {"key": "value", "comesFrom": "props"},
+				"innerHTML": "badge",
+			}
+			block = {
+				"blockId": "default",
+				"element": "div",
+				"props": {"value": dynamic_prop(prop_type, default)},
+				"innerHTML": html,
+				"children": [badge],
+			}
+			return render_template(get_block_html([block])[0], {"props": {}})
+
+		for prop_type, default, html, shown, badge in (
+			("boolean", False, "[{{ props.value }}]", "[False]", False),
+			("boolean", "false", "[{{ props.value }}]", "[False]", False),
+			("number", "0", "[{{ props.value }}]", "[0]", False),
+			("boolean", "true", "[{{ props.value }}]", "[True]", True),
+			("number", "5", "[{{ props.value }}]", "[5]", True),
+			("object", '{"label": "Home"}', "[{{ props.value.label }}]", "[Home]", True),
+		):
+			with self.subTest(prop_type=prop_type, default=default):
+				rendered = render(prop_type, default, html)
+
+				self.assertIn(shown, rendered)
+				self.assertEqual(badge, "badge" in rendered)
+
 	def test_dynamic_value_wins_over_data_key(self):
 		"""dataKey is the legacy home for a binding. When both record the same (property, type)
 		with different keys, the dynamicValues key resolves first and dataKey stays behind it as a
