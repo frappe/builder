@@ -928,13 +928,15 @@ export class AIChatController {
 	};
 
 	/** Notes the turn ended without reading: sent as the next turn, or put back in the
-	 * composer when the turn stopped for the user (cancel, error, a question card). */
+	 * composer when the turn stopped for the user (cancel, error, a question card, or a
+	 * card waiting for their OK, which only takes a click while it is the last message). */
 	private releaseNotes(send: boolean) {
 		if (!this.queuedNotes.value.length) return;
 		const text = this.queuedNotes.value.join("\n\n");
 		this.queuedNotes.value = [];
 		this.prompt.value = [text, this.prompt.value.trim()].filter(Boolean).join("\n\n");
-		if (send) this.submitPrompt();
+		const awaitsOk = this.messages.value.at(-1)?.metadata?.status === "pending_action";
+		if (send && !awaitsOk) this.submitPrompt();
 	}
 
 	cancel = async () => {
