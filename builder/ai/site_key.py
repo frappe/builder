@@ -44,7 +44,10 @@ REDACTED = "[the site's AI key]"
 REDACTED_GATEWAY = "[the site's AI gateway]"
 # a rough count, on the high side: a held estimate that is too low lets parallel calls overspend
 CHARS_PER_TOKEN = 3
-IMAGE_TOKENS = 1500
+# the most one image costs on Claude's high-resolution models (2576 px on the long edge): a message can carry 14
+# (six images and a video's frames, builder/ai/attachments.py) and a turn replays 8 more, so an image counted low
+# would leave each round holding tens of thousands of tokens too few
+IMAGE_TOKENS = 4784
 # what a call may write when it sets no max_tokens
 DEFAULT_COMPLETION_TOKENS = 4096
 

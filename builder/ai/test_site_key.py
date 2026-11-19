@@ -1,3 +1,4 @@
+import math
 from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
 
@@ -149,6 +150,23 @@ class TestMeteredCalls(SiteKeyTestCase):
 				self.assertFalse(settled.measured)
 				self.assertEqual(settled.prompt_tokens, self.meter.holds[0] - 1000)  # the prompt it held
 				self.assertEqual(settled.completion_tokens, 100)
+
+	def test_a_round_holds_what_the_attachments_of_a_message_can_cost(self):
+		"""The editor sends up to 14 images per message (six and a video's frames), each up to 1568 px on its long
+		edge (frontend/src/components/ai/attachments.ts): about 3.3k tokens each on Claude (width x height / 750)"""
+		from builder.ai.attachments import AttachedImage, TurnImages
+
+		images = TurnImages([AttachedImage(data="data:image/png;base64,AAAA")] * TurnImages.MAX_IMAGES)
+		messages = [{"role": "user", "content": [{"type": "text", "text": "Like these"}, *images.parts()]}]
+		with patch("litellm.completion", return_value=iter([chunk(None, usage(50, 2))])):
+			list(
+				llm.complete_with_tools(
+					"frappe/openai/gpt-6.1-sol", messages, [], {"max_tokens": 1000}, stream=True
+				)
+			)
+
+		largest_editor_image = math.ceil(1568 * 1568 / 750)
+		self.assertGreaterEqual(self.meter.holds[0] - 1000, TurnImages.MAX_IMAGES * largest_editor_image)
 
 	def test_a_stream_settles_once_it_ends(self):
 		chunks = [chunk("Hel"), chunk("lo"), chunk(None, usage(50, 2))]
