@@ -51,12 +51,14 @@ SCENARIOS = (
 		expect_any=("generate_page",),
 		fresh_look=True,
 	),
-	# purpose, contents and feel are all there, without "build it now": the card is skipped
+	# purpose, contents, facts and feel are all there, without "build it now": the card is skipped
 	Scenario(
 		"vibe-build",
 		"A landing page for Tide & Tallow, a small-batch candle maker in Assagao, Goa. Sections: the "
-		"three scents (Monsoon Earth, Salt Air, Cashew Smoke, ₹1,200 each), how they're poured, "
-		"stockists, and ordering on Instagram. Slow, coastal, unhurried. Its own look, not the site's.",
+		"three scents (Monsoon Earth, Salt Air, Cashew Smoke, ₹1,200 each), how they're poured (by "
+		"hand, in batches of forty, in coconut wax), stockists (Sublime Galleria in Anjuna and Bombay "
+		"Paperie in Mumbai), and ordering on Instagram at @tideandtallow. Slow, coastal, unhurried. "
+		"Its own look, not the site's.",
 		expect_any=("generate_page",),
 		forbid=("present_ui",),
 		fresh_look=True,
