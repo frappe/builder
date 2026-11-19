@@ -964,7 +964,7 @@ const messageContainer = ref<HTMLElement | null>(null);
 watch(
 	messageContainer,
 	(el) => {
-		chat.messageContainer.value = el;
+		chat.scroll.container.value = el;
 	},
 	{ immediate: true },
 );
@@ -981,7 +981,7 @@ useAIStatePoll(() => builderStore.leftPanelActiveTab === "Chat", builderStore);
 watch(
 	() => builderStore.leftPanelActiveTab,
 	(tab) => {
-		if (tab === "Chat") chat.flushPendingScroll();
+		if (tab === "Chat") chat.scroll.flushPending();
 	},
 );
 

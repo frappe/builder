@@ -5,6 +5,7 @@ import { type AffectedItems, type PageCanvas, ToolDispatcher } from "@/component
 import { type Credits, creditsFor } from "@/components/ai/commands/shared";
 import { contextUsageOf } from "@/components/ai/contextUsage";
 import { ChatAttachments, sentImages } from "@/components/ai/attachments";
+import { ChatScroll } from "@/components/ai/chatScroll";
 import type { BuildPage } from "@/components/ai/pageChanges";
 import type { AIProvider, AITurnStep, ChatMessage } from "@/components/ai/types";
 import { buildLocalMessage } from "@/components/ai/blockFields";
@@ -43,7 +44,7 @@ export class AIChatController {
 	readonly progressMessage = ref("");
 	readonly isSubmitting = ref(false);
 	readonly isCancelling = ref(false); // true between clicking stop and the backend's cancelled event
-	readonly messageContainer = ref<HTMLElement | null>(null);
+	readonly scroll = new ChatScroll();
 
 	readonly attachments = new ChatAttachments();
 	readonly isDragging = ref(false);
@@ -352,31 +353,6 @@ export class AIChatController {
 		};
 	}
 
-	// scrolling a display:none container (closed tab) is a no-op; park and replay
-	private pendingScrollToBottom = false;
-	private scrollFrame = 0;
-
-	/** At most once a frame: streaming calls this per token, and each scroll forces
-	 * a layout. The frame lands after Vue has patched the DOM. */
-	private scrollToBottom() {
-		if (this.scrollFrame) return;
-		this.scrollFrame = requestAnimationFrame(() => {
-			this.scrollFrame = 0;
-			const el = this.messageContainer.value;
-			if (!el || el.clientHeight === 0) {
-				this.pendingScrollToBottom = true;
-				return;
-			}
-			el.scrollTop = el.scrollHeight;
-		});
-	}
-
-	flushPendingScroll = () => {
-		if (!this.pendingScrollToBottom) return;
-		this.pendingScrollToBottom = false;
-		this.scrollToBottom();
-	};
-
 	/** Load a chat session: the given one, else the current one, else the page's
 	 * most recently used, or a blank chat when there is none. A page can hold
 	 * several parallel sessions; see switchSession/newSession. */
@@ -403,13 +379,16 @@ export class AIChatController {
 				messages: ChatMessage[];
 				is_running?: boolean;
 			};
+			// a chat being opened starts at its latest; a refresh keeps the reader's place
+			const opened = session.session_id !== this.sessionId.value;
 			this.sessionId.value = session.session_id;
 			this.messages.value = (session.messages || []).map(
 				(m) => ({ ...m, role: m.role === "user" ? "user" : "assistant" }) as ChatMessage,
 			);
 			// a turn running from another page reports there, so this one can't follow it
 			if (session.is_running && session.page_id === pageId) this.beginResumedTurn();
-			this.scrollToBottom();
+			if (opened) this.scroll.toLatest();
+			else this.scroll.follow();
 			this.loadSessions();
 		} finally {
 			if (epoch === this.loadSessionEpoch) {
@@ -436,7 +415,7 @@ export class AIChatController {
 		this.sessionIntentEpoch++;
 		this.resetTransientState();
 		await this.loadSession(sessionId);
-		this.scrollToBottom();
+		this.scroll.toLatest();
 	};
 
 	/** A blank chat. The server only creates its session with the first message. */
@@ -535,7 +514,7 @@ export class AIChatController {
 			this.progressMessage.value = step.summary;
 		}
 		this.syncPendingSteps();
-		this.scrollToBottom();
+		this.scroll.follow();
 	};
 
 	/** A turn building another page names it on every event; the chat shows that
@@ -599,7 +578,7 @@ export class AIChatController {
 		// rewrote the summary, or a retry is re-sending the round).
 		this.summaryContent.value = data.replace ? data.chunk || "" : this.summaryContent.value + data.chunk;
 		this.syncPendingSteps();
-		this.scrollToBottom();
+		this.scroll.follow();
 	};
 
 	/** A server tool changed state the canvas only loads at editor start. Refetch
@@ -662,7 +641,7 @@ export class AIChatController {
 		// Don't overwrite the bubble with a static "Applying N changes…" — the loop emits
 		// a per-round progress note (the model's words, or a "Updated N blocks" summary)
 		// right after each batch, which is what the user actually sees update.
-		this.scrollToBottom();
+		this.scroll.follow();
 	};
 
 	/** Mirror edits the server already saved. Autosave stands down so the client
@@ -757,7 +736,7 @@ export class AIChatController {
 			}
 		}
 
-		this.scrollToBottom();
+		this.scroll.follow();
 		this.completeTimer = setTimeout(() => {
 			this.progressMessage.value = "";
 			this.pendingAssistantId.value = null;
@@ -820,7 +799,7 @@ export class AIChatController {
 		this.pendingAssistantId.value = null;
 		// Backend persists+commits clarify messages before emitting, so this is race-free.
 		await this.loadSession();
-		this.scrollToBottom();
+		this.scroll.follow();
 		this.releaseNotes(false);
 	};
 
@@ -848,7 +827,7 @@ export class AIChatController {
 			await this.loadSession();
 			// a page card shows how each page came out itself
 			if (decision === "apply" && !res?.pages) toast.success(res?.message || "Applied");
-			this.scrollToBottom();
+			this.scroll.toLatest();
 			if (res?.resumed && !this.isSubmitting.value) this.beginResumedTurn();
 		} catch (e: any) {
 			toast.error(e?.messages?.[0] || "Could not apply the change");
@@ -868,7 +847,7 @@ export class AIChatController {
 		this.liveSteps.value = [];
 		this.dispatcher.reset();
 		this.isSubmitting.value = true;
-		this.scrollToBottom();
+		this.scroll.follow();
 	};
 
 	/** Ask the backend to abort the in-flight turn at its next stream chunk.
@@ -1006,7 +985,7 @@ export class AIChatController {
 		const assistantMessage = buildLocalMessage("assistant", "", { status: "running" });
 		this.messages.value.push(userMessage, assistantMessage);
 		this.pendingAssistantId.value = assistantMessage.id;
-		this.scrollToBottom();
+		this.scroll.toLatest();
 		this.previewBlocks.value = null;
 		this.summaryContent.value = "";
 		this.liveSteps.value = [];
@@ -1082,7 +1061,7 @@ export class AIChatController {
 		await this.pageStore.restoreSnapshot(snapshot);
 		// 3. Reload the (now truncated) chat — restoreSnapshot doesn't touch the session.
 		await this.loadSession();
-		this.scrollToBottom();
+		this.scroll.toLatest();
 	};
 
 	selectBlockById = (blockId: string) => {
