@@ -380,6 +380,7 @@
 			</div>
 			<!-- one box: the field on top, its controls along the bottom edge -->
 			<div
+				ref="composer"
 				class="relative rounded-6 border border-outline-gray-2 bg-surface-base transition-colors focus-within:border-outline-gray-4 focus-within:shadow-sm hover:border-outline-gray-3 hover:shadow-sm"
 				@paste.stop="handlePaste"
 				@dragover.prevent="isDragging = isVisionModel ? true : isDragging"
@@ -500,6 +501,7 @@ import { __ } from "@/translation";
 import useBuilderStore from "@/stores/builderStore";
 import useCanvasStore from "@/stores/canvasStore";
 import { Badge, Button, Dropdown, KeyboardShortcut, Textarea, Tooltip, useKeyboardShortcut } from "frappe-ui";
+import { onClickOutside } from "@vueuse/core";
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from "vue";
 
 const chat = new AIChatController();
@@ -881,6 +883,9 @@ const bob: BobContext = {
 onUnmounted(registerBobCommands(bob));
 // runs the open level's cleanup, like a sign-in still polling
 onUnmounted(menu.close);
+// the menu sits inside the composer, and the prompt is its filter, so clicks there keep it open
+const composer = ref<HTMLElement | null>(null);
+onClickOutside(composer, menu.dismiss);
 // the composer stops its own Escape, so this only hears one pressed after focus left it
 useKeyboardShortcut({
 	combo: "Escape",
@@ -897,9 +902,11 @@ const composerPlaceholder = computed(() => {
 	return "Ask to create or edit this page, or type / for commands";
 });
 
-// a key or URL is typed into a field inside the menu; hand focus back after
+// a list filters on the prompt, and a field inside the menu hands focus back as it goes;
+// after a click away, focus stays wherever the click put it
 watch(menuLevel, (level) => {
-	if (!level?.input) nextTick(() => promptInput.value?.focus());
+	if (level?.input) return;
+	if (level || composer.value?.contains(document.activeElement)) nextTick(() => promptInput.value?.focus());
 });
 
 const submitPrompt = () => {
