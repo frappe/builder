@@ -49,6 +49,9 @@ class Tool:
 	# A skill-bound tool is offered only once its skill is in the model's context:
 	# rarely used schemas stay off the rounds that never need them.
 	skill: str | None = None
+	# available(ctx) -> bool: whether the tool can work for this turn's user and model.
+	# One that can't is left out of the schemas, so the model never plans around it.
+	available: Callable | None = None
 
 	def schema(self) -> dict:
 		return {
@@ -82,10 +85,17 @@ class ToolRegistry:
 		tool = self._tools.get(name)
 		return tool.side if tool else "client"
 
-	def schemas(self, skills: set[str] | None = None) -> list[dict]:
+	def schemas(self, skills: set[str] | None = None, hidden: frozenset[str] = frozenset()) -> list[dict]:
 		return [
-			tool.schema() for tool in self._tools.values() if not tool.skill or tool.skill in (skills or ())
+			tool.schema()
+			for tool in self._tools.values()
+			if tool.name not in hidden and (not tool.skill or tool.skill in (skills or ()))
 		]
+
+	def unavailable(self, ctx) -> frozenset[str]:
+		return frozenset(
+			tool.name for tool in self._tools.values() if tool.available and not tool.available(ctx)
+		)
 
 	def names(self) -> list[str]:
 		return list(self._tools)

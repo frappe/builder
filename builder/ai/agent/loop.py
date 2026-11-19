@@ -55,6 +55,7 @@ from builder.ai.agent.page_changes import PageChanges, page_row
 from builder.ai.agent.registry import ToolRegistry, build_default_registry
 from builder.ai.agent.selectors import walk_blocks
 from builder.ai.agent.tree import WorkingTree
+from builder.ai.attachments import TurnImages
 from builder.ai.block_codec import BlockCodec
 from builder.ai.models import ModelRegistry
 from builder.ai.prompts import Prompts
@@ -372,8 +373,7 @@ class AgentRunner:
 		next_builds: list[dict] | None = None,
 		session_id: str | None = None,
 		selected_block_ids: list[str] | None = None,
-		image_url: str | None = None,
-		image_file_url: str | None = None,
+		images: list[dict] | None = None,
 		canvas_theme: str | None = None,
 		effort: str | None = None,
 		registry: ToolRegistry | None = None,
@@ -402,14 +402,15 @@ class AgentRunner:
 		# show the whole turn as one line about that page.
 		self.build_page = page_row(page_id) if self.off_screen else None
 		self.selected_block_ids = selected_block_ids or []
-		self.image_url = image_url
-		self.image_file_url = image_file_url
+		self.images = TurnImages.from_payload(images)
 		self.canvas_theme = canvas_theme
 		self.effort = llm.Effort(effort)
 		self.registry = registry or build_default_registry()
 		# Skills in context, including read_skill results; reset on every turn.
 		self.attached_skills: set[str] = set()
 		self.round_skills: set[str] = set()
+		# Tools that can't work for this user or model, set once the turn's model is known.
+		self.unavailable_tools: frozenset[str] = frozenset()
 		# The editor-URL prefix is site-configurable; resolve it so the links the
 		# agent writes (e.g. to a page it built off-canvas) actually work here.
 		self.system_prompt = (system_prompt or Prompts.AGENT_SYSTEM).replace(
@@ -786,23 +787,9 @@ class AgentRunner:
 		user_text = self.prompt
 		if self.selected_block_ids:
 			user_text += "\n\n" + self.attached_blocks_note()
-		if self.image_url and self.image_file_url:
-			# The image itself rides below; the model also needs its ADDRESS — the
-			# only handle a brief can carry into the generation step.
-			user_text += (
-				f"\n\n(Attached image, saved at {self.image_file_url} — when it should guide a build, "
-				f"carry that exact url in the brief on its own line: REFERENCE IMAGE: {self.image_file_url})"
-			)
-		if self.image_url:
-			messages.append(
-				{
-					"role": "user",
-					"content": [
-						{"type": "text", "text": user_text},
-						{"type": "image_url", "image_url": {"url": self.image_url}},
-					],
-				}
-			)
+		user_text += self.images.brief_note()
+		if image_parts := self.images.parts():
+			messages.append({"role": "user", "content": [{"type": "text", "text": user_text}, *image_parts]})
 		else:
 			messages.append({"role": "user", "content": user_text})
 		self.prompt_index = len(messages) - 1
@@ -881,7 +868,7 @@ class AgentRunner:
 		stream = llm.complete_with_tools(
 			self.loop_model,
 			messages,
-			self.registry.schemas(self.round_skills),
+			self.registry.schemas(self.round_skills, self.unavailable_tools),
 			self.effort.params("agent"),
 			api_key=self.api_key,
 			stream=True,
@@ -1174,11 +1161,14 @@ class AgentRunner:
 	def op_kind(self, op: dict) -> str:
 		"""How the loop must handle one tool call: "artifact" (streamed generation),
 		"terminal" (ends the turn), "server" (run the handler now), or "client"
-		(apply to the working tree + mirror to the canvas), or "withheld" (a tool the
-		hosting app took away, refused). A client tool with a server twin (page
-		scripts) always runs as a server op — see SCRIPT_TWIN_TOOLS."""
+		(apply to the working tree + mirror to the canvas). A client tool with a
+		server twin (page scripts) always runs as a server op — see
+		SCRIPT_TWIN_TOOLS. "withheld": a tool the hosting app took away, refused.
+		"unavailable": a tool this user or model can't use."""
 		if op["tool_name"] in self.registry.withheld:
 			return "withheld"
+		if op["tool_name"] in self.unavailable_tools:
+			return "unavailable"
 		if self.other_page(op):
 			return "other_page"
 		tool = self.registry.get(op["tool_name"])
@@ -1294,6 +1284,10 @@ class AgentRunner:
 			return client_results[id(op)]
 		if kind == "withheld":
 			return f"FAILED: {op['tool_name']} is not available on this site. Use the tools you were given."
+		if kind == "unavailable":
+			return (
+				f"FAILED: {op['tool_name']} isn't available to this user on this site. Use the other tools."
+			)
 		if kind == "other_page":
 			return self.edit_other_page(op)
 		tool = self.registry.get(op["tool_name"])
@@ -1439,6 +1433,7 @@ class AgentRunner:
 		# generation taste, and silently swapping a deliberately-picked model is the
 		# surest way to degrade output.
 		self.loop_model = self.model
+		self.unavailable_tools = self.registry.unavailable(self)
 		label = ModelRegistry.get_label(self.loop_model)
 		self.emit("progress", message=f"Thinking with {label}" if label else "Thinking…")
 
@@ -1871,6 +1866,10 @@ class AgentRunner:
 def run_agent_job(prompt: str, model: str, turn_ticket: str | None = None, **kwargs):
 	# Resolved here so the key never sits in Redis; jobs queued by older code still pass one.
 	kwargs.pop("api_key", None)
+	# ...and jobs queued before a turn could carry several images pass one, by its old names.
+	if image := kwargs.pop("image_url", None):
+		kwargs["images"] = [{"data": image, "url": kwargs.get("image_file_url") or ""}]
+	kwargs.pop("image_file_url", None)
 	runner = None
 	try:
 		runner = AgentRunner(prompt, model, llm.resolve_api_key(model), turn_ticket=turn_ticket, **kwargs)

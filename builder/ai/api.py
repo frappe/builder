@@ -12,7 +12,7 @@ from frappe import _
 from frappe.utils.telemetry import capture
 
 from builder.ai.agent.page_changes import page_row
-from builder.ai.block_codec import BlockCodec
+from builder.ai.attachments import TurnImages
 from builder.ai.discovery import Discovery
 from builder.ai.llm import Effort, resolve_api_key, settings_api_key
 from builder.ai.models import GatewayListing, ModelRegistry, fetch_credits
@@ -25,30 +25,6 @@ logger = frappe.logger("builder.ai.api")
 logger.setLevel(logging.INFO)
 
 
-def save_attached_image(data_url: str) -> str | None:
-	"""Persist a pasted image as a site file. The data URI only lives for the turn
-	it was sent on; the file URL is what later turns replay and briefs reference.
-	Private: it belongs to the chat (a mock may be confidential), and every reader —
-	replay, brief attachment, the chat thumbnail — goes through permissioned paths."""
-	try:
-		header, content = data_url.split(";base64,", 1)
-		ext = header.removeprefix("data:image/").split("+")[0] or "png"
-		file = frappe.get_doc(
-			{
-				"doctype": "File",
-				"file_name": f"ai-attachment-{frappe.generate_hash(length=10)}.{ext}",
-				"is_private": 1,
-				"folder": "Home/Builder Uploads",
-				"content": content,
-				"decode": True,
-			}
-		).insert(ignore_permissions=True)
-		return file.file_url
-	except Exception:
-		logger.warning("could not save the attached image as a file", exc_info=True)
-		return None
-
-
 @frappe.whitelist()
 @has_page_write()
 def run(
@@ -57,7 +33,7 @@ def run(
 	model: str | None = None,
 	session_id: str | None = None,
 	selected_block_ids: list | None = None,
-	image_data: str | None = None,
+	images: list | None = None,
 	selected_block_context: list | None = None,
 	display_text: str | None = None,
 	canvas_theme: str | None = None,
@@ -70,7 +46,7 @@ def run(
 	"""
 	logger.info(f"run: page_id={page_id}, model={model}, session_id={session_id}")
 
-	image_url = BlockCodec.validate_image_data(image_data) if image_data else None
+	attached = TurnImages.from_request(images)
 	canvas_theme = canvas_theme if canvas_theme in ("light", "dark") else None
 
 	# Guard concurrency for an established session first — nothing may persist on the
@@ -82,18 +58,18 @@ def run(
 	resolved_model = ModelRegistry.get_default(model or "openrouter")
 	if not ModelRegistry.is_known_model(resolved_model):
 		frappe.throw(_("Unknown AI model: {0}").format(resolved_model))
-	if image_data and not ModelRegistry.supports_vision(resolved_model):
+	if attached and not ModelRegistry.supports_vision(resolved_model):
 		frappe.throw(
-			_("{0} can't view images. Pick a vision-capable model or remove the image.").format(
+			_("{0} can't view images. Pick a vision-capable model or remove the attachments.").format(
 				resolved_model
 			)
 		)
 	thinking = turn_effort(effort, resolved_model)
 	ticket = queue_ticket(resolved_model, thinking)
 
-	# A pasted image is a one-turn data URI: saved as a site file it gains a real URL
+	# Attached images are one-turn data URIs: saved as site files they gain real URLs
 	# that later turns can replay and a generation brief can carry as REFERENCE IMAGE.
-	image_file_url = save_attached_image(image_url) if image_url else None
+	attached.save()
 
 	if not session_id:
 		session_id = AISession.create({"page": page_id}, model).name
@@ -106,8 +82,8 @@ def run(
 		msg_meta["canvasTheme"] = canvas_theme
 	if thinking.level:
 		msg_meta["effort"] = thinking.level
-	if image_data:
-		msg_meta["attachedImageUrl"] = image_file_url or image_data
+	if attached:
+		msg_meta["attachedImages"] = attached.metadata()
 	# A card-composed reply (option tap, form submit) shows as this compact line
 	# in the chat; the full labelled text stays the message content for the model.
 	if display_text:
@@ -127,8 +103,7 @@ def run(
 		page_id=page_id,
 		session_id=session_id,
 		selected_block_ids=selected_block_ids,
-		image_url=image_url,
-		image_file_url=image_file_url,
+		images=attached.payload(),
 		canvas_theme=canvas_theme,
 		effort=thinking.level,
 	)

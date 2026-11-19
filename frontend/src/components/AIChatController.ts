@@ -4,6 +4,7 @@ import { type AIChatHandlers, attachAIChatListeners, detachAIChatListeners } fro
 import { type AffectedItems, type PageCanvas, ToolDispatcher } from "@/components/ai/toolDispatch";
 import { type Credits, creditsFor } from "@/components/ai/commands/shared";
 import { contextUsageOf } from "@/components/ai/contextUsage";
+import { ChatAttachments, sentImages } from "@/components/ai/attachments";
 import type { BuildPage } from "@/components/ai/pageChanges";
 import type { AIProvider, AITurnRequest, AITurnStep, ChatMessage } from "@/components/ai/types";
 import { buildLocalMessage } from "@/components/ai/blockFields";
@@ -44,9 +45,7 @@ export class AIChatController {
 	readonly isCancelling = ref(false); // true between clicking stop and the backend's cancelled event
 	readonly messageContainer = ref<HTMLElement | null>(null);
 
-	readonly imageData = ref<string | null>(null);
-	readonly imagePreviewUrl = ref<string | null>(null);
-	readonly imageFileName = ref("");
+	readonly attachments = new ChatAttachments();
 	readonly isDragging = ref(false);
 
 	readonly sessionId = ref("");
@@ -218,6 +217,7 @@ export class AIChatController {
 		() =>
 			!!this.prompt.value.trim() &&
 			!this.isSubmitting.value &&
+			!this.attachments.reading.value &&
 			this.isEditingPage.value &&
 			!!this.selectedModel.value &&
 			!this.selectedModelUnusable.value,
@@ -482,23 +482,14 @@ export class AIChatController {
 		await this.loadSession(); // falls back to the next most recent (or a blank chat)
 	};
 
-	clearImage = () => {
-		this.imageData.value = null;
-		this.imagePreviewUrl.value = null;
-		this.imageFileName.value = "";
-		this.isDragging.value = false;
-	};
-
-	attachImageFile = (file: File) => {
-		if (!file.type.startsWith("image/")) return;
-		if (file.size > 5 * 1024 * 1024) return;
-		this.imageFileName.value = file.name || "pasted-image.png";
-		const reader = new FileReader();
-		reader.onload = (e) => {
-			this.imageData.value = e.target?.result as string;
-			this.imagePreviewUrl.value = this.imageData.value;
-		};
-		reader.readAsDataURL(file);
+	/** Files dropped, pasted or picked into the composer. */
+	attachFiles = (files: File[]) => {
+		if (!files.length) return;
+		if (!this.isVisionModel.value) {
+			toast.error(`${this.modelLabel.value} can't read images or video. Pick another model to attach them.`);
+			return;
+		}
+		this.attachments.add(files);
 	};
 
 	// --- realtime handlers ------------------------------------------------
@@ -1033,16 +1024,14 @@ export class AIChatController {
 		const selectedBlockContext = this.attachedBlocks.value.map((b) => ({ id: b.id, label: b.label }));
 		const selectedIds = this.attachedBlocks.value.map((b) => b.id);
 		this.attachedBlocks.value = [];
-		const attachedImageData = this.imageData.value;
-		const attachedImageUrl = this.imagePreviewUrl.value;
-		this.clearImage();
+		const images = this.attachments.take();
 
 		const displayText = this.pendingDisplayText;
 		this.pendingDisplayText = null;
 
 		const contextMeta: Record<string, any> = {};
 		if (selectedBlockContext.length) contextMeta.selectedBlockContext = selectedBlockContext;
-		if (attachedImageUrl) contextMeta.attachedImageUrl = attachedImageUrl;
+		if (images.length) contextMeta.attachedImages = sentImages(images);
 		if (displayText) contextMeta.displayText = displayText;
 
 		const userMessage = buildLocalMessage("user", userText, contextMeta);
@@ -1073,7 +1062,7 @@ export class AIChatController {
 					session_id: sessionId,
 					...(selectedIds.length ? { selected_block_ids: selectedIds } : {}),
 					...(selectedBlockContext.length ? { selected_block_context: selectedBlockContext } : {}),
-					...(attachedImageData ? { image_data: attachedImageData } : {}),
+					...(images.length ? { images } : {}),
 					...(displayText ? { display_text: displayText } : {}),
 					canvas_theme: this.builderStore.canvasDarkMode ? "dark" : "light",
 					...(this.selectedEffort.value ? { effort: this.selectedEffort.value } : {}),

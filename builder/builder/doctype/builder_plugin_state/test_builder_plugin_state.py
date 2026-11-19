@@ -5,6 +5,7 @@ import frappe
 from frappe.tests.utils import FrappeTestCase
 
 from builder.builder.tests.plugin_fixtures import (
+	TEST_ROLE,
 	drop_installations,
 	make_installation,
 	make_page_reader,
@@ -46,6 +47,13 @@ class TestPluginState(FrappeTestCase):
 		set_state(PLUGIN, {"theme": "dark"})
 
 		self.assertEqual(get_state(PLUGIN), {"theme": "dark"})
+
+	def test_refuses_a_user_who_cannot_read_pages(self):
+		frappe.set_user(make_user("plugin-outsider@example.com", roles=(TEST_ROLE,)))
+		self.addCleanup(frappe.set_user, "Administrator")
+
+		with self.assertRaises(frappe.PermissionError):
+			set_state(PLUGIN, {"theme": "dark"})
 
 	def test_refuses_an_plugin_the_site_has_not_installed(self):
 		drop_installations("acme/absent")
