@@ -1,10 +1,11 @@
 """What the eval reads off a finished turn: the run, the reply, a card, and the
 built page's design fingerprint. No judge model, so two runs compare exactly."""
 
-import colorsys
 import json
 import re
 from itertools import pairwise
+
+from builder.ai.stock_look import is_cream
 
 DASHES = "[\u2014\u2013]"
 POSITIONED = frozenset({"relative", "absolute", "fixed", "sticky"})
@@ -217,16 +218,6 @@ def summary_line(result: dict) -> str:
 	if page:
 		line += " | " + " ".join(f"{k}={v}" for k, v in page.items())
 	return line + f" | reply dashes={result['reply']['dashes']} hype={result['reply']['hype']}"
-
-
-def is_cream(colour: str) -> bool:
-	"""A warm, pale, muted ground: the cream of the most common generated look."""
-	match = re.fullmatch(r"#([0-9a-fA-F]{6})", colour.strip())
-	if not match:
-		return False
-	r, g, b = (int(match.group(1)[i : i + 2], 16) / 255 for i in (0, 2, 4))
-	hue, lightness, saturation = colorsys.rgb_to_hls(r, g, b)
-	return 20 <= hue * 360 <= 60 and lightness >= 0.85 and 0.15 <= saturation <= 0.8
 
 
 def walk(block: dict):

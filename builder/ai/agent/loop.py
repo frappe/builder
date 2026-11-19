@@ -446,6 +446,8 @@ class AgentRunner:
 		# preview_page calls this turn — hard-capped so a screenshot loop can't run up cost.
 		self.preview_count = 0
 		self.image_views = 0
+		# Cream grounds set_design_token turned back this turn; the same value again is deliberate.
+		self.stock_grounds: set[str] = set()
 		# read_page calls this turn — same idea, a reference sweep can't run up context.
 		self.page_read_count = 0
 		# A page generated this turn that no preview has looked at yet: a closing
