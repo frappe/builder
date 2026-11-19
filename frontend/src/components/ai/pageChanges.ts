@@ -127,8 +127,8 @@ export function cardOutcome(rows: PageCardRow[], skippedAll: boolean): string {
 }
 
 export const RESULT_ICONS: Record<PageResultStatus, string> = {
-	created: "lucide-check text-ink-green-6",
-	changed: "lucide-check text-ink-green-6",
+	created: "lucide-check text-ink-gray-6",
+	changed: "lucide-check text-ink-gray-6",
 	skipped: "lucide-minus text-ink-gray-4",
 	failed: "lucide-circle-alert text-ink-red-5",
 };
