@@ -4,7 +4,7 @@
 import copy
 import hashlib
 import re
-from contextlib import nullcontext
+from contextlib import nullcontext, suppress
 from typing import Any
 from urllib.parse import quote_plus
 
@@ -42,8 +42,10 @@ from builder.template_sync import delete_template_page_fixture, export_template_
 from builder.utils import (
 	ColonRule,
 	camel_case_to_kebab_case,
+	can_serve_page,
 	clean_data,
 	compact_json,
+	content_problems,
 	count_blocks,
 	escape_single_quotes,
 	execute_script,
@@ -72,23 +74,29 @@ SERVED_PAGE_FILTERS = {"published": 1, "staging": 1}
 
 class BuilderPageRenderer(DocumentPage):
 	def can_render(self):
-		if page := find_page_with_path(self.path):
-			self.doctype = "Builder Page"
-			self.docname = page
-			self.validate_access()
-			return True
+		# a lookup the schema refuses (a deploy ahead of its migrate) answers no page, so the site's own www
+		# pages and the other renderers still resolve
+		page = db_lookup(self.find_page)
 
+		# a hosting app may refuse a page to this request (builder_can_serve_page)
+		if not page or not can_serve_page(page, self.path):
+			return False
+		self.doctype = "Builder Page"
+		self.docname = page
+		self.validate_access()
+		return True
+
+	def find_page(self) -> str | None:
+		return find_page_with_path(self.path) or self.find_dynamic_page()
+
+	def find_dynamic_page(self) -> str | None:
 		for d in get_web_pages_with_dynamic_routes():
 			try:
 				if evaluate_dynamic_routes([ColonRule(f"/{d.route}", endpoint=d.name)], self.path):
-					self.doctype = "Builder Page"
-					self.docname = d.name
-					self.validate_access()
-					return True
+					return d.name
 			except (ValueError, LookupError):
 				continue
-
-		return False
+		return None
 
 	def validate_access(self):
 		if self.docname:
@@ -744,7 +752,11 @@ class BuilderPage(WebsiteGenerator):
 		"""Render this page in preview mode (uses draft_blocks when present), so a
 		preview can be generated for unpublished/draft pages too — not just for
 		pages reachable via their published route. `color_scheme` ("light"/"dark")
-		forces that mode, as the editor's preview does."""
+		forces that mode, as the editor's preview does. A page the hosting app refuses to render
+		(builder_content_problems) gets a document naming the problems instead: a preview renders the
+		page's Jinja on the server, wherever its content came from."""
+		if problems := content_problems(self, rendering=True):
+			return refused_preview_html(self.name, problems)
 		# set_request() swaps frappe.local.request for a faked GET request. When
 		# this runs synchronously inside a real web request (e.g. run_doc_method),
 		# that clobbers the live request and drops its `after_response`, which
@@ -1868,9 +1880,13 @@ def find_page_with_path(route):
 	return pages[0] if pages else None
 
 
+# clear_route_cache calls get_web_pages_with_dynamic_routes.clear_cache on every save, and Frappe's
+# DocumentPage calls this name through the get_web_pages_with_dynamic_routes hook: keep both
 @redis_cache(ttl=60 * 60)
 def get_web_pages_with_dynamic_routes() -> list[dict]:
-	return frappe.get_all(
+	"""Served pages with a dynamic route, without those a hosting app refuses for every request
+	(builder_can_serve_page with no path), so neither Builder nor Frappe can match them"""
+	pages = frappe.get_all(
 		"Builder Page",
 		fields=["name", "route", "modified"],
 		filters={"dynamic_route": 1},
@@ -1879,6 +1895,47 @@ def get_web_pages_with_dynamic_routes() -> list[dict]:
 		order_by="published desc, published_at desc, creation desc",
 		update={"doctype": "Builder Page"},
 	)
+	return [page for page in pages if can_serve_page(page.name, None)]
+
+
+def refused_preview_html(page: str, problems: list[str]) -> str:
+	"""What a preview shows for a page the hosting app refuses to render: the problems, and nothing of the page"""
+	escape = frappe.utils.escape_html
+	items = "".join(f"<li>{escape(problem)}</li>" for problem in problems)
+	return (
+		"<!doctype html><html lang='en'><head><meta charset='utf-8'><title>Preview refused</title></head>"
+		f"<body><h1>{escape(page)} cannot be previewed here</h1><ul>{items}</ul></body></html>"
+	)
+
+
+def db_errors() -> tuple[type[Exception], ...]:
+	"""What a query raises when the schema lags the code, or the database is not there to ask"""
+	return (
+		frappe.db.ProgrammingError,
+		frappe.db.OperationalError,
+		frappe.db.InternalError,
+		frappe.db.InterfaceError,
+	)
+
+
+# one name serves every lookup: a savepoint of the same name shadows the one before it
+LOOKUP_SAVEPOINT = "builder_page_lookup"
+
+
+def db_lookup(lookup, *args, default=None):
+	"""`lookup(*args)`, or `default` when the database refuses the query (db_errors), as it does for Builder
+	code deployed ahead of its migrate. The lookup runs in a savepoint that a refusal rolls back to: on
+	Postgres a failed statement aborts the whole transaction, and every later query of the request (the
+	site's own www page included) would fail with it."""
+	try:
+		frappe.db.savepoint(LOOKUP_SAVEPOINT)
+		result = lookup(*args)
+		frappe.db.release_savepoint(LOOKUP_SAVEPOINT)
+		return result
+	except db_errors():
+		with suppress(*db_errors()):
+			frappe.db.rollback(save_point=LOOKUP_SAVEPOINT)
+		return default
 
 
 def resolve_path(path):
@@ -1887,17 +1944,21 @@ def resolve_path(path):
 	if is_mounted() and (editor := resolve_editor_path(path)):
 		return editor
 	try:
-		if find_page_with_path(path):
-			return path
-		elif evaluate_dynamic_routes(
-			[ColonRule(f"/{d.route}", endpoint=d.name) for d in get_web_pages_with_dynamic_routes()],
-			path,
-		):
+		if db_lookup(serves_page_at, path, default=False):
 			return path
 	except Exception:
 		pass
 
 	return resolve_editor_path(path) or original_resolve_path(path)
+
+
+def serves_page_at(path) -> bool:
+	"""Whether a Builder Page answers `path`, by its route or a dynamic one. A page a hosting app refuses here
+	(builder_can_serve_page) leaves the path to the editor and Frappe."""
+	if (page := find_page_with_path(path)) and can_serve_page(page, path):
+		return True
+	dynamic_rules = [ColonRule(f"/{d.route}", endpoint=d.name) for d in get_web_pages_with_dynamic_routes()]
+	return bool((page := evaluate_dynamic_routes(dynamic_rules, path)) and can_serve_page(page, path))
 
 
 def resolve_editor_path(path):

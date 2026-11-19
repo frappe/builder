@@ -1026,10 +1026,11 @@ class AgentRunner:
 				# (editor + published alike).
 				op["args"]["blocks"] = page_writer.normalize_component_instances(op["args"]["blocks"])
 				self.tree.root = op["args"]["blocks"]
-		self.applied_operations.extend(ops)
-		self.emit_to_page("tool_batch", operations=ops)
+		# saved before it is mirrored: a draft the hosting app refuses raises here, and never reaches the canvas
 		if self.page_id and self.tree and self.tree.root:
 			page_writer.save_draft_blocks(self.page_id, self.tree.root)
+		self.applied_operations.extend(ops)
+		self.emit_to_page("tool_batch", operations=ops)
 		return ops
 
 	def page_root(self) -> dict | None:
@@ -1173,9 +1174,11 @@ class AgentRunner:
 	def op_kind(self, op: dict) -> str:
 		"""How the loop must handle one tool call: "artifact" (streamed generation),
 		"terminal" (ends the turn), "server" (run the handler now), or "client"
-		(apply to the working tree + mirror to the canvas). A client tool with a
-		server twin (page scripts) always runs as a server op — see
-		SCRIPT_TWIN_TOOLS."""
+		(apply to the working tree + mirror to the canvas), or "withheld" (a tool the
+		hosting app took away, refused). A client tool with a server twin (page
+		scripts) always runs as a server op — see SCRIPT_TWIN_TOOLS."""
+		if op["tool_name"] in self.registry.withheld:
+			return "withheld"
 		if self.other_page(op):
 			return "other_page"
 		tool = self.registry.get(op["tool_name"])
@@ -1240,17 +1243,19 @@ class AgentRunner:
 				logger.warning("Client op rejected — %s: %s", op["tool_name"], content)
 			applied.extend(accepted)
 		if applied:
+			if self.page_id and self.tree.root:
+				from builder.ai import page_writer
+
+				# Persist after every applied round so a cancel/crash keeps the work
+				# done so far (the same live-apply semantics the canvas shows). Saved
+				# before it is mirrored: a draft the hosting app refuses raises here,
+				# and never reaches the canvas.
+				page_writer.save_draft_blocks(self.page_id, self.tree.root)
 			self.applied_operations.extend(applied)
 			# after_commit: an op can reference a doc this round created (a component
 			# extract) — mirrored early, the canvas fetches it before the checkpoint
 			# commit lands and caches a Missing placeholder.
 			self.emit_to_page("tool_batch", operations=applied, after_commit=True)
-			if self.page_id and self.tree.root:
-				from builder.ai import page_writer
-
-				# Persist after every applied round so a cancel/crash keeps the work
-				# done so far (the same live-apply semantics the canvas shows).
-				page_writer.save_draft_blocks(self.page_id, self.tree.root)
 		return results, applied
 
 	def skill_missing(self, tool) -> str | None:
@@ -1287,6 +1292,8 @@ class AgentRunner:
 		kind = self.op_kind(op)
 		if kind == "client":
 			return client_results[id(op)]
+		if kind == "withheld":
+			return f"FAILED: {op['tool_name']} is not available on this site. Use the tools you were given."
 		if kind == "other_page":
 			return self.edit_other_page(op)
 		tool = self.registry.get(op["tool_name"])

@@ -1,12 +1,13 @@
 import { builderSettings } from "@/data/builderSettings";
-import { isMounted } from "@/utils/frappePage";
+import { isIsolated } from "@/utils/frappePage";
 import createDOMPurify from "dompurify";
 
 /**
  * On frappe.page the editors of every site share the app host's origin, so markup or a
- * script of one site that runs in the canvas could reach the editor of another. There the
- * canvas draws block HTML without anything that runs, and block scripts run only on the
- * live site and in its preview. Off frappe.page the canvas behaves as it always did.
+ * script of one site that runs in the canvas could reach the editor of another, or the
+ * host's own dashboard. There (isIsolated) the canvas draws block HTML without anything
+ * that runs, and block scripts run only on the live site and in its preview. Off
+ * frappe.page the canvas behaves as it always did.
  */
 
 // its own instance: the hook below must not reach the markdown that the AI panel sanitizes
@@ -45,7 +46,7 @@ const SANITIZE_OPTIONS = {
 };
 
 export function sanitizeBlockHTML(html: string): string {
-	return isMounted ? purify.sanitize(html, SANITIZE_OPTIONS) : html;
+	return isIsolated ? purify.sanitize(html, SANITIZE_OPTIONS) : html;
 }
 
 // a block's element comes from its stored JSON, so it could name one that loads or runs code
@@ -53,14 +54,14 @@ const ACTIVE_TAGS = new Set(["script", "object", "embed", "applet", "frame", "fr
 
 /** The element the canvas draws for a block's tag: an active one is drawn as a plain div. */
 export function canvasTag(tag: string): string {
-	return isMounted && ACTIVE_TAGS.has(tag.trim().toLowerCase()) ? "div" : tag;
+	return isIsolated && ACTIVE_TAGS.has(tag.trim().toLowerCase()) ? "div" : tag;
 }
 
 const URL_ATTRIBUTES = new Set(["href", "src", "action", "formaction", "xlink:href", "data"]);
 
 /** Drops what would run from a block's attributes. `keep` holds the ones Builder itself passes. */
 export function isolateBlockAttributes(tag: string, attributes: Record<string, unknown>, keep: object) {
-	if (!isMounted) return;
+	if (!isIsolated) return;
 	for (const [name, value] of Object.entries(attributes)) {
 		if (name in keep) continue;
 		const key = name.trim().toLowerCase();
@@ -72,6 +73,6 @@ export function isolateBlockAttributes(tag: string, attributes: Record<string, u
 }
 
 export function blockScriptsMode() {
-	if (isMounted) return "Don't Execute";
+	if (isIsolated) return "Don't Execute";
 	return builderSettings.doc?.execute_block_scripts_in_editor ?? "Restricted";
 }

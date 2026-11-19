@@ -9,7 +9,7 @@ import { __ } from "@/translation";
 import { BuilderClientScript, BuilderPage } from "@/types/doctypes";
 import getBlockTemplate from "@/utils/blockTemplate";
 import { editorDemo } from "@/utils/editorDemo";
-import { isMounted, liveOrigin } from "@/utils/frappePage";
+import { fp, isMounted, liveOrigin } from "@/utils/frappePage";
 import {
 	confirm,
 	countBlocks,
@@ -526,6 +526,8 @@ const usePageStore = defineStore("pageStore", {
 		},
 
 		openPageInBrowser(page: BuilderPage) {
+			// the hosting app serves what visitors see somewhere else than at the page's route
+			if (fp.view_live_url) return void window.open(fp.view_live_url, "builder-preview");
 			const pageURL = this.getResolvedPageURL(true, page);
 			// a tab on the live host is cross-origin, so opening it again is the only reload there is
 			if (isMounted) return void window.open(liveOrigin() + pageURL, "builder-preview");

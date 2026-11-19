@@ -2,7 +2,7 @@ import { createRegistry, type RegistryItem } from "@/utils/createRegistry";
 import { defineAsyncComponent, type Component } from "vue";
 import { __ } from "@/translation";
 import { isCloudBillingAvailable } from "@/composables/useCloudBilling";
-import { isMounted } from "@/utils/frappePage";
+import { isHostEditor, isMounted } from "@/utils/frappePage";
 
 export type SettingsGroup = "Current Page" | "Global";
 
@@ -21,6 +21,12 @@ export type SettingsItem = RegistryItem & {
 	/** the pane brings its own title and padding, as the Cloud billing panel does */
 	bare?: boolean;
 };
+
+/**
+ * The app host's own editor edits its landing page and nothing else: the site's code, its users (every
+ * member of the host), its routes, domains and billing are the host's, so their panes stay out of it.
+ */
+const offHostEditor = () => !isHostEditor;
 
 /** a pane declares the loader once: register builds the component from it */
 type SettingsPane = Omit<SettingsItem, "component"> & { load: () => Promise<{ default: Component }> };
@@ -59,6 +65,7 @@ const panes: SettingsPane[] = [
 		icon: "lucide-code",
 		group: "Current Page",
 		load: () => import("@/components/Settings/PageCode.vue"),
+		condition: offHostEditor,
 	},
 	{
 		name: "page_meta",
@@ -97,6 +104,7 @@ const panes: SettingsPane[] = [
 			isMounted
 				? import("@/components/Settings/FrappePageMembers.vue")
 				: import("@/components/Settings/GlobalUsers.vue"),
+		condition: offHostEditor,
 	},
 	{
 		name: "global_code",
@@ -105,6 +113,7 @@ const panes: SettingsPane[] = [
 		icon: "lucide-code",
 		group: "Global",
 		load: () => import("@/components/Settings/GlobalCode.vue"),
+		condition: offHostEditor,
 	},
 	{
 		name: "global_redirects",
@@ -113,6 +122,7 @@ const panes: SettingsPane[] = [
 		icon: "lucide-shuffle",
 		group: "Global",
 		load: () => import("@/components/Settings/GlobalRedirects.vue"),
+		condition: offHostEditor,
 	},
 	{
 		name: "global_address",
@@ -136,7 +146,8 @@ const panes: SettingsPane[] = [
 				: import("@/components/Settings/GlobalDomains.vue"),
 		// the boot data renders the Python bool, so "False" is a truthy string.
 		// v2 sites show Cloud Settings' Domains panel below instead.
-		condition: () => isMounted || (window.is_fc_site === "True" && !isCloudBillingAvailable.value),
+		condition: () =>
+			offHostEditor() && (isMounted || (window.is_fc_site === "True" && !isCloudBillingAvailable.value)),
 	},
 	{
 		name: "global_cloud_domains",
@@ -145,7 +156,7 @@ const panes: SettingsPane[] = [
 		icon: "lucide-globe",
 		group: "Global",
 		load: () => import("@/components/Settings/GlobalCloudDomains.vue"),
-		condition: () => !isMounted && isCloudBillingAvailable.value,
+		condition: () => offHostEditor() && !isMounted && isCloudBillingAvailable.value,
 		bare: true,
 	},
 	{
@@ -155,7 +166,7 @@ const panes: SettingsPane[] = [
 		icon: "lucide-credit-card",
 		group: "Global",
 		load: () => import("@/components/Settings/GlobalBilling.vue"),
-		condition: () => isCloudBillingAvailable.value,
+		condition: () => offHostEditor() && isCloudBillingAvailable.value,
 		bare: true,
 	},
 	{

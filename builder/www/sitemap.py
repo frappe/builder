@@ -8,6 +8,8 @@ from frappe.utils import get_url
 from frappe.website.router import get_pages
 from frappe.www.sitemap import get_public_pages_from_doctypes, is_dynamic_route
 
+from builder.utils import can_serve_page
+
 no_cache = 1
 
 REGEX_CHARS = frozenset(".^$*+?{}[]\\|()")
@@ -47,9 +49,20 @@ class RedirectSources:
 		return route in self.paths or any(pattern.match(route) for pattern in self.patterns)
 
 
+# Frappe's www pages a site can turn off; off, they redirect, so frappe's sitemap leaves them out too
+SWITCHABLE_PAGES = {"frappe.www.about": "About Us Settings", "frappe.www.contact": "Contact Us Settings"}
+
+
 def get_static_routes() -> dict:
 	"""www pages have no reliable change date, so they go without a lastmod"""
-	return {route: None for route, page in get_pages().items() if page.sitemap}
+	disabled = {
+		controller
+		for controller, settings in SWITCHABLE_PAGES.items()
+		if frappe.get_single_value(settings, "is_disabled")
+	}
+	return {
+		route: None for route, page in get_pages().items() if page.sitemap and page.controller not in disabled
+	}
 
 
 def get_document_routes() -> dict:
@@ -61,6 +74,9 @@ def get_document_routes() -> dict:
 
 
 def get_builder_page_routes() -> dict:
+	# a site whose pages a hosting app keeps from visitors (builder_can_serve_page) lists none of them
+	if not can_serve_page(None, None):
+		return {}
 	home_page = frappe.get_cached_value("Builder Settings", "Builder Settings", "home_page")
 	robots = get_robots_parser()
 	routes = {}

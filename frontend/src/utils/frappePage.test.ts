@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 // the tenant's own fetch: index.html wraps it to prefix the mount, so control calls must never use it
 const tenantFetch = vi.fn();
@@ -74,5 +74,36 @@ describe("openSiteURL", () => {
 	it("opens a site through the app host, then goes to the given editor path", () => {
 		expect(openSiteURL("blog")).toBe("https://frappe.page/open/blog");
 		expect(openSiteURL("new", "/new/home")).toBe("https://frappe.page/open/new?redirect-to=%2Fnew%2Fhome");
+	});
+});
+
+describe("isIsolated", () => {
+	const hostWindow = globalThis.window;
+	const boot = async (fp: object) => {
+		vi.resetModules();
+		vi.stubGlobal("window", { fp });
+		return import("./frappePage");
+	};
+
+	afterEach(() => {
+		vi.stubGlobal("window", hostWindow);
+	});
+
+	it("isolates a mounted editor, which is no host editor", async () => {
+		const { isHostEditor, isIsolated, isMounted } = await boot({ mount: "/acme" });
+
+		expect([isMounted, isIsolated, isHostEditor]).toEqual([true, true, false]);
+	});
+
+	it("isolates the app host's own editor, which has no mount", async () => {
+		const { isHostEditor, isIsolated, isMounted } = await boot({ isolate: 1 });
+
+		expect([isMounted, isIsolated, isHostEditor]).toEqual([false, true, true]);
+	});
+
+	it("leaves an editor outside frappe.page as it was", async () => {
+		const { isHostEditor, isIsolated, isMounted } = await boot({});
+
+		expect([isMounted, isIsolated, isHostEditor]).toEqual([false, false, false]);
 	});
 });

@@ -63,6 +63,52 @@ def is_mounted() -> bool:
 	return bool(request and request.headers.get("X-FP-Mount"))
 
 
+def is_isolated() -> bool:
+	"""Whether the editor must keep code that pages and plugins bring away from its origin, as it does under a
+	frappe.page mount. A hosting app turns it on for a site of its own with the builder_is_isolated hook:
+	frappe.page does on its control site, whose editor shares the origin with every member's dashboard."""
+	return is_mounted() or any(
+		frappe.get_attr(method)() for method in frappe.get_hooks("builder_is_isolated")
+	)
+
+
+def can_serve_page(page: str | None, path: str | None) -> bool:
+	"""Whether Builder Page `page` may answer the request for `path`; both are None when the question is
+	about every page, as for the sitemap. A hosting app keeps pages from visitors with the
+	builder_can_serve_page hook: frappe.page only compiles its control site's pages, so a visitor must never
+	get one rendered raw. Only an explicit False refuses, so without a hook, or with a hook that answers
+	None, every page is served."""
+	return all(
+		frappe.get_attr(method)(page, path) is not False
+		for method in frappe.get_hooks("builder_can_serve_page")
+	)
+
+
+def content_problems(doc, rendering: bool = False) -> list[str]:
+	"""Why a hosting app refuses Builder Page or Builder Component `doc`, saved or not, through the
+	builder_content_problems hook (empty: nothing refused). Builder's AI writes drafts, generated pages, page
+	settings and component definitions with frappe.db.set_value, past validate, and previews render a page
+	on the server, so those paths ask here: frappe.page compiles its own site's page into a public copy
+	through Jinja that can read the database, and stored content is the only place that can be stopped.
+	`rendering` is True right before a preview renders the page, so a hook can check what the render pulls
+	in with it (components, settings)."""
+	problems = []
+	for method in frappe.get_hooks("builder_content_problems"):
+		problems.extend(frappe.get_attr(method)(doc, rendering) or [])
+	return problems
+
+
+def refuse_unsafe_write(doctype: str, name: str, updates: dict) -> None:
+	"""Raise before Builder writes `updates` to `name` past validate, when a hosting app refuses the doc as it
+	would be after the write (content_problems). Without a hook it reads nothing."""
+	if not frappe.get_hooks("builder_content_problems"):
+		return
+	doc = frappe.get_doc(doctype, name)
+	doc.update(updates)
+	if problems := content_problems(doc):
+		frappe.throw("\n".join(problems), title=frappe._("Not allowed on this site"))
+
+
 def get_installed_app_path(app_name) -> str | None:
 	"""Path of an installed app, or None if it is unset or not installed.
 
@@ -572,7 +618,9 @@ def is_component_used(blocks, component_id):
 
 
 def escape_single_quotes(text):
-	return (text or "").replace("'", "\\'")
+	"""`text` made safe inside a single-quoted Jinja string literal. The backslash goes first: left alone, a
+	value ending in one escapes the literal's own closing quote, and whatever follows runs as Jinja."""
+	return (text or "").replace("\\", "\\\\").replace("'", "\\'")
 
 
 def camel_case_to_kebab_case(text, remove_spaces=False):

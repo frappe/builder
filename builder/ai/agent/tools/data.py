@@ -19,6 +19,7 @@ import frappe
 from builder.ai.agent import pending
 from builder.ai.agent.registry import Tool
 from builder.ai.agent.tools.scripts import LIVE_NOTE
+from builder.utils import refuse_unsafe_write
 
 logger = frappe.logger("builder.ai.agent.data")
 logger.setLevel(logging.INFO)
@@ -290,6 +291,8 @@ def write_page_data_script(ctx, args: dict) -> str:
 			f"{', '.join(missing)} don't exist, so the page would fail to render. Use "
 			f"{PORTABLE_HINT}."
 		)
+	# set_value skips validate, so the hosting app is asked first (builder_content_problems)
+	refuse_unsafe_write("Builder Page", ctx.page_id, {"page_data_script": script})
 	frappe.db.set_value("Builder Page", ctx.page_id, "page_data_script", script)
 	from builder.ai.agent.tools.settings import emit_refetch
 

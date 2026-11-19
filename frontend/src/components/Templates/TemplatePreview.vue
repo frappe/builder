@@ -38,7 +38,7 @@
 <script setup lang="ts">
 import { __ } from "@/translation";
 import { TemplatePageSummary } from "@/types/template";
-import { fp, isMounted } from "@/utils/frappePage";
+import { fp, isIsolated } from "@/utils/frappePage";
 import { useElementSize } from "@vueuse/core";
 import { Button } from "frappe-ui";
 import { computed, ref } from "vue";
@@ -81,5 +81,5 @@ const src = computed(
 		`${fp.mount ?? ""}/api/method/builder.api.get_page_preview_html?page=${encodeURIComponent(props.page.name)}`,
 );
 // on frappe.page a local template renders on the editor's origin, so its scripts get an opaque one
-const sandbox = computed(() => (isMounted && !props.page.live_url ? "allow-scripts" : undefined));
+const sandbox = computed(() => (isIsolated && !props.page.live_url ? "allow-scripts" : undefined));
 </script>

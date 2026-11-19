@@ -598,7 +598,7 @@ def add_ai_model(provider: str, model_id: str):
 @has_page_write()
 def start_codex_login():
 	"""Begin a ChatGPT sign-in: the code to show, the page to enter it on, and the state to poll."""
-	_refuse_codex_when_mounted()
+	refuse_codex_when_isolated()
 	from builder.ai import codex_login
 	from builder.ai.codex import CodexError
 
@@ -612,7 +612,7 @@ def start_codex_login():
 @has_page_write()
 def poll_codex_login(state: str):
 	"""Where a ChatGPT sign-in stands: pending, approved, connected (with its models), failed or expired."""
-	_refuse_codex_when_mounted()
+	refuse_codex_when_isolated()
 	from builder.ai import codex_login
 	from builder.ai.codex import CodexError
 
@@ -627,6 +627,7 @@ def poll_codex_login(state: str):
 def start_codex_browser_login():
 	"""The fallback sign-in, for a workspace without device codes: a link to open,
 	whose localhost redirect the user pastes into finish_codex_login."""
+	refuse_codex_when_isolated()
 	from builder.ai import codex_login
 
 	return codex_login.start_browser()
@@ -636,6 +637,7 @@ def start_codex_browser_login():
 @has_page_write()
 def finish_codex_login(redirect_url: str):
 	"""Complete a browser-link sign-in from the pasted redirect URL."""
+	refuse_codex_when_isolated()
 	from builder.ai import codex_login
 	from builder.ai.codex import CodexError
 
@@ -787,9 +789,10 @@ def get_active_build(page_id: str):
 	return frappe.parse_json(raw) if raw else None
 
 
-def _refuse_codex_when_mounted():
-	"""frappe.page gives tenants operator-managed AI; a ChatGPT plan login must not be stored on a shared host."""
-	from builder.utils import is_mounted
+def refuse_codex_when_isolated():
+	"""frappe.page gives its sites operator-managed AI; a ChatGPT plan login must not be stored on a shared
+	host, whether a tenant's (mounted) or the host's own (isolated by the builder_is_isolated hook)."""
+	from builder.utils import is_isolated
 
-	if is_mounted():
+	if is_isolated():
 		frappe.throw(_("ChatGPT sign-in is not available on this site."), frappe.PermissionError)

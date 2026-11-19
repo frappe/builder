@@ -23,6 +23,17 @@ export type FrappePageBoot = {
 	forgetUser?: () => Promise<void>;
 	/** fetch as it was before index.html prefixed same-origin URLs with the mount: it reaches the app host */
 	appFetch?: typeof fetch;
+	/**
+	 * Isolate the editor as a mount does, without one: the app host's own site, whose editor shares the
+	 * origin with every member's dashboard, sets it. Site code then never runs with the editor's origin.
+	 */
+	isolate?: 0 | 1 | boolean;
+	/** the plugin sources an isolated editor runs, instead of the Hub and installed apps */
+	plugin_sources?: string[];
+	/** the whitelisted method that answers the address of a page's preview, instead of the mounted one */
+	preview_method?: string;
+	/** where "View live" goes, when the published page is not what visitors get at its route */
+	view_live_url?: string;
 };
 
 declare global {
@@ -34,6 +45,13 @@ declare global {
 // globalThis: unit tests import this without a window
 export const fp: FrappePageBoot = globalThis.window?.fp ?? {};
 export const isMounted = Boolean(fp.mount);
+/**
+ * Whether site code must be kept away from the editor's origin: under a mount, or when the boot asks for
+ * it. Checks about safety or a feature read this; checks about the URL mount keep reading isMounted.
+ */
+export const isIsolated = isMounted || Boolean(fp.isolate);
+/** The editor of the app host's own site: isolated, at the host's root rather than under a mount. */
+export const isHostEditor = isIsolated && !isMounted;
 /** frappe.page/<sub>/<page>: Builder's /builder and /page segments are left out of the address */
 export const shortEditorURLs = isMounted && fp.editor_base === fp.mount;
 

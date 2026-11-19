@@ -13,6 +13,7 @@ import frappe
 
 from builder.ai.agent import pending
 from builder.ai.agent.registry import Tool
+from builder.utils import refuse_unsafe_write
 
 PAGE_SETTING_FIELDS = {
 	"page_title",
@@ -54,6 +55,9 @@ def set_page_settings(ctx, args: dict) -> str:
 		doc.save()
 		note = dynamic_route_note(doc)
 	else:
+		# set_value skips validate, so the hosting app is asked first (head/body HTML and the canonical URL
+		# are rendered as Jinja)
+		refuse_unsafe_write("Builder Page", ctx.page_id, updates)
 		frappe.db.set_value("Builder Page", ctx.page_id, updates)
 	emit_refetch(ctx, "page")
 	return f"Updated page settings: {', '.join(updates)}.{note}"

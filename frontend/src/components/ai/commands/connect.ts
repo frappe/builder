@@ -8,7 +8,7 @@ import type {
 	DeviceSignIn,
 	SignInStatus,
 } from "@/components/ai/types";
-import { isMounted } from "@/utils/frappePage";
+import { isIsolated } from "@/utils/frappePage";
 import { toast } from "frappe-ui";
 
 /** Connecting is two steps: pick a provider, then paste its key or approve a ChatGPT
@@ -21,7 +21,7 @@ export function connectLevel(ctx: BobContext): MenuLevel {
 			const state = await api<AISetupState>("builder.ai.api.ai_setup_state");
 			if (state.needs_migrate)
 				throw new Error("This site is missing Builder's AI tables. Run bench migrate first.");
-			const presets = isMounted ? state.presets.filter((preset) => !preset.oauth) : state.presets;
+			const presets = isIsolated ? state.presets.filter((preset) => !preset.oauth) : state.presets;
 			return presets.map((preset): MenuItem => ({
 				key: preset.id,
 				label: preset.name || "Other endpoint",

@@ -5,12 +5,15 @@ from unittest.mock import patch
 
 import frappe
 from frappe.tests.utils import FrappeTestCase
+from frappe.utils import set_request
 
+from builder.builder.tests.hosting_hooks import hosting_hooks, isolate, no_say, refuse
 from builder.utils import (
 	Block,
 	ColonRule,
 	add_composite_index_to_web_page_view,
 	camel_case_to_kebab_case,
+	can_serve_page,
 	clean_data,
 	copy_asset_file,
 	copy_assets_from_blocks,
@@ -22,6 +25,7 @@ from builder.utils import (
 	get_builder_page_preview_file_paths,
 	get_template_assets_folder_path,
 	is_component_used,
+	is_isolated,
 	make_safe_get_request,
 	normalize_legacy_raw_styles,
 	process_block_assets,
@@ -58,10 +62,21 @@ class TestBuilderUtils(FrappeTestCase):
 			"Don't do this": "Don\\'t do this",
 			"Regular text": "Regular text",
 			"'Quoted'": "\\'Quoted\\'",
+			# a backslash is escaped too, so a value ending in one cannot escape the literal's closing quote
+			"A\\": "A\\\\",
+			"C:\\temp\\new": "C:\\\\temp\\\\new",
+			"it\\'s": "it\\\\\\'s",
 		}
 
 		for input_str, expected in test_cases.items():
 			self.assertEqual(escape_single_quotes(input_str), expected)
+
+	def test_an_escaped_value_reads_back_as_itself_in_a_jinja_string(self):
+		from frappe.utils.jinja import render_template
+
+		for value in ("A\\", "it's", "a\\'b", "\\n", "x\\\\"):
+			with self.subTest(value=value):
+				self.assertEqual(render_template(f"{{{{ '{escape_single_quotes(value)}' }}}}", {}), value)
 
 	def test_export_dir_name(self):
 		test_cases = {
@@ -625,3 +640,35 @@ class TestBuilderUtils(FrappeTestCase):
 	def test_add_composite_index_skips_virtual_web_page_view(self, get_meta, add_index):
 		add_composite_index_to_web_page_view()
 		add_index.assert_not_called()
+
+
+class TestHostingAppHooks(FrappeTestCase):
+	"""What a hosting app such as frappe.page decides through Builder's hooks; without one, nothing changes"""
+
+	def setUp(self):
+		set_request(method="GET", path="/")
+
+	def test_an_editor_is_not_isolated_without_a_mount_or_a_hook(self):
+		with hosting_hooks(builder_is_isolated=[]):
+			self.assertFalse(is_isolated())
+		with hosting_hooks(builder_is_isolated=[no_say]):
+			self.assertFalse(is_isolated())
+
+	def test_a_hosting_app_isolates_a_site_without_a_mount(self):
+		with hosting_hooks(builder_is_isolated=[no_say, isolate]):
+			self.assertTrue(is_isolated())
+
+	def test_a_mounted_editor_is_isolated(self):
+		set_request(method="GET", path="/", headers={"X-FP-Mount": "/s/acme"})
+		self.addCleanup(set_request, method="GET", path="/")
+		with hosting_hooks(builder_is_isolated=[]):
+			self.assertTrue(is_isolated())
+
+	def test_a_page_is_served_unless_a_hook_refuses_it(self):
+		with hosting_hooks(builder_can_serve_page=[]):
+			self.assertTrue(can_serve_page("page-1", "about"))
+		with hosting_hooks(builder_can_serve_page=[no_say]):
+			self.assertTrue(can_serve_page("page-1", "about"))
+			self.assertTrue(can_serve_page(None, None))
+		with hosting_hooks(builder_can_serve_page=[no_say, refuse]):
+			self.assertFalse(can_serve_page("page-1", "about"))

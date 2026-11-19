@@ -49,7 +49,7 @@
 			<div class="flex flex-col items-center gap-1 text-center">
 				<p class="text-sm font-medium text-ink-gray-8">Build pages by describing them</p>
 				<p class="text-p-xs text-ink-gray-5">
-					{{ isMounted ? "Paste an API key." : "Sign in with ChatGPT, or paste an API key." }}
+					{{ isIsolated ? "Paste an API key." : "Sign in with ChatGPT, or paste an API key." }}
 				</p>
 			</div>
 			<Button variant="solid" size="sm" @click="menu.open(connectLevel(bob))">Connect a model</Button>
@@ -499,7 +499,7 @@ import { renderMarkdown } from "@/components/ai/markdown";
 import type { AITurnStep, ChatMessage } from "@/components/ai/types";
 import { reloadAIRegistry } from "@/data/aiModels";
 import { __ } from "@/translation";
-import { isMounted } from "@/utils/frappePage";
+import { isIsolated } from "@/utils/frappePage";
 import useBuilderStore from "@/stores/builderStore";
 import useCanvasStore from "@/stores/canvasStore";
 import { Badge, Button, Dropdown, KeyboardShortcut, Textarea, Tooltip, useKeyboardShortcut } from "frappe-ui";

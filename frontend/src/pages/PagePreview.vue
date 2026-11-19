@@ -53,6 +53,7 @@
 			<div class="relative h-full bg-white" :style="{ width: frameWidth }">
 				<iframe
 					:src="previewRoute"
+					:sandbox="previewSandbox"
 					frameborder="0"
 					v-if="previewRoute"
 					class="h-full w-full"
@@ -89,7 +90,7 @@ import router from "@/router";
 import useBuilderStore from "@/stores/builderStore";
 import usePageStore, { DETACHED_PREVIEW_CHANNEL } from "@/stores/pageStore";
 import { BuilderPage } from "@/types/doctypes";
-import { isMounted } from "@/utils/frappePage";
+import { fp, isHostEditor, isIsolated, isMounted } from "@/utils/frappePage";
 import { Button, call, useKeyboardShortcut } from "frappe-ui";
 import { useTelemetry } from "@framework/ui/telemetry";
 import { useDebounceFn, useEventListener, useStorage } from "@vueuse/core";
@@ -255,8 +256,8 @@ const restoreScrollPosition = () => {
 // each reload replaces the document, so add the listeners again
 const onPreviewLoad = () => {
 	loading.value = false;
-	// the live host's document is cross-origin, so there is nothing to reach into
-	if (isMounted) return;
+	// the live host's document is cross-origin, and an isolated preview's is opaque: nothing to reach into
+	if (isIsolated) return;
 	const previewDocument = previewFrame.value?.contentWindow?.document;
 	if (!previewDocument) return;
 	// without these, a panel drag over the iframe gets stuck
@@ -308,7 +309,7 @@ const setWidth = (device: string) => {
 };
 
 const setPreviewURL = () => {
-	if (isMounted) return void setLivePreviewURL();
+	if (isMounted || fp.preview_method) return void setLivePreviewURL();
 	let queryParams: Record<string, any> = {
 		page: route.params.pageId,
 		...pageStore.routeVariables,
@@ -320,13 +321,14 @@ const setPreviewURL = () => {
 		.join("&")}`;
 };
 
-// frappe.page renders the draft on the site's live host, so its scripts never run with the editor's origin
+// frappe.page renders the draft on the site's live host, so its scripts never run with the editor's origin.
+// The app host's own editor names its method, which answers a same-origin address the sandbox makes opaque.
 const previewError = ref("");
+const previewMethod = fp.preview_method ?? "frappe_page.tenant.preview.get_preview_url";
+const previewSandbox = isHostEditor ? "allow-scripts allow-forms allow-popups allow-modals" : undefined;
 const setLivePreviewURL = async () => {
 	try {
-		const url = new URL(
-			await call("frappe_page.tenant.preview.get_preview_url", { page: route.params.pageId }),
-		);
+		const url = new URL(await call(previewMethod, { page: route.params.pageId }), window.location.href);
 		const query = { ...pageStore.routeVariables, prefers_color_scheme: isDark.value ? "dark" : "light" };
 		for (const [key, value] of Object.entries(query)) url.searchParams.set(key, String(value));
 		previewRoute.value = url.href;

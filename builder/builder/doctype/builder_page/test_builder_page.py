@@ -2,6 +2,7 @@
 # See license.txt
 
 
+import importlib
 from unittest.mock import patch
 
 import frappe
@@ -11,8 +12,17 @@ from frappe.utils import set_request
 from frappe.website.serve import get_response, get_response_content
 
 from builder.builder.component_versions import ensure_component_version
-from builder.builder.doctype.builder_page.builder_page import resolve_editor_path, resolve_path
+from builder.builder.doctype.builder_page.builder_page import (
+	BuilderPageRenderer,
+	get_web_pages_with_dynamic_routes,
+	resolve_editor_path,
+	resolve_path,
+)
+from builder.builder.tests import hosting_hooks as hooks
+from builder.builder.tests.hosting_hooks import hosting_hooks, no_say, refuse, refuse_every_request
 from builder.utils import Block
+
+PAGE_MODULE = "builder.builder.doctype.builder_page.builder_page"
 
 repeater_page_data_script = """
 data.update({
@@ -244,6 +254,21 @@ class TestBuilderPage(FrappeTestCase):
 		finally:
 			for page in pages:
 				page.delete()
+
+	def test_sitemap_leaves_out_the_about_and_contact_pages_a_site_turned_off(self):
+		# off, they redirect; frappe's own sitemap leaves them out as well. The switch is answered, not
+		# written: a commit elsewhere in this class (a client script's file write) would keep the write
+		get_single_value = frappe.get_single_value
+		for doctype, route in (("About Us Settings", "about"), ("Contact Us Settings", "contact")):
+			for disabled in (1, 0):
+				with (
+					self.subTest(route=route, disabled=disabled),
+					patch.object(
+						frappe, "get_single_value", side_effect=switch(doctype, disabled, get_single_value)
+					),
+				):
+					sitemap = get_response_content("/sitemap.xml")
+					self.assertEqual(f"/{route}</loc>" in sitemap, not disabled)
 
 	def test_sitemap_skips_routes_that_redirect(self):
 		# plain paths and regex sources are matched separately
@@ -945,6 +970,28 @@ class TestBuilderPage(FrappeTestCase):
 
 		self.assertEqual(block["innerHTML"].count("{{"), 1)
 		self.assertNotIn("else '{{", block["innerHTML"])
+
+	def test_a_fallback_ending_in_a_backslash_stays_a_string(self):
+		"""A binding's fallback is the block's own value in a single-quoted Jinja literal: a backslash at its
+		end must not escape the closing quote, or the text after it runs as Jinja (seen reading the database
+		from a block's innerHTML, through the renderer's own {{)"""
+		from frappe.utils.jinja import render_template
+
+		from builder.builder.doctype.builder_page.builder_page import get_block_html
+
+		block = {
+			"blockId": "fallback",
+			"element": "div",
+			"attributes": {"title": "A\\"},
+			"dynamicValues": [{"type": "attribute", "property": "title", "key": "k", "comesFrom": "props"}],
+			"innerHTML": "' ~ (7*7) }}",
+		}
+		content = get_block_html([block])[0]
+		rendered = render_template(content, {"props": {}})
+
+		self.assertNotIn("49", rendered)
+		self.assertIn('title="A\\"', rendered)
+		self.assertIn("' ~ (7*7) }}", rendered)
 
 	def test_dynamic_value_wins_over_data_key(self):
 		"""dataKey is the legacy home for a binding. When both record the same (property, type)
@@ -2461,3 +2508,174 @@ def get_html_for(html, type, value, index=None, only_content=False, list_all=Fal
 
 def get_app_page_data(page):
 	return {"page_id": page.name, "title": "from app"}
+
+
+def insert_published_page(route, heading, **values):
+	return frappe.get_doc(
+		{
+			"doctype": "Builder Page",
+			"page_title": heading,
+			"route": route,
+			"published": 1,
+			"blocks": Block(
+				element="div",
+				originalElement="body",
+				children=[Block(element="h1", innerHTML=heading)],
+			).as_json(wrap_in_array=True),
+			**values,
+		}
+	).insert()
+
+
+class TestPagesAHostingAppRefuses(FrappeTestCase):
+	"""frappe.page only compiles its own site's pages, so none may answer a visitor raw
+	(builder_can_serve_page). Frappe's DocumentPage is the hosting app's to gate."""
+
+	@classmethod
+	def setUpClass(cls):
+		super().setUpClass()
+		cls.page = insert_published_page("test-refused-page", "Refused Content")
+		cls.dynamic_page = insert_published_page(
+			"test-refused-dynamic/<name>", "Refused Dynamic Content", dynamic_route=1
+		)
+		cls.addClassCleanup(cls.dynamic_page.delete)
+		cls.addClassCleanup(cls.page.delete)
+
+	def setUp(self):
+		# the list is cached in Redis: a refused run must neither read a stale one nor leave one behind
+		get_web_pages_with_dynamic_routes.clear_cache()
+		self.addCleanup(get_web_pages_with_dynamic_routes.clear_cache)
+
+	def can_render(self, path):
+		set_request(method="GET", path=f"/{path}")
+		return BuilderPageRenderer(path).can_render()
+
+	def test_a_refused_page_is_not_rendered(self):
+		self.assertTrue(self.can_render("test-refused-page"))
+		self.assertTrue(self.can_render("test-refused-dynamic/abc"))
+
+		with hosting_hooks(builder_can_serve_page=[refuse]):
+			self.assertFalse(self.can_render("test-refused-page"))
+			self.assertFalse(self.can_render("test-refused-dynamic/abc"))
+
+	def test_the_hook_hears_the_page_and_the_path(self):
+		with patch.object(hooks, "refuse", wraps=hooks.refuse) as hook:
+			with hosting_hooks(builder_can_serve_page=[refuse]):
+				self.can_render("test-refused-page")
+
+		hook.assert_called_with(self.page.name, "test-refused-page")
+
+	def test_a_hook_without_a_say_serves_every_page(self):
+		with hosting_hooks(builder_can_serve_page=[no_say]):
+			self.assertTrue(self.can_render("test-refused-page"))
+			self.assertTrue(self.can_render("test-refused-dynamic/abc"))
+
+	def test_a_refused_page_leaves_the_path_to_the_editor_and_frappe(self):
+		set_request(method="GET", path="/test-refused-page")
+		with patch(f"{PAGE_MODULE}.original_resolve_path", return_value="resolved-by-frappe"):
+			self.assertEqual(resolve_path("test-refused-page"), "test-refused-page")
+			self.assertEqual(resolve_path("test-refused-dynamic/abc"), "test-refused-dynamic/abc")
+
+			with hosting_hooks(builder_can_serve_page=[refuse]):
+				self.assertEqual(resolve_path("test-refused-page"), "resolved-by-frappe")
+				self.assertEqual(resolve_path("test-refused-dynamic/abc"), "resolved-by-frappe")
+
+	def test_dynamic_routes_leave_out_pages_refused_to_every_request(self):
+		"""Frappe's DocumentPage reads this list too, through the get_web_pages_with_dynamic_routes hook"""
+		with hosting_hooks(builder_can_serve_page=[refuse_every_request]):
+			self.assertNotIn(self.dynamic_page.name, dynamic_page_names())
+
+		get_web_pages_with_dynamic_routes.clear_cache()
+		self.assertIn(self.dynamic_page.name, dynamic_page_names())
+
+	def test_saving_a_page_still_clears_the_cached_dynamic_routes(self):
+		"""clear_route_cache calls get_web_pages_with_dynamic_routes.clear_cache on every save: the
+		function must stay the cached one, not a plain wrapper around it"""
+		with hosting_hooks(builder_can_serve_page=[refuse_every_request]):
+			dynamic_page_names()
+
+		self.page.clear_route_cache()
+
+		self.assertIn(self.dynamic_page.name, dynamic_page_names())
+
+	def test_a_lookup_that_fails_on_the_schema_answers_no_page(self):
+		"""Builder code deployed before its migrate queries columns that are not there yet. The query really
+		fails in the database: on Postgres that aborts the transaction, so the rest of the request (the site's
+		own www page) must still be able to query"""
+		with patch(f"{PAGE_MODULE}.find_page_with_path", side_effect=query_a_missing_column):
+			self.assertFalse(self.can_render("test-refused-page"))
+		self.assertEqual(frappe.db.sql("select 1")[0][0], 1)
+
+		with patch(f"{PAGE_MODULE}.get_web_pages_with_dynamic_routes", side_effect=query_a_missing_column):
+			self.assertFalse(self.can_render("test-refused-dynamic/abc"))
+		self.assertEqual(frappe.db.sql("select 1")[0][0], 1)
+
+	def test_resolve_path_survives_a_lookup_that_fails_on_the_schema(self):
+		set_request(method="GET", path="/test-refused-page")
+		with (
+			patch(f"{PAGE_MODULE}.find_page_with_path", side_effect=query_a_missing_column),
+			patch(
+				f"{PAGE_MODULE}.original_resolve_path",
+				side_effect=lambda path: frappe.db.sql("select 1") and path,
+			),
+		):
+			self.assertEqual(resolve_path("test-refused-page"), "test-refused-page")
+
+	def test_a_site_page_still_answers_after_a_lookup_that_fails_on_the_schema(self):
+		set_request(method="GET", path="/login")
+		answer = get_response("/login").status_code
+		with patch(f"{PAGE_MODULE}.find_page_with_path", side_effect=query_a_missing_column):
+			response = get_response("/login")
+
+		self.assertEqual(response.status_code, answer)
+		self.assertEqual(frappe.db.sql("select 1")[0][0], 1)
+
+	def test_a_refused_404_page_leaves_the_default_not_found_page(self):
+		not_found = insert_published_page("404", "Custom Not Found Content")
+		self.addCleanup(not_found.delete)
+		self.assertIn("Custom Not Found Content", get_response_content("/test-no-such-route"))
+
+		with hosting_hooks(builder_can_serve_page=[refuse]):
+			response = get_response("/test-no-such-route")
+
+		self.assertEqual(response.status_code, 404)
+		self.assertNotIn("Custom Not Found Content", frappe.safe_decode(response.get_data()))
+
+	def test_the_not_found_page_survives_a_lookup_that_fails_on_the_schema(self):
+		# a module named 404 is out of reach of patch()'s dotted path
+		not_found_page = importlib.import_module("builder.www.404")
+
+		with patch.object(not_found_page, "find_page_with_path", side_effect=query_a_missing_column):
+			response = get_response("/test-no-such-route")
+
+		self.assertEqual(response.status_code, 404)
+		self.assertEqual(frappe.db.sql("select 1")[0][0], 1)
+
+	def test_a_site_that_refuses_every_page_lists_none_in_its_sitemap(self):
+		self.assertIn("/test-refused-page</loc>", get_response_content("/sitemap.xml"))
+
+		with hosting_hooks(builder_can_serve_page=[refuse_every_request]):
+			sitemap = get_response_content("/sitemap.xml")
+
+		self.assertNotIn("/test-refused-page</loc>", sitemap)
+		self.assertIn("<urlset", sitemap)
+
+
+def switch(doctype, is_disabled, get_single_value):
+	"""frappe.get_single_value, answering `is_disabled` for `doctype` as given"""
+
+	def answer(single, field, *args, **kwargs):
+		if (single, field) == (doctype, "is_disabled"):
+			return is_disabled
+		return get_single_value(single, field, *args, **kwargs)
+
+	return answer
+
+
+def query_a_missing_column(*args):
+	"""The query a newer Builder runs against a schema that has not been migrated yet"""
+	frappe.db.sql("select name from `tabBuilder Page` where `column_a_newer_builder_adds` = 1")
+
+
+def dynamic_page_names() -> list[str]:
+	return [page.name for page in get_web_pages_with_dynamic_routes()]

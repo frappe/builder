@@ -1,8 +1,9 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { createApp } from "vue";
 
 vi.mock("frappe-ui", () => ({ call: vi.fn() }));
 
+import type { PluginSource } from "./context";
 import { importPlugins, installPlugins, loadPlugin, runningPlugins } from "./loader";
 
 type Installed = { names: string[]; contexts: Record<string, unknown>[] };
@@ -55,5 +56,37 @@ describe("plugins", () => {
 
 		expect(installed().names).toEqual(["later"]);
 		expect(runningPlugins.has("acme/later")).toBe(true);
+	});
+});
+
+describe("plugin sources", () => {
+	const sources: (PluginSource | undefined)[] = ["Hub", "App", "Development", "Bob", undefined];
+	const runnable = async (frappePage: object) => {
+		vi.resetModules();
+		vi.doMock("@/utils/frappePage", () => frappePage);
+		const { canRunFrom } = await import("./loader");
+		return sources.filter(canRunFrom);
+	};
+
+	afterEach(() => {
+		vi.doUnmock("@/utils/frappePage");
+	});
+
+	it("runs every source when the editor is not isolated", async () => {
+		expect(await runnable({ fp: {}, isMounted: false, isIsolated: false })).toEqual(sources);
+	});
+
+	it("runs the Hub's and an app's plugins under a mount", async () => {
+		expect(await runnable({ fp: {}, isMounted: true, isIsolated: true })).toEqual(["Hub", "App"]);
+	});
+
+	it("runs only the sources an isolated editor's boot names", async () => {
+		const boot = { fp: { isolate: 1, plugin_sources: ["App"] }, isMounted: false, isIsolated: true };
+
+		expect(await runnable(boot)).toEqual(["App"]);
+	});
+
+	it("runs only an app's plugins when an isolated editor's boot names no sources", async () => {
+		expect(await runnable({ fp: { isolate: 1 }, isMounted: false, isIsolated: true })).toEqual(["App"]);
 	});
 });
