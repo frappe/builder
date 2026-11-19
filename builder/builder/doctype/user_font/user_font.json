@@ -54,6 +54,10 @@
    "role": "Website Manager",
    "share": 1,
    "write": 1
+  },
+  {
+   "read": 1,
+   "role": "Builder Draft Editor"
   }
  ],
  "sort_field": "creation",

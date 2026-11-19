@@ -9,6 +9,8 @@ A Builder site is a set of documents: `Builder Page` (a block tree in `blocks` =
 
 With a shell, read `reference/cli.md` first: `scripts/builder.py` in this skill's directory signs in, lints and pushes trees, builds component instances and copies pages between sites.
 
+For an external agent that must only prepare drafts for human publishing, use the dedicated **Builder Draft Editor** account and methods in `reference/draft-agents.md` instead of the general write/publish workflow below.
+
 ## 1. Edit loop
 
 - A page's tree is `draft_blocks`, or `blocks` while the draft is empty; a component's is `block`. Each is JSON stored as a string: write the whole tree back to `draft_blocks` (or `block`) together with the `modified` value you read. If someone saved in between, the write fails instead of overwriting them: read again and merge.

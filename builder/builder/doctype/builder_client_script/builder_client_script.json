@@ -70,6 +70,10 @@
    "role": "Website Manager",
    "share": 1,
    "write": 1
+  },
+  {
+   "read": 1,
+   "role": "Builder Draft Editor"
   }
  ],
  "row_format": "Dynamic",

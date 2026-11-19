@@ -83,6 +83,10 @@
    "read": 1,
    "role": "Website Manager",
    "write": 1
+  },
+  {
+   "read": 1,
+   "role": "Builder Draft Editor"
   }
  ],
  "row_format": "Dynamic",
