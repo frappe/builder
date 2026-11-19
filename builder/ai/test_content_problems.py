@@ -14,6 +14,7 @@ import frappe
 from frappe.tests.utils import FrappeTestCase
 
 from builder.ai import page_writer
+from builder.ai.agent.tools.data import write_page_data_script
 from builder.ai.agent.tools.settings import set_page_settings
 from builder.ai.agent.tree import update_definition
 from builder.builder.tests.hosting_hooks import hosting_hooks, refuse_template_syntax
@@ -73,6 +74,24 @@ class TestContentAHostingAppRefuses(FrappeTestCase):
 		):
 			set_page_settings(ctx, {"head_html": "<meta content='{{ 6*7 }}'>"})
 		self.assertEqual(self.stored("head_html"), "")
+
+	def test_a_refused_page_data_script_is_neither_run_nor_saved(self):
+		"""Bob's data script is test-run before it saves; the hosting app is asked before that run"""
+		ctx = SimpleNamespace(page_id=self.page.name)
+		with hosting_hooks(builder_content_problems=[refuse_template_syntax]):
+			with (
+				patch(
+					"builder.ai.agent.tools.data.DataScriptTrial", **{"return_value.blocks_save": False}
+				) as trial,
+				self.assertRaises(frappe.ValidationError),
+			):
+				write_page_data_script(ctx, {"script": "data.title = '{{ 6*7 }}'"})
+			trial.assert_not_called()
+			self.assertEqual(self.stored("page_data_script"), "")
+
+			out = write_page_data_script(ctx, {"script": "data.title = 'Hello'"})
+		self.assertTrue(out.startswith("Saved"), out)
+		self.assertEqual(self.stored("page_data_script"), "data.title = 'Hello'")
 
 	def test_a_refused_component_definition_is_not_saved(self):
 		def bind_jinja(definition):
