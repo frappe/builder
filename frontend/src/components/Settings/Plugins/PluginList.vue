@@ -16,7 +16,7 @@
 					tooltip="Turn off plugins"
 					@click="setPluginsDisabled(true)" />
 				<Button
-					v-if="isDeveloperMode && canManagePlugins"
+					v-if="canLoadDevPlugin && canManagePlugins"
 					variant="solid"
 					icon-left="lucide-plug"
 					label="Load dev plugin"
@@ -65,7 +65,9 @@
 				{{ filter ? "Nothing here matches that." : "No plugins installed." }}
 			</div>
 			<div
-				v-if="isBuildWithBobShown && canManagePlugins && builderStore.isAIEnabled && !filter"
+				v-if="
+					isBuildWithBobShown && canRunFrom('Bob') && canManagePlugins && builderStore.isAIEnabled && !filter
+				"
 				class="flex cursor-pointer items-center gap-2 rounded-4 px-2 py-2 hover:bg-surface-gray-1"
 				role="button"
 				tabindex="0"
@@ -78,7 +80,7 @@
 
 		<!-- the catalog comes from the Builder Hub. Another Hub is set by builder_hub_url in the site config -->
 		<!-- an unreachable Hub is nothing the user can fix, so the section goes rather than say so -->
-		<div v-if="!pluginsCatalog.error" class="flex flex-col">
+		<div v-if="pluginsCatalog && !pluginsCatalog.error" class="flex flex-col">
 			<span class="sticky top-0 z-10 bg-surface-base pb-1 text-p-sm text-ink-gray-5">
 				Marketplace ({{ notInstalled.length }})
 			</span>
@@ -126,6 +128,7 @@ import {
 	type CatalogPlugin,
 } from "@/data/plugins";
 import { isDevPlugin, showDevPluginDialog, stopDevPlugin } from "@/plugins/devPlugin";
+import { canRunFrom } from "@/plugins/loader";
 import useBuilderStore from "@/stores/builderStore";
 import { Badge, Button, LoadingIndicator, Tooltip } from "frappe-ui";
 import { computed, ref } from "vue";
@@ -151,8 +154,9 @@ const stop = async () => {
 	promptReload("Dev plugin stopped");
 };
 
-// a dev load runs code that the site did not install. So only a developer sees the button
-const isDeveloperMode = Boolean(window.is_developer_mode);
+// a dev load runs code that the site did not install. So only a developer sees the button, and only in an
+// editor that runs a dev server's plugins (an isolated one does not)
+const canLoadDevPlugin = Boolean(window.is_developer_mode) && canRunFrom("Development");
 
 const filter = ref("");
 
@@ -165,8 +169,9 @@ function matchesFilter(plugin: CatalogPlugin) {
 
 const installed = computed(() => installations.value.filter(matchesFilter));
 
-const pluginsCatalog = getPluginsCatalog();
-const catalog = computed<CatalogPlugin[]>(() => pluginsCatalog.data?.plugins ?? []);
+// an editor that runs no Hub plugins, as the app host's own runs only an installed app's, offers none
+const pluginsCatalog = canRunFrom("Hub") ? getPluginsCatalog() : null;
+const catalog = computed<CatalogPlugin[]>(() => pluginsCatalog?.data?.plugins ?? []);
 
 /** The catalog entries that are not installed yet. */
 const notInstalled = computed<CatalogPlugin[]>(() => {
