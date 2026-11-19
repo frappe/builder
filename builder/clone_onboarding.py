@@ -76,7 +76,8 @@ def design_for(look: str) -> dict:
 
 def clone_user_keys() -> dict:
 	"""A fresh key for the clone service user. Committed now, since the service starts writing before this request ends."""
-	user = frappe.get_doc("User", CLONE_USER) if frappe.db.exists("User", CLONE_USER) else new_clone_user()
+	user_id = frappe.db.get_value("User", {"email": CLONE_USER})
+	user = frappe.get_doc("User", user_id) if user_id else new_clone_user()
 	secret = frappe.generate_hash(length=15)
 	user.append_roles(*CLONE_ROLES)
 	user.enabled = 1
@@ -100,10 +101,11 @@ def new_clone_user():
 
 
 def disable_clone_user():
-	if not frappe.db.get_value("User", CLONE_USER, "api_key"):
+	user = frappe.db.get_value("User", {"email": CLONE_USER, "api_key": ("is", "set")})
+	if not user:
 		return
-	frappe.db.set_value("User", CLONE_USER, {"enabled": 0, "api_key": None})
-	remove_encrypted_password("User", CLONE_USER, "api_secret")
+	frappe.db.set_value("User", user, {"enabled": 0, "api_key": None})
+	remove_encrypted_password("User", user, "api_secret")
 
 
 def call_service(endpoint: str, payload: dict, http: str = "POST") -> dict:
