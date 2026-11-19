@@ -151,8 +151,8 @@ search_images = Tool(
 		"with a concrete visual query (subject + setting + mood), not a brand name, and once "
 		"per subject the page shows, all in one round. Every result reaches generate_page by "
 		"itself: a brief names only an image a section must use (HERO IMAGE: <url>). For "
-		"imagery that defines the page (the hero photo, a logo), let the user pick: 3-4 "
-		"results as present_ui choices plus an upload option."
+		"imagery that defines the page (the hero photo, a logo), let the user pick, unless they "
+		"left the photos to you: 3-4 results as present_ui choices plus an upload option."
 	),
 	parameters={
 		"type": "object",
