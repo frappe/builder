@@ -37,6 +37,9 @@ MAX_ATTACHED_IMAGES = 2
 # As large as an image a chat message may carry: a turn's job reads its own images back from their files.
 MAX_IMAGE_BYTES = BlockCodec.MAX_IMAGE_DATA_URL * 3 // 4
 IMAGE_CHECK_TIMEOUT = 5
+# A run a hosting app keeps off the web has neither (frappe.page's control site): it then requests no outside
+# address for a brief's image, and hands none to the provider to fetch either.
+WEB_TOOLS = frozenset({"read_url", "search_images"})
 
 
 def image_url_resolves(url: str) -> bool:
@@ -65,11 +68,11 @@ def image_url_resolves(url: str) -> bool:
 		return False
 
 
-def brief_image_parts(brief: str, skip: set[str] | None = None) -> list[dict]:
+def brief_image_parts(brief: str, skip: set[str] | None = None, web: bool = True) -> list[dict]:
 	"""Resolve the brief's image markers into message image parts. https URLs are
-	attached directly (the provider fetches them); site file paths (public or
-	private) are read from the site and inlined as data URLs. The marker lines always stay in the brief text,
-	so the model still knows the exact URLs to place in blocks."""
+	attached directly (the provider fetches them), unless the run is kept off the web (`web` False);
+	site file paths (public or private) are read from the site and inlined as data URLs. The marker lines
+	always stay in the brief text, so the model still knows the exact URLs to place in blocks."""
 	parts = []
 	for url in IMAGE_MARKER_RE.findall(brief or ""):
 		if len(parts) >= MAX_ATTACHED_IMAGES:
@@ -77,6 +80,8 @@ def brief_image_parts(brief: str, skip: set[str] | None = None) -> list[dict]:
 		if url in (skip or ()):  # already attached as the turn's own image
 			continue
 		if url.startswith("https://"):
+			if not web:
+				continue
 			if not image_url_resolves(url):
 				logger.warning(f"skipping unreachable brief image: {url}")
 				continue
@@ -86,6 +91,12 @@ def brief_image_parts(brief: str, skip: set[str] | None = None) -> list[dict]:
 			if data_url:
 				parts.append({"type": "image_url", "image_url": {"url": data_url}})
 	return parts
+
+
+def may_reach_web(ctx) -> bool:
+	"""Whether this run may request outside addresses: not once a hosting app withheld a web tool."""
+	registry = getattr(ctx, "registry", None)
+	return not (registry and WEB_TOOLS & registry.withheld)
 
 
 def read_site_image(file_url: str) -> str | None:
@@ -288,7 +299,8 @@ def generate_page_markup(ctx, args: dict) -> list[dict]:
 		image_parts: list[dict] = []
 		if ModelRegistry.supports_vision(ctx.model):
 			image_parts.extend(ctx.images.parts())
-			image_parts.extend(brief_image_parts(brief, skip=ctx.images.file_urls()))
+			web = may_reach_web(ctx)
+			image_parts.extend(brief_image_parts(brief, skip=ctx.images.file_urls(), web=web))
 		if image_parts:
 			messages.append({"role": "user", "content": [{"type": "text", "text": build_text}, *image_parts]})
 		else:
