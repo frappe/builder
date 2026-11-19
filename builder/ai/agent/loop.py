@@ -55,6 +55,7 @@ from builder.ai.agent.page_changes import PageChanges, page_row
 from builder.ai.agent.registry import ToolRegistry, build_default_registry
 from builder.ai.agent.selectors import walk_blocks
 from builder.ai.agent.tree import WorkingTree
+from builder.ai.attachments import TurnImages
 from builder.ai.block_codec import BlockCodec
 from builder.ai.models import ModelRegistry
 from builder.ai.prompts import Prompts
@@ -370,8 +371,7 @@ class AgentRunner:
 		next_builds: list[dict] | None = None,
 		session_id: str | None = None,
 		selected_block_ids: list[str] | None = None,
-		image_url: str | None = None,
-		image_file_url: str | None = None,
+		images: list[dict] | None = None,
 		canvas_theme: str | None = None,
 		effort: str | None = None,
 		registry: ToolRegistry | None = None,
@@ -397,8 +397,7 @@ class AgentRunner:
 		# show the whole turn as one line about that page.
 		self.build_page = page_row(page_id) if self.off_screen else None
 		self.selected_block_ids = selected_block_ids or []
-		self.image_url = image_url
-		self.image_file_url = image_file_url
+		self.images = TurnImages.from_payload(images)
 		self.canvas_theme = canvas_theme
 		self.effort = llm.Effort(effort)
 		self.registry = registry or build_default_registry()
@@ -775,23 +774,9 @@ class AgentRunner:
 		user_text = self.prompt
 		if self.selected_block_ids:
 			user_text += "\n\n" + self.attached_blocks_note()
-		if self.image_url and self.image_file_url:
-			# The image itself rides below; the model also needs its ADDRESS — the
-			# only handle a brief can carry into the generation step.
-			user_text += (
-				f"\n\n(Attached image, saved at {self.image_file_url} — when it should guide a build, "
-				f"carry that exact url in the brief on its own line: REFERENCE IMAGE: {self.image_file_url})"
-			)
-		if self.image_url:
-			messages.append(
-				{
-					"role": "user",
-					"content": [
-						{"type": "text", "text": user_text},
-						{"type": "image_url", "image_url": {"url": self.image_url}},
-					],
-				}
-			)
+		user_text += self.images.brief_note()
+		if image_parts := self.images.parts():
+			messages.append({"role": "user", "content": [{"type": "text", "text": user_text}, *image_parts]})
 		else:
 			messages.append({"role": "user", "content": user_text})
 		self.prompt_index = len(messages) - 1
@@ -1834,4 +1819,8 @@ class AgentRunner:
 def run_agent_job(prompt: str, model: str, **kwargs):
 	# Resolved here so the key never sits in Redis; jobs queued by older code still pass one.
 	kwargs.pop("api_key", None)
+	# ...and jobs queued before a turn could carry several images pass one, by its old names.
+	if image := kwargs.pop("image_url", None):
+		kwargs["images"] = [{"data": image, "url": kwargs.get("image_file_url") or ""}]
+	kwargs.pop("image_file_url", None)
 	AgentRunner(prompt, model, llm.resolve_api_key(model), **kwargs).run()
