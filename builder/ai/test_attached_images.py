@@ -57,6 +57,21 @@ class TestAttachedImages(FrappeTestCase):
 		with self.assertRaises(frappe.ValidationError):
 			TurnImages.from_request([{"data": "data:video/mp4;base64,AAAA"}])
 
+	def test_request_takes_only_the_image_types_models_read(self):
+		payload = base64.b64encode(PNG_BYTES).decode()
+		for kind in ("svg+xml", "html", "x-icon", ""):
+			with self.subTest(kind=kind), self.assertRaises(frappe.ValidationError):
+				TurnImages.from_request([{"data": f"data:image/{kind};base64,{payload}"}])
+		for kind in ("png", "jpeg", "webp", "gif"):
+			self.assertTrue(TurnImages.from_request([{"data": f"data:image/{kind};base64,{payload}"}]))
+
+	def test_saved_file_is_named_by_its_image_type(self):
+		# bytes of its own: a File with the same content as an earlier one gets that one's address
+		content = base64.b64encode(PNG_BYTES + frappe.generate_hash(length=8).encode()).decode()
+		image = AttachedImage(data=f"data:image/png;charset=utf-8;base64,{content}")
+		image.save()
+		self.assertTrue(image.url.endswith(".png"), image.url)
+
 	def test_parts_label_every_image(self):
 		images = TurnImages([saved(), saved(video="demo.mp4", at=64.5)])
 		labels = [p["text"] for p in images.parts() if p["type"] == "text"]

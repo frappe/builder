@@ -14,6 +14,15 @@ from builder.ai.block_codec import BlockCodec
 logger = frappe.logger("builder.ai.attachments")
 logger.setLevel(logging.INFO)
 
+# What vision models read and all read_site_image hands back on a later turn. The file an image is saved
+# as takes its name from the type, so nothing else (an .svg, an .html) is stored from a chat.
+MEDIA_TYPES = ("png", "jpeg", "webp", "gif")
+
+
+def media_type(data_url: str) -> str:
+	"""The image type a data URI names: `png` for data:image/png;base64,..."""
+	return data_url.split(",", 1)[0].split(";", 1)[0].removeprefix("data:image/").lower()
+
 
 class AttachedImage:
 	def __init__(self, data: str = "", url: str = "", video: str = "", at: float | None = None):
@@ -49,8 +58,8 @@ class AttachedImage:
 		to the chat (a mock may be confidential), and every reader — replay, brief
 		attachment, the chat thumbnail — goes through permissioned paths."""
 		try:
-			header, content = self.data.split(";base64,", 1)
-			ext = header.removeprefix("data:image/").split("+")[0] or "png"
+			content = self.data.split(";base64,", 1)[1]
+			ext = media_type(self.data)
 			file = frappe.get_doc(
 				{
 					"doctype": "File",
@@ -103,6 +112,8 @@ class TurnImages:
 			frappe.throw(_("These attachments are too large to send together. Remove some and try again."))
 		for i in images:
 			BlockCodec.validate_image_data(i["data"])
+			if media_type(i["data"]) not in MEDIA_TYPES:
+				frappe.throw(_("Attach images as PNG, JPEG, WebP or GIF."))
 		# The address is the server's to assign once saved, never the client's.
 		return cls([AttachedImage.from_dict({**i, "url": ""}) for i in images])
 
