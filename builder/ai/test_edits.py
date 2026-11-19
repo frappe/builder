@@ -139,6 +139,25 @@ class TestEditScript(FrappeTestCase):
 
 
 class TestCompositionNotes(FrappeTestCase):
+	def test_flags_a_section_written_again_as_an_empty_copy(self):
+		hero = {
+			"blockId": "hero1234",
+			"element": "section",
+			"children": [{"blockId": "herohead", "element": "h1", "innerHTML": "Make room for clay."}],
+		}
+		copy = {
+			"blockId": "herocopy",
+			"element": "section",
+			"baseStyles": {"flexDirection": "column", "padding": "64px 24px"},
+			"children": [{"blockId": "copyhead", "element": "h1", "innerHTML": ""}],
+		}
+		root = {"blockId": "root", "children": [hero, copy]}
+
+		notes = composition_notes(root)
+
+		self.assertIn("EMPTY SECTION: @heroc render as blank bands", notes)
+		self.assertNotIn("EMPTY TEXT", notes)
+
 	def test_flags_headings_and_paragraphs_left_without_text(self):
 		hours = {
 			"blockId": "hours123",

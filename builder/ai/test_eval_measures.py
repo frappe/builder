@@ -25,6 +25,7 @@ class TestPageMeasures(FrappeTestCase):
 	def test_counts_a_band_with_only_labels_or_nothing_as_empty(self):
 		root = page(
 			section(LABEL, backgroundColor="#23201C"),
+			section(padding="64px 24px"),
 			section(),
 			section({"element": "p", "innerHTML": "Wheel throwing, four Saturdays"}),
 			section({"element": "img", "attributes": {"src": "/files/kiln.jpg"}}),

@@ -5,12 +5,11 @@ import json
 import re
 from itertools import pairwise
 
+from builder.ai.agent.edits import empty_sections
 from builder.ai.stock_look import REFLEX_FACES, is_cream
 
 DASHES = "[\u2014\u2013]"
 POSITIONED = frozenset({"relative", "absolute", "fixed", "sticky"})
-SECTION_TAGS = frozenset({"section", "header", "footer", "main", "article"})
-MEDIA_TAGS = frozenset({"img", "svg", "video", "iframe", "canvas"})
 # Bob narrating its own turn to the user: previews, retries, rejected edits
 PROCESS = re.compile(r"\b(preview|screenshot|operation|rejected|retr(?:y|ied)|tool calls?|rounds?)\b", re.I)
 TEXT_TAGS = frozenset({"p", "h1", "h2", "h3", "h4", "h5", "h6", "span", "a", "button", "label"})
@@ -55,7 +54,7 @@ class PageMeasure:
 			"escaped_text": sum(escapes_text(b) for b in self.blocks),
 			"dead_styles": sum(dead_styles(b) for b in self.blocks),
 			"overflow_width": sum(overflows_width(b) for b in self.blocks),
-			"empty_sections": sum(is_empty_section(b) for b in self.blocks),
+			"empty_sections": len(empty_sections(self.root)),
 		}
 
 	def pinned_absolute(self) -> int:
@@ -92,26 +91,6 @@ class PageMeasure:
 def is_reflex(face: str) -> bool:
 	"""One of the faces models reach for by reflex, in any of its cuts."""
 	return face.lower().startswith(tuple(reflex.lower() for reflex in REFLEX_FACES))
-
-
-def is_empty_section(block: dict) -> bool:
-	"""A section that renders as a blank band: no text beyond small labels, nothing to see."""
-	if block.get("element") not in SECTION_TAGS or styles(block).get("display") == "none":
-		return False
-	return not any(shows_content(b) for b in walk(block))
-
-
-def shows_content(block: dict) -> bool:
-	return bool(
-		photo_src(block)
-		or block.get("element") in MEDIA_TAGS
-		or block.get("isRepeaterBlock")
-		or block.get("dynamicValues")
-		or block.get("extendedFromComponent")
-		or "<svg" in str(block.get("innerHTML") or "")
-		or "url(" in str(styles(block).get("backgroundImage") or "")
-		or (block_text(block).strip() and not is_micro_label(block))
-	)
 
 
 def escapes_text(block: dict) -> bool:
