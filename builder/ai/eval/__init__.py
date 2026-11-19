@@ -199,6 +199,7 @@ class ScenarioRun:
 			"run": run_measures(runner, self.seconds),
 			"reply": reply_measures(authored_text(reply)),
 			"card": card_measures(reply) if reply.get("message_type") == "clarification" else None,
+			"suggestions": json.loads(reply.get("metadata_json") or "{}").get("suggestions", []),
 		}
 		if ran & {"generate_page", *EDITS}:
 			root = self.root_of(page.name)
