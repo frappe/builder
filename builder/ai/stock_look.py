@@ -1,5 +1,6 @@
 """The look generated pages converge on, and what keeps Bob off it: the faces models
-reach for by reflex, the cream ground, and a random draw from the font catalogue.
+reach for by reflex, the cream ground, and random draws from the font catalogue and
+from heroes and motion pages rarely get.
 Prompts can name the stock look but not stop it (Bob renames the cream ground and
 moves to the next favourite face), so it is checked and drawn in code."""
 
@@ -116,4 +117,39 @@ class FontDraw:
 			(item["family"], sum(not v.endswith("italic") for v in item["variants"]))
 			for item in items
 			if not FontDraw.SKIP.search(item["family"]) and not item["family"].startswith(stock)
+		)
+
+
+class CompositionDraw:
+	"""A chat's starting points for the hero and the motion. Left to itself, every page
+	opens on a headline beside a boxed photo, and given motion, drifts that photo."""
+
+	HEROES = (
+		"footage edge to edge behind the headline (search_videos; a photo when no clip fits)",
+		"one photo edge to edge with the headline set over it on a scrim",
+		"the headline as the image: display type filling the first screen, a photo cropped "
+		"into a strip beneath it or knocked through the letters",
+		"a collage of three photos at different scales and angles, overlapping around the headline",
+		"a full-width strip of photos under a one-line headline, cropped at both edges",
+		"one object staged huge and off-centre, the headline tucked into the space it leaves",
+	)
+	MOTIONS = (
+		"footage looping silently",
+		"a marquee band of the real offerings, names or places running at a steady pace",
+		"the display headline tracking wider or scaling down as it leaves the first screen",
+		"a row of photos sliding sideways as the page scrolls past it",
+		"sections stacking over one another as they scroll (position:sticky, no script)",
+		"one photo drifting slower than the page around it",
+	)
+
+	def __init__(self, seed: str | None):
+		self.rng = random.Random(f"composition:{seed}")
+
+	def sentence(self) -> str:
+		heroes = self.rng.sample(self.HEROES, 2)
+		motions = self.rng.sample(self.MOTIONS, 2)
+		return (
+			f"This chat's draw, to start from instead of the hero you'd reach for: a hero of "
+			f"{heroes[0]}, or of {heroes[1]}; and for motion, {motions[0]}, or {motions[1]}. "
+			"Take one of each unless the brand rules it out."
 		)
