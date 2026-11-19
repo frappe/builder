@@ -69,6 +69,8 @@ def run(
 	accepted ops to the canvas.
 	"""
 	logger.info(f"run: page_id={page_id}, model={model}, session_id={session_id}")
+	if frappe.db.get_single_value("Builder Settings", "disable_bob"):
+		frappe.throw(_("Bob is turned off. Turn it on in Settings, under AI."))
 
 	image_url = BlockCodec.validate_image_data(image_data) if image_data else None
 	canvas_theme = canvas_theme if canvas_theme in ("light", "dark") else None

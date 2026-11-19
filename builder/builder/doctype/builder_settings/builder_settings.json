@@ -21,6 +21,7 @@
   "execute_block_scripts_in_editor",
   "restrict_click_handlers",
   "ai_section",
+  "disable_bob",
   "ai_api_key",
   "default_ai_model",
   "persona_survey_done"
@@ -125,6 +126,13 @@
    "label": "AI Settings"
   },
   {
+   "default": "0",
+   "description": "Hides Bob in the editor and the dashboard, and refuses new chats",
+   "fieldname": "disable_bob",
+   "fieldtype": "Check",
+   "label": "Disable Bob"
+  },
+  {
    "description": "API key for the selected AI model provider",
    "fieldname": "ai_api_key",
    "fieldtype": "Password",
@@ -149,7 +157,7 @@
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2026-11-02 16:00:00.000000",
+ "modified": "2026-11-19 12:05:42.853190",
  "modified_by": "Administrator",
  "module": "Builder",
  "name": "Builder Settings",

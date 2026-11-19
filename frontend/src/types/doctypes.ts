@@ -41,6 +41,8 @@ export interface BuilderSettings extends DocType {
   execute_block_scripts_in_editor?: 'Don\'t Execute' | 'Restricted' | 'Unrestricted';
   /** Restrict Click Handlers: Check */
   restrict_click_handlers: 0 | 1;
+  /** Disable Bob: Check */
+  disable_bob: 0 | 1;
   /** AI API Key: Password */
   ai_api_key?: string;
   /** Persona Survey Done: Check */
@@ -211,6 +213,8 @@ export interface BuilderAIProvider extends DocType {
   api_base?: string;
   /** API Key: Password */
   api_key?: string;
+  /** From Site Config: Check */
+  from_site_config: 0 | 1;
 }
 
 // Last updated: 2026-10-27 12:00:00.000000
