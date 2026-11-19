@@ -2,7 +2,7 @@
 
 The build tooling for trusted Frappe Builder plugins.
 
-A trusted plugin is a Vue plugin that the Builder editor loads into its own app. The plugin imports `builder`, `vue`, `pinia` and `frappe-ui` from the editor, so this package has no runtime code. It gives a plugin project:
+A trusted plugin is a Vue plugin that the Builder editor loads into its own app. The plugin imports `builder`, `vue`, `pinia`, `frappe-ui`, `frappe-ui/editor` and `frappe-ui/list` from the editor, so this package has no runtime code. It gives a plugin project:
 
 - the Vite plugin that builds a package Builder can load, and serves the plugin to the editor in development
 - the types of the `builder` module
@@ -63,6 +63,8 @@ export default {
 | Export                                                                                          | What it gives                                                                      |
 | ----------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
 | `leftPanelTabs`, `toolbarItems`, `blockContextMenuOptions`, `propertySections`, `settingsItems` | The registries of the editor surfaces. `register` answers with its own unregister. |
+| `blockTemplates`                                                                                | Block templates in the Block Templates panel. `getBlock()` gives the block to insert. |
+| `dashboardItems`                                                                                | Views of the dashboard, beside All Pages. Each opens at `/dashboard/<name>`.      |
 | `usePageStore`, `useCanvasStore`, `useBuilderStore`                                             | The editor's stores                                                                |
 | `blockController`, `Block`                                                                      | The selected blocks, and the block tree                                            |
 | `lucideIcon(name)`                                                                              | Any lucide icon, as a component for an `icon` field                                |
@@ -112,11 +114,13 @@ The editor loads the plugin's styles before its own. Where a plugin class and an
 
 A manifest has no `permissions` field. A plugin runs with the access of the user who opens the editor.
 
+The plugin's details page in **Settings** > **Plugins** shows `DESCRIPTION.md`, written for its users. Without one, it shows `README.md`, which is for developers.
+
 ## Develop
 
 1. Set `builderUrl` in `vite.config.ts` to the origin that serves Builder.
 2. Run `npm run dev`.
-3. In the editor, open the **Plugins** tab and choose **Load dev plugin**. The site must run in developer mode.
+3. In Builder, open **Settings** > **Plugins** and choose **Load dev plugin**. The site must run in developer mode.
 4. Paste the URL that Vite prints.
 
 The dev plugin runs until you reload the editor. Vite's hot reload updates its components.

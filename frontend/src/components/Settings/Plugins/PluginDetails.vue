@@ -1,16 +1,16 @@
 <template>
 	<div class="flex h-full min-h-0 flex-col">
-		<div class="flex shrink-0 items-center gap-1 bg-surface-base px-2 py-3">
+		<div class="-ml-2 flex shrink-0 items-center gap-1 bg-surface-base pb-3">
 			<Button variant="ghost" size="sm" icon-left="lucide-arrow-left" label="Back" @click="emit('back')" />
 		</div>
 
 		<div class="no-scrollbar flex min-h-0 flex-1 flex-col overflow-y-auto">
-			<p v-if="error" class="px-3 pb-3 text-p-sm text-ink-red-6">{{ error }}</p>
+			<p v-if="error" class="pb-3 text-p-sm text-ink-red-6">{{ error }}</p>
 			<div v-else-if="!details" class="flex flex-1 items-center justify-center">
 				<LoadingIndicator class="size-5 text-ink-gray-5" />
 			</div>
 
-			<div v-else class="flex flex-col gap-5 px-3 pb-5">
+			<div v-else class="flex flex-col gap-5 pb-5">
 				<div class="flex items-start gap-3">
 					<img
 						v-if="details.icon"
@@ -110,7 +110,7 @@
 					@uninstall="uninstall" />
 
 				<Button
-					v-if="details.source === 'Bob' && builderStore.isAIEnabled"
+					v-if="isChangeWithBobShown && details.source === 'Bob' && builderStore.isAIEnabled"
 					class="self-start"
 					variant="subtle"
 					size="sm"
@@ -160,9 +160,9 @@
 </template>
 
 <script setup lang="ts">
-import PluginActions from "@/components/LeftPanelTabs/Plugins/PluginActions.vue";
-import PluginInstallDialog from "@/components/LeftPanelTabs/Plugins/PluginInstallDialog.vue";
-import PluginUpdate from "@/components/LeftPanelTabs/Plugins/PluginUpdate.vue";
+import PluginActions from "@/components/Settings/Plugins/PluginActions.vue";
+import PluginInstallDialog from "@/components/Settings/Plugins/PluginInstallDialog.vue";
+import PluginUpdate from "@/components/Settings/Plugins/PluginUpdate.vue";
 import { renderMarkdown } from "@/components/ai/markdown";
 import { leftPanelTabs } from "@/components/LeftPanelTabs";
 import {
@@ -223,6 +223,9 @@ const stop = async () => {
 const readme = computed(() => (details.value?.readme ? renderMarkdown(details.value.readme) : ""));
 
 const builderStore = useBuilderStore();
+
+/** Off for now: Settings stays open over the Chat tab, and the dashboard has no Chat tab. */
+const isChangeWithBobShown = false;
 
 const changeWithBob = () => {
 	builderStore.leftPanelActiveTab = "Chat";

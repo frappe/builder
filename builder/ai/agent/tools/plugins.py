@@ -59,7 +59,7 @@ def run_write_plugin(ctx, args: dict) -> str:
 	if not ctx.page_id:
 		return "Installed. It loads the next time each user opens the editor."
 	if not doc.enabled:
-		return "Saved, but the plugin is turned off on this site. Tell the user to turn it on in the Plugins panel."
+		return "Saved, but the plugin is turned off on this site. Tell the user to turn it on in Settings, under Plugins."
 	return load_in_editor(ctx, doc)
 
 

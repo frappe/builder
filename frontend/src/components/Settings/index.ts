@@ -197,7 +197,7 @@ const panes: SettingsPane[] = [
 	{
 		name: "global_plugins",
 		label: __("Plugins"),
-		title: __("Plugins Settings"),
+		title: __("Plugins"),
 		icon: "lucide-plug",
 		group: "Global",
 		load: () => import("@/components/Settings/GlobalPlugins.vue"),

@@ -24,3 +24,4 @@ Preferences for this codebase. Follow existing patterns first. Apply these unles
 - Keep page templates small.
 - Move large/repeated UI pieces into feature-specific `.vue` components.
 - Check for similar code before building something new. Extract common patterns when repetition appears.
+- Don't add tests for UI code: components, or the composables behind them like the menus and the composer. Add them only when asked.
