@@ -14,6 +14,7 @@ import { nextTick, type Ref } from "vue";
 export type CommandKeys = {
 	combo: KeyboardShortcutCombo;
 	allowInInput?: boolean;
+	allowInDialog?: boolean;
 	preventDefault?: boolean;
 	description: string;
 };
@@ -95,6 +96,23 @@ const setLayersTab = async () => {
 	builderStore.leftPanelActiveTab = "Layers";
 	await nextTick();
 };
+
+commands.register({
+	name: "settings",
+	title: __("Open Settings"),
+	icon: "lucide-settings",
+	group: "General",
+	condition: isBuilderRoute,
+	// the dashboard's sidebar binds the same keys to its own Settings dialog. They type nothing, so they
+	// work from any field or dialog
+	keys: {
+		combo: "Mod+Shift+Comma",
+		allowInInput: true,
+		allowInDialog: true,
+		description: __("Open Settings"),
+	},
+	action: () => builderStore.openBuilderSettings(),
+});
 
 commands.register({
 	name: "go-to-dashboard",
