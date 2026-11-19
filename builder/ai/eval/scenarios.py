@@ -66,8 +66,9 @@ SCENARIOS = (
 		"card-then-build",
 		"Make a page for my bakery.",
 		follow_up="It's Crumb, a sourdough bakery in Koregaon Park, Pune, for people grabbing breakfast "
-		"before work. Show the six loaves, the morning menu and the address. Go with the first "
-		"direction, and give it a look of its own rather than the site's.",
+		"before work. Show the six loaves, the morning menu and the address, with placeholder copy "
+		"I'll fill in. Go with the first direction, and give it a look of its own rather than the "
+		"site's.",
 		expect_any=("generate_page",),
 		fresh_look=True,
 	),
