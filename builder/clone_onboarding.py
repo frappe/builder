@@ -32,13 +32,12 @@ def start_clone(url: str, look: str = "clean_up") -> dict | None:
 		frappe.throw(_("Pick how the copy should look."))
 	nonce = frappe.generate_hash(length=32)
 	frappe.cache.set_value(nonce_key(nonce), 1, expires_in_sec=NONCE_SECONDS)
-	user = frappe.session.user
 	payload = {
 		"url": url,
 		"site": frappe.utils.get_url(),
 		"nonce": nonce,
 		"design": json.dumps(design_for(look)),
-		"email": user if user in frappe.STANDARD_USERS else get_email_address(user),
+		"email": get_email_address(frappe.session.user),
 		**clone_user_keys(),
 	}
 	started = call_service("start_into", payload)
