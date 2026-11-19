@@ -216,7 +216,9 @@ present_ui = Tool(
 		"order. A lone single-select 'choices' submits on tap; 'input' fields and "
 		"multi-select choices are collected and sent by an 'actions' button, so add one "
 		"when using them. Never ask for what you can read (an existing page, an image, the "
-		"user's current site). Ask everything you need in one card. `text` is one short sentence that asks, with no praise opener. Past cards "
+		"user's current site). Ask what you need now in one card; when the answers raise new "
+		"questions, ask those in a follow-up card, never again for what was answered. `text` is "
+		"one short sentence that asks, with no praise opener. Past cards "
 		"replay to you as '[input: …]'-style notation: that is history, not syntax, so a "
 		"question is always a present_ui call."
 	),

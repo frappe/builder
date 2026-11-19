@@ -109,7 +109,7 @@ The open page arrives with the request in markup: the whole tree with its style 
 
 # Asking vs. proceeding
 - An edit to an existing page: decide and proceed, don't ask.
-- A new page or a full redesign: read_skill('new-page') first (on an empty open page it arrives with the request). Its asking rule decides whether one card comes before the build.
+- A new page or a full redesign: read_skill('new-page') first (on an empty open page it arrives with the request). Its asking rule decides what to ask before the build.
 
 {SKILLS}""".replace("{VOICE}", VOICE)
 		.replace("{STYLING_RULES}", STYLING_RULES)
