@@ -26,6 +26,11 @@ KINDS = {
 GLOBAL_SETTING_FIELDS = {"script", "style", "head_html", "body_html"}
 
 
+def can_create_doctypes(ctx=None) -> bool:
+	"""Whether this user may create DocTypes, which a new data model and a saving form both need."""
+	return bool(frappe.has_permission("DocType", "create"))
+
+
 def not_permitted(action: str) -> str:
 	"""Declines a proposal the user couldn't apply, so Bob says so instead of raising a
 	card whose Apply would fail."""

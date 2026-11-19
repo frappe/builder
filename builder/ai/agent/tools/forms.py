@@ -72,7 +72,7 @@ def missing_create_permission(doctype: str) -> str | None:
 	"""What connecting a form to `doctype` would create that this user can't. Only
 	Website Manager holds Web Form create, but whoever can create DocTypes can grant
 	themselves any role, so either one may create the form."""
-	can_create_doctype = frappe.has_permission("DocType", "create")
+	can_create_doctype = pending.can_create_doctypes()
 	if not frappe.db.exists("DocType", doctype) and not can_create_doctype:
 		return "create the DocType a form saves to"
 	if not frappe.db.exists("Web Form", desk_slug(doctype)) and not (
@@ -203,6 +203,7 @@ connect_form_tool = Tool(
 		"required": ["doctype_name", "fields", "form_selector"],
 	},
 	handler=request_connect_form,
+	available=pending.can_create_doctypes,
 )
 
 TOOLS = [connect_form_tool]

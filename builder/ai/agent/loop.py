@@ -405,6 +405,8 @@ class AgentRunner:
 		# Skills in context, including read_skill results; reset on every turn.
 		self.attached_skills: set[str] = set()
 		self.round_skills: set[str] = set()
+		# Tools that can't work for this user or model, set once the turn's model is known.
+		self.unavailable_tools: frozenset[str] = frozenset()
 		# The editor-URL prefix is site-configurable; resolve it so the links the
 		# agent writes (e.g. to a page it built off-canvas) actually work here.
 		self.system_prompt = (system_prompt or Prompts.AGENT_SYSTEM).replace(
@@ -870,7 +872,7 @@ class AgentRunner:
 		stream = llm.complete_with_tools(
 			self.loop_model,
 			messages,
-			self.registry.schemas(self.round_skills),
+			self.registry.schemas(self.round_skills, self.unavailable_tools),
 			self.effort.params("agent"),
 			api_key=self.api_key,
 			stream=True,
@@ -1164,7 +1166,9 @@ class AgentRunner:
 		"terminal" (ends the turn), "server" (run the handler now), or "client"
 		(apply to the working tree + mirror to the canvas). A client tool with a
 		server twin (page scripts) always runs as a server op — see
-		SCRIPT_TWIN_TOOLS."""
+		SCRIPT_TWIN_TOOLS. "unavailable": a tool this user or model can't use."""
+		if op["tool_name"] in self.unavailable_tools:
+			return "unavailable"
 		if self.other_page(op):
 			return "other_page"
 		tool = self.registry.get(op["tool_name"])
@@ -1276,6 +1280,10 @@ class AgentRunner:
 		kind = self.op_kind(op)
 		if kind == "client":
 			return client_results[id(op)]
+		if kind == "unavailable":
+			return (
+				f"FAILED: {op['tool_name']} isn't available to this user on this site. Use the other tools."
+			)
 		if kind == "other_page":
 			return self.edit_other_page(op)
 		tool = self.registry.get(op["tool_name"])
@@ -1421,6 +1429,7 @@ class AgentRunner:
 		# generation taste, and silently swapping a deliberately-picked model is the
 		# surest way to degrade output.
 		self.loop_model = self.model
+		self.unavailable_tools = self.registry.unavailable(self)
 		label = ModelRegistry.get_label(self.loop_model)
 		self.emit("progress", message=f"Thinking with {label}" if label else "Thinking…")
 

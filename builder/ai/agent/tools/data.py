@@ -13,8 +13,10 @@ import ast
 import json
 import logging
 import re
+import traceback
 
 import frappe
+from frappe.utils.safe_exec import SERVER_SCRIPT_FILE_PREFIX
 
 from builder.ai.agent import pending
 from builder.ai.agent.registry import Tool
@@ -255,6 +257,100 @@ def is_portable(name: str) -> bool:
 	)
 
 
+UNPACK_HINT = (
+	" This sandbox can't unpack in an assignment (`a, b = row`): index the values instead "
+	"(`a = row[0]`). Unpacking in a for loop works."
+)
+SCOPE_HINT = (
+	" Functions in a data script can't see its top-level names, `{name}` among them: pass it "
+	"in as an argument, or move that code out of the function."
+)
+
+
+class ScriptError:
+	"""A data script's exception, put so the model can fix it: the line it hit, and the sandbox
+	rule behind the two errors whose plain message points the wrong way."""
+
+	def __init__(self, error: Exception, script: str | None):
+		self.error = error
+		self.script = script or ""
+
+	def __str__(self) -> str:
+		return f"{type(self.error).__name__}: {self.error}{self.where()}{self.hint()}"
+
+	def where(self) -> str:
+		frames = traceback.extract_tb(self.error.__traceback__)
+		lines = [f.lineno for f in frames if f.filename.startswith(SERVER_SCRIPT_FILE_PREFIX)]
+		source = self.script.splitlines()
+		if not lines or not 0 < lines[-1] <= len(source):
+			return ""
+		return f" at line {lines[-1]}: `{source[lines[-1] - 1].strip()}`"
+
+	def hint(self) -> str:
+		if not isinstance(self.error, NameError):
+			return ""
+		if "_unpack_sequence_" in str(self.error):
+			return UNPACK_HINT
+		if (name := getattr(self.error, "name", None)) in top_level_names(self.script):
+			return SCOPE_HINT.format(name=name)
+		return ""
+
+
+def top_level_names(script: str) -> set[str]:
+	"""Names the script binds outside any function, which its functions can't see here."""
+	try:
+		body = ast.parse(script).body
+	except SyntaxError:
+		return set()
+	names = set()
+	for statement in body:
+		if isinstance(statement, ast.FunctionDef | ast.AsyncFunctionDef | ast.ClassDef):
+			names.add(statement.name)
+			continue
+		stored = (n for n in ast.walk(statement) if isinstance(n, ast.Name) and isinstance(n.ctx, ast.Store))
+		names.update(n.id for n in stored)
+	return names
+
+
+class DataScriptTrial:
+	"""The data script run once before it goes live, the way a render runs it, with anything it
+	wrote rolled back. A script that reads URL or query params may fail here only for lack of
+	them, so its error is a warning, unless it is a NameError, which no request causes."""
+
+	SAVEPOINT = "builder_ai_data_script_trial"
+
+	def __init__(self, page_id: str, script: str):
+		self.script = script
+		self.error = self.run(page_id)
+
+	def run(self, page_id: str) -> Exception | None:
+		page = frappe.get_doc("Builder Page", page_id)
+		page.page_data_script = self.script
+		frappe.db.savepoint(self.SAVEPOINT)
+		try:
+			page._get_page_data()
+		except Exception as error:
+			return error
+		finally:
+			frappe.db.rollback(save_point=self.SAVEPOINT)
+		return None
+
+	@property
+	def blocks_save(self) -> bool:
+		return bool(self.error) and (isinstance(self.error, NameError) or not self.reads_request())
+
+	def reads_request(self) -> bool:
+		return any("form_dict" in name for name in frappe_names(self.script))
+
+	def warning(self) -> str:
+		if not self.error:
+			return ""
+		return (
+			f" A test run without URL or query params raised {ScriptError(self.error, self.script)}: "
+			"expected if the page always gets those params, otherwise fix it."
+		)
+
+
 def write_page_data_script(ctx, args: dict) -> str:
 	"""Save the server-side Python that populates `data` for the current page (e.g.
 	`data.events = frappe.db.get_all("Event", ...)`). Runs sandboxed at render time;
@@ -290,11 +386,17 @@ def write_page_data_script(ctx, args: dict) -> str:
 			f"{', '.join(missing)} don't exist, so the page would fail to render. Use "
 			f"{PORTABLE_HINT}."
 		)
+	trial = DataScriptTrial(ctx.page_id, script)
+	if trial.blocks_save:
+		return (
+			f"FAILED: a test run of this data script raised {ScriptError(trial.error, script)}. "
+			"Nothing was saved, so the page keeps its previous script."
+		)
 	frappe.db.set_value("Builder Page", ctx.page_id, "page_data_script", script)
 	from builder.ai.agent.tools.settings import emit_refetch
 
 	emit_refetch(ctx, "page_data")
-	return f"Saved the page data script (runs server-side to populate `data`).{LIVE_NOTE}"
+	return f"Saved the page data script (runs server-side to populate `data`).{trial.warning()}{LIVE_NOTE}"
 
 
 # --- writes (terminal, confirm-gated) -----------------------------------
@@ -313,7 +415,7 @@ def request_create_doctype(ctx, args: dict) -> str | None:
 			f"REAL fieldnames (schema follows), or propose a different name (e.g. 'Community {name}').\n"
 			f"{get_doctype_schema(ctx, {'doctype': name})}"
 		)
-	if not frappe.has_permission("DocType", "create"):
+	if not pending.can_create_doctypes():
 		return pending.not_permitted("create DocTypes")
 	summary = f"Create a new DocType '{name}' with {len(fields)} field(s)?"
 	pending.request_confirmation(ctx, "create_doctype", summary, {"name": name, "fields": fields})
@@ -460,7 +562,8 @@ write_page_data_script_tool = Tool(
 		"Set the current page's server-side data script (Python). Use it to populate `data` "
 		"for data-driven pages, e.g. `data.events = frappe.db.get_all('Event', "
 		"fields=['title', 'starts_on'], filters={'published': 1})`, then bind blocks and "
-		"repeaters to the keys you set. It runs sandboxed at render time with no imports. "
+		"repeaters to the keys you set. It runs sandboxed at render time with no imports, and "
+		"is test-run before it saves: a script that fails is not saved. "
 		"Write it with the names every site provides, including sites with server scripts "
 		f"disabled: {PORTABLE_HINT}. frappe.db.get_all reads whatever the script asks for, "
 		"whoever is viewing, so list explicit `fields`, filter to what the page publishes, and "
@@ -499,6 +602,7 @@ create_doctype_tool = Tool(
 		"required": ["name", "fields"],
 	},
 	handler=request_create_doctype,
+	available=pending.can_create_doctypes,
 )
 
 seed_sample_data_tool = Tool(
