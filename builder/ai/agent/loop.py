@@ -722,7 +722,7 @@ class AgentRunner:
 		if name in self.attached_skills:
 			return ""
 		self.attached_skills.add(name)
-		return f"{reason}, here is the {name} skill in full; no read_skill needed this turn:\n\n{Skills.read(name)}"
+		return f"{reason}, here is the {name} skill in full; no read_skill needed this turn:\n\n{Skills.read(name, self.session_id)}"
 
 	def require_skill(self, name: str) -> str | None:
 		# A read alongside a write has not reached the model that authored that write.

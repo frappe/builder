@@ -2,7 +2,8 @@ import frappe
 from frappe.tests.utils import FrappeTestCase
 
 from builder.ai.agent.tools.settings import set_design_token
-from builder.ai.stock_look import is_cream
+from builder.ai.skills import Skills
+from builder.ai.stock_look import REFLEX_FACES, TIRED_FACES, FontDraw, is_cream
 
 
 class Ctx:
@@ -34,3 +35,30 @@ class TestCreamGround(FrappeTestCase):
 		)
 
 		self.assertIn("var(--test-kiln-ink)", out)
+
+
+class TestFontDraw(FrappeTestCase):
+	def test_a_chat_draws_the_same_faces_every_turn(self):
+		first, again, other = (
+			FontDraw("chat-a").sample(),
+			FontDraw("chat-a").sample(),
+			FontDraw("chat-b").sample(),
+		)
+
+		self.assertEqual(len(first), 16)
+		self.assertEqual(first, again)
+		self.assertNotEqual(first, other)
+
+	def test_never_draws_a_reflex_tired_or_popular_face(self):
+		popular = {"Roboto", "Open Sans", "Lato", "Montserrat", "Poppins", "Inter", "Playfair Display"}
+		for seed in range(20):
+			for face in FontDraw(str(seed)).sample():
+				self.assertFalse(face.startswith(REFLEX_FACES + TIRED_FACES), face)
+				self.assertNotIn(face, popular)
+
+	def test_the_new_page_skill_carries_the_chats_draw_and_the_stock_faces(self):
+		guide = Skills.read("new-page", "chat-a")
+
+		self.assertIn(", ".join(FontDraw("chat-a").sample()), guide)
+		self.assertIn("in any of their cuts: Fraunces, Instrument Serif", guide)
+		self.assertNotIn("{{", guide)

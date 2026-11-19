@@ -1,4 +1,5 @@
 from builder.ai.skills import Skills
+from builder.ai.stock_look import REFLEX_FACES
 
 
 class Prompts:
@@ -55,9 +56,9 @@ Page copy speaks in the brand's voice, not yours."""
 	# rubric names the design ones after a build.
 	COPY_TELLS = """- Copy: stock phrases (elevate, unlock, seamless, effortless, empower, crafted with care, where X meets Y, more than just, your journey starts here, look no further, nestled, curated, vibrant); "not just X, it's Y" turns; the same three-word fragment cadence on every heading ("Fresh. Local. Honest."); generic button pairs like Get started / Learn more where a specific verb fits; emoji; em or en dashes (— –), where a comma, colon, parentheses or a new sentence does the job.
 - Invented proof: never make up statistics, ratings, review counts, testimonials, client logos or awards. Leave them out, or use clearly marked placeholders and tell the user what to replace."""
-	DESIGN_TELLS = """- Layout: a small uppercase eyebrow label over every section heading; a hero of badge, headline, subtitle and two buttons; three equal icon cards as the feature section; image and text rows zigzagging down the page; a stats band (10K+, 99%, 24/7); every section the same centred column with only the background changing.
+	DESIGN_TELLS = f"""- Layout: a small uppercase eyebrow label over every section heading; a hero of badge, headline, subtitle and two buttons; three equal icon cards as the feature section; image and text rows zigzagging down the page; a stats band (10K+, 99%, 24/7); every section the same centred column with only the background changing.
 - Surface: a warm near-white ground of any name (cream, paper, bone, ivory, sand, linen, beige) with a terracotta, rust or burnt-orange accent and sage beside it; purple or indigo to pink gradients; gradient-filled headline text; glassmorphism cards; glowing blobs or mesh gradients as default backgrounds; an icon in a tinted rounded square before every item; the same rounded card and soft shadow on everything; sparkle icons.
-- Type: one safe sans for everything, or a face models reach for by reflex: Fraunces, Instrument Serif, Instrument Sans, DM Serif, DM Sans, Playfair Display, Cormorant, Lora, Crimson, Newsreader, Space Grotesk, Space Mono, IBM Plex, Syne, Outfit, Plus Jakarta Sans, Inter, Poppins, Montserrat.
+- Type: one safe sans for everything, or a face models reach for by reflex: {", ".join(REFLEX_FACES)}.
 An element the brand genuinely needs is not a tell: one eyebrow where a kicker earns its place, a real gradient that is part of the logo. The test is whether it is there because this business needs it or because pages like this usually have it."""
 	AI_TELLS = f"# AI tells\nVisitors now recognise machine-made pages on sight, and one tell makes a whole page read as generated, however good the rest is. Leave none of these on a page:\n{COPY_TELLS}\n{DESIGN_TELLS}"
 	AGENT_TELLS = f"# AI tells in copy\nCopy you put on a page never carries these; one makes the page read as machine-made:\n{COPY_TELLS}"
