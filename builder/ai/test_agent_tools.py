@@ -45,3 +45,21 @@ class TestAgentToolsHook(FrappeTestCase):
 			self.assertEqual(runner.op_kind(op), "withheld")
 			self.assertTrue(runner.run_op(op, {}).startswith("FAILED"))
 		self.assertEqual(runner.op_kind({"tool_name": "read_page", "args": {}}), "server")
+
+	def test_the_model_hears_which_tools_the_host_withheld(self):
+		"""His instructions name search_images and set_page_script, and his next steps become buttons"""
+		with hosting_hooks(builder_agent_tools=[page_tools]):
+			runner = AgentRunner("hi", model="m", api_key="k", page_id="page-x")
+
+		context = runner.build_withheld_context()
+
+		for name in ("search_images", "set_page_script", "connect_form", "run_python"):
+			self.assertIn(name, context)
+		self.assertNotIn("read_page", context)
+		self.assertIn("as a next step", context)
+
+	def test_nothing_is_said_where_no_hook_limits_the_tools(self):
+		with hosting_hooks(builder_agent_tools=[no_say]):
+			runner = AgentRunner("hi", model="m", api_key="k", page_id="page-x")
+
+		self.assertEqual(runner.build_withheld_context(), "")

@@ -731,6 +731,18 @@ class AgentRunner:
 			return {}
 		return {"pageMarks": {self.page_id: markup.page_mark(page_writer.load_page_root(self.page_id))}}
 
+	def build_withheld_context(self) -> str:
+		"""Bob's instructions name tools a hosting app may take away (builder_agent_tools), and his next
+		steps turn into buttons the user sends as they are: without this he plans and offers work only
+		the missing tools do, which then fails when the user takes him up on it."""
+		if not (withheld := sorted(self.registry.withheld)):
+			return ""
+		return (
+			f"This site's host leaves you without these tools: {', '.join(withheld)}. Where your "
+			"instructions name one, skip that step, or say in a sentence that it can't be done here. "
+			"Never offer work only they can do, in a reply or as a next step."
+		)
+
 	def build_agent_context(self) -> str:
 		"""Instructions installed apps give for the open page, through the builder_agent_context hook."""
 		if not self.page_id:
@@ -800,6 +812,7 @@ class AgentRunner:
 		blocks = [
 			self.build_open_page_context(),
 			self.build_changed_since_context(),
+			self.build_withheld_context(),
 			self.build_agent_context(),
 			self.build_initial_page_context(),
 			self.build_memory_context(),
