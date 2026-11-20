@@ -21,6 +21,7 @@ import time
 import frappe
 
 from builder.ai import llm
+from builder.ai.block_codec import BlockCodec
 from builder.ai.models import ModelRegistry
 from builder.ai.prompts import Prompts
 from builder.ai.session import AISession
@@ -33,8 +34,12 @@ logger.setLevel(logging.INFO)
 # (not just place): the user's reference and the chosen hero shot.
 IMAGE_MARKER_RE = re.compile(r"(?:REFERENCE|HERO) IMAGE:\s*(\S+)", re.IGNORECASE)
 MAX_ATTACHED_IMAGES = 2
-MAX_IMAGE_BYTES = 3 * 1024 * 1024
+# As large as an image a chat message may carry: a turn's job reads its own images back from their files.
+MAX_IMAGE_BYTES = BlockCodec.MAX_IMAGE_DATA_URL * 3 // 4
 IMAGE_CHECK_TIMEOUT = 5
+# A run a hosting app keeps off the web has neither (frappe.page's control site): it then requests no outside
+# address for a brief's image, and hands none to the provider to fetch either.
+WEB_TOOLS = frozenset({"read_url", "search_images"})
 
 
 def image_url_resolves(url: str) -> bool:
@@ -63,11 +68,11 @@ def image_url_resolves(url: str) -> bool:
 		return False
 
 
-def brief_image_parts(brief: str, skip: set[str] | None = None) -> list[dict]:
+def brief_image_parts(brief: str, skip: set[str] | None = None, web: bool = True) -> list[dict]:
 	"""Resolve the brief's image markers into message image parts. https URLs are
-	attached directly (the provider fetches them); site file paths (public or
-	private) are read from the site and inlined as data URLs. The marker lines always stay in the brief text,
-	so the model still knows the exact URLs to place in blocks."""
+	attached directly (the provider fetches them), unless the run is kept off the web (`web` False);
+	site file paths (public or private) are read from the site and inlined as data URLs. The marker lines
+	always stay in the brief text, so the model still knows the exact URLs to place in blocks."""
 	parts = []
 	for url in IMAGE_MARKER_RE.findall(brief or ""):
 		if len(parts) >= MAX_ATTACHED_IMAGES:
@@ -75,6 +80,8 @@ def brief_image_parts(brief: str, skip: set[str] | None = None) -> list[dict]:
 		if url in (skip or ()):  # already attached as the turn's own image
 			continue
 		if url.startswith("https://"):
+			if not web:
+				continue
 			if not image_url_resolves(url):
 				logger.warning(f"skipping unreachable brief image: {url}")
 				continue
@@ -86,16 +93,16 @@ def brief_image_parts(brief: str, skip: set[str] | None = None) -> list[dict]:
 	return parts
 
 
+def may_reach_web(ctx) -> bool:
+	"""Whether this run may request outside addresses: not once a hosting app withheld a web tool."""
+	registry = getattr(ctx, "registry", None)
+	return not (registry and WEB_TOOLS & registry.withheld)
+
+
 def read_site_image(file_url: str) -> str | None:
 	try:
-		name = frappe.db.get_value("File", {"file_url": file_url}, "name")
-		if not name:
-			return None
-		file = frappe.get_doc("File", name)
-		# The path may come out of a model-written brief, so a private file is only
-		# inlined when the user this run acts for may actually read it.
-		if file.is_private and not file.has_permission("read"):
-			logger.warning(f"read_site_image: {file_url} is private and not readable here")
+		file = readable_file(file_url)
+		if not file:
 			return None
 		content = file.get_content()
 		if isinstance(content, str):
@@ -110,6 +117,22 @@ def read_site_image(file_url: str) -> str | None:
 	except Exception as e:
 		logger.warning(f"read_site_image failed for {file_url}: {e}")
 		return None
+
+
+def readable_file(file_url: str):
+	"""A File at `file_url` the user this run acts for may read. The path may come out of a model-written
+	brief, so a private file is only inlined when they may. Files with the same content share one address,
+	so a user's own image can sit at an address an earlier upload of someone else's took first."""
+	names = frappe.get_all(
+		"File", filters={"file_url": file_url}, pluck="name", order_by="creation", limit=20
+	)
+	for name in names:
+		file = frappe.get_doc("File", name)
+		if not file.is_private or file.has_permission("read"):
+			return file
+	if names:
+		logger.warning(f"read_site_image: {file_url} is private and not readable here")
+	return None
 
 
 def found_photo_list(ctx) -> str:
@@ -276,7 +299,8 @@ def generate_page_markup(ctx, args: dict) -> list[dict]:
 		image_parts: list[dict] = []
 		if ModelRegistry.supports_vision(ctx.model):
 			image_parts.extend(ctx.images.parts())
-			image_parts.extend(brief_image_parts(brief, skip=ctx.images.file_urls()))
+			web = may_reach_web(ctx)
+			image_parts.extend(brief_image_parts(brief, skip=ctx.images.file_urls(), web=web))
 		if image_parts:
 			messages.append({"role": "user", "content": [{"type": "text", "text": build_text}, *image_parts]})
 		else:
@@ -288,6 +312,11 @@ def generate_page_markup(ctx, args: dict) -> list[dict]:
 	text = ""
 	finish_reason = None
 	preview = PagePreview(ctx)
+	# Claude plans the whole page before it writes a line of it, a minute or more in which only its thinking
+	# summary streams and the canvas has nothing to show. That goes into a thinking step, as in a round of the
+	# loop, ending when the page starts; a model that shows no thinking leaves the step empty, off the message.
+	thinking = ctx.add_step("thinking", status="running")
+	thinking_since: float | None = time.monotonic()
 	stream = llm.complete(
 		ctx.model,  # heavy model — generation quality
 		messages,
@@ -313,13 +342,28 @@ def generate_page_markup(ctx, args: dict) -> list[dict]:
 				continue
 			if fr := chunk.choices[0].finish_reason:
 				finish_reason = fr
-			if delta := chunk.choices[0].delta.content:
-				text += delta
+			delta = chunk.choices[0].delta
+			if reasoning := getattr(delta, "reasoning_content", None):
+				thinking["text"] = (thinking.get("text") or "") + reasoning
+				ctx.emit("stream", chunk=reasoning, kind="reasoning")
+			if content := getattr(delta, "content", None):
+				if thinking_since is not None:
+					ctx.finish_step(thinking, started=thinking_since)
+					thinking_since = None
+				text += content
 				preview.update(text)
 	finally:
+		# a cancel or a dropped stream must not leave the step spinning
+		if thinking_since is not None:
+			ctx.finish_step(thinking, started=thinking_since)
 		# The buffer only serves mid-build refreshes; once this function returns the
 		# draft is persisted (or the turn failed/cancelled) and the DB is the truth.
 		clear_stream_buffer(ctx.page_id)
+
+	if finish_reason == llm.REFUSED:
+		# a page the model declined part way is not one to keep: the turn ends, saying why
+		logger.info("generate_page: the model refused (model=%s, page=%s)", ctx.model, ctx.page_id)
+		raise llm.Refused
 
 	if not text.strip() or not ctx.page_id:
 		logger.warning("generate_page: nothing to persist (model=%s, page=%s)", ctx.model, ctx.page_id)

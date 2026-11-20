@@ -251,13 +251,18 @@ def update_definition(component: str, mutate) -> None:
 
 	import frappe
 
+	from builder.utils import refuse_unsafe_write
+
 	if not frappe.db.exists("Builder Component", component):
 		return
 	definition = frappe.parse_json(frappe.db.get_value("Builder Component", component, "block") or "{}")
 	if not isinstance(definition, dict):
 		return
 	mutate(definition)
-	frappe.db.set_value("Builder Component", component, "block", json.dumps(definition), update_modified=True)
+	block = json.dumps(definition)
+	# set_value skips validate, so the hosting app is asked first (builder_content_problems)
+	refuse_unsafe_write("Builder Component", component, {"block": block})
+	frappe.db.set_value("Builder Component", component, "block", block, update_modified=True)
 
 
 def merge_bindings(block: dict, bind: dict) -> None:

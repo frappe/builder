@@ -86,6 +86,7 @@ export const loadDevPlugin = async (url: string): Promise<DevelopmentPlugin> => 
 		// the dev server serves the source entry. So the path comes from the dev server
 		entryUrl: `${origin}${descriptor.entry}`,
 		icon: descriptor.icon ? `${origin}${descriptor.icon}` : undefined,
+		source: "Development",
 		isDevelopment: true,
 	};
 	await loadPlugin(plugin);

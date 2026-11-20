@@ -1,6 +1,6 @@
 <template>
 	<div class="flex flex-col gap-5">
-		<div class="flex justify-between">
+		<div v-if="!isIsolated" class="flex justify-between">
 			<label class="text-p-base-medium w-fit shrink-0 text-ink-gray-8">
 				{{ __("Execute Block Client Scripts in Editor") }}
 			</label>
@@ -17,6 +17,7 @@
 				]" />
 		</div>
 		<Switch
+			v-if="!isIsolated"
 			size="sm"
 			:label="__('Prevent Click Emulation')"
 			:description="
@@ -28,7 +29,10 @@
 					builderStore.updateBuilderSettings('restrict_click_handlers', val);
 				}
 			" />
-		<p class="text-p-sm text-ink-gray-5">
+		<p v-if="isIsolated" class="text-p-sm text-ink-gray-5">
+			{{ __("Block Client Scripts run on the published site and in Preview, not in the editor.") }}
+		</p>
+		<p v-else class="text-p-sm text-ink-gray-5">
 			{{
 				__(
 					"Note: Block Scripts are executed in a sandboxed environment. This may have limitations and might not perfectly replicate live site behavior. Executing untrusted scripts could be unsafe.",
@@ -40,6 +44,7 @@
 <script setup lang="ts">
 import { __ } from "@/translation";
 import { builderSettings } from "@/data/builderSettings";
+import { isIsolated } from "@/utils/frappePage";
 import useBuilderStore from "@/stores/builderStore";
 import { Select, Switch } from "frappe-ui";
 

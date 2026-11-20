@@ -18,11 +18,15 @@ export type PluginContext = {
 	setOpenHandler: (handler: () => void) => void;
 };
 
+/** Where a plugin's files came from. Bob is Builder's AI, which writes plugins too. */
+export type PluginSource = "Hub" | "App" | "Development" | "Bob";
+
 export type RunnablePlugin = {
 	name: string;
 	label: string;
 	version: string;
 	entryUrl: string;
+	source?: PluginSource;
 	isDevelopment?: boolean;
 };
 

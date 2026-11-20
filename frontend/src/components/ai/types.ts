@@ -4,8 +4,9 @@ export interface AIModel {
 	vision?: boolean;
 	/** Has a usable key — its provider's own, or the shared one in Builder Settings. */
 	ready?: boolean;
-	/** Set for a gateway with its own base URL, the only kind that can report credits. */
-	api_base?: string | null;
+	/** Its provider is a gateway with a base URL, the only kind that can report credits. The URL stays
+	 * on the server. */
+	gateway?: boolean;
 	/** Builder Settings names this model as the one to start with. */
 	default?: boolean;
 }
@@ -70,6 +71,16 @@ export interface AISetupState {
 	providers: number;
 	needs_migrate?: boolean;
 	presets: AIPreset[];
+}
+
+/** A turn another screen asks Bob to start on a page it opened, as if the user had typed
+ * `prompt` there; the chat shows `display` for it. */
+export interface AITurnRequest {
+	pageId: string;
+	prompt: string;
+	display?: string;
+	/** told once whether Bob accepted the turn, or it never started (the words are back in the composer) */
+	settled?: (accepted: boolean) => void;
 }
 
 /** One entry of a turn's timeline (see the event contract in agent/loop.py):

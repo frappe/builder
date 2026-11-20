@@ -35,6 +35,14 @@ REFLEX_FACES = (
 	"Montserrat",
 )
 TIRED_FACES = ("Roboto", "Open Sans", "Raleway", "Merriweather")
+# What a run its hosting app keeps off the web (artifact.may_reach_web) is told about faces instead of a
+# draw: such a host's pages load no font from outside. frappe.page's own site serves its InterVar itself
+# (CSP font-src 'self'), so a Google face, or any face its pages don't use, shows in a fallback there.
+LOCAL_FACES = (
+	"This site's pages load no font from outside, so a face they don't already use shows in a fallback "
+	"face on the live page: keep to the faces its pages already use (read_page names them) and name "
+	"those in the brief, whatever else your instructions say about faces."
+)
 
 
 def is_cream(colour: str) -> bool:

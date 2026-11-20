@@ -13,6 +13,7 @@ import logging
 
 import frappe
 
+from builder.ai.agent.artifact import may_reach_web
 from builder.ai.agent.registry import Tool
 
 logger = frappe.logger("builder.ai.agent.preview")
@@ -38,11 +39,16 @@ def render_page_image(page, viewport: str = "desktop", color_scheme: str | None 
 	return render_markup_image(page.get_preview_html(color_scheme=color_scheme), viewport)
 
 
-def render_markup_image(markup: str, viewport: str = "desktop") -> bytes:
+def render_markup_image(markup: str, viewport: str = "desktop", block_external: bool = False) -> bytes:
+	"""`block_external` for a run its hosting app keeps off the web (artifact.may_reach_web): the
+	server's Chromium then fetches nothing from outside, and the capture shows what such a host's
+	visitors get."""
 	from builder.html_preview_image import render_full_page
 
 	width, height = VIEWPORTS[viewport]
-	return render_full_page(markup, width=width, height=height, max_height=CAPTURE_HEIGHT)
+	return render_full_page(
+		markup, width=width, height=height, max_height=CAPTURE_HEIGHT, block_external=block_external
+	)
 
 
 def page_error(page, error: Exception) -> str:
@@ -155,8 +161,9 @@ def run_preview_page(ctx, args: dict) -> str:
 		logger.warning("preview_page: %s failed to render", page_id, exc_info=True)
 		return page_error(page, error)
 	ctx.preview_count += 1
+	web = may_reach_web(ctx)
 	try:
-		image = render_markup_image(markup, viewport)
+		image = render_markup_image(markup, viewport, block_external=not web)
 	except Exception:
 		logger.warning("preview_page: render failed for %s", page_id, exc_info=True)
 		return (
@@ -194,12 +201,17 @@ def run_preview_page(ctx, args: dict) -> str:
 			"on the open page (read_page gives you the precise fonts/hexes/handles). Its "
 			"blocks are not editable from here."
 		)
+	resolves = (
+		"a real Google Fonts name or an installed User Font"
+		if web
+		else "a face this site's pages already use: they load no font from outside"
+	)
 	return (
 		f"{extent} For your eyes only (the user doesn't see it). Review in two passes, then act:\n"
 		"1. Breakage: unreadable contrast, accidental overlap, empty sections, a layout that "
 		"collapses. Fonts: the page default is Inter, so text in a Times-like serif that no "
 		"block chose means a named family isn't loading on this site; restyle to a family "
-		"that resolves here (a real Google Fonts name or an installed User Font). Stale "
+		f"that resolves here ({resolves}). Stale "
 		"chrome: an embedded component still showing its default content (a breadcrumb "
 		"reading 'Home', another product's name in the nav); override the instance's "
 		"children (edit_page on its instance refs) so it names this page. Orphaned "
@@ -271,18 +283,19 @@ def image_view_html(src: str) -> str:
 	)
 
 
-def renderable_source(src: str) -> str | None:
+def renderable_source(src: str, web: bool = True) -> str | None:
 	"""What the renderer may load for an image, or None. Only what the user could
 	open themselves gets through (it ends up in front of an external model): data:
 	images, public site files, private files they may read, and public web images,
-	which are inlined so Chromium never dials the network for them."""
+	which are inlined so Chromium never dials the network for them. Off the web
+	(`web` False, artifact.may_reach_web) a web image is not fetched at all."""
 	from urllib.parse import urlparse
 
 	if src.startswith("data:image/"):
 		return src
 	parsed = urlparse(src)
 	if parsed.scheme in ("http", "https") and parsed.netloc != urlparse(frappe.utils.get_url()).netloc:
-		return inline_remote_image(src)
+		return inline_remote_image(src) if web else None
 	if parsed.path.startswith("/private/files/"):
 		name = frappe.db.get_value("File", {"file_url": parsed.path}, "name")
 		return src if name and frappe.get_doc("File", name).has_permission("read") else None
@@ -308,7 +321,7 @@ def inline_remote_image(src: str) -> str | None:
 	return f"data:{content_type};base64,{base64.b64encode(content).decode()}"
 
 
-def render_block_images(sources: dict[str, str]) -> list[dict] | None:
+def render_block_images(sources: dict[str, str], web: bool = True) -> list[dict] | None:
 	"""All the block's pictures, or None if any one fails: a half-attached pair would
 	leave the model unsure which variant it actually saw."""
 	from builder.html_preview_image import render
@@ -316,7 +329,7 @@ def render_block_images(sources: dict[str, str]) -> list[dict] | None:
 	attachments = []
 	for label, src in sources.items():
 		try:
-			image = render(image_view_html(src), width=1024, height=768)
+			image = render(image_view_html(src), width=1024, height=768, block_external=not web)
 		except Exception:
 			logger.warning("read_page: image render failed for %s", src[:200], exc_info=True)
 			return None
@@ -340,11 +353,12 @@ def attach_block_images(ctx, block: dict) -> str:
 		return "Your selected model can't view images."
 	if ctx.image_views >= MAX_IMAGE_VIEWS_PER_TURN:
 		return "Image view limit reached for this turn."
-	sources = {label: renderable_source(src) for label, src in sources.items()}
+	web = may_reach_web(ctx)
+	sources = {label: renderable_source(src, web) for label, src in sources.items()}
 	if None in sources.values():
 		return "This image's address is private, internal or unreachable, so it can't be shown to you."
 	ctx.image_views += 1
-	attachments = render_block_images(sources)
+	attachments = render_block_images(sources, web)
 	if attachments is None:
 		return "The image could not be rendered; don't describe what you haven't seen."
 	ctx.pending_images.extend(attachments)

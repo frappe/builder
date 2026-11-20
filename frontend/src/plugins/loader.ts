@@ -1,7 +1,8 @@
 import type { App, Plugin } from "vue";
 import { reactive } from "vue";
 import { trackPluginItems, unregisterPluginItems } from "@/utils/createRegistry";
-import { createPluginContext, type PluginContext, type RunnablePlugin } from "./context";
+import { fp, isIsolated, isMounted } from "@/utils/frappePage";
+import { createPluginContext, type PluginContext, type PluginSource, type RunnablePlugin } from "./context";
 
 type LoadedPlugin = { plugin: RunnablePlugin; vuePlugin: Plugin };
 
@@ -19,6 +20,20 @@ const runningEntries = new Map<string, string>();
 
 export const getRunningEntry = (plugin: string) => runningEntries.get(plugin);
 
+/** What an isolated editor runs: the boot's list, else the Hub and apps under a mount, else apps only. */
+const isolatedSources = (): string[] => fp.plugin_sources ?? (isMounted ? ["Hub", "App"] : ["App"]);
+
+/** A refusal names the sources as tenants' editors have always read it ("the Hub or an app"). */
+const SOURCE_NAMES: Record<string, string> = { Hub: "the Hub", App: "an app" };
+
+/**
+ * A plugin runs with the editor's origin. On frappe.page every site's editor shares that
+ * origin, so only plugins from the Hub or an installed app run there, not a dev server's or Bob's.
+ * The app host's own editor names its sources in the boot, and runs only an installed app's.
+ */
+export const canRunFrom = (source?: PluginSource) =>
+	!isIsolated || (source !== undefined && isolatedSources().includes(source));
+
 const isVuePlugin = (value: unknown): value is Plugin =>
 	typeof value === "function" || typeof (value as { install?: unknown })?.install === "function";
 
@@ -28,6 +43,12 @@ const isVuePlugin = (value: unknown): value is Plugin =>
  * import map, and its build links its own stylesheet.
  */
 export async function importPlugin(plugin: RunnablePlugin): Promise<Plugin> {
+	if (!canRunFrom(plugin.source)) {
+		const sources = isolatedSources()
+			.map((source) => SOURCE_NAMES[source] ?? source)
+			.join(" or ");
+		throw new Error(`${plugin.label} does not run here: this site runs plugins from ${sources} only`);
+	}
 	const module = await import(/* @vite-ignore */ plugin.entryUrl);
 	if (!isVuePlugin(module.default)) {
 		throw new Error(`${plugin.entryUrl} has no default export with an install() function`);

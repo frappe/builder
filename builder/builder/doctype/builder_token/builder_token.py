@@ -8,7 +8,7 @@ import frappe
 from frappe.model.document import Document
 from frappe.modules.export_file import delete_folder, export_to_files
 from frappe.utils.caching import redis_cache
-from frappe.website.utils import delete_page_cache
+from frappe.website.utils import clear_website_cache, delete_page_cache
 
 from builder.export_import_standard_page import StandardFileSync
 from builder.utils import is_bulk_import
@@ -41,6 +41,7 @@ class BuilderToken(StandardFileSync, Document):
 
 	def on_update(self):
 		clear_builder_token_cache()
+		self.clear_pages_for_font()
 		if self.is_standard and frappe.conf.developer_mode:
 			export_to_files(
 				record_list=[["Builder Token", self.name, "builder_token"]], record_module="builder"
@@ -53,9 +54,16 @@ class BuilderToken(StandardFileSync, Document):
 
 	def on_trash(self):
 		clear_builder_token_cache()
+		self.clear_pages_for_font()
 		if self.is_standard:
 			delete_folder("builder", "builder_token", self.name)
 		self.delete_standard_exported_files()
+
+	def clear_pages_for_font(self) -> None:
+		# a rendered page links the Google Fonts its Font tokens resolve to, so a cached page
+		# would keep loading the old family while tokens.css already names the new one
+		if self.type == "Font":
+			clear_website_cache()
 
 	def export_standard_files(self) -> None:
 		if not frappe.conf.developer_mode or is_bulk_import():

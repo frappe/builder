@@ -41,3 +41,11 @@ class TestAccountOnboarding(FrappeTestCase):
 			self.assertFalse(is_password_needed())
 			with self.assertRaises(frappe.PermissionError):
 				set_password(PASSWORD)
+
+	def test_a_hosting_apps_editor_never_asks_for_a_password(self):
+		"""frappe.page signs its members in itself, mounted on tenants and isolated on its own site"""
+		for hook in ("is_mounted", "is_isolated"):
+			with self.subTest(hook=hook), patch(f"builder.account_onboarding.{hook}", return_value=True):
+				self.assertFalse(is_password_needed())
+				with self.assertRaises(frappe.PermissionError):
+					set_password(PASSWORD)

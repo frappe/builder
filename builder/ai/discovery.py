@@ -54,8 +54,11 @@ class Discovery:
 	@classmethod
 	def connected(cls) -> list["Discovery"]:
 		"""Every enabled provider of a known kind that has a credential to list with."""
+		# the Frappe provider stores no api_base either, but lists its gateway (GatewayListing)
 		names = frappe.get_all(
-			"Builder AI Provider", filters={"enabled": 1, "api_base": ["is", "not set"]}, pluck="name"
+			"Builder AI Provider",
+			filters={"enabled": 1, "api_base": ["is", "not set"], "from_site_config": 0},
+			pluck="name",
 		)
 		found = [cls(frappe.get_doc("Builder AI Provider", name)) for name in names]
 		return [d for d in found if d.preset and d.credential()]

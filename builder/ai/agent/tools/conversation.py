@@ -149,6 +149,9 @@ def sanitize_option(option) -> dict | None:
 		return None
 	if option.get("colors") is not None and not isinstance(option["colors"], list):
 		option.pop("colors")
+	elif option.get("colors"):
+		# a tile shows each as a CSS colour, and the stock-look check reads them as text
+		option["colors"] = [colour for colour in option["colors"] if isinstance(colour, str)]
 	if option.get("image") is not None and not isinstance(option["image"], str):
 		option.pop("image")
 	return option

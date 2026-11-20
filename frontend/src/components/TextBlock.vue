@@ -2,7 +2,7 @@
 	<component :is="block.getTag()" ref="component" :key="editor" class="__text_block__">
 		<div
 			class="__text_content__ bg-clip-[inherit] bg-inherit [-webkit-background-clip:inherit] [background-image:inherit]"
-			v-html="textContent"
+			v-html="canvasTextContent"
 			v-show="!editor && textContent"
 			@click="handleClick"></div>
 		<TextBlockBubbleMenu
@@ -36,6 +36,7 @@ import useCanvasStore from "@/stores/canvasStore";
 import blockController from "@/utils/blockController";
 import { BlockValueResolver } from "@/utils/blockValueResolver";
 import { hasCopiedBlocks } from "@/utils/builderBlockCopyPaste";
+import { sanitizeBlockHTML } from "@/utils/canvasIsolation";
 import { setFontFromHTML } from "@/utils/fontManager";
 import type { PauseId } from "@/utils/useCanvasHistory";
 import { Color } from "@tiptap/extension-color";
@@ -87,8 +88,8 @@ const FontFamilyPasteRule = Extension.create({
 				key: new PluginKey("fontFamilyPasteRule"),
 				props: {
 					transformPastedHTML(html) {
-						const div = document.createElement("div");
-						div.innerHTML = html;
+						// inert, so pasted markup cannot run its handlers in the editor
+						const div = new DOMParser().parseFromString(html, "text/html").body;
 						const removeFontFamily = (element: HTMLElement) => {
 							if (element.style) {
 								element.style.fontFamily = "";
@@ -121,6 +122,9 @@ const textContent = computed(() => {
 	}
 	return String(innerHTML ?? "");
 });
+
+// the editor syncs from textContent, so only what the canvas draws is sanitized
+const canvasTextContent = computed(() => sanitizeBlockHTML(textContent.value));
 
 const getDynamicContent = () => {
 	return valueResolver.applyDynamicValues("key", { innerHTML: null }).innerHTML;

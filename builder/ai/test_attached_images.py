@@ -1,11 +1,13 @@
 import base64
 import json
+import os
 
 import frappe
 from frappe.tests.utils import FrappeTestCase
 
 from builder.ai.agent.artifact import read_site_image
 from builder.ai.attachments import AttachedImage, TurnImages
+from builder.ai.block_codec import BlockCodec
 from builder.ai.session import AISession
 
 PNG_BYTES = base64.b64decode(
@@ -18,6 +20,14 @@ def saved(**kwargs) -> AttachedImage:
 	image = AttachedImage(data=DATA_URL, **kwargs)
 	image.save()
 	return image
+
+
+def make_user(email: str) -> str:
+	if not frappe.db.exists("User", email):
+		frappe.get_doc({"doctype": "User", "email": email, "first_name": "Perm"}).insert(
+			ignore_permissions=True
+		)
+	return email
 
 
 def user_row(*urls: str, legacy: bool = False) -> dict:
@@ -57,12 +67,80 @@ class TestAttachedImages(FrappeTestCase):
 		with self.assertRaises(frappe.ValidationError):
 			TurnImages.from_request([{"data": "data:video/mp4;base64,AAAA"}])
 
+	def test_request_takes_only_the_image_types_models_read(self):
+		payload = base64.b64encode(PNG_BYTES).decode()
+		for kind in ("svg+xml", "html", "x-icon", ""):
+			with self.subTest(kind=kind), self.assertRaises(frappe.ValidationError):
+				TurnImages.from_request([{"data": f"data:image/{kind};base64,{payload}"}])
+		for kind in ("png", "jpeg", "webp", "gif"):
+			self.assertTrue(TurnImages.from_request([{"data": f"data:image/{kind};base64,{payload}"}]))
+
+	def test_saved_file_is_named_by_its_image_type(self):
+		# bytes of its own: a File with the same content as an earlier one gets that one's address
+		content = base64.b64encode(PNG_BYTES + frappe.generate_hash(length=8).encode()).decode()
+		image = AttachedImage(data=f"data:image/png;charset=utf-8;base64,{content}")
+		image.save()
+		self.assertTrue(image.url.endswith(".png"), image.url)
+
 	def test_parts_label_every_image(self):
 		images = TurnImages([saved(), saved(video="demo.mp4", at=64.5)])
 		labels = [p["text"] for p in images.parts() if p["type"] == "text"]
 		self.assertTrue(labels[0].startswith("Image 1 (saved at /private/files/"))
 		self.assertTrue(labels[1].startswith("Frame at 1:04 of demo.mp4"))
 		self.assertEqual(sum(p["type"] == "image_url" for p in images.parts()), 2)
+
+	def test_a_frame_time_that_is_no_time_in_a_video_is_dropped(self):
+		for at in (float("inf"), float("-inf"), float("nan"), -1, 10**9, True, "12"):
+			with self.subTest(at=at):
+				image = AttachedImage.from_dict({"url": "/files/a.png", "video": "demo.mp4", "at": at})
+				self.assertIsNone(image.at)
+				self.assertEqual(image.label(1), "Frame at 0:00 of demo.mp4 (saved at /files/a.png)")
+		self.assertEqual(AttachedImage.from_dict({"video": "demo.mp4", "at": 64.5}).at, 64.5)
+
+	def test_a_message_stored_with_an_infinite_frame_time_still_replays(self):
+		# JSON carries Infinity both ways: a request's body, and a message's metadata as it was stored
+		meta = json.dumps({"attachedImages": [{"url": saved().url, "video": "demo.mp4", "at": float("inf")}]})
+		history = [{"role": "user", "content": "hi", "metadata_json": meta}]
+		parts = self.session().images_to_replay(history)[0].parts()
+		self.assertTrue(parts[0]["text"].startswith("Frame at 0:00 of demo.mp4"))
+		self.assertEqual(parts[1]["image_url"]["url"], DATA_URL)
+
+	def test_the_job_gets_a_saved_image_by_its_address_and_reads_it_back(self):
+		unsaved = AttachedImage(data=DATA_URL)  # its save failed: the job has nothing else to read
+		payload = TurnImages([saved(), unsaved]).payload()
+		self.assertNotIn("data", payload[0])
+		self.assertEqual(payload[1]["data"], DATA_URL)
+		parts = TurnImages.from_payload(payload).parts()
+		self.assertEqual([p["image_url"]["url"] for p in parts if p["type"] == "image_url"], [DATA_URL] * 2)
+
+	def test_an_image_as_large_as_a_message_takes_is_read_back_from_its_file(self):
+		# past the 3 MB replay used to read back, within what a request takes (about 5.25 MB)
+		content = base64.b64encode(PNG_BYTES + os.urandom(3_500_000)).decode()
+		data = BlockCodec.validate_image_data(f"data:image/png;base64,{content}")
+		image = AttachedImage(data=data)
+		image.save()
+		self.assertEqual(read_site_image(image.url), data)
+		[part] = [
+			p for p in TurnImages.from_payload(TurnImages([image]).payload()).parts() if "image_url" in p
+		]
+		self.assertEqual(part["image_url"]["url"], data)
+
+	def test_an_image_another_user_sent_too_is_read_through_this_user_s_own_file(self):
+		# the same bytes share one address, whoever sent them first
+		content = base64.b64encode(PNG_BYTES + frappe.generate_hash(length=8).encode()).decode()
+		data = f"data:image/png;base64,{content}"
+		urls = {}
+		try:
+			for user in ("ai-attachment-first@example.com", "ai-attachment-second@example.com"):
+				frappe.set_user(make_user(user))
+				image = AttachedImage(data=data)
+				image.save()
+				urls[user] = image.url
+			for user in urls:
+				frappe.set_user(user)
+				self.assertEqual(read_site_image(urls[user]), data, user)
+		finally:
+			frappe.set_user("Administrator")
 
 	def test_replay_keeps_to_the_image_budget(self):
 		limit = AISession.IMAGE_REPLAY_LIMIT
@@ -92,12 +170,7 @@ class TestAttachedImages(FrappeTestCase):
 
 	def test_private_file_needs_read_permission(self):
 		file_url = saved().url
-		user = "ai-attachment-perm-test@example.com"
-		if not frappe.db.exists("User", user):
-			frappe.get_doc({"doctype": "User", "email": user, "first_name": "Perm"}).insert(
-				ignore_permissions=True
-			)
-		frappe.set_user(user)
+		frappe.set_user(make_user("ai-attachment-perm-test@example.com"))
 		try:
 			self.assertIsNone(read_site_image(file_url))
 		finally:

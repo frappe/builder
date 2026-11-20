@@ -17,6 +17,7 @@ from builder.plugins.access import (
 	find_installation,
 )
 from builder.plugins.constants import DEV_PLUGIN_VERSION
+from builder.utils import is_isolated
 
 
 @frappe.whitelist(methods=["POST"])
@@ -78,3 +79,6 @@ def remove_dev_plugin(plugin: str) -> None:
 def assert_developer_mode() -> None:
 	if not frappe.conf.get("developer_mode"):
 		frappe.throw(_("Development plugins are unavailable outside developer mode."))
+	# an isolated editor never loads a dev server's code, whatever the site's developer mode says
+	if is_isolated():
+		frappe.throw(_("Development plugins are unavailable on this site."), frappe.PermissionError)

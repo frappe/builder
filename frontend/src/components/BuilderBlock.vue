@@ -49,6 +49,7 @@ import useCanvasStore from "@/stores/canvasStore";
 import useComponentStore from "@/stores/componentStore";
 import usePageStore from "@/stores/pageStore";
 import { BlockValueResolver } from "@/utils/blockValueResolver";
+import { canvasTag, isolateBlockAttributes } from "@/utils/canvasIsolation";
 import componentController from "@/utils/componentController.js";
 import { needsItalic, setFont } from "@/utils/fontManager";
 import { extractComponentId, getTextContent } from "@/utils/helpers";
@@ -161,7 +162,7 @@ const getComponentName = (block: Block) => {
 	} else if (block.isHTML()) {
 		return BlockHTML;
 	} else {
-		return block.getTag();
+		return canvasTag(block.getTag());
 	}
 };
 
@@ -240,6 +241,7 @@ const attributes = computed(() => {
 	}
 
 	valueResolver.applyDynamicValues("attribute", attribs);
+	isolateBlockAttributes(props.block.getTag(), attribs, attrs);
 
 	if (props.block.isInput()) {
 		attribs.readonly = true;

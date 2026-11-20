@@ -8,6 +8,8 @@ STANDARD_ATTRS = {"src", "darkSrc", "alt", "href", "title", "value", "type", "pl
 
 
 class BlockCodec:
+	# The longest image data URL a chat message may carry: about 5.25 MB of image.
+	MAX_IMAGE_DATA_URL = 7 * 1024 * 1024
 	# Defaults the client injects on an icon svg — noise for the model, stripped on re-collapse.
 	ICON_STYLE_DEFAULTS: ClassVar[dict[str, str | int]] = {
 		"display": "inline-flex",
@@ -154,7 +156,7 @@ class BlockCodec:
 			frappe.throw(_("Invalid image data: must be a base64-encoded image data URL"))
 		if ";base64," not in image_data:
 			frappe.throw(_("Invalid image data: must be a base64-encoded data URL"))
-		if len(image_data) > 7 * 1024 * 1024:
+		if len(image_data) > BlockCodec.MAX_IMAGE_DATA_URL:
 			frappe.throw(_("Image is too large. Please use an image smaller than 5 MB."))
 		return image_data
 

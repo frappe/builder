@@ -13,7 +13,11 @@ import { aiModels, aiProviders, reloadAIRegistry } from "@/data/aiModels";
 import type { BuilderAIModel, BuilderAIProvider } from "@/types/doctypes";
 import { call, toast } from "frappe-ui";
 
+/** How much of today's AI allowance a site has left, when its host meters the AI that comes with it. */
+type Allowance = { percent_left: number; resets_in: string };
+
 export function providersLevel(ctx: BobContext): MenuLevel {
+	let allowance: Allowance | null = null;
 	return {
 		title: "Providers",
 		items: withCredits(
@@ -22,15 +26,22 @@ export function providersLevel(ctx: BobContext): MenuLevel {
 				// picks up what the gateways added or retired since the picker last asked
 				await call("builder.ai.api.sync_ai_models").catch(() => null);
 				await reloadAIRegistry();
+				allowance = await loadAllowance();
 				return aiProviders.data || [];
 			},
-			(providers) => providers.filter((p) => p.api_base).map((p) => p.name),
+			// the provider that comes with the site keeps its gateway's address on the server
+			(providers) => providers.filter((p) => p.api_base || p.from_site_config).map((p) => p.name),
 			(providers, credits) => [
 				...providers.map((p): MenuItem => ({
 					key: p.name,
 					label: p.provider_name,
 					description: p.enabled
-						? [modelCount(p.name), creditsLabel(credits[p.name])].filter(Boolean).join(" · ")
+						? (p.from_site_config
+								? ["Included with this site", allowanceLabel(allowance) || modelCount(p.name)]
+								: [modelCount(p.name), creditsLabel(credits[p.name])]
+							)
+								.filter(Boolean)
+								.join(" · ")
 						: "Off",
 					group: "Connected",
 					submenu: true,
@@ -49,11 +60,16 @@ export function providersLevel(ctx: BobContext): MenuLevel {
 }
 
 export function providerLevel(ctx: BobContext, name: string): MenuLevel {
+	const included = !!providerDoc(name)?.from_site_config;
 	return {
 		title: name,
+		// the server refuses to change it too: this only keeps the menu from offering what can't be done
+		note: included
+			? "Comes with this site, so it stays on and can't be removed. You can connect providers of your own alongside it."
+			: undefined,
 		items: async () => {
 			await reloadAIRegistry();
-			return [
+			const models: MenuItem[] = [
 				// a model discovery retired is gone, not switched off: only the ones someone chose stay listed
 				...modelsOf(name)
 					.filter((m) => m.enabled || !m.discovered)
@@ -77,6 +93,10 @@ export function providerLevel(ctx: BobContext, name: string): MenuLevel {
 					icon: "lucide-refresh-cw",
 					run: () => refreshModels(ctx, name),
 				},
+			];
+			if (included) return [...models, await allowanceItem()].filter((item): item is MenuItem => !!item);
+			return [
+				...models,
 				{
 					key: "enabled",
 					label: "Use this provider",
@@ -98,6 +118,26 @@ export function providerLevel(ctx: BobContext, name: string): MenuLevel {
 				},
 			];
 		},
+	};
+}
+
+async function loadAllowance(): Promise<Allowance | null> {
+	return api<Allowance | null>("builder.ai.api.get_site_ai_allowance").catch(() => null);
+}
+
+function allowanceLabel(allowance: Allowance | null): string | undefined {
+	return allowance ? `${allowance.percent_left}% left today` : undefined;
+}
+
+async function allowanceItem(): Promise<MenuItem | null> {
+	const allowance = await loadAllowance();
+	if (!allowance) return null;
+	return {
+		key: "allowance",
+		label: "Today's allowance",
+		description: `${allowance.percent_left}% left · renews at midnight UTC, ${allowance.resets_in}`,
+		icon: "lucide-gauge",
+		run: () => "stay",
 	};
 }
 

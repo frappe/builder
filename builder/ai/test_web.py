@@ -5,9 +5,13 @@ from unittest.mock import patch
 from frappe.tests.utils import FrappeTestCase
 
 from builder.ai.agent.tools.web import (
+	IMAGES_LIMIT,
+	LINKS_LIMIT,
+	MAX_BYTES,
 	MAX_LINKS,
 	MAX_RESEARCH_PER_TURN,
 	MAX_URL_READS_PER_TURN,
+	TEXT_LIMIT,
 	extract_title,
 	html_to_text,
 	pick_fields,
@@ -140,11 +144,44 @@ class TestReadUrl(FrappeTestCase):
 		self.assertNotIn("data:image", out)
 
 	def test_caps_the_link_list(self):
-		markup = "".join(f'<a href="/p/{i}">Post {i}</a>' for i in range(MAX_LINKS + 10)).encode()
-		with fetched(markup):
-			out = run_read_url(ctx(), {"url": "https://example.com"})
+		# short rows, so the count binds before the listing's budget does
+		markup = "".join(f'<a href="/{i}">{i}</a>' for i in range(MAX_LINKS + 10)).encode()
+		with fetched(markup, url="https://a.co/"):
+			out = run_read_url(ctx(), {"url": "https://a.co/"})
 
 		self.assertIn("… and 10 more", out)
+
+	def test_leaves_out_an_overlong_address(self):
+		tracked = "https://shop.example.com/item?utm_source=x&ref=" + "a" * 400
+		markup = (
+			f'<a href="{tracked}">Tracked</a><a href="/shop">Shop</a>'
+			f'<img src="https://cdn.example.com/{"b" * 400}.jpg" alt="Long"><img src="/logo.png" alt="Logo">'
+		).encode()
+		with fetched(markup):
+			out = run_read_url(ctx(), {"url": "https://example.com/"})
+
+		self.assertIn("- Shop: https://example.com/shop", out)
+		self.assertIn("- Logo: https://example.com/logo.png", out)
+		self.assertNotIn("Tracked", out.split("Links on the page:", 1)[1])
+		self.assertNotIn("Long", out)
+
+	def test_a_page_of_long_links_and_images_stays_within_its_listings_budget(self):
+		# what one fetch may bring: 150 links and 40 images, each address just short of the cut
+		href = "https://shop.example.com/item?ref=" + "a" * 250
+		links = "".join(f'<a href="{href}{i}">Item {i}</a>' for i in range(150))
+		images = "".join(
+			f'<img src="https://cdn.example.com/{"b" * 250}{i}.jpg" alt="p{i}">' for i in range(40)
+		)
+		markup = f"<title>Shop</title><p>Hello</p>{links}{images}".encode()[:MAX_BYTES]
+		with fetched(markup):
+			out = run_read_url(ctx(), {"url": "https://example.com/"})
+
+		links_part, images_part = out.split("Links on the page:\n", 1)[1].split("\n\nImages on the page:\n")
+		self.assertLessEqual(len(links_part.rsplit("\n", 1)[0]), LINKS_LIMIT)
+		self.assertLessEqual(len(images_part.rsplit("\n", 1)[0]), IMAGES_LIMIT)
+		self.assertRegex(links_part, r"… and \d+ more$")
+		self.assertRegex(images_part, r"… and \d+ more$")
+		self.assertLess(len(out), TEXT_LIMIT + LINKS_LIMIT + IMAGES_LIMIT + 500)
 
 	def test_refuses_non_http_schemes(self):
 		self.assertIn("FAILED", run_read_url(ctx(), {"url": "ftp://example.com/file"}))

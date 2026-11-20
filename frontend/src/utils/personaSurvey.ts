@@ -1,4 +1,5 @@
 import { builderSettings } from "@/data/builderSettings";
+import { isMounted } from "@/utils/frappePage";
 import { useTelemetry } from "@framework/ui/telemetry";
 import { until } from "@vueuse/core";
 import { call } from "frappe-ui";
@@ -25,7 +26,7 @@ declare global {
 export type PersonaAnswers = Record<string, string | boolean | null>;
 
 // A guard on the home route, so a user who owes the survey is sent there before the dashboard renders.
-// The survey runs on Frappe Cloud sites only; ?persona_survey=test forces it elsewhere.
+// The survey runs on Frappe Cloud and frappe.page sites only; ?persona_survey=test forces it elsewhere.
 export async function personaSurveyRedirect(
 	to: RouteLocationNormalized,
 	user: string,
@@ -35,6 +36,13 @@ export async function personaSurveyRedirect(
 	if (!user || user === "Guest") return;
 	if (!forced && !window.is_password_needed && (await isPersonaSurveyDone())) return;
 	return { name: "persona-survey", query: forced ? { persona_survey: "test" } : {} };
+}
+
+// The survey's own address, on a site that has taken it, opens the dashboard: entering it by hand never asks
+// again. ?persona_survey=test still shows it.
+export async function finishedSurveyRedirect(to: RouteLocationNormalized): Promise<RouteLocationRaw | undefined> {
+	if (to.query.persona_survey === "test") return;
+	if (await isPersonaSurveyDone()) return { name: "home" };
 }
 
 // Leaving the questions settles the survey, so the guard lets the user through from now on.
@@ -94,7 +102,7 @@ function save(answers: PersonaAnswers) {
 
 // is_fc_site reads a key only Frappe Cloud V1 sites have, and V2 sites carry Cloud Settings instead
 function isCloudSite() {
-	return window.is_fc_site === "True" || Boolean(window.cloud_settings?.enabled);
+	return window.is_fc_site === "True" || Boolean(window.cloud_settings?.enabled) || isMounted;
 }
 
 // The page renders the flag as it stood on load, so the guard decides with no request.

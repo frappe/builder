@@ -4,13 +4,17 @@ import html as html_parser
 import frappe
 
 
-def generate_preview(html, output_path, width: int = 1280, height: int = 720):
-	image = render(html, width=width, height=height)
+def generate_preview(html, output_path, width: int = 1280, height: int = 720, block_external: bool = False):
+	image = render(html, width=width, height=height, block_external=block_external)
 	with open(output_path, "wb") as f:
 		f.write(image)
 
 
-def render(html: str, width: int = 1280, height: int = 720) -> bytes:
+def render(html: str, width: int = 1280, height: int = 720, block_external: bool = False) -> bytes:
+	"""`block_external`: the page gets only what this site serves itself, for a host that keeps the
+	server off the web (render_full_page)."""
+	if block_external:
+		return render_full_page(html, width=width, height=height, max_height=height, block_external=True)
 	# Newer Frappe versions ship a built-in headless-Chromium screenshot generator,
 	# so we render previews in-process — no external service, and local assets
 	# resolve. Older versions don't have this helper; fall back to the
@@ -23,14 +27,23 @@ def render(html: str, width: int = 1280, height: int = 720) -> bytes:
 	return capture_screenshot("webp", html=html, width=width, height=height)
 
 
-def render_full_page(html: str, width: int = 1280, height: int = 900, max_height: int = 8000) -> bytes:
+def render_full_page(
+	html: str, width: int = 1280, height: int = 900, max_height: int = 8000, block_external: bool = False
+) -> bytes:
 	"""Screenshot the whole document from a real-sized viewport, so vh units keep the
-	size they have in a browser instead of stretching to the capture height."""
+	size they have in a browser instead of stretching to the capture height. With
+	`block_external` Chromium fails every request off this site's host (Frappe's
+	interceptor) instead of fetching it from the server: fonts, images and styles
+	from elsewhere are missing, as they are on a host whose pages load nothing from
+	outside (frappe.page's own site)."""
 	try:
 		from frappe.utils.chromium import CDPSocketClient, ChromiumManager, Page
 		from frappe.utils.pdf import get_host_url
 		from frappe.utils.preview import safe_execute
 	except ImportError:
+		if block_external:
+			# the other renderers fetch what the page names, or send it to an outside service
+			raise RuntimeError("No renderer here keeps a page off the web") from None
 		return render(html, width=width, height=max_height)
 
 	generator, browser_id = ChromiumManager.acquire()
@@ -45,6 +58,7 @@ def render_full_page(html: str, width: int = 1280, height: int = 900, max_height
 			if error:
 				raise RuntimeError(f"Error creating browser context: {error}")
 			page = Page(session, context["browserContextId"], "screenshot")
+			page.block_external_requests = block_external
 			page.is_print_designer = False
 			page.set_media_emulation("screen")
 			page.set_device_metrics(width, height)

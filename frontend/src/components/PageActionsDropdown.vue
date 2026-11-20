@@ -31,6 +31,7 @@
 						label: __('View in Desk'),
 						onClick: () => openInDesk(props.page),
 						icon: 'lucide-arrow-up-right',
+						condition: () => !isMounted,
 					},
 					{
 						label: __('Delete'),
@@ -56,6 +57,7 @@ import { __ } from "@/translation";
 import usePageStore from "@/stores/pageStore";
 import { BuilderPage } from "@/types/doctypes";
 import { promptRenamePage } from "@/utils/dialogs";
+import { isMounted } from "@/utils/frappePage";
 import { openInDesk } from "@/utils/helpers";
 import { Dropdown } from "frappe-ui";
 

@@ -7,6 +7,7 @@ from builder.ai import api
 from builder.ai.agent.loop import run_agent_job
 from builder.ai.models import ModelRegistry
 from builder.ai.test_llm import OPENROUTER_MODEL as MODEL
+from builder.ai.turns import TurnQueue
 
 SECRET = "sk-or-secret"
 
@@ -18,6 +19,10 @@ def chat_session() -> tuple[str, str]:
 
 
 class TestAgentJobs(FrappeTestCase):
+	def setUp(self):
+		# these queue more turns than a site may have in flight, and no job ever ends them
+		self.enterContext(patch.object(TurnQueue, "limit", return_value=1000))
+
 	def test_queued_jobs_never_carry_the_api_key(self):
 		page, session = chat_session()
 		for queue in (
@@ -78,6 +83,9 @@ class TestAgentJobs(FrappeTestCase):
 				patch("builder.ai.llm.resolve_api_key", return_value=SECRET),
 				patch("builder.ai.agent.loop.AgentRunner") as runner,
 			):
+				runner.return_value.turn_ticket = None
 				run_agent_job("hi", MODEL["name"], page_id="some-page", **queued)
 
-				runner.assert_called_once_with("hi", MODEL["name"], SECRET, page_id="some-page")
+				runner.assert_called_once_with(
+					"hi", MODEL["name"], SECRET, turn_ticket=None, page_id="some-page"
+				)

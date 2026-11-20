@@ -1,5 +1,6 @@
 """read_skill: a skill's full guide, on demand (see builder/ai/skills)."""
 
+from builder.ai.agent.artifact import may_reach_web
 from builder.ai.agent.registry import Tool
 from builder.ai.skills import Skills
 
@@ -8,7 +9,7 @@ def run_read_skill(ctx, args: dict) -> str:
 	name = (args.get("name") or "").strip()
 	if name in ctx.attached_skills:
 		return f"The {name} skill is already in your context this turn."
-	if guide := Skills.read(name, getattr(ctx, "session_id", None)):
+	if guide := Skills.read(name, getattr(ctx, "session_id", None), may_reach_web(ctx)):
 		ctx.attached_skills.add(name)
 		return guide
 	return f"FAILED: no skill '{name}'. Skills: {', '.join(Skills.names())}."

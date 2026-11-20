@@ -11,7 +11,7 @@ export function modelLevel(ctx: BobContext, query = ""): MenuLevel {
 		items: withCredits(
 			ctx,
 			() => loadGroups(ctx),
-			(groups) => groups.filter((g) => g.models.some((m) => m.api_base)).map((g) => g.provider),
+			(groups) => groups.filter((g) => g.models.some((m) => m.gateway)).map((g) => g.provider),
 			(groups, credits) => [
 				...groups.flatMap((group) =>
 					group.models.map((model): MenuItem => ({

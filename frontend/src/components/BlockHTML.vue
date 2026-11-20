@@ -9,6 +9,7 @@
 <script setup lang="ts">
 import type Block from "@/block";
 import { BlockValueResolver } from "@/utils/blockValueResolver";
+import { sanitizeBlockHTML } from "@/utils/canvasIsolation";
 import { computed, ref } from "vue";
 
 const component = ref<HTMLElement | null>(null);
@@ -34,7 +35,7 @@ const html = computed(() => {
 	}
 	return `
 		<div class="absolute top-0 bottom-0 right-0 left-0"></div>
-		${content}
+		${sanitizeBlockHTML(String(content))}
 	`;
 });
 

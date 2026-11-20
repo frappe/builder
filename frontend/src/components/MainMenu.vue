@@ -16,6 +16,7 @@
 <script setup lang="ts">
 import { __ } from "@/translation";
 import { useDashboardState } from "@/composables/useDashboardState";
+import { useFrappePageMenu } from "@/composables/useFrappePageMenu";
 import useBuilderStore from "@/stores/builderStore";
 import useCanvasStore from "@/stores/canvasStore";
 import usePageStore from "@/stores/pageStore";
@@ -24,6 +25,7 @@ import { triggerCopyEvent } from "@/utils/helpers";
 import { deletePage } from "@/utils/pageActions";
 import { useDark, useToggle } from "@vueuse/core";
 import { Dropdown } from "frappe-ui";
+import { computed } from "vue";
 import { useRouter } from "vue-router";
 
 const { showTemplatesDialog } = useDashboardState();
@@ -44,7 +46,10 @@ const handleCopyPage = () => {
 	triggerCopyEvent();
 };
 
-const mainMenuOptions = [
+// frappe.page: pick another of the user's sites, start one, or sign out of frappe.page
+const { sitesGroup, accountGroup } = useFrappePageMenu();
+
+const mainMenuOptions = computed(() => [
 	{
 		group: "Builder",
 		hideLabel: true,
@@ -56,6 +61,7 @@ const mainMenuOptions = [
 			},
 		],
 	},
+	...sitesGroup.value,
 	{
 		group: "Page",
 		hideLabel: true,
@@ -115,5 +121,6 @@ const mainMenuOptions = [
 			},
 		],
 	},
-];
+	...accountGroup.value,
+]);
 </script>

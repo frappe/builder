@@ -5,6 +5,7 @@ import usePageStore from "@/stores/pageStore";
 import { __ } from "@/translation";
 import { BuilderPage, BuilderProjectFolder } from "@/types/doctypes";
 import { webPages } from "@/data/webPage";
+import { getRootBlockTemplate } from "@/utils/helpers";
 import { createListResource, createResource, dialog } from "frappe-ui";
 import { ref } from "vue";
 
@@ -45,6 +46,30 @@ export const shortTitle = (page: BuilderPage) =>
 
 export function createPageIn(folder: string) {
 	router.push({ name: "builder", params: { pageId: "new" }, query: folder ? { folder } : {} });
+}
+
+/**
+ * `folder` while it exists, else no folder: the remembered one may have been deleted since, and a page
+ * can't be saved into a folder that isn't there. A folder that is gone also stops being the selected one.
+ */
+export async function existingFolder(folder: string | null | undefined): Promise<string> {
+	if (!folder) return "";
+	const count = await createResource({ url: "frappe.client.get_count" }).submit({
+		doctype: "Builder Project Folder",
+		filters: { name: folder },
+	});
+	if (count) return folder;
+	const builderStore = useBuilderStore();
+	if (builderStore.activeFolder === folder) builderStore.activeFolder = "";
+	return "";
+}
+
+/** A new empty page, saved: what opening "new" makes, for a caller that needs the page's name first. */
+export async function insertBlankPage(folder = useBuilderStore().activeFolder): Promise<BuilderPage> {
+	const page = { page_title: "My Page", draft_blocks: [getRootBlockTemplate()] } as BuilderPage;
+	const projectFolder = await existingFolder(folder);
+	if (projectFolder) page.project_folder = projectFolder;
+	return webPages.insert.submit(page);
 }
 
 // the open page saves through the page store so its unsaved state stays consistent

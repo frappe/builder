@@ -53,10 +53,12 @@
 			<div class="relative h-full bg-white" :style="{ width: frameWidth }">
 				<iframe
 					:src="previewRoute"
+					:sandbox="previewSandbox"
 					frameborder="0"
 					v-if="previewRoute"
 					class="h-full w-full"
 					ref="previewFrame"></iframe>
+				<p v-else-if="previewError" class="p-6 text-center text-p-sm text-ink-red-8">{{ previewError }}</p>
 				<div v-if="loading || resizing" class="absolute inset-0"></div>
 				<template v-if="!isFullscreen">
 					<PanelResizer
@@ -88,7 +90,8 @@ import router from "@/router";
 import useBuilderStore from "@/stores/builderStore";
 import usePageStore, { DETACHED_PREVIEW_CHANNEL } from "@/stores/pageStore";
 import { BuilderPage } from "@/types/doctypes";
-import { Button, useKeyboardShortcut } from "frappe-ui";
+import { fp, isHostEditor, isIsolated, isMounted } from "@/utils/frappePage";
+import { Button, call, useKeyboardShortcut } from "frappe-ui";
 import { useTelemetry } from "@framework/ui/telemetry";
 import { useDebounceFn, useEventListener, useStorage } from "@vueuse/core";
 import { Ref, computed, onActivated, onDeactivated, ref, watch } from "vue";
@@ -253,6 +256,8 @@ const restoreScrollPosition = () => {
 // each reload replaces the document, so add the listeners again
 const onPreviewLoad = () => {
 	loading.value = false;
+	// the live host's document is cross-origin, and an isolated preview's is opaque: nothing to reach into
+	if (isIsolated) return;
 	const previewDocument = previewFrame.value?.contentWindow?.document;
 	if (!previewDocument) return;
 	// without these, a panel drag over the iframe gets stuck
@@ -304,6 +309,7 @@ const setWidth = (device: string) => {
 };
 
 const setPreviewURL = () => {
+	if (isMounted || fp.preview_method) return void setLivePreviewURL();
 	let queryParams: Record<string, any> = {
 		page: route.params.pageId,
 		...pageStore.routeVariables,
@@ -313,6 +319,24 @@ const setPreviewURL = () => {
 	previewRoute.value = `/api/method/builder.api.get_page_preview_html?${Object.entries(queryParams)
 		.map(([key, value]) => `${key}=${value}`)
 		.join("&")}`;
+};
+
+// frappe.page renders the draft on the site's live host, so its scripts never run with the editor's origin.
+// The app host's own editor names its method, which answers a same-origin address the sandbox makes opaque.
+const previewError = ref("");
+const previewMethod = fp.preview_method ?? "frappe_page.tenant.preview.get_preview_url";
+const previewSandbox = isHostEditor ? "allow-scripts allow-forms allow-popups allow-modals" : undefined;
+const setLivePreviewURL = async () => {
+	try {
+		const url = new URL(await call(previewMethod, { page: route.params.pageId }), window.location.href);
+		const query = { ...pageStore.routeVariables, prefers_color_scheme: isDark.value ? "dark" : "light" };
+		for (const [key, value] of Object.entries(query)) url.searchParams.set(key, String(value));
+		previewRoute.value = url.href;
+		previewError.value = "";
+	} catch (error) {
+		previewRoute.value = "";
+		previewError.value = __("Could not open the preview: {0}", [(error as Error).message]);
+	}
 };
 
 const headerActions = computed(() => [

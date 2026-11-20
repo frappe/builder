@@ -26,6 +26,8 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Literal
 
+import frappe
+
 ToolSide = Literal["client", "server", "terminal"]
 
 
@@ -65,6 +67,8 @@ class Tool:
 class ToolRegistry:
 	def __init__(self):
 		self._tools: dict[str, Tool] = {}
+		# tools a hosting app took away: a call to one is refused, never run as an unknown client op
+		self.withheld: set[str] = set()
 
 	def register(self, tool: Tool) -> Tool:
 		self._tools[tool.name] = tool
@@ -95,6 +99,10 @@ class ToolRegistry:
 
 	def names(self) -> list[str]:
 		return list(self._tools)
+
+	def keep_only(self, names: set[str]) -> None:
+		self.withheld |= set(self._tools) - names
+		self._tools = {name: tool for name, tool in self._tools.items() if name in names}
 
 
 def build_default_registry() -> ToolRegistry:
@@ -138,4 +146,15 @@ def build_default_registry() -> ToolRegistry:
 	registry.extend(components.TOOLS)
 	registry.extend(skills.TOOLS)
 	registry.extend(plugins.TOOLS)
+	if (allowed := allowed_tool_names()) is not None:
+		registry.keep_only(allowed)
 	return registry
+
+
+def allowed_tool_names() -> set[str] | None:
+	"""The tools hosting apps let the agent have, the union of what each builder_agent_tools hook answers;
+	None when no hook limits them. A hook that answers None has no say, as frappe.page's does on a site
+	where it lets the agent keep every tool."""
+	answers = [frappe.get_attr(method)() for method in frappe.get_hooks("builder_agent_tools")]
+	limits = [set(answer) for answer in answers if answer is not None]
+	return set().union(*limits) if limits else None

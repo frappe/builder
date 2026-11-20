@@ -14,7 +14,7 @@ import frappe
 
 from builder.ai.block_codec import BlockCodec
 from builder.ai.lucide import lucide_svg
-from builder.utils import compact_json
+from builder.utils import compact_json, refuse_unsafe_write
 
 logger = frappe.logger("builder.ai.page_writer")
 
@@ -495,8 +495,12 @@ def expand_page_markup(text: str, is_root: bool = True, errors: list | None = No
 
 def load_page_root(page_id: str) -> dict | None:
 	"""The page's current root block dict — draft_blocks when present, else the
-	published blocks. None when the page is empty or the JSON is invalid."""
-	draft, published = frappe.db.get_value("Builder Page", page_id, ["draft_blocks", "blocks"])
+	published blocks. None when the page is empty, the JSON is invalid, or the page is gone (deleted
+	while a turn ran: the turn's end still marks it)."""
+	row = frappe.db.get_value("Builder Page", page_id, ["draft_blocks", "blocks"])
+	if not row:
+		return None
+	draft, published = row
 	try:
 		data = json.loads(draft or published or "")
 	except (json.JSONDecodeError, TypeError):
@@ -509,10 +513,11 @@ def load_page_root(page_id: str) -> dict | None:
 def save_draft_blocks(page_id: str, root_block: dict) -> None:
 	"""Persist an edited block tree back to draft_blocks (same shape persist_page
 	writes). Used by the headless loop after each round of applied block ops; the
-	round's checkpoint commit is what makes a cancelled or crashed turn keep it."""
-	frappe.db.set_value(
-		"Builder Page", page_id, "draft_blocks", compact_json([root_block]), update_modified=True
-	)
+	round's checkpoint commit is what makes a cancelled or crashed turn keep it. A draft the hosting app
+	refuses (builder_content_problems) raises instead: this write skips validate."""
+	draft = compact_json([root_block])
+	refuse_unsafe_write("Builder Page", page_id, {"draft_blocks": draft})
+	frappe.db.set_value("Builder Page", page_id, "draft_blocks", draft, update_modified=True)
 
 
 def persist_page(page_id: str, text: str, errors: list | None = None) -> tuple[dict | None, str]:
@@ -529,6 +534,8 @@ def persist_page(page_id: str, text: str, errors: list | None = None) -> tuple[d
 	# set_value, NOT doc.save: the canvas autosaves the throwaway streamed preview
 	# repeatedly throughout a generation, so a timestamp-checked save loses the race
 	# arbitrarily often (a single retry was observed losing twice within 200ms). The
-	# generated result is authoritative and must land regardless.
+	# generated result is authoritative and must land regardless, unless the hosting
+	# app refuses it, since validate never sees it.
+	refuse_unsafe_write("Builder Page", page_id, updates)
 	frappe.db.set_value("Builder Page", page_id, updates, update_modified=True)
 	return blocks[0], data_script

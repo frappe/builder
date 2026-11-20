@@ -56,7 +56,7 @@ class ProviderCatalog:
 	def models(self) -> list[dict]:
 		"""Every chat model the provider serves. Where models.dev describes them, only
 		those that call tools: Bob does all its work through tools."""
-		if self.provider.api_base:
+		if self.provider.base_url():
 			return [{"id": i, "label": i.rsplit("/", 1)[-1]} for i in self.gateway_ids()]
 		if not self.discovery.preset:
 			return []
@@ -68,7 +68,12 @@ class ProviderCatalog:
 		]
 
 	def gateway_ids(self) -> list[str]:
-		listed = fetch_listing(GatewayListing(self.provider).request())
+		listing = GatewayListing(self.provider)
+		if self.provider.from_site_config:
+			# the host's key lists its gateway no more often than a refresh may
+			listing.refresh()
+			return sorted(GatewayListing.served_ids(self.provider.name) or [])
+		listed = fetch_listing(listing.request())
 		if isinstance(listed, Exception):
 			raise listed
-		return [i for i in listed if not any(m in i.lower() for m in NON_CHAT_MARKERS)]
+		return [e["id"] for e in listed if not any(m in e["id"].lower() for m in NON_CHAT_MARKERS)]

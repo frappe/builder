@@ -25,6 +25,11 @@ MAX_BYTES = 1_000_000
 TEXT_LIMIT = 10_000
 MAX_LINKS = 150
 MAX_IMAGES = 40
+# Each listing is bounded as the text is, since every later round of the turn sends it again: an address
+# longer than MAX_URL is a tracking or signed one no rebuilt page needs, and the rows stop at their budget.
+MAX_URL = 300
+LINKS_LIMIT = 4_000
+IMAGES_LIMIT = 2_000
 FETCH_TIMEOUT = 12
 USER_AGENT = "Mozilla/5.0 (compatible; FrappeBuilderAI/1.0)"
 
@@ -178,9 +183,8 @@ class PageLinks(HTMLParser):
 	def read(cls, markup: str, base_url: str) -> str:
 		parser = cls(base_url)
 		parser.feed(markup)
-		return parser.listing("Links on the page", parser.links, MAX_LINKS) + parser.listing(
-			"Images on the page", parser.images, MAX_IMAGES
-		)
+		links = parser.listing("Links on the page", parser.links, MAX_LINKS, LINKS_LIMIT)
+		return links + parser.listing("Images on the page", parser.images, MAX_IMAGES, IMAGES_LIMIT)
 
 	def handle_starttag(self, tag, attrs):
 		attrs = dict(attrs)
@@ -203,25 +207,34 @@ class PageLinks(HTMLParser):
 	def open_link(self, attrs: dict):
 		href = (attrs.get("href") or "").strip()
 		skipped = not href or href.startswith(("#", "javascript:"))
-		self.href = None if skipped else urljoin(self.base_url, href)
+		url = None if skipped else urljoin(self.base_url, href)
+		self.href = url if url and len(url) <= MAX_URL else None
 		self.words = []
 		self.label = attrs.get("aria-label") or attrs.get("title") or ""
 
 	def add_image(self, attrs: dict):
 		src = (attrs.get("src") or attrs.get("data-src") or "").strip()
 		alt = (attrs.get("alt") or "").strip()
-		if src and not src.startswith("data:"):
-			self.images.setdefault(urljoin(self.base_url, src), alt[:80] or "(no alt text)")
+		url = urljoin(self.base_url, src) if src and not src.startswith("data:") else ""
+		if url and len(url) <= MAX_URL:
+			self.images.setdefault(url, alt[:80] or "(no alt text)")
 		if self.href and alt:
 			self.words.append(alt)
 
 	@staticmethod
-	def listing(heading: str, entries: dict[str, str], limit: int) -> str:
+	def listing(heading: str, entries: dict[str, str], limit: int, budget: int) -> str:
+		"""At most `limit` rows, and as many as fit in `budget` characters."""
 		if not entries:
 			return ""
-		rows = [f"- {text}: {url}" for url, text in list(entries.items())[:limit]]
-		if len(entries) > limit:
-			rows.append(f"… and {len(entries) - limit} more")
+		rows, size = [], 0
+		for url, text in entries.items():
+			row = f"- {text}: {url}"
+			if len(rows) == limit or size + len(row) > budget:
+				break
+			rows.append(row)
+			size += len(row) + 1
+		if len(entries) > len(rows):
+			rows.append(f"… and {len(entries) - len(rows)} more")
 		return f"\n\n{heading}:\n" + "\n".join(rows)
 
 

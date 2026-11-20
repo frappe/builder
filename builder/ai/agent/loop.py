@@ -51,6 +51,7 @@ import frappe
 
 from builder.ai import llm, locks, markup
 from builder.ai.agent import next_steps
+from builder.ai.agent.artifact import may_reach_web
 from builder.ai.agent.edits import EditScript, composition_notes
 from builder.ai.agent.page_changes import PageChanges, page_row
 from builder.ai.agent.registry import ToolRegistry, build_default_registry
@@ -61,8 +62,11 @@ from builder.ai.block_codec import BlockCodec
 from builder.ai.models import ModelRegistry
 from builder.ai.prompts import Prompts
 from builder.ai.session import AISession
+from builder.ai.site_key import cache_write_tokens, redacted_traceback
 from builder.ai.skills import Skills
 from builder.ai.snapshots import capture_page_state, save_revert_snapshot
+from builder.ai.stock_look import LOCAL_FACES
+from builder.ai.turns import TurnQueue
 
 logger = frappe.logger("builder.ai.agent.loop")
 logger.setLevel(logging.INFO)
@@ -377,8 +381,11 @@ class AgentRunner:
 		effort: str | None = None,
 		registry: ToolRegistry | None = None,
 		system_prompt: str | None = None,
+		turn_ticket: str | None = None,
 	):
 		self.prompt = prompt
+		# the site's slot for this turn (builder/ai/turns.py), until the job ends or hands it on
+		self.turn_ticket = turn_ticket
 		self.model = model
 		self.api_key = api_key
 		self.user = user or frappe.session.user
@@ -506,13 +513,15 @@ class AgentRunner:
 		# Per-turn token tally, summed across every LLM call this turn (the loop's
 		# tool-calling rounds + the generation stream). Surfaced in debug metadata and
 		# logged so the selector/tiered-context changes can be measured against baseline.
-		# `cached_tokens` is the cache-read slice of prompt_tokens; `per_call` keeps
-		# each call's split so a turn can be read round by round.
+		# `cached_tokens` is the cache-read slice of prompt_tokens, `cache_write_tokens`
+		# the slice written to the cache; `per_call` keeps each call's split so a turn
+		# can be read round by round.
 		self.usage = {
 			"prompt_tokens": 0,
 			"completion_tokens": 0,
 			"total_tokens": 0,
 			"cached_tokens": 0,
+			"cache_write_tokens": 0,
 			"calls": 0,
 			"per_call": [],
 		}
@@ -617,12 +626,16 @@ class AgentRunner:
 		completion = getattr(usage, "completion_tokens", 0) or 0
 		total = getattr(usage, "total_tokens", 0) or 0
 		cached = self.cached_prompt_tokens(usage)
+		written, _ = cache_write_tokens(usage)
 		self.usage["prompt_tokens"] += prompt
 		self.usage["completion_tokens"] += completion
 		self.usage["total_tokens"] += total
 		self.usage["cached_tokens"] += cached
+		self.usage["cache_write_tokens"] += written
 		self.usage["calls"] += 1
-		self.usage["per_call"].append({"prompt": prompt, "completion": completion, "cached": cached})
+		self.usage["per_call"].append(
+			{"prompt": prompt, "completion": completion, "cached": cached, "written": written}
+		)
 
 	def record_round(self, round_index: int, tool_operations: list[dict], text: str) -> None:
 		"""Append one round to the debug trace: which tools the model called (with
@@ -720,6 +733,20 @@ class AgentRunner:
 			return {}
 		return {"pageMarks": {self.page_id: markup.page_mark(page_writer.load_page_root(self.page_id))}}
 
+	def build_withheld_context(self) -> str:
+		"""Bob's instructions name tools a hosting app may take away (builder_agent_tools), and his next
+		steps turn into buttons the user sends as they are: without this he plans and offers work only
+		the missing tools do, which then fails when the user takes him up on it."""
+		if not (withheld := sorted(self.registry.withheld)):
+			return ""
+		context = (
+			f"This site's host leaves you without these tools: {', '.join(withheld)}. Where your "
+			"instructions name one, skip that step, or say in a sentence that it can't be done here. "
+			"Never offer work only they can do, in a reply or as a next step."
+		)
+		# a font change needs no skill, and the faces his instructions name load from Google Fonts
+		return context if may_reach_web(self) else f"{context}\n{LOCAL_FACES}"
+
 	def build_agent_context(self) -> str:
 		"""Instructions installed apps give for the open page, through the builder_agent_context hook."""
 		if not self.page_id:
@@ -741,7 +768,8 @@ class AgentRunner:
 		if name in self.attached_skills:
 			return ""
 		self.attached_skills.add(name)
-		return f"{reason}, here is the {name} skill in full; no read_skill needed this turn:\n\n{Skills.read(name, self.session_id)}"
+		guide = Skills.read(name, self.session_id, may_reach_web(self))
+		return f"{reason}, here is the {name} skill in full; no read_skill needed this turn:\n\n{guide}"
 
 	def require_skill(self, name: str) -> str | None:
 		# A read alongside a write has not reached the model that authored that write.
@@ -789,6 +817,7 @@ class AgentRunner:
 		blocks = [
 			self.build_open_page_context(),
 			self.build_changed_since_context(),
+			self.build_withheld_context(),
 			self.build_agent_context(),
 			self.build_initial_page_context(),
 			self.build_memory_context(),
@@ -1029,10 +1058,11 @@ class AgentRunner:
 				# (editor + published alike).
 				op["args"]["blocks"] = page_writer.normalize_component_instances(op["args"]["blocks"])
 				self.tree.root = op["args"]["blocks"]
-		self.applied_operations.extend(ops)
-		self.emit_to_page("tool_batch", operations=ops)
+		# saved before it is mirrored: a draft the hosting app refuses raises here, and never reaches the canvas
 		if self.page_id and self.tree and self.tree.root:
 			page_writer.save_draft_blocks(self.page_id, self.tree.root)
+		self.applied_operations.extend(ops)
+		self.emit_to_page("tool_batch", operations=ops)
 		return ops
 
 	def page_root(self) -> dict | None:
@@ -1178,7 +1208,10 @@ class AgentRunner:
 		"terminal" (ends the turn), "server" (run the handler now), or "client"
 		(apply to the working tree + mirror to the canvas). A client tool with a
 		server twin (page scripts) always runs as a server op — see
-		SCRIPT_TWIN_TOOLS. "unavailable": a tool this user or model can't use."""
+		SCRIPT_TWIN_TOOLS. "withheld": a tool the hosting app took away, refused.
+		"unavailable": a tool this user or model can't use."""
+		if op["tool_name"] in self.registry.withheld:
+			return "withheld"
 		if op["tool_name"] in self.unavailable_tools:
 			return "unavailable"
 		if self.other_page(op):
@@ -1245,17 +1278,19 @@ class AgentRunner:
 				logger.warning("Client op rejected — %s: %s", op["tool_name"], content)
 			applied.extend(accepted)
 		if applied:
+			if self.page_id and self.tree.root:
+				from builder.ai import page_writer
+
+				# Persist after every applied round so a cancel/crash keeps the work
+				# done so far (the same live-apply semantics the canvas shows). Saved
+				# before it is mirrored: a draft the hosting app refuses raises here,
+				# and never reaches the canvas.
+				page_writer.save_draft_blocks(self.page_id, self.tree.root)
 			self.applied_operations.extend(applied)
 			# after_commit: an op can reference a doc this round created (a component
 			# extract) — mirrored early, the canvas fetches it before the checkpoint
 			# commit lands and caches a Missing placeholder.
 			self.emit_to_page("tool_batch", operations=applied, after_commit=True)
-			if self.page_id and self.tree.root:
-				from builder.ai import page_writer
-
-				# Persist after every applied round so a cancel/crash keeps the work
-				# done so far (the same live-apply semantics the canvas shows).
-				page_writer.save_draft_blocks(self.page_id, self.tree.root)
 		return results, applied
 
 	def skill_missing(self, tool) -> str | None:
@@ -1292,6 +1327,8 @@ class AgentRunner:
 		kind = self.op_kind(op)
 		if kind == "client":
 			return client_results[id(op)]
+		if kind == "withheld":
+			return f"FAILED: {op['tool_name']} is not available on this site. Use the tools you were given."
 		if kind == "unavailable":
 			return (
 				f"FAILED: {op['tool_name']} isn't available to this user on this site. Use the other tools."
@@ -1477,6 +1514,9 @@ class AgentRunner:
 					self.read_notes(messages)
 					continue
 				self.record_round(round_index, tool_operations, summary_text)
+				if self.finish_reasons[-1:] == [llm.REFUSED]:
+					# a refusal can cut a reply off mid-call, so nothing of this round is applied
+					raise llm.Refused
 
 				if not tool_operations:
 					if self.ran_out_of_room(summary_text):
@@ -1524,8 +1564,19 @@ class AgentRunner:
 		except CancelledError:
 			self.emit_cancelled()
 			return
+		except llm.Refused:
+			# the model's safety checks declined to go on: what earlier rounds did stays, and the reply
+			# says why, as a reply rather than as an error
+			logger.info(f"Agent turn stopped by a refusal from {self.loop_model}")
+			self.stop_reason = "refused"
+			summary_text = llm.REFUSAL_NOTE
+		except llm.UsageLimitError as e:
+			# the site's allowance is spent: nothing failed, and the message says when it renews
+			logger.info(f"Agent turn stopped by the site key allowance: {e}")
+			self.fail_turn(llm.user_facing_error(e))
+			return
 		except Exception as e:
-			logger.error(f"Agent LLM call failed: {e!s}", exc_info=True)
+			logger.error(f"Agent LLM call failed: {redacted_traceback()}")
 			frappe.log_error(f"Agent LLM call failed: {e}", "AgentRunner.run")
 			# Never the raw provider/exception string: it can leak internals (keys, model
 			# ids, stack detail). Full error is logged above.
@@ -1720,7 +1771,9 @@ class AgentRunner:
 		if self.next_builds and not self.page_changes:
 			from builder.ai.api import queue_page_build
 
-			queue_page_build(self.session_id, self.next_builds, self.user)
+			# the next build takes over this turn's slot, so a busy site can't break the chain
+			if queue_page_build(self.session_id, self.next_builds, self.user, self.turn_ticket):
+				self.turn_ticket = None
 
 	def maybe_name_session(self) -> None:
 		"""The first completed turn names the chat: a short generated title reads
@@ -1787,9 +1840,12 @@ class AgentRunner:
 			return missing, []
 		entry = self.build_step = self.begin_activity(op["tool_name"], op["args"])
 		self.ensure_revert_snapshot()  # generation replaces the block tree
-		ops = tool.generator(self, op["args"])
-		self.build_step = None
-		self.end_activity(entry)
+		try:
+			ops = tool.generator(self, op["args"])
+		finally:
+			# a generation the model refused ends the turn, and must not leave its step spinning
+			self.build_step = None
+			self.end_activity(entry)
 		if not ops:
 			return ("FAILED: generation produced nothing. Retry generate_page with a fuller brief.", [])
 		root = ops[0]["args"]["blocks"][0]
@@ -1875,11 +1931,16 @@ class AgentRunner:
 		return " ".join(parts)
 
 
-def run_agent_job(prompt: str, model: str, **kwargs):
+def run_agent_job(prompt: str, model: str, turn_ticket: str | None = None, **kwargs):
 	# Resolved here so the key never sits in Redis; jobs queued by older code still pass one.
 	kwargs.pop("api_key", None)
 	# ...and jobs queued before a turn could carry several images pass one, by its old names.
 	if image := kwargs.pop("image_url", None):
 		kwargs["images"] = [{"data": image, "url": kwargs.get("image_file_url") or ""}]
 	kwargs.pop("image_file_url", None)
-	AgentRunner(prompt, model, llm.resolve_api_key(model), **kwargs).run()
+	runner = None
+	try:
+		runner = AgentRunner(prompt, model, llm.resolve_api_key(model), turn_ticket=turn_ticket, **kwargs)
+		runner.run()
+	finally:
+		TurnQueue.release(runner.turn_ticket if runner else turn_ticket)
