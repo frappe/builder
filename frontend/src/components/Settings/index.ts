@@ -158,12 +158,12 @@ const panes: SettingsPane[] = [
 		load: () => import("@/components/Settings/GlobalDeveloper.vue"),
 	},
 	{
-		name: "global_agents",
-		label: __("AI Agents"),
-		title: __("Connect Your Agent"),
-		icon: "lucide-bot",
+		name: "global_ai",
+		label: __("AI"),
+		title: __("AI Settings"),
+		icon: "lucide-sparkle",
 		group: "Global",
-		load: () => import("@/components/Settings/GlobalAgents.vue"),
+		load: () => import("@/components/Settings/GlobalAI.vue"),
 	},
 	{
 		name: "global_plugins",

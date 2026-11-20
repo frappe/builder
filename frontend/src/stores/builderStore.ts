@@ -13,8 +13,6 @@ import BlockLayers from "./components/BlockLayers.vue";
 
 const { capture } = useTelemetry();
 const belowLgBreakpoint = useBreakpoints(breakpointsTailwind).smaller("lg");
-// Cloud Settings is enabled on Frappe Cloud v2 sites only
-const isCloudV2Site = Boolean(window.cloud_settings?.enabled);
 
 declare global {
 	interface Window {
@@ -38,7 +36,7 @@ const useBuilderStore = defineStore("builderStore", {
 			scriptEditorHeight: 300,
 			optionsPanelWidth: 57,
 		},
-		leftPanelActiveTab: <LeftSidebarTabOption>(isCloudV2Site ? "Chat" : "Layers"),
+		leftPanelActiveTab: <LeftSidebarTabOption>"Layers",
 		showRightPanel: <boolean>true,
 		showLeftPanel: <boolean>true,
 		showVersionHistory: <boolean>false,
@@ -78,6 +76,10 @@ const useBuilderStore = defineStore("builderStore", {
 	getters: {
 		isSmallScreen(): boolean {
 			return belowLgBreakpoint.value;
+		},
+		/** AI Settings can turn Bob off for the site. Off until the settings load, so Bob never flashes */
+		isBobOn(): boolean {
+			return !!builderSettings.doc && !builderSettings.doc.disable_bob;
 		},
 		isAIEnabled(): boolean {
 			return !!this.aiConfigured || !!builderSettings.doc?.ai_api_key;

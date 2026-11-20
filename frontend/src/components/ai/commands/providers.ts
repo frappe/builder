@@ -9,7 +9,18 @@ import {
 	type BobContext,
 } from "@/components/ai/commands/shared";
 import type { AISetupState } from "@/components/ai/types";
-import { aiModels, aiProviders, reloadAIRegistry } from "@/data/aiModels";
+import {
+	aiProviders,
+	disconnectProvider,
+	listedModelsOf,
+	modelsOf,
+	providerDoc,
+	reloadAIRegistry,
+	saveProviderKey,
+	setModelEnabled,
+	setProviderEnabled,
+	syncProviderModels,
+} from "@/data/aiModels";
 import type { BuilderAIModel, BuilderAIProvider } from "@/types/doctypes";
 import { call, toast } from "frappe-ui";
 
@@ -54,16 +65,13 @@ export function providerLevel(ctx: BobContext, name: string): MenuLevel {
 		items: async () => {
 			await reloadAIRegistry();
 			return [
-				// a model discovery retired is gone, not switched off: only the ones someone chose stay listed
-				...modelsOf(name)
-					.filter((m) => m.enabled || !m.discovered)
-					.map((m): MenuItem => ({
-						key: m.name,
-						label: m.label || m.model_id,
-						group: "Models",
-						switchValue: !!m.enabled,
-						run: () => toggleModel(ctx, m),
-					})),
+				...listedModelsOf(name).map((m): MenuItem => ({
+					key: m.name,
+					label: m.label || m.model_id,
+					group: "Models",
+					switchValue: !!m.enabled,
+					run: () => toggleModel(ctx, m),
+				})),
 				{
 					key: "add",
 					label: "Add a model",
@@ -128,7 +136,7 @@ function credentialItem(ctx: BobContext, name: string): MenuItem {
 
 async function refreshModels(ctx: BobContext, name: string): Promise<MenuStep> {
 	const before = modelsOf(name).filter((m) => m.enabled).length;
-	await call("builder.ai.api.sync_ai_models", { provider: name });
+	await syncProviderModels(name);
 	await ctx.refreshAI();
 	await reloadAIRegistry();
 	const after = modelsOf(name).filter((m) => m.enabled).length;
@@ -144,7 +152,7 @@ function keyLevel(ctx: BobContext, name: string): MenuLevel {
 			secret: true,
 			submit: async (key): Promise<MenuStep> => {
 				if (!key) throw new Error("Paste a key first");
-				await call("builder.ai.api.save_ai_provider", { provider: { api_key: key }, name });
+				await saveProviderKey(name, key);
 				await ctx.refreshAI();
 				toast.success("Key saved");
 				return "back";
@@ -154,29 +162,23 @@ function keyLevel(ctx: BobContext, name: string): MenuLevel {
 }
 
 async function toggleModel(ctx: BobContext, model: BuilderAIModel): Promise<MenuStep> {
-	await aiModels.setValue.submit({ name: model.name, enabled: model.enabled ? 0 : 1 });
+	await setModelEnabled(model.name, !model.enabled);
 	await ctx.refreshAI();
 	return "stay";
 }
 
 async function toggleProvider(ctx: BobContext, name: string): Promise<MenuStep> {
-	await aiProviders.setValue.submit({ name, enabled: providerDoc(name)?.enabled ? 0 : 1 });
+	await setProviderEnabled(name, !providerDoc(name)?.enabled);
 	await ctx.refreshAI();
 	return "stay";
 }
 
 async function remove(ctx: BobContext, name: string): Promise<MenuStep> {
-	await call("builder.ai.api.delete_ai_provider", { provider: name });
+	await disconnectProvider(name);
 	await ctx.refreshAI();
 	toast.success(`${name} deleted`);
 	return { back: 2 };
 }
-
-const providerDoc = (name: string): BuilderAIProvider | undefined =>
-	(aiProviders.data || []).find((p: BuilderAIProvider) => p.name === name);
-
-const modelsOf = (provider: string): BuilderAIModel[] =>
-	(aiModels.data || []).filter((m: BuilderAIModel) => m.provider === provider);
 
 function modelCount(provider: string): string {
 	const on = modelsOf(provider).filter((m) => m.enabled).length;
