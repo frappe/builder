@@ -156,14 +156,30 @@ class EditScript:
 
 
 POSITIONED = frozenset({"relative", "absolute", "fixed", "sticky"})
+# Text tags that are never decoration: a span or a link may be a dot or an icon holder
+BLANK_TEXT_TAGS = frozenset({"h1", "h2", "h3", "h4", "h5", "h6", "p", "li", "button", "label"})
+SECTION_TAGS = frozenset({"section", "header", "footer", "main", "article"})
+MEDIA_TAGS = frozenset({"img", "svg", "video", "iframe", "canvas"})
+# what makes an empty section a visible band rather than nothing at all
+ROOM_STYLES = ("padding", "height", "minHeight", "aspectRatio", "background", "border")
 
 
 def composition_notes(root: dict) -> str:
 	"""What a generated page gets wrong that the markup doesn't show at a glance, as
-	refs to act on: absolute blocks pinned to the page instead of their section, and
-	small uppercase labels over headings past the one the page allows."""
+	refs to act on: absolute blocks pinned to the page instead of their section, small
+	uppercase labels over headings past the one the page allows, sections that render
+	blank, and text left blank."""
 	refs = markup.short_refs(root)
 	pinned, eyebrows = [], []
+	empty = empty_sections(root)
+	# a blank heading inside an empty copy is the copy's to lose, not text to write
+	inside_empty = {b.get("blockId") for section in empty for b, _ in walk_blocks(section)}
+	empty_refs = [f"@{refs.get(section.get('blockId'))}" for section in empty]
+	blank = [
+		f"@{refs.get(block.get('blockId'))}"
+		for block, _ in walk_blocks(root)
+		if is_blank_text(block) and block.get("blockId") not in inside_empty
+	]
 	for block, _ in walk_blocks(root):
 		children = block.get("children") or []
 		for child in children:
@@ -189,7 +205,68 @@ def composition_notes(root: dict) -> str:
 			"a page allows one at most. `remove` the rest (hiding leaves dead blocks), or fold what they say "
 			"into the heading or its copy."
 		)
+	if empty:
+		notes.append(
+			f"EMPTY SECTION: {', '.join(empty_refs[:8])} "
+			"render as blank bands, with nothing in them beyond small labels. A section written again "
+			"to restyle an earlier one is an empty copy, not a stylesheet rule: move its declarations "
+			"into m{} or t{} on the original's line and remove it. Otherwise give it its content."
+		)
+	if blank:
+		notes.append(
+			f"EMPTY TEXT: {', '.join(blank[:12])} are headings or paragraphs with no text, so their "
+			"section renders blank. Write their copy in one edit_page script, or remove the ones the "
+			"design doesn't need."
+		)
 	return "".join(f"\n{note}" for note in notes)
+
+
+def empty_sections(root: dict) -> list[dict]:
+	"""The outermost sections that render as blank bands."""
+	found, covered = [], set()
+	for block, _ in walk_blocks(root):
+		if id(block) in covered or not is_empty_section(block):
+			continue
+		found.append(block)
+		covered.update(id(b) for b, _ in walk_blocks(block))
+	return found
+
+
+def is_empty_section(block: dict) -> bool:
+	"""A section with no text beyond small labels and nothing to see, that still takes up room."""
+	if block.get("element") not in SECTION_TAGS or is_hidden(block):
+		return False
+	subtree = [b for b, _ in walk_blocks(block)]
+	return not any(map(shows_content, subtree)) and any(map(takes_room, subtree))
+
+
+def takes_room(block: dict) -> bool:
+	return any(key.startswith(ROOM_STYLES) for key in block.get("baseStyles") or {})
+
+
+def shows_content(block: dict) -> bool:
+	html = str(block.get("innerHTML") or "")
+	return bool(
+		block.get("element") in MEDIA_TAGS
+		or block.get("isRepeaterBlock")
+		or block.get("dynamicValues")
+		or block.get("extendedFromComponent")
+		or "<svg" in html
+		or "url(" in str((block.get("baseStyles") or {}).get("backgroundImage") or "")
+		or (re.sub(r"<[^>]+>", " ", html).strip() and not is_micro_label(block))
+	)
+
+
+def is_blank_text(block: dict) -> bool:
+	"""A heading or paragraph the generator left without words, nothing bound in their place."""
+	return (
+		block.get("element") in BLANK_TEXT_TAGS
+		and not (block.get("innerHTML") or "").strip()
+		and not block.get("children")
+		and not block.get("dynamicValues")
+		and not block.get("isChildOfComponent")
+		and not is_hidden(block)
+	)
 
 
 def is_hidden(block: dict) -> bool:

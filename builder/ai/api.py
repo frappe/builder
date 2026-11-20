@@ -208,11 +208,24 @@ def confirm_page_changes(msg, meta: dict, skip: list | None = None) -> dict:
 	changed = [p["page_id"] for p in pages if p["status"] in ("created", "changed")]
 	AISession(frappe.get_doc(AISession.DOCTYPE, msg.session)).add_pages(*changed)
 	AISession.try_append_message(
-		msg.session, "assistant", outcome, message_type="status", metadata={"card": msg.name}
+		msg.session,
+		"assistant",
+		outcome,
+		message_type="status",
+		metadata={"card": msg.name, "pageMarks": page_marks(changed)},
 	)
 	created = [p for p in pages if p["status"] == "created"]
 	resumed = queue_page_build(msg.session, [*(meta.get("next_builds") or []), *created])
 	return {"status": "applied", "message": outcome, "pages": pages, "resumed": resumed}
+
+
+def page_marks(page_ids: list[str]) -> dict[str, str]:
+	"""How the card left each page, so this chat's next turn on one tells the user's
+	later edits from these."""
+	from builder.ai.markup import page_mark
+	from builder.ai.page_writer import load_page_root
+
+	return {page_id: page_mark(load_page_root(page_id)) for page_id in page_ids}
 
 
 def resume_after_action(session_id: str, outcome: str) -> bool:

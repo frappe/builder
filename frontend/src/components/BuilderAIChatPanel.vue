@@ -243,6 +243,19 @@
 							:answered-with="replyTo(message)"
 							:lead="message.metadata.text"
 							@submit="selectOption" />
+						<!-- What Bob could do next: tapping one sends it. Plain buttons like the chips
+						     below, since a frappe-ui Button truncates its label to one line. -->
+						<div v-if="nextSteps(message).length" class="mt-2 flex flex-wrap gap-1.5">
+							<button
+								v-for="(step, i) in nextSteps(message)"
+								:key="step"
+								class="bob-pill-in max-w-full rounded-3 bg-surface-gray-2 px-1.5 py-1 text-left text-xs leading-snug text-ink-gray-8 transition-colors hover:bg-surface-gray-3 disabled:cursor-not-allowed disabled:opacity-50"
+								:style="{ animationDelay: `${i * 70}ms` }"
+								:disabled="!isEditingPage"
+								@click="selectOption(step)">
+								{{ step }}
+							</button>
+						</div>
 					</div>
 					<!-- Page, block and attachment chips below the bubble -->
 					<div
@@ -639,6 +652,12 @@ const canvasStore = useCanvasStore();
 
 const lastMessageId = computed(() => messages.value.at(-1)?.id ?? null);
 const builds = computed(() => pageBuilds(messages.value));
+
+/** The next steps Bob suggested after its latest reply, while nothing is running. */
+function nextSteps(message: ChatMessage): string[] {
+	if (message.id !== lastMessageId.value || isSubmitting.value) return [];
+	return message.metadata?.suggestions ?? [];
+}
 
 /** The answer itself, without the timeline that led to it. A card message persists
  * its whole card as text so the model sees it on replay — the chat shows only the

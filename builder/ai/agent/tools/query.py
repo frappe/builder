@@ -528,7 +528,7 @@ read_page = Tool(
 		"show_image the picture itself (and its dark-mode version): look before you describe, "
 		"judge, recreate or vary an existing image, never work from its file name. `page_id`: "
 		"ANOTHER page of this site as a read-only reference, with its design digest (fonts, "
-		"colours, radii, section rhythm). That is THE way to learn the site's design language: "
+		"colours, radii, section rhythm) and attached scripts. That is THE way to learn the site's design language: "
 		"when the user names a reference page or wants this page to fit the site, read the "
 		"reference FIRST and carry its exact values (font families, hexes, $token handles, "
 		"section structure, its $sets) into your brief or edits."

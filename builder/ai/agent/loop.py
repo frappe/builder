@@ -50,6 +50,7 @@ import time
 import frappe
 
 from builder.ai import llm, locks, markup
+from builder.ai.agent import next_steps
 from builder.ai.agent.edits import EditScript, composition_notes
 from builder.ai.agent.page_changes import PageChanges, page_row
 from builder.ai.agent.registry import ToolRegistry, build_default_registry
@@ -444,9 +445,13 @@ class AgentRunner:
 		# since the last round was committed. finish_turn compares against it so a
 		# summary already on screen isn't said twice.
 		self.live_text = ""
+		# The part of live_text streamed so far: it stops short of next-step tags.
+		self.live_shown = ""
 		# preview_page calls this turn — hard-capped so a screenshot loop can't run up cost.
 		self.preview_count = 0
 		self.image_views = 0
+		# Cream grounds set_design_token turned back this turn; the same value again is deliberate.
+		self.stock_grounds: set[str] = set()
 		# read_page calls this turn — same idea, a reference sweep can't run up context.
 		self.page_read_count = 0
 		# A page generated this turn that no preview has looked at yet: a closing
@@ -706,6 +711,26 @@ class AgentRunner:
 			)
 		return context
 
+	def build_changed_since_context(self) -> str:
+		"""The replayed replies describe the page as this chat last left it; without this,
+		a page changed since reads as one those replies still describe."""
+		last = AISession.page_mark(self.session_id, self.page_id)
+		if not last or last == markup.page_mark(self.page_root()):
+			return ""
+		return (
+			"This page has changed outside this chat since your last turn on it. Where your earlier "
+			"replies describe it differently, go by the page as it is now, and keep those changes "
+			"unless asked."
+		)
+
+	def page_marks(self) -> dict:
+		"""How this turn leaves its page, for the next turn to tell what changed since."""
+		from builder.ai import page_writer
+
+		if not (self.page_id and self.tree):
+			return {}
+		return {"pageMarks": {self.page_id: markup.page_mark(page_writer.load_page_root(self.page_id))}}
+
 	def build_agent_context(self) -> str:
 		"""Instructions installed apps give for the open page, through the builder_agent_context hook."""
 		if not self.page_id:
@@ -727,7 +752,7 @@ class AgentRunner:
 		if name in self.attached_skills:
 			return ""
 		self.attached_skills.add(name)
-		return f"{reason}, here is the {name} skill in full; no read_skill needed this turn:\n\n{Skills.read(name)}"
+		return f"{reason}, here is the {name} skill in full; no read_skill needed this turn:\n\n{Skills.read(name, self.session_id)}"
 
 	def require_skill(self, name: str) -> str | None:
 		# A read alongside a write has not reached the model that authored that write.
@@ -774,6 +799,7 @@ class AgentRunner:
 		# ahead of it generally prevents reuse across turns.
 		blocks = [
 			self.build_open_page_context(),
+			self.build_changed_since_context(),
 			self.build_agent_context(),
 			self.build_initial_page_context(),
 			self.build_memory_context(),
@@ -873,6 +899,7 @@ class AgentRunner:
 			api_key=self.api_key,
 			stream=True,
 			timeout=self.effort.stall_timeout,
+			cache_key=self.session_id,
 		)
 
 		content_parts: list[str] = []
@@ -885,7 +912,7 @@ class AgentRunner:
 		# A retry re-issues the identical completion, so whatever the failed attempt
 		# streamed has to come off the screen first or the answer arrives doubled.
 		if self.live_text:
-			self.live_text = ""
+			self.live_text = self.live_shown = ""
 			self.emit("stream", chunk="", replace=True)
 		thinking = self.add_step("thinking", status="running")
 		thinking_since: float | None = time.monotonic()
@@ -919,7 +946,7 @@ class AgentRunner:
 					# to have called tools commits this as a narration step below; the
 					# last round's text is the turn's answer and stays as the content.
 					self.live_text += content
-					self.emit("stream", chunk=content)
+					self.stream_visible()
 				for tc in tool_calls or []:
 					idx = tc.index if tc.index is not None else 0
 					entry = acc.setdefault(idx, {"id": None, "name": None, "args": ""})
@@ -1331,11 +1358,19 @@ class AgentRunner:
 		as they were written; this fixes them in the timeline so the next round starts
 		with a clean slate, and stands in with a description of the ops when the model
 		called tools without saying anything."""
-		note = (text or "").strip()
+		note = next_steps.split(text or "")[0].strip()
 		if not note and applied:
 			note = self.describe_operations(applied)
-		self.live_text = ""
+		self.live_text = self.live_shown = ""
 		self.add_step("text", status="done", text=note)
+
+	def stream_visible(self) -> None:
+		"""Stream what the model wrote since the last chunk, short of any next-step
+		tags: those become buttons under the reply, never text."""
+		shown = next_steps.visible(self.live_text)
+		if len(shown) > len(self.live_shown):
+			self.emit("stream", chunk=shown[len(self.live_shown) :])
+			self.live_shown = shown
 
 	def flush_pending_images(self, messages: list[dict]) -> None:
 		"""Images a tool captured this round (preview_page screenshots) ride a
@@ -1374,7 +1409,11 @@ class AgentRunner:
 		msg = "Stopped. Kept what was built so far." if self.applied_operations else "Cancelled."
 		msg += self.page_changes.dropped_note()
 		AISession.try_append_message(
-			self.session_id, "assistant", msg, message_type="status", metadata={"status": "cancelled"}
+			self.session_id,
+			"assistant",
+			msg,
+			message_type="status",
+			metadata={"status": "cancelled", **self.page_marks()},
 		)
 		self.emit("complete", message=msg, after_commit=True)
 
@@ -1382,7 +1421,11 @@ class AgentRunner:
 		"""End the turn with a persisted error message + error event."""
 		message += self.page_changes.dropped_note()
 		AISession.try_append_message(
-			self.session_id, "assistant", message, message_type="status", metadata={"status": "error"}
+			self.session_id,
+			"assistant",
+			message,
+			message_type="status",
+			metadata={"status": "error", **self.page_marks()},
 		)
 		self.emit("error", message=message, after_commit=True)
 
@@ -1561,6 +1604,7 @@ class AgentRunner:
 
 	def finish_turn(self, summary_text: str, started: float):
 		"""Wrap up a completed loop: pick/emit the final summary and persist the turn."""
+		summary_text, suggestions = next_steps.split(summary_text)
 		if self.page_changes and not summary_text:
 			summary_text = self.page_changes.reply()
 		if not self.applied_operations and not summary_text:
@@ -1601,7 +1645,7 @@ class AgentRunner:
 		# The final round's words already reached the chat as they were written. Only
 		# say it again when it is NOT what the user is looking at — a synthesised
 		# summary, or one of the guards above having replaced what the model wrote.
-		if summary_text != self.live_text:
+		if summary_text != next_steps.split(self.live_text)[0]:
 			self.emit("stream", chunk=summary_text, replace=True)
 
 		# Hit the per-turn round cap → the work is INCOMPLETE. Say so, so a big edit
@@ -1631,6 +1675,7 @@ class AgentRunner:
 		final_metadata = {
 			"status": "complete",
 			"model": self.model,
+			**self.page_marks(),
 			"operations": len(self.applied_operations),
 			# Trace for the agent debugger: why the turn ended + what the model did each
 			# round. Explains cases like "only 2 blocks updated" at a glance.
@@ -1662,6 +1707,8 @@ class AgentRunner:
 			final_metadata["plugins"] = self.plugins_written
 		if self.web_sources:
 			final_metadata["sources"] = self.web_sources
+		if suggestions:
+			final_metadata["suggestions"] = suggestions
 		if timeline := self.timeline():
 			# The turn's timeline — rendered live from step events, rehydrated from
 			# here on a session reload.
@@ -1786,9 +1833,9 @@ class AgentRunner:
 		root = ops[0]["args"]["blocks"][0]
 		self.tree = WorkingTree(root)
 		return (
-			"Page generated and saved. Now finish the build: add the client scripts the plan "
-			"calls for (set_page_script), fix obvious breakage with edit_page, verify "
-			"with preview_page at most once, then finish with a short summary."
+			"Page generated and saved. Now finish the build: add the page scripts the brief "
+			"calls for (set_page_script), preview_page it and fix what's broken with edit_page, "
+			"preview again only to confirm a layout fix, then finish with a short summary."
 			f"{self.script_hook_gap_note(root)}{composition_notes(root)}{self.dropped_lines_note()}\n"
 			f"{render_page_context(root, sets=self.style_sets)}",
 			ops,

@@ -156,7 +156,8 @@ extract_component_tool = Tool(
 		"a pixel-exact copy, no regeneration. The original block becomes an instance of it. Use it when "
 		"a designed section should be SHARED across pages (the header/nav, the footer, a CTA banner): "
 		"extract once, then embed on other pages as a block `div use(<id>)`, header first, "
-		"footer last. Every page then stays identical, and one component edit updates all of them."
+		"footer last. Every page then stays identical, and one component edit updates all of them. "
+		"Unless the user asked for it, offer it rather than doing it: it changes how they edit the site."
 	),
 	parameters={
 		"type": "object",

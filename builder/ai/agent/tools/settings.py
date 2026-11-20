@@ -13,6 +13,7 @@ import frappe
 
 from builder.ai.agent import pending
 from builder.ai.agent.registry import Tool
+from builder.ai.stock_look import unseen_creams
 from builder.utils import refuse_unsafe_write
 
 PAGE_SETTING_FIELDS = {
@@ -97,6 +98,14 @@ def clean_variable_id(raw: str) -> str:
 	return re.sub(r"[^a-z0-9_-]+", "-", (raw or "").strip().lower()).strip("-")
 
 
+STOCK_GROUND = (
+	"FAILED: {value} is a warm near-white, the ground of the stock generated look under any "
+	"name (cream, paper, chalk, sunwashed). Unless the user asked for it or their brand already "
+	"uses it, pick pure white, near-black or a colour you'd name, and set the token again. If "
+	"they did, set this same value again and it is saved."
+)
+
+
 def set_design_token(ctx, args: dict) -> str:
 	"""Create or update a site theme token (Builder Token). The CSS handle is
 	var(--<doc name>); token_name is only the human label. An explicit `id`
@@ -120,6 +129,8 @@ def set_design_token(ctx, args: dict) -> str:
 		value = value.split(",")[0].strip().strip("'\"")
 		if not value or value.startswith("var("):
 			return "FAILED: a Font token's value must be a bare font family name, e.g. 'Fraunces'."
+	if token_type == "Color" and unseen_creams(ctx, [value]):
+		return STOCK_GROUND.format(value=value)
 	fields = {
 		"type": token_type,
 		"value": value,

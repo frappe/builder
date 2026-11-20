@@ -16,6 +16,10 @@ class Scenario:
 	runtime: bool = False
 	# a pass also needs the fixture page to have changed: the edit tools ran AND landed
 	must_change: bool = False
+	# the user's answer to whatever the first turn asked; the second turn is the one scored
+	follow_up: str = ""
+	# the request leaves the look to Bob: the stock cream ground or a reflex face fails it
+	fresh_look: bool = False
 
 
 # edit_page, plus the block tools it replaced, so a branch from before it scores as a baseline
@@ -45,6 +49,30 @@ SCENARIOS = (
 		f"{KILN_AND_CLAY} Give it a look of its own, don't copy the site's other pages. Pick the look "
 		"and the photos yourself and build it now.",
 		expect_any=("generate_page",),
+		fresh_look=True,
+	),
+	# purpose, contents, facts and feel are all there, without "build it now": the card is skipped
+	Scenario(
+		"vibe-build",
+		"A landing page for Tide & Tallow, a small-batch candle maker in Assagao, Goa. Sections: the "
+		"three scents (Monsoon Earth, Salt Air, Cashew Smoke, ₹1,200 each), how they're poured (by "
+		"hand, in batches of forty, in coconut wax), stockists (Sublime Galleria in Anjuna and Bombay "
+		"Paperie in Mumbai), and ordering on Instagram at @tideandtallow. Slow, coastal, unhurried. "
+		"Its own look, not the site's.",
+		expect_any=("generate_page",),
+		forbid=("present_ui",),
+		fresh_look=True,
+	),
+	# the whole new-page flow: a card for what's missing, then the build from its answer
+	Scenario(
+		"card-then-build",
+		"Make a page for my bakery.",
+		follow_up="It's Crumb, a sourdough bakery in Koregaon Park, Pune, for people grabbing breakfast "
+		"before work. Show the six loaves, the morning menu and the address, with placeholder copy "
+		"I'll fill in. Go with the first direction, and give it a look of its own rather than the "
+		"site's.",
+		expect_any=("generate_page",),
+		fresh_look=True,
 	),
 	Scenario(
 		"edit",
