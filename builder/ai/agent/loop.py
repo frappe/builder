@@ -700,6 +700,26 @@ class AgentRunner:
 			)
 		return context
 
+	def build_changed_since_context(self) -> str:
+		"""The replayed replies describe the page as this chat last left it; without this,
+		a page changed since reads as one those replies still describe."""
+		last = AISession.page_mark(self.session_id, self.page_id)
+		if not last or last == markup.page_mark(self.page_root()):
+			return ""
+		return (
+			"This page has changed outside this chat since your last turn on it. Where your earlier "
+			"replies describe it differently, go by the page as it is now, and keep those changes "
+			"unless asked."
+		)
+
+	def page_marks(self) -> dict:
+		"""How this turn leaves its page, for the next turn to tell what changed since."""
+		from builder.ai import page_writer
+
+		if not (self.page_id and self.tree):
+			return {}
+		return {"pageMarks": {self.page_id: markup.page_mark(page_writer.load_page_root(self.page_id))}}
+
 	def build_agent_context(self) -> str:
 		"""Instructions installed apps give for the open page, through the builder_agent_context hook."""
 		if not self.page_id:
@@ -768,6 +788,7 @@ class AgentRunner:
 		# ahead of it generally prevents reuse across turns.
 		blocks = [
 			self.build_open_page_context(),
+			self.build_changed_since_context(),
 			self.build_agent_context(),
 			self.build_initial_page_context(),
 			self.build_memory_context(),
@@ -867,6 +888,7 @@ class AgentRunner:
 			api_key=self.api_key,
 			stream=True,
 			timeout=self.effort.stall_timeout,
+			cache_key=self.session_id,
 		)
 
 		content_parts: list[str] = []
@@ -1368,7 +1390,11 @@ class AgentRunner:
 		msg = "Stopped. Kept what was built so far." if self.applied_operations else "Cancelled."
 		msg += self.page_changes.dropped_note()
 		AISession.try_append_message(
-			self.session_id, "assistant", msg, message_type="status", metadata={"status": "cancelled"}
+			self.session_id,
+			"assistant",
+			msg,
+			message_type="status",
+			metadata={"status": "cancelled", **self.page_marks()},
 		)
 		self.emit("complete", message=msg, after_commit=True)
 
@@ -1376,7 +1402,11 @@ class AgentRunner:
 		"""End the turn with a persisted error message + error event."""
 		message += self.page_changes.dropped_note()
 		AISession.try_append_message(
-			self.session_id, "assistant", message, message_type="status", metadata={"status": "error"}
+			self.session_id,
+			"assistant",
+			message,
+			message_type="status",
+			metadata={"status": "error", **self.page_marks()},
 		)
 		self.emit("error", message=message, after_commit=True)
 
@@ -1612,6 +1642,7 @@ class AgentRunner:
 		final_metadata = {
 			"status": "complete",
 			"model": self.model,
+			**self.page_marks(),
 			"operations": len(self.applied_operations),
 			# Trace for the agent debugger: why the turn ended + what the model did each
 			# round. Explains cases like "only 2 blocks updated" at a glance.

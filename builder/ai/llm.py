@@ -344,12 +344,17 @@ def complete_with_tools(
 	api_key: str | None = None,
 	stream: bool = False,
 	timeout: int = 120,
+	cache_key: str | None = None,
 ):
-	"""Tool-calling completion. Returns the raw response (iterator when streaming)."""
+	"""Tool-calling completion. Returns the raw response (iterator when streaming).
+	Calls sharing a `cache_key` (one conversation) share a prompt cache on the codex
+	route; other routes match cached prefixes without one."""
 	if target := codex_route(model):
 		from builder.ai import codex
 
-		return codex.complete(target[1], messages, params, provider=target[0], tools=tools, stream=stream)
+		return codex.complete(
+			target[1], messages, params, provider=target[0], tools=tools, stream=stream, cache_key=cache_key
+		)
 	model, overrides, api_key = route(model, api_key)
 	patch_messages_for_provider(model, messages)
 	params = patch_params_for_provider(model, params)
