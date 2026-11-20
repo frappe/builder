@@ -495,8 +495,12 @@ def expand_page_markup(text: str, is_root: bool = True, errors: list | None = No
 
 def load_page_root(page_id: str) -> dict | None:
 	"""The page's current root block dict — draft_blocks when present, else the
-	published blocks. None when the page is empty or the JSON is invalid."""
-	draft, published = frappe.db.get_value("Builder Page", page_id, ["draft_blocks", "blocks"])
+	published blocks. None when the page is empty, the JSON is invalid, or the page is gone (deleted
+	while a turn ran: the turn's end still marks it)."""
+	row = frappe.db.get_value("Builder Page", page_id, ["draft_blocks", "blocks"])
+	if not row:
+		return None
+	draft, published = row
 	try:
 		data = json.loads(draft or published or "")
 	except (json.JSONDecodeError, TypeError):
