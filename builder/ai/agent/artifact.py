@@ -117,7 +117,7 @@ def found_photo_list(ctx) -> str:
 
 	Every url here came back from a provider, so it resolves — unlike one the model
 	retyped from memory. Copy them EXACTLY."""
-	found = getattr(ctx, "found_images", None) or []
+	found = [p for p in getattr(ctx, "found_images", None) or [] if p.get("kind") != "video"]
 	if not found:
 		return ""
 	preamble = (
@@ -130,6 +130,25 @@ def found_photo_list(ctx) -> str:
 	for i, p in enumerate(found, 1):
 		desc = (p.get("description") or "").strip()[:100] or p.get("query") or "photo"
 		lines.append(f"{i}. [{p.get('query')}] {desc} — {p.get('size')}\n   {p.get('url')}")
+	return "\n".join(lines)
+
+
+def found_video_list(ctx) -> str:
+	"""The turn's search_videos results: the footage the page may loop."""
+	found = [v for v in getattr(ctx, "found_images", None) or [] if v.get("kind") == "video"]
+	if not found:
+		return ""
+	lines = [
+		"VIDEOS AVAILABLE for this page: real footage already searched for you. Copy src and "
+		"poster exactly. Loop one of them where the brand's world moves, the hero or one "
+		"full-bleed band, as `video [src=<src> poster=<poster> autoplay muted loop playsinline]` "
+		"filling a positioned wrapper (see the video loop technique)."
+	]
+	for i, v in enumerate(found, 1):
+		lines.append(
+			f"{i}. [{v.get('query')}] {v.get('description')}, {v.get('seconds')}s, {v.get('size')}\n"
+			f"   src: {v.get('url')}\n   poster: {v.get('poster')}"
+		)
 	return "\n".join(lines)
 
 
@@ -265,6 +284,8 @@ def generate_page_markup(ctx, args: dict) -> list[dict]:
 	# photo or none: transcribing urls by hand is work, so it mostly didn't happen.
 	if photos := found_photo_list(ctx):
 		messages.append({"role": "user", "content": photos})
+	if videos := found_video_list(ctx):
+		messages.append({"role": "user", "content": videos})
 	# The geometry of reference pages read this turn — the brief alone cannot carry it.
 	if geometry := reference_geometry(ctx):
 		messages.append({"role": "user", "content": geometry})

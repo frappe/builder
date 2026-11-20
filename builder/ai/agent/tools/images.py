@@ -1,10 +1,13 @@
-"""Image search — real photos for pages instead of drawn SVGs.
+"""Image and video search: real photos and footage for pages instead of drawn SVGs.
 
-Providers, best first: Pexels (site_config `pexels_api_key`), Unsplash
+Photo providers, best first: Pexels (site_config `pexels_api_key`), Unsplash
 (site_config `unsplash_access_key`), then keyless Openverse as the
 zero-config fallback. Each result carries a full-size `url` (for page
 blocks / generation briefs) and a `thumb` (for present_ui image options).
+Video comes from Pexels alone, so search_videos is offered only with its key.
 """
+
+import re
 
 import frappe
 import requests
@@ -83,6 +86,45 @@ def search_openverse(query: str, orientation: str | None) -> list[dict]:
 	]
 
 
+def search_pexels_videos(query: str, orientation: str | None, key: str) -> list[dict]:
+	params = {"query": query, "per_page": MAX_RESULTS}
+	if orientation:
+		params["orientation"] = orientation
+	r = requests.get(
+		"https://api.pexels.com/v1/videos/search",
+		params=params,
+		headers={"Authorization": key},
+		timeout=SEARCH_TIMEOUT,
+	)
+	r.raise_for_status()
+	return [clip for video in r.json().get("videos", []) if (clip := pexels_clip(video))]
+
+
+def pexels_clip(video: dict) -> dict | None:
+	"""A Pexels video as its lightest HD mp4: a muted loop behind type needs no more,
+	and every extra megabyte delays the page's first frame."""
+	files = [
+		f
+		for f in video.get("video_files") or []
+		if f.get("file_type") == "video/mp4" and min(f.get("width") or 0, f.get("height") or 0) >= 720
+	]
+	if not files:
+		return None
+	file = min(files, key=lambda f: f["width"] * f["height"])
+	# Pexels gives a video no description; its page slug names the subject.
+	slug = re.sub(r"-?\d+/?$", "", (video.get("url") or "").rstrip("/").rsplit("/", 1)[-1])
+	return {
+		"kind": "video",
+		"url": file["link"],
+		"thumb": video.get("image") or "",
+		"poster": video.get("image") or "",
+		"description": slug.replace("-", " "),
+		"credit": (video.get("user") or {}).get("name") or "Pexels",
+		"size": f"{file['width']}x{file['height']}",
+		"seconds": video.get("duration"),
+	}
+
+
 def providers() -> list[tuple[str, callable]]:
 	out: list[tuple[str, callable]] = []
 	if frappe.conf.pexels_api_key:
@@ -114,6 +156,28 @@ def run_search_images(ctx, args: dict) -> str:
 		f"No images found for '{query}'. Try a simpler, more visual query (subject + setting, "
 		"e.g. 'running shoe studio'), or fall back to a CSS composition."
 	)
+
+
+def run_search_videos(ctx, args: dict) -> str:
+	query = (args.get("query") or "").strip()
+	if not query:
+		return "query is required."
+	orientation = args.get("orientation") if args.get("orientation") in ORIENTATIONS else None
+	try:
+		results = search_pexels_videos(query, orientation, frappe.conf.pexels_api_key)
+	except Exception as e:
+		frappe.logger("builder.ai").warning(f"search_videos failed: {e}")
+		return f"FAILED: the video search didn't answer ({e}). Go on with photos."
+	if not results:
+		return f"No videos found for '{query}'. Try a simpler subject + setting, or go on with photos."
+	remember_for_generation(ctx, query, results)
+	lines = ["Pexels videos (each reaches generate_page by itself; `thumb` goes on present_ui options):"]
+	for i, v in enumerate(results, 1):
+		lines.append(
+			f"{i}. {v['description'] or '(no description)'}, {v['seconds']}s, {v['size']}, by {v['credit']}\n"
+			f"   src: {v['url']}\n   poster: {v['poster']}"
+		)
+	return "\n".join(lines)
 
 
 MAX_REMEMBERED_IMAGES = 24
@@ -167,4 +231,28 @@ search_images = Tool(
 	},
 )
 
-TOOLS = [search_images]
+search_videos = Tool(
+	name="search_videos",
+	side="server",
+	handler=run_search_videos,
+	available=lambda ctx: bool(frappe.conf.pexels_api_key),
+	description=(
+		"Search Pexels for short stock footage to loop silently in a page: surf at the café's "
+		"door, hands centring clay, a peloton cresting a hill. Footage of the brand's world is the "
+		"strongest hero there is. Query like search_images (subject + setting + mood); every "
+		"result reaches generate_page by itself."
+	),
+	parameters={
+		"type": "object",
+		"properties": {
+			"query": {
+				"type": "string",
+				"description": "Visual description, e.g. 'barista pouring latte art'.",
+			},
+			"orientation": {"type": "string", "enum": list(ORIENTATIONS)},
+		},
+		"required": ["query"],
+	},
+)
+
+TOOLS = [search_images, search_videos]

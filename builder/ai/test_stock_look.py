@@ -5,7 +5,7 @@ from builder.ai.agent.tools.conversation import run_present_ui
 from builder.ai.agent.tools.settings import set_design_token
 from builder.ai.session import AISession
 from builder.ai.skills import Skills
-from builder.ai.stock_look import REFLEX_FACES, TIRED_FACES, FontDraw, is_cream
+from builder.ai.stock_look import REFLEX_FACES, TIRED_FACES, CompositionDraw, FontDraw, is_cream
 
 
 class Ctx:
@@ -91,4 +91,11 @@ class TestFontDraw(FrappeTestCase):
 
 		self.assertIn(", ".join(FontDraw("chat-a").sample()), guide)
 		self.assertIn("in any of their cuts: Fraunces, Instrument Serif", guide)
+		self.assertIn(CompositionDraw("chat-a").sentence(), guide)
 		self.assertNotIn("{{", guide)
+
+	def test_a_chat_draws_the_same_hero_and_motion_every_turn(self):
+		first, again, other = (CompositionDraw(seed).sentence() for seed in ("chat-a", "chat-a", "chat-c"))
+
+		self.assertEqual(first, again)
+		self.assertNotEqual(first, other)

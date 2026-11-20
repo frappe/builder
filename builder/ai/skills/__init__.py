@@ -6,12 +6,13 @@ read_skill, or the loop for a state it can see, puts the body in front of the mo
 import os
 import re
 
-from builder.ai.stock_look import REFLEX_FACES, TIRED_FACES, FontDraw
+from builder.ai.stock_look import REFLEX_FACES, TIRED_FACES, CompositionDraw, FontDraw
 
 SLOT = re.compile(r"\{\{(\w+)\}\}")
 # Text a skill takes at read time: what changes per chat, or what code owns.
 SLOTS = {
 	"font_draw": lambda seed: FontDraw(seed).sentence(),
+	"composition_draw": lambda seed: CompositionDraw(seed).sentence(),
 	"stock_faces": lambda seed: ", ".join(REFLEX_FACES + TIRED_FACES),
 }
 
