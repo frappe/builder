@@ -144,7 +144,19 @@
 							<!-- Card-composed replies relay a long labelled text to the model;
 							     the chat shows only the compact display line. -->
 							<div class="whitespace-pre-wrap">
-								{{ message.metadata?.displayText || message.content }}
+								<template
+									v-for="(part, i) in linkParts(message.metadata?.displayText || message.content)"
+									:key="i">
+									<a
+										v-if="part.href"
+										:href="part.href"
+										target="_blank"
+										rel="noopener noreferrer"
+										class="ai-link">
+										{{ part.text }}
+									</a>
+									<template v-else>{{ part.text }}</template>
+								</template>
 							</div>
 						</div>
 						<div
@@ -463,10 +475,13 @@
 					<Button
 						v-if="isSubmitting"
 						variant="solid"
-						icon="lucide-square"
 						:loading="isCancelling"
 						:tooltip="isCancelling ? 'Cancelling…' : 'Cancel generation'"
-						@click="chat.cancel" />
+						@click="chat.cancel">
+						<template #icon>
+							<span class="block h-2.5 w-2.5 rounded-[2px] bg-current" />
+						</template>
+					</Button>
 					<Tooltip v-else side="top">
 						<template #content>
 							<span class="flex items-center gap-1.5">
@@ -523,7 +538,7 @@ import AIDebugPanel from "@/components/AIDebugPanel.vue";
 import Dialog from "@/components/Controls/Dialog.vue";
 import SparklesIcon from "@/components/Icons/Sparkles.vue";
 import { cardAnswers } from "@/components/ai/cardAnswers";
-import { renderMarkdown } from "@/components/ai/markdown";
+import { linkParts, renderMarkdown } from "@/components/ai/markdown";
 import type { AITurnStep, ChatMessage } from "@/components/ai/types";
 import { reloadAIRegistry } from "@/data/aiModels";
 import { __ } from "@/translation";
@@ -1066,6 +1081,21 @@ function toggleChips(messageId: string) {
 	--tw-prose-quote-borders: var(--outline-gray-2);
 	--tw-prose-th-borders: var(--outline-gray-2);
 	--tw-prose-td-borders: var(--outline-gray-1);
+}
+/* Links read as part of the text: a faint underline that firms up on hover. */
+.ai-link,
+.ai-prose a {
+	color: inherit;
+	font-weight: inherit;
+	text-decoration-line: underline;
+	text-decoration-color: var(--outline-gray-3);
+	text-underline-offset: 2px;
+	overflow-wrap: anywhere;
+	transition: text-decoration-color 0.15s;
+}
+.ai-link:hover,
+.ai-prose a:hover {
+	text-decoration-color: var(--ink-gray-5);
 }
 .ai-prose p:first-child {
 	margin-top: 0;
