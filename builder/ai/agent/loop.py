@@ -51,6 +51,7 @@ import frappe
 
 from builder.ai import llm, locks, markup
 from builder.ai.agent import next_steps
+from builder.ai.agent.artifact import may_reach_web
 from builder.ai.agent.edits import EditScript, composition_notes
 from builder.ai.agent.page_changes import PageChanges, page_row
 from builder.ai.agent.registry import ToolRegistry, build_default_registry
@@ -764,7 +765,8 @@ class AgentRunner:
 		if name in self.attached_skills:
 			return ""
 		self.attached_skills.add(name)
-		return f"{reason}, here is the {name} skill in full; no read_skill needed this turn:\n\n{Skills.read(name, self.session_id)}"
+		guide = Skills.read(name, self.session_id, may_reach_web(self))
+		return f"{reason}, here is the {name} skill in full; no read_skill needed this turn:\n\n{guide}"
 
 	def require_skill(self, name: str) -> str | None:
 		# A read alongside a write has not reached the model that authored that write.

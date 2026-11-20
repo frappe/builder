@@ -29,11 +29,15 @@ class Skills:
 		)
 
 	@classmethod
-	def read(cls, name: str, seed: str | None = None) -> str | None:
-		"""A skill's guide, its slots filled; `seed` keeps a chat's draws the same across turns."""
+	def read(cls, name: str, seed: str | None = None, web: bool = True) -> str | None:
+		"""A skill's guide, its slots filled; `seed` keeps a chat's draws the same across turns. A run its
+		hosting app keeps off the web (`web` False, artifact.may_reach_web) gets no font draw: its faces
+		load from Google Fonts, and such a host's pages may load no font from outside (frappe.page's own
+		site loads none)."""
 		if name not in cls.names():
 			return None
-		fill = lambda match: SLOTS[match.group(1)](seed) if match.group(1) in SLOTS else match.group(0)  # noqa: E731
+		slots = SLOTS if web else {**SLOTS, "font_draw": lambda seed: ""}
+		fill = lambda match: slots[match.group(1)](seed) if match.group(1) in slots else match.group(0)  # noqa: E731
 		return SLOT.sub(fill, cls.parse(name)[1])
 
 	@classmethod

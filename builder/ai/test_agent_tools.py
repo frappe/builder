@@ -5,6 +5,8 @@ from frappe.tests.utils import FrappeTestCase
 
 from builder.ai.agent.loop import AgentRunner
 from builder.ai.agent.registry import build_default_registry
+from builder.ai.agent.tools.skills import run_read_skill
+from builder.ai.stock_look import FontDraw
 from builder.builder.tests.hosting_hooks import hosting_hooks, no_say, page_tools, preview_tools
 
 
@@ -63,3 +65,23 @@ class TestAgentToolsHook(FrappeTestCase):
 			runner = AgentRunner("hi", model="m", api_key="k", page_id="page-x")
 
 		self.assertEqual(runner.build_withheld_context(), "")
+
+	def test_a_run_kept_off_the_web_is_offered_no_font_draw(self):
+		"""The draw's faces load from Google Fonts, and frappe.page's own site loads no font from outside"""
+
+		def runner(hook):
+			with hosting_hooks(builder_agent_tools=[hook]):
+				return AgentRunner("hi", model="m", api_key="k", page_id="page-x", session_id="chat-a")
+
+		draw = ", ".join(FontDraw("chat-a").sample())
+		self.assertIn(draw, runner(no_say).attach_skill("new-page", "For this page"))
+		self.assertIn(draw, run_read_skill(runner(no_say), {"name": "new-page"}))
+
+		for guide in (
+			runner(page_tools).attach_skill("new-page", "For this page"),
+			run_read_skill(runner(page_tools), {"name": "new-page"}),
+		):
+			self.assertNotIn(draw, guide)
+			self.assertNotIn("Google Fonts catalogue", guide)
+			self.assertNotIn("{{", guide)
+			self.assertIn("in any of their cuts: Fraunces", guide)
