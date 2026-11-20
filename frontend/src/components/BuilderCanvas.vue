@@ -105,23 +105,10 @@
 		<div class="absolute top-0 order-1 w-full">
 			<slot name="header"></slot>
 		</div>
-		<DraggablePopup
-			v-model="builderStore.showSearchBlock"
-			:container="canvasContainer"
-			placement="top-right"
-			:placementOffset="20"
-			v-if="builderStore.showSearchBlock">
-			<template #header>{{ __("Search Block") }}</template>
-			<template #content>
-				<SearchBlock></SearchBlock>
-			</template>
-		</DraggablePopup>
 	</div>
 </template>
 <script setup lang="ts">
 import type Block from "@/block";
-import DraggablePopup from "@/components/Controls/DraggablePopup.vue";
-import SearchBlock from "@/components/Controls/SearchBlock.vue";
 import LoadingIcon from "@/components/Icons/Loading.vue";
 import { builderSettings } from "@/data/builderSettings";
 import useBuilderStore from "@/stores/builderStore";
@@ -129,7 +116,7 @@ import useCanvasStore from "@/stores/canvasStore";
 import usePageStore from "@/stores/pageStore";
 import { __ } from "@/translation";
 import { BreakpointConfig, CanvasHistory } from "@/types/Builder/BuilderCanvas";
-import { getBlockObject, isCtrlOrCmd } from "@/utils/helpers";
+import { isCtrlOrCmd } from "@/utils/helpers";
 import {
 	type BlockClientScriptRuntime,
 	executeClientScriptRestricted,
@@ -339,33 +326,6 @@ const handleClick = (ev: MouseEvent) => {
 	}
 };
 
-function searchBlock(searchTerm: string, targetBlock: null | Block, limit: number = 5): Block[] {
-	const results: Block[] = [];
-
-	function search(block: Block) {
-		if (results.length >= limit) return;
-
-		const blockObject = getBlockObject(block);
-		const children = blockObject.children || [];
-		delete blockObject.children;
-
-		if (JSON.stringify(blockObject).toLowerCase().includes(searchTerm.toLowerCase())) {
-			results.push(findBlock(block.blockId) as Block);
-		}
-
-		for (const child of children) {
-			search(child);
-		}
-	}
-
-	if (!targetBlock) {
-		targetBlock = getRootBlock();
-	}
-
-	search(targetBlock);
-	return results;
-}
-
 function setActiveBreakpoint(breakpoint: string | null) {
 	activeBreakpoint.value = breakpoint;
 }
@@ -436,7 +396,6 @@ defineExpose({
 	removeBlock,
 	selectBlockRange,
 	resizingBlock,
-	searchBlock,
 	activeBreakpoint,
 	hoveredBreakpoint,
 	hoveredBlock,
