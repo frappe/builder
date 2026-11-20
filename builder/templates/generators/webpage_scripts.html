@@ -26,6 +26,10 @@
 (function(){function s(){var t=document.documentElement.getAttribute('data-theme')||document.documentElement.getAttribute('data-prefers-color-scheme');document.querySelectorAll('picture source[data-scheme="dark"]').forEach(function(s){s.media=t==='dark'?'all':t==='light'?'not all':'(prefers-color-scheme: dark)';});}new MutationObserver(s).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme','data-prefers-color-scheme']});s();})();
 </script>
 {% endif %}
+<script>
+// a required radio group reports a missing choice under its heading, since the browser would point at the first option
+{const k="data-radio-group-error";document.addEventListener("invalid",function(e){const r=e.target,g=r.type==="radio"&&r.closest('[role="radiogroup"]');if(!g)return;e.preventDefault();if(r.form&&r.form.querySelector(":invalid")===r)r.focus();if(g.querySelector("["+k+"]"))return;const m=document.createElement("p");m.setAttribute(k,"");m.setAttribute("role","alert");m.style.cssText="margin:0;font-size:13px;color:#e03131";m.textContent=r.validationMessage;const h=[...g.children].find(c=>!c.querySelector('input[type="radio"]'));h?h.after(m):g.prepend(m);g.setAttribute("aria-invalid","true")},true);document.addEventListener("change",function(e){const g=e.target.type==="radio"&&e.target.closest('[role="radiogroup"]');if(!g)return;g.querySelector("["+k+"]")?.remove();g.removeAttribute("aria-invalid")})}
+</script>
 {% if _body_html %}
 {{ _body_html | safe }}
 {% endif %}

@@ -1,6 +1,6 @@
 <template>
 	<div
-		class="editor pointer-events-none fixed box-content select-none ring-2 ring-inset"
+		class="editor pointer-events-none fixed box-content select-none ring-2"
 		ref="editor"
 		:selected="isBlockSelected"
 		@click.stop="handleClick"
@@ -72,6 +72,8 @@ const showResizer = computed(() => {
 		isBlockSelected.value &&
 		!blockController.multipleBlocksSelected() &&
 		!props.block.getParentBlock()?.isGrid() &&
+		// corner handles are bigger than a checkbox or radio, so those are sized from the Dimension panel
+		!props.block.isCheckable() &&
 		!(props.block.isHTML() && !props.block.isSVG() && !props.block.isIframe())
 	);
 });
@@ -111,6 +113,8 @@ const showPaddingHandler = computed(() => {
 		!props.readonly &&
 		!blockController.multipleBlocksSelected() &&
 		!props.block.isSVG() &&
+		// padding only inflates a checkbox or radio
+		!props.block.isCheckable() &&
 		(!props.block.isText() || (props.block.isLink() && props.block.hasChildren()))
 	);
 });
@@ -133,6 +137,8 @@ const showBorderRadiusHandler = computed(() => {
 		!props.block.isText() &&
 		!props.block.isHTML() &&
 		!props.block.isSVG() &&
+		// the square or round shape is what tells a checkbox from a radio
+		!props.block.isCheckable() &&
 		!props.editable &&
 		!props.readonly &&
 		!transforming.value &&
@@ -177,6 +183,10 @@ const isBlockSelected = computed(() => {
 
 const getStyleClasses = computed(() => {
 	const classes = [];
+	// an inset ring would cover a checkbox or radio, so theirs sits outside
+	if (!props.block.isCheckable()) {
+		classes.push("ring-inset");
+	}
 	if (movable.value && !props.block.isRoot()) {
 		classes.push("cursor-grab");
 	}

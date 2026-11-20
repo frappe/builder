@@ -1,5 +1,5 @@
 <template>
-	<div class="flex w-full items-center justify-between">
+	<div class="flex w-full items-center justify-between gap-2">
 		<InputLabel v-if="label" class="w-1/3 min-w-[88px] shrink-0">{{ label }}</InputLabel>
 		<TabButtons
 			fluid

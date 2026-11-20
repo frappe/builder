@@ -56,6 +56,15 @@ const CONTAINER_ELEMENTS = new Set(["section", "div"]);
 
 const HEADER_ELEMENTS = new Set(["h1", "h2", "h3", "h4", "h5", "h6"]);
 
+const CHECKABLE_INPUT_TYPES = new Set(["checkbox", "radio"]);
+
+const getNumberedName = (name: string, takenNames: Set<string>) => {
+	let count = 2;
+	while (takenNames.has(`${name}-${count}`)) count++;
+	takenNames.add(`${name}-${count}`);
+	return `${name}-${count}`;
+};
+
 // editor of the currently editable text block; kept off Block instances to
 // avoid Vue reactivity and serialization. Owner tracked by blockId since
 // undo/redo swaps instances but keeps ids.
@@ -372,6 +381,8 @@ class Block implements BlockOptions {
 		let description = this.blockName || this.originalElement || this.getElement() || "";
 		if (this.getTextContent() && !this.blockName) {
 			description += " | " + this.getTextContent();
+		} else if (this.isInput() && this.getEffectiveAttribute("type") && !this.blockName) {
+			description += " | " + this.getEffectiveAttribute("type");
 		}
 		return description;
 	}
@@ -417,6 +428,48 @@ class Block implements BlockOptions {
 			this.originalElement === "input" || this.getElement() === "input" || this.getElement() === "textarea"
 		);
 	}
+	isTextarea() {
+		return this.getElement() === "textarea";
+	}
+	isSelect() {
+		return this.getElement() === "select";
+	}
+	isCheckable() {
+		return this.isInput() && CHECKABLE_INPUT_TYPES.has(this.getEffectiveAttribute("type") as string);
+	}
+	isRadio() {
+		return this.isInput() && this.getEffectiveAttribute("type") === "radio";
+	}
+	isRadioGroup() {
+		return this.getEffectiveAttribute("role") === "radiogroup";
+	}
+	getRadios(): Block[] {
+		return this.getChildren().flatMap((child) => (child.isRadio() ? [child] : child.getRadios()));
+	}
+	// a radio group is required as soon as any of its radios is, so the group's toggle sets them all
+	isGroupRequired() {
+		return this.getRadios().some((radio) => radio.getEffectiveAttribute("required") != null);
+	}
+	setGroupRequired(required: boolean) {
+		this.getRadios().forEach((radio) =>
+			radio.setEffectiveAttribute("required", required ? "required" : undefined),
+		);
+	}
+	getRadioNames() {
+		return new Set(this.getRadios().map((radio) => radio.getEffectiveAttribute("name") as string));
+	}
+	// a name the page already uses gets a number, or two inserted radio groups would act as one
+	renameTakenRadioNames(takenNames: Set<string>) {
+		const newNames = new Map<string, string>();
+		const reservedNames = new Set([...takenNames, ...this.getRadioNames()]);
+		this.getRadios().forEach((radio) => {
+			const name = radio.getEffectiveAttribute("name") as string;
+			if (name && !newNames.has(name) && takenNames.has(name)) {
+				newNames.set(name, getNumberedName(name, reservedNames));
+			}
+			if (newNames.has(name)) radio.setEffectiveAttribute("name", newNames.get(name));
+		});
+	}
 	setStyle(style: styleProperty, value: StyleValue) {
 		const canvasStore = useCanvasStore();
 		let styleObj = this.baseStyles;
@@ -458,14 +511,26 @@ class Block implements BlockOptions {
 	}
 	setId(id: string | undefined) {
 		// a removed key falls back to the component's id, so an instance blanks it instead
-		const value = id || (this.referenceComponent?.getId() ? "" : undefined);
-		if (value !== undefined && "id" in this.getCustomAttributes()) {
-			this.customAttributes.id = value;
-		} else {
-			// clearing drops both copies, or the one left behind becomes the id again
-			delete this.customAttributes.id;
+		this.setEffectiveAttribute("id", id || (this.referenceComponent?.getId() ? "" : undefined));
+	}
+	// what the published page renders, since customAttributes win over attributes there
+	getEffectiveAttribute(attribute: string) {
+		return this.getCustomAttributes()[attribute] ?? this.getAttribute(attribute) ?? undefined;
+	}
+	setEffectiveAttribute(attribute: string, value: string | undefined) {
+		// a removed key falls back to the component's value, so an instance stores null instead
+		if (value === undefined && this.referenceComponent?.getEffectiveAttribute(attribute) != null) {
+			this.customAttributes[attribute] = null;
+			this.attributes[attribute] = null;
+			return;
 		}
-		this.setAttribute("id", value);
+		if (value !== undefined && attribute in this.getCustomAttributes()) {
+			this.customAttributes[attribute] = value;
+		} else {
+			// clearing drops both copies, or the one left behind becomes the value again
+			delete this.customAttributes[attribute];
+		}
+		this.setAttribute(attribute, value);
 	}
 	getAttribute(attribute: string) {
 		return this.getAttributes()[attribute];

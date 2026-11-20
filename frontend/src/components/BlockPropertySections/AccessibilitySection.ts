@@ -72,6 +72,7 @@ const accessibilitySectionProperties = [
 				"contentinfo",
 				"heading",
 				"form",
+				"radiogroup",
 				"list",
 				"table",
 				"text",
