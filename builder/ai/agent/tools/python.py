@@ -171,7 +171,10 @@ run_python_tool = Tool(
 		"helpers, frappe.utils.get_url, frappe.session.user, json, and `page_id` (the open "
 		"page). No imports, raw SQL, query builder, network requests, emails or background "
 		"jobs, and documents cannot be saved; reads answer with the current user's own "
-		"permissions. Orient yourself with it instead of guessing or asking the user."
+		"permissions. Orient yourself with it instead of guessing or asking the user. To "
+		"find where a token is used, search var(--<its id>) in Builder Page blocks and "
+		"draft_blocks, Builder Component block, Builder Client Script script and Builder "
+		"Settings style/script, returning only the matches: pages run to millions of characters."
 	),
 	parameters={
 		"type": "object",

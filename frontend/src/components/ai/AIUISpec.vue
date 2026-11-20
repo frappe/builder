@@ -451,6 +451,11 @@ function submitCollected(actionLabel?: string) {
 			const label = atomLabel(i);
 			lines.push(label ? `${label}: ${inputs[i].trim()}` : inputs[i].trim());
 			values.push(inputs[i].trim());
+		} else if (el.kind === "input") {
+			// A skipped field still reaches the model, with the suggestion it wrote as the
+			// placeholder: it takes that for a preference, never for a fact about the business.
+			const suggested = el.placeholder?.trim() ? `; you suggested "${el.placeholder.trim()}"` : "";
+			lines.push(`${atomLabel(i) || "Answer"}: (left blank${suggested})`);
 		}
 		if (el.kind === "upload" && uploads[i]) {
 			lines.push(`${el.label || "Uploaded image"}: ${uploads[i]}`);

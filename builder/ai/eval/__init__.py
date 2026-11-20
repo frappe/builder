@@ -95,8 +95,15 @@ def arm_line(results: list[dict]) -> str:
 	tools = Counter(tool for r in scored for tool in r["tools"])
 	line += " | " + ", ".join(f"{tool} {n}" for tool, n in tools.most_common())
 	if pages := [r["page"] for r in scored if r.get("page")]:
-		line += " | " + " ".join(f"{k}={median([p[k] for p in pages])}" for k in pages[0])
-	return line + f" | reply dashes {sum(r['reply']['dashes'] for r in scored)}"
+		line += " | " + " ".join(f"{k}={median([p.get(k, 0) for p in pages])}" for k in pages[0])
+	if looks := [tuple(r["look"]["fonts"]) for r in scored if r.get("look")]:
+		# the same pairing on every attempt is a reflex, whatever the face
+		line += f" | pairings {len(set(looks))}/{len(looks)}"
+	replies = [r["reply"] for r in scored]
+	line += f" | reply words {median([r['words'] for r in replies])}"
+	line += f" process {sum(r.get('process_talk', 0) for r in replies)}"
+	line += f" pills {sum(bool(r.get('suggestions')) for r in scored)}/{len(scored)}"
+	return line + f" | reply dashes {sum(r['dashes'] for r in replies)}"
 
 
 class ScenarioRun:
@@ -106,6 +113,8 @@ class ScenarioRun:
 		self.model = model
 		self.fixture = fixture
 		self.out_dir = out_dir
+		# what the first turn ended on, when the scenario answers it with a follow_up
+		self.first_reply: dict | None = None
 
 	def execute(self) -> dict:
 		started = frappe.utils.now_datetime()
@@ -145,19 +154,23 @@ class ScenarioRun:
 		return page
 
 	def run_turn(self, page):
-		from builder.ai import llm
-		from builder.ai.agent.loop import AgentRunner
 		from builder.ai.session import AISession
 
 		session = AISession.create({"page": page.name}, self.model)
-		session.append_message("user", self.scenario.prompt, message_type="chat", task_type="agent")
+		runner = self.send(session, page, self.scenario.prompt)
+		if self.scenario.follow_up:
+			self.first_reply = self.final_reply(session.name)
+			runner = self.send(session, page, self.scenario.follow_up)
+		return runner
+
+	def send(self, session, page, text: str):
+		from builder.ai import llm
+		from builder.ai.agent.loop import AgentRunner
+
+		session.append_message("user", text, message_type="chat", task_type="agent")
 		frappe.db.commit()  # nosemgrep
 		runner = AgentRunner(
-			self.scenario.prompt,
-			self.model,
-			llm.resolve_api_key(self.model),
-			page_id=page.name,
-			session_id=session.name,
+			text, self.model, llm.resolve_api_key(self.model), page_id=page.name, session_id=session.name
 		)
 		runner.run()
 		frappe.db.commit()  # nosemgrep
@@ -199,6 +212,7 @@ class ScenarioRun:
 			"run": run_measures(runner, self.seconds),
 			"reply": reply_measures(authored_text(reply)),
 			"card": card_measures(reply) if reply.get("message_type") == "clarification" else None,
+			"suggestions": json.loads(reply.get("metadata_json") or "{}").get("suggestions", []),
 		}
 		if ran & {"generate_page", *EDITS}:
 			root = self.root_of(page.name)
@@ -211,8 +225,24 @@ class ScenarioRun:
 			write_json(os.path.join(self.out_dir, f"{self.scenario.name}-{self.attempt}.blocks.json"), root)
 		if self.scenario.runtime and "generate_page" in ran:
 			result["runtime"] = self.check_runtime(page.name)
+		if first := self.first_reply:
+			result["first_card"] = (
+				card_measures(first) if first.get("message_type") == "clarification" else None
+			)
+		result["broke"] = self.broke(result)
+		result["ok"] = result["ok"] and not result["broke"]
 		result["reviews"] = getattr(runner, "reviews", [])
 		return result
+
+	def broke(self, result: dict) -> list[str]:
+		"""What fails a turn beyond its tools: a colour question, or the stock look where the
+		request left the look to Bob."""
+		cards = [card for card in (result.get("card"), result.get("first_card")) if card]
+		page = result.get("page") or {}
+		reasons = ["colour_step"] if any(card["colour_steps"] for card in cards) else []
+		if self.scenario.fresh_look and (page.get("cream_ground") or page.get("reflex_faces")):
+			reasons.append("stock_look")
+		return reasons
 
 	def check_runtime(self, page_id: str) -> dict:
 		from .runtime import RuntimeCheck
