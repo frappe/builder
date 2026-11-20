@@ -480,7 +480,7 @@
 						:tooltip="isCancelling ? 'Cancelling…' : 'Cancel generation'"
 						@click="chat.cancel">
 						<template #icon>
-							<span class="block h-2.5 w-2.5 rounded-[2px] bg-current" />
+							<span class="block h-2 w-2 rounded-[1.5px] bg-current" />
 						</template>
 					</Button>
 					<Tooltip v-else side="top">
