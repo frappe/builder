@@ -16,6 +16,8 @@ const useCanvasStore = defineStore("canvasStore", {
 		requiresConfirmationForCopyingEntirePage: <boolean>true,
 		copyEntirePage: <boolean>false,
 		layerDraggingOverBlock: <string | null>null,
+		// array item shown on the canvas for each props repeater, keyed by repeater blockId
+		repeaterPreviewIndex: <Record<string, number>>{},
 		preventClick: false,
 		isMarqueeActive: false,
 		guides: {

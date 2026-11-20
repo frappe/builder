@@ -15,9 +15,21 @@
 			@input="handleMaxItemsChange"
 			:placeholder="__('Enter max number of items')"></InlineInput>
 	</div>
+	<div class="flex items-center justify-between">
+		<InlineInput
+			:label="__('Item Type')"
+			class="w-full"
+			type="select"
+			:options="[
+				{ label: __('Text'), value: 'string' },
+				{ label: __('Image'), value: 'image' },
+			]"
+			:modelValue="itemType"
+			@update:modelValue="handleItemTypeChange"></InlineInput>
+	</div>
 	<div class="flex flex-col gap-3">
 		<InputLabel class="w-[88px] shrink-0">{{ __("Default Items") }}</InputLabel>
-		<ArrayEditor :arr @update:arr="handleArrChange" />
+		<ArrayEditor :arr :itemType @update:arr="handleArrChange" />
 	</div>
 </template>
 
@@ -39,6 +51,15 @@ const emit = defineEmits<{
 	(update: "update:options", value: Record<string, any>): void;
 }>();
 
+const itemType = ref<"string" | "image">(props.options?.itemType === "image" ? "image" : "string");
+
+watch(
+	() => props.options?.itemType,
+	(newVal) => {
+		itemType.value = newVal === "image" ? "image" : "string";
+	},
+);
+
 type NumberRef = {
 	value: Ref<number | null, number | null>;
 	handleChange: (val: string) => Promise<void>;
@@ -46,7 +67,7 @@ type NumberRef = {
 };
 
 type StringArrayRef = {
-	value: Ref<string[], string[]>;
+	value: Ref<ArrayPropItem[], ArrayPropItem[]>;
 	handleChange: (val: any[]) => Promise<void>;
 	reset: (toProps?: boolean) => void;
 };
@@ -77,7 +98,7 @@ function performValidation() {
 
 function useArrayOption(key: string, isNumeric: boolean = false) {
 	const numericValue = ref(toNumberOrNull(props.options?.[key]));
-	const arrayValue = ref<string[]>(Array.isArray(props.options?.[key]) ? props.options?.[key] : []);
+	const arrayValue = ref<ArrayPropItem[]>(Array.isArray(props.options?.[key]) ? props.options?.[key] : []);
 
 	watch(
 		() => props.options?.[key],
@@ -103,9 +124,10 @@ function useArrayOption(key: string, isNumeric: boolean = false) {
 		const isValid = performValidation();
 		if (isValid) {
 			emit("update:options", {
-				minItems,
-				maxItems,
-				defaultValue: arr,
+				minItems: minItems.value,
+				maxItems: maxItems.value,
+				defaultValue: arr.value,
+				itemType: itemType.value,
 			});
 		} else {
 			toast.error(__("Invalid option configuration!"));
@@ -121,6 +143,7 @@ function useArrayOption(key: string, isNumeric: boolean = false) {
 				minItems: minItems.value,
 				maxItems: maxItems.value,
 				defaultValue: arr.value,
+				itemType: itemType.value,
 			});
 		} else {
 			toast.error(__("Invalid option configuration!"));
@@ -148,10 +171,23 @@ const {
 	reset: resetArr,
 } = useArrayOption("defaultValue") as StringArrayRef;
 
+const handleItemTypeChange = async (val: "string" | "image") => {
+	itemType.value = val;
+	arr.value = [];
+	await nextTick();
+	emit("update:options", {
+		minItems: minItems.value,
+		maxItems: maxItems.value,
+		defaultValue: [],
+		itemType: val,
+	});
+};
+
 const reset = (toProps: boolean = false) => {
 	resetMin(toProps);
 	resetMax(toProps);
 	resetArr(toProps);
+	itemType.value = toProps && props.options?.itemType === "image" ? "image" : "string";
 };
 
 defineExpose({ reset });

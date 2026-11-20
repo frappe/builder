@@ -5,8 +5,8 @@
 			fluid
 			class="w-full min-w-[150px] [&_[data-slot=tab-button]]:relative"
 			:options="tabOptions"
-			:modelValue="modelValue"
-			@update:modelValue="$emit('update:modelValue', $event)">
+			:modelValue="toTabValue(modelValue)"
+			@update:modelValue="$emit('update:modelValue', fromTabValue($event))">
 			<template #prefix="{ button }">
 				<span v-if="isInherited(button.value)" :class="INHERITED_OUTLINE" />
 			</template>
@@ -18,17 +18,19 @@ import InputLabel from "@/components/Controls/InputLabel.vue";
 import { TabButtons, type TabButtonValue } from "frappe-ui";
 import { computed, type Component } from "vue";
 
+type ToggleValue = TabButtonValue | boolean;
+
 const props = withDefaults(
 	defineProps<{
-		modelValue?: TabButtonValue;
+		modelValue?: ToggleValue;
 		options?: {
 			label: string;
-			value: TabButtonValue;
+			value: ToggleValue;
 			icon?: string | Component;
 			hideLabel?: boolean;
 		}[];
 		label?: string;
-		defaultValue?: TabButtonValue;
+		defaultValue?: ToggleValue;
 	}>(),
 	{
 		options: () => [],
@@ -49,11 +51,18 @@ const isSet = computed(
 	() => props.modelValue !== undefined && props.modelValue !== null && props.modelValue !== "",
 );
 
-const isInherited = (value: TabButtonValue) => !isSet.value && value === props.defaultValue;
+const isInherited = (value: TabButtonValue) => !isSet.value && value === toTabValue(props.defaultValue);
+
+// TabButtons only takes strings and numbers, so boolean options (component props of type
+// boolean) go through as "true"/"false" and are emitted back as booleans
+const toTabValue = (value?: ToggleValue) => (typeof value === "boolean" ? String(value) : value);
+
+const fromTabValue = (value: TabButtonValue) =>
+	props.options.find((option) => toTabValue(option.value) === value)?.value ?? value;
 
 const tabOptions = computed(() =>
 	props.options.map(({ label, value, icon, hideLabel }) => ({
-		value,
+		value: toTabValue(value) as TabButtonValue,
 		label,
 		// frappe-ui reads `icon` as icon-only, labelling the tab with `label`,
 		// and `iconLeft` as an accent beside a visible label
