@@ -161,8 +161,9 @@ def run_preview_page(ctx, args: dict) -> str:
 		logger.warning("preview_page: %s failed to render", page_id, exc_info=True)
 		return page_error(page, error)
 	ctx.preview_count += 1
+	web = may_reach_web(ctx)
 	try:
-		image = render_markup_image(markup, viewport, block_external=not may_reach_web(ctx))
+		image = render_markup_image(markup, viewport, block_external=not web)
 	except Exception:
 		logger.warning("preview_page: render failed for %s", page_id, exc_info=True)
 		return (
@@ -200,12 +201,17 @@ def run_preview_page(ctx, args: dict) -> str:
 			"on the open page (read_page gives you the precise fonts/hexes/handles). Its "
 			"blocks are not editable from here."
 		)
+	resolves = (
+		"a real Google Fonts name or an installed User Font"
+		if web
+		else "a face this site's pages already use: they load no font from outside"
+	)
 	return (
 		f"{extent} For your eyes only (the user doesn't see it). Review in two passes, then act:\n"
 		"1. Breakage: unreadable contrast, accidental overlap, empty sections, a layout that "
 		"collapses. Fonts: the page default is Inter, so text in a Times-like serif that no "
 		"block chose means a named family isn't loading on this site; restyle to a family "
-		"that resolves here (a real Google Fonts name or an installed User Font). Stale "
+		f"that resolves here ({resolves}). Stale "
 		"chrome: an embedded component still showing its default content (a breadcrumb "
 		"reading 'Home', another product's name in the nav); override the instance's "
 		"children (edit_page on its instance refs) so it names this page. Orphaned "

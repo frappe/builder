@@ -10,7 +10,7 @@ from builder.ai.agent.loop import AgentRunner
 from builder.ai.agent.registry import build_default_registry
 from builder.ai.agent.tools.query import run_read_page
 from builder.ai.agent.tools.skills import run_read_skill
-from builder.ai.stock_look import FontDraw
+from builder.ai.stock_look import LOCAL_FACES, FontDraw
 from builder.builder.tests.hosting_hooks import hosting_hooks, no_say, page_tools, preview_tools
 
 
@@ -58,11 +58,14 @@ class TestAgentToolsHook(FrappeTestCase):
 			runner = AgentRunner("hi", model="m", api_key="k", page_id="page-x")
 
 		context = runner.build_withheld_context()
+		withheld = context.splitlines()[0]
 
 		for name in ("search_images", "set_page_script", "connect_form", "run_python"):
-			self.assertIn(name, context)
-		self.assertNotIn("read_page", context)
+			self.assertIn(name, withheld)
+		self.assertNotIn("read_page", withheld)
 		self.assertIn("as a next step", context)
+		# kept off the web, so its pages load no font from outside, whatever the turn is about
+		self.assertIn(LOCAL_FACES, context)
 
 	def test_nothing_is_said_where_no_hook_limits_the_tools(self):
 		with hosting_hooks(builder_agent_tools=[no_say]):
@@ -80,6 +83,7 @@ class TestAgentToolsHook(FrappeTestCase):
 		draw = ", ".join(FontDraw("chat-a").sample())
 		self.assertIn(draw, runner(no_say).attach_skill("new-page", "For this page"))
 		self.assertIn(draw, run_read_skill(runner(no_say), {"name": "new-page"}))
+		self.assertNotIn(LOCAL_FACES, run_read_skill(runner(no_say), {"name": "new-page"}))
 
 		for guide in (
 			runner(page_tools).attach_skill("new-page", "For this page"),
@@ -88,6 +92,8 @@ class TestAgentToolsHook(FrappeTestCase):
 			self.assertNotIn(draw, guide)
 			self.assertNotIn("Google Fonts catalogue", guide)
 			self.assertNotIn("{{", guide)
+			# the site's own faces stand, though the stock faces after it name Inter (InterVar on frappe.page)
+			self.assertIn(f"{LOCAL_FACES} Never the faces generated pages all share", guide)
 			self.assertIn("in any of their cuts: Fraunces", guide)
 
 	def test_a_run_kept_off_the_web_never_asks_google_fonts_about_a_reference(self):

@@ -65,6 +65,7 @@ from builder.ai.session import AISession
 from builder.ai.site_key import cache_write_tokens, redacted_traceback
 from builder.ai.skills import Skills
 from builder.ai.snapshots import capture_page_state, save_revert_snapshot
+from builder.ai.stock_look import LOCAL_FACES
 from builder.ai.turns import TurnQueue
 
 logger = frappe.logger("builder.ai.agent.loop")
@@ -738,11 +739,13 @@ class AgentRunner:
 		the missing tools do, which then fails when the user takes him up on it."""
 		if not (withheld := sorted(self.registry.withheld)):
 			return ""
-		return (
+		context = (
 			f"This site's host leaves you without these tools: {', '.join(withheld)}. Where your "
 			"instructions name one, skip that step, or say in a sentence that it can't be done here. "
 			"Never offer work only they can do, in a reply or as a next step."
 		)
+		# a font change needs no skill, and the faces his instructions name load from Google Fonts
+		return context if may_reach_web(self) else f"{context}\n{LOCAL_FACES}"
 
 	def build_agent_context(self) -> str:
 		"""Instructions installed apps give for the open page, through the builder_agent_context hook."""

@@ -166,6 +166,25 @@ class TestPreviewOffTheWeb(FrappeTestCase):
 		self.assertTrue(self.blocking(kept_off))
 		self.assertFalse(self.blocking(anywhere))
 
+	def test_off_the_web_the_review_sends_a_face_that_falls_back_to_the_sites_own(self):
+		"""Not to Google Fonts: those faces are the ones that fall back there"""
+
+		def rubric(*hooks) -> str:
+			with hosting_hooks(builder_agent_tools=list(hooks)):
+				runner = AgentRunner("hi", model="m", api_key="k", page_id=self.page_id)
+			with (
+				patch("builder.html_preview_image.render_full_page", return_value=b"webp"),
+				patch("builder.ai.agent.tools.preview.refresh_page_thumbnail"),
+				patch("builder.ai.models.ModelRegistry.supports_vision", return_value=True),
+				patch("builder.ai.agent.tools.preview.attach_to_model", return_value=(1, True)),
+			):
+				return run_preview_page(runner, {})
+
+		kept_off, anywhere = rubric(page_tools, preview_tools), rubric()
+		self.assertIn("a face this site's pages already use", kept_off)
+		self.assertNotIn("Google Fonts", kept_off)
+		self.assertIn("a real Google Fonts name", anywhere)
+
 	def test_a_web_image_is_not_fetched_for_bob_to_view_off_the_web(self):
 		with hosting_hooks(builder_agent_tools=[page_tools]):
 			runner = AgentRunner("hi", model="m", api_key="k", page_id=self.page_id)
