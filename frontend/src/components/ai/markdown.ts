@@ -18,6 +18,25 @@ DOMPurify.addHook("afterSanitizeAttributes", (node) => {
 const MAX_CACHED = 300;
 const rendered = new Map<string, string>();
 
+// A web address in plain text, without the punctuation that usually ends the sentence it's in.
+const WEB_ADDRESS = /\b(?:https?:\/\/|www\.)[^\s<>"']*[^\s<>"'.,;:!?)\]}]/g;
+
+/** A user's plain-text message as runs of text and the web addresses in it, so the
+ * addresses render as links without the message going through markdown. */
+export function linkParts(text: string): { text: string; href?: string }[] {
+	const parts: { text: string; href?: string }[] = [];
+	let last = 0;
+	for (const match of text.matchAll(WEB_ADDRESS)) {
+		const start = match.index ?? 0;
+		if (start > last) parts.push({ text: text.slice(last, start) });
+		const href = match[0].startsWith("www.") ? `https://${match[0]}` : match[0];
+		parts.push({ text: match[0], href });
+		last = start + match[0].length;
+	}
+	if (last < text.length) parts.push({ text: text.slice(last) });
+	return parts;
+}
+
 /** Markdown → sanitized HTML for AI chat messages (editor panel + dashboard chat). */
 export function renderMarkdown(content: string): string {
 	const html = rendered.get(content) ?? sanitize(content);
