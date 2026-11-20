@@ -226,12 +226,13 @@ const cloneError = ref("");
 
 const otherInput = ref<InstanceType<typeof Textarea>>();
 
-// personal greeting; fullname is an email until the fetch lands (skip it then)
+// personal greeting; fullname is the user ID until the fetch lands (skip it then)
 const userInfo = getUserInfo(sessionUser.value);
 const greetingName = computed(() => {
 	const fullname = userInfo?.fullname;
-	// skip the name until it resolves, or when it's an email / the Guest fallback
-	if (!fullname || fullname.includes("@") || fullname === "Guest") return "";
+	// skip the name until it resolves, or when it's an email / the user ID / the Guest fallback
+	if (!fullname || fullname.includes("@") || fullname === sessionUser.value || fullname === "Guest")
+		return "";
 	return `, ${fullname.split(" ")[0]}`;
 });
 const screen = computed(() => {
