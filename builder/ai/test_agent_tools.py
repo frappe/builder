@@ -1,10 +1,14 @@
 """The tools a hosting app lets Bob have (builder_agent_tools): frappe.page gives its own site's
 editor page tools only, and a call to any other tool must be refused, not run."""
 
+from unittest.mock import patch
+
+import frappe
 from frappe.tests.utils import FrappeTestCase
 
 from builder.ai.agent.loop import AgentRunner
 from builder.ai.agent.registry import build_default_registry
+from builder.ai.agent.tools.query import run_read_page
 from builder.ai.agent.tools.skills import run_read_skill
 from builder.ai.stock_look import FontDraw
 from builder.builder.tests.hosting_hooks import hosting_hooks, no_say, page_tools, preview_tools
@@ -85,3 +89,32 @@ class TestAgentToolsHook(FrappeTestCase):
 			self.assertNotIn("Google Fonts catalogue", guide)
 			self.assertNotIn("{{", guide)
 			self.assertIn("in any of their cuts: Fraunces", guide)
+
+	def test_a_run_kept_off_the_web_never_asks_google_fonts_about_a_reference(self):
+		"""read_page asks fonts.googleapis.com about each face that is no User Font. frappe.page's own site
+		serves the landing's InterVar itself, as no User Font, so the warning sent Bob to Google for it"""
+		face = f"Off Web Face {frappe.generate_hash(length=6)}"
+		self.addCleanup(frappe.cache().delete_value, f"google_font_exists:{face}")
+		page = frappe.get_doc(
+			{
+				"doctype": "Builder Page",
+				"page_title": "Off the web reference",
+				"draft_blocks": frappe.as_json(
+					[{"element": "div", "baseStyles": {"fontFamily": face}, "children": []}]
+				),
+			}
+		).insert()
+
+		def read(hook):
+			with hosting_hooks(builder_agent_tools=[hook]):
+				runner = AgentRunner("hi", model="m", api_key="k", page_id="page-x")
+			with patch("builder.ai.agent.tools.query.google_font_exists", return_value=False) as probe:
+				return run_read_page(runner, {"page_id": page.name}), probe
+
+		out, probe = read(page_tools)
+		probe.assert_not_called()
+		self.assertNotIn("FONT AVAILABILITY", out)
+
+		out, probe = read(no_say)
+		probe.assert_called_once_with(face)
+		self.assertIn("FONT AVAILABILITY", out)
