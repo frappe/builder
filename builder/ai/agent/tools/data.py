@@ -13,8 +13,10 @@ import ast
 import json
 import logging
 import re
+import traceback
 
 import frappe
+from frappe.utils.safe_exec import SERVER_SCRIPT_FILE_PREFIX
 
 from builder.ai.agent import pending
 from builder.ai.agent.registry import Tool
@@ -255,6 +257,67 @@ def is_portable(name: str) -> bool:
 	)
 
 
+class ScriptError:
+	"""A data script's exception as a traceback of the script's own frames. The sandbox compiles
+	the script from a string, so its source lines come from the script, not linecache."""
+
+	def __init__(self, error: Exception, script: str | None):
+		self.error = error
+		self.script = script or ""
+
+	def __str__(self) -> str:
+		frames = self.frames()
+		trace = ["Traceback (most recent call last):", *frames] if frames else []
+		return "\n".join([*trace, f"{type(self.error).__name__}: {self.error}"])
+
+	def frames(self) -> list[str]:
+		source = self.script.splitlines()
+		return [
+			f"  line {frame.lineno}: {source[frame.lineno - 1].strip()}"
+			for frame in traceback.extract_tb(self.error.__traceback__)
+			if frame.filename.startswith(SERVER_SCRIPT_FILE_PREFIX) and 0 < frame.lineno <= len(source)
+		]
+
+
+class DataScriptTrial:
+	"""The data script run once before it goes live, the way a render runs it, with anything it
+	wrote rolled back. A script that reads URL or query params may fail here only for lack of
+	them, so its error is a warning, unless it is a NameError, which no request causes."""
+
+	SAVEPOINT = "builder_ai_data_script_trial"
+
+	def __init__(self, page_id: str, script: str):
+		self.script = script
+		self.error = self.run(page_id)
+
+	def run(self, page_id: str) -> Exception | None:
+		page = frappe.get_doc("Builder Page", page_id)
+		page.page_data_script = self.script
+		frappe.db.savepoint(self.SAVEPOINT)
+		try:
+			page._get_page_data()
+		except Exception as error:
+			return error
+		finally:
+			frappe.db.rollback(save_point=self.SAVEPOINT)
+		return None
+
+	@property
+	def blocks_save(self) -> bool:
+		return bool(self.error) and (isinstance(self.error, NameError) or not self.reads_request())
+
+	def reads_request(self) -> bool:
+		return any("form_dict" in name for name in frappe_names(self.script))
+
+	def warning(self) -> str:
+		if not self.error:
+			return ""
+		return (
+			"\nA test run without URL or query params raised the error below: expected if the page "
+			f"always gets those params, otherwise fix it.\n{ScriptError(self.error, self.script)}"
+		)
+
+
 def write_page_data_script(ctx, args: dict) -> str:
 	"""Save the server-side Python that populates `data` for the current page (e.g.
 	`data.events = frappe.db.get_all("Event", ...)`). Runs sandboxed at render time;
@@ -290,11 +353,17 @@ def write_page_data_script(ctx, args: dict) -> str:
 			f"{', '.join(missing)} don't exist, so the page would fail to render. Use "
 			f"{PORTABLE_HINT}."
 		)
+	trial = DataScriptTrial(ctx.page_id, script)
+	if trial.blocks_save:
+		return (
+			"FAILED: a test run of this data script raised the error below. Nothing was saved, so "
+			f"the page keeps its previous script.\n{ScriptError(trial.error, script)}"
+		)
 	frappe.db.set_value("Builder Page", ctx.page_id, "page_data_script", script)
 	from builder.ai.agent.tools.settings import emit_refetch
 
 	emit_refetch(ctx, "page_data")
-	return f"Saved the page data script (runs server-side to populate `data`).{LIVE_NOTE}"
+	return f"Saved the page data script (runs server-side to populate `data`).{LIVE_NOTE}{trial.warning()}"
 
 
 # --- writes (terminal, confirm-gated) -----------------------------------
@@ -313,7 +382,7 @@ def request_create_doctype(ctx, args: dict) -> str | None:
 			f"REAL fieldnames (schema follows), or propose a different name (e.g. 'Community {name}').\n"
 			f"{get_doctype_schema(ctx, {'doctype': name})}"
 		)
-	if not frappe.has_permission("DocType", "create"):
+	if not pending.can_create_doctypes():
 		return pending.not_permitted("create DocTypes")
 	summary = f"Create a new DocType '{name}' with {len(fields)} field(s)?"
 	pending.request_confirmation(ctx, "create_doctype", summary, {"name": name, "fields": fields})
@@ -460,7 +529,8 @@ write_page_data_script_tool = Tool(
 		"Set the current page's server-side data script (Python). Use it to populate `data` "
 		"for data-driven pages, e.g. `data.events = frappe.db.get_all('Event', "
 		"fields=['title', 'starts_on'], filters={'published': 1})`, then bind blocks and "
-		"repeaters to the keys you set. It runs sandboxed at render time with no imports. "
+		"repeaters to the keys you set. It runs sandboxed at render time with no imports, and "
+		"is test-run before it saves: a script that fails is not saved. "
 		"Write it with the names every site provides, including sites with server scripts "
 		f"disabled: {PORTABLE_HINT}. frappe.db.get_all reads whatever the script asks for, "
 		"whoever is viewing, so list explicit `fields`, filter to what the page publishes, and "
@@ -499,6 +569,7 @@ create_doctype_tool = Tool(
 		"required": ["name", "fields"],
 	},
 	handler=request_create_doctype,
+	available=pending.can_create_doctypes,
 )
 
 seed_sample_data_tool = Tool(

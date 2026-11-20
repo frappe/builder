@@ -13,7 +13,7 @@ from frappe.utils.telemetry import capture
 
 from builder.ai.agent.loop import run_agent_job
 from builder.ai.agent.page_changes import page_row
-from builder.ai.block_codec import BlockCodec
+from builder.ai.attachments import TurnImages
 from builder.ai.discovery import Discovery
 from builder.ai.llm import Effort, resolve_api_key, settings_api_key
 from builder.ai.models import GatewayListing, ModelRegistry, fetch_credits
@@ -25,30 +25,6 @@ logger = frappe.logger("builder.ai.api")
 logger.setLevel(logging.INFO)
 
 
-def save_attached_image(data_url: str) -> str | None:
-	"""Persist a pasted image as a site file. The data URI only lives for the turn
-	it was sent on; the file URL is what later turns replay and briefs reference.
-	Private: it belongs to the chat (a mock may be confidential), and every reader —
-	replay, brief attachment, the chat thumbnail — goes through permissioned paths."""
-	try:
-		header, content = data_url.split(";base64,", 1)
-		ext = header.removeprefix("data:image/").split("+")[0] or "png"
-		file = frappe.get_doc(
-			{
-				"doctype": "File",
-				"file_name": f"ai-attachment-{frappe.generate_hash(length=10)}.{ext}",
-				"is_private": 1,
-				"folder": "Home/Builder Uploads",
-				"content": content,
-				"decode": True,
-			}
-		).insert(ignore_permissions=True)
-		return file.file_url
-	except Exception:
-		logger.warning("could not save the attached image as a file", exc_info=True)
-		return None
-
-
 @frappe.whitelist()
 @has_page_write()
 def run(
@@ -57,7 +33,7 @@ def run(
 	model: str | None = None,
 	session_id: str | None = None,
 	selected_block_ids: list | None = None,
-	image_data: str | None = None,
+	images: list | None = None,
 	selected_block_context: list | None = None,
 	display_text: str | None = None,
 	canvas_theme: str | None = None,
@@ -70,7 +46,7 @@ def run(
 	"""
 	logger.info(f"run: page_id={page_id}, model={model}, session_id={session_id}")
 
-	image_url = BlockCodec.validate_image_data(image_data) if image_data else None
+	attached = TurnImages.from_request(images)
 	canvas_theme = canvas_theme if canvas_theme in ("light", "dark") else None
 	thinking = Effort(effort)
 
@@ -80,9 +56,7 @@ def run(
 	if session_id and AISession.is_session_running(session_id):
 		frappe.throw(_("Another AI request is still processing. Please wait."), frappe.TooManyRequestsError)
 
-	# A pasted image is a one-turn data URI: saved as a site file it gains a real URL
-	# that later turns can replay and a generation brief can carry as REFERENCE IMAGE.
-	image_file_url = save_attached_image(image_url) if image_url else None
+	attached.save()
 
 	if not session_id:
 		session_id = AISession.create({"page": page_id}, model).name
@@ -96,8 +70,8 @@ def run(
 			msg_meta["canvasTheme"] = canvas_theme
 		if thinking.level:
 			msg_meta["effort"] = thinking.level
-		if image_data:
-			msg_meta["attachedImageUrl"] = image_file_url or image_data
+		if attached:
+			msg_meta["attachedImages"] = attached.metadata()
 		# A card-composed reply (option tap, form submit) shows as this compact line
 		# in the chat; the full labelled text stays the message content for the model.
 		if display_text:
@@ -107,9 +81,9 @@ def run(
 	resolved_model = ModelRegistry.get_default(model or "openrouter")
 	if not ModelRegistry.is_known_model(resolved_model):
 		frappe.throw(_("Unknown AI model: {0}").format(resolved_model))
-	if image_data and not ModelRegistry.supports_vision(resolved_model):
+	if attached and not ModelRegistry.supports_vision(resolved_model):
 		frappe.throw(
-			_("{0} can't view images. Pick a vision-capable model or remove the image.").format(
+			_("{0} can't view images. Pick a vision-capable model or remove the attachments.").format(
 				resolved_model
 			)
 		)
@@ -131,8 +105,7 @@ def run(
 		session_id=session_id,
 		enqueue_after_commit=True,
 		selected_block_ids=selected_block_ids,
-		image_url=image_url,
-		image_file_url=image_file_url,
+		images=attached.payload(),
 		canvas_theme=canvas_theme,
 		effort=thinking.level,
 	)
@@ -180,8 +153,11 @@ def confirm_pending_settings(message_id: str, decision: str = "apply", skip: lis
 		AISession.try_append_message(
 			msg.session, "assistant", outcome, message_type="status", metadata=answers
 		)
-		# Nothing waits on a page card: it comes once the turn's work is done.
-		resumed = not on_pages and resume_after_action(msg.session, outcome)
+		# A page card comes once the turn's work is done; only approved pages it held back go on.
+		if on_pages:
+			resumed = queue_page_build(msg.session, meta.get("next_builds") or [])
+		else:
+			resumed = resume_after_action(msg.session, outcome)
 		return {"status": "skipped", "resumed": resumed}
 
 	if on_pages:
@@ -208,11 +184,24 @@ def confirm_page_changes(msg, meta: dict, skip: list | None = None) -> dict:
 	changed = [p["page_id"] for p in pages if p["status"] in ("created", "changed")]
 	AISession(frappe.get_doc(AISession.DOCTYPE, msg.session)).add_pages(*changed)
 	AISession.try_append_message(
-		msg.session, "assistant", outcome, message_type="status", metadata={"card": msg.name}
+		msg.session,
+		"assistant",
+		outcome,
+		message_type="status",
+		metadata={"card": msg.name, "pageMarks": page_marks(changed)},
 	)
-	builds = [p for p in pages if p["status"] == "created"]
-	resumed = bool(builds) and queue_page_build(msg.session, builds)
+	created = [p for p in pages if p["status"] == "created"]
+	resumed = queue_page_build(msg.session, [*(meta.get("next_builds") or []), *created])
 	return {"status": "applied", "message": outcome, "pages": pages, "resumed": resumed}
+
+
+def page_marks(page_ids: list[str]) -> dict[str, str]:
+	"""How the card left each page, so this chat's next turn on one tells the user's
+	later edits from these."""
+	from builder.ai.markup import page_mark
+	from builder.ai.page_writer import load_page_root
+
+	return {page_id: page_mark(load_page_root(page_id)) for page_id in page_ids}
 
 
 def resume_after_action(session_id: str, outcome: str) -> bool:
@@ -232,6 +221,8 @@ def resume_after_action(session_id: str, outcome: str) -> bool:
 
 def queue_page_build(session_id: str, builds: list[dict], user: str | None = None) -> bool:
 	"""Build the first of the approved new pages off-screen; its turn hands on the rest."""
+	if not builds:
+		return False
 	page = builds[0]
 	prompt = (
 		f"The user approved the new page “{page['title']}” ({page['route']}). It now exists and is "

@@ -28,7 +28,7 @@ npm run dev
 ~~~
 
 Open Builder at the URL configured in `vite.config.ts`. The site must run in
-developer mode. In the **Plugins** tab, choose **Load dev plugin**, then
+developer mode. In **Settings** > **Plugins**, choose **Load dev plugin**, then
 paste the URL printed by Vite.
 
 ## Build and package

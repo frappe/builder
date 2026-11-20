@@ -85,11 +85,44 @@ declare module "builder" {
 		disabled?: boolean;
 	};
 
+	/** A block template in the Block Templates panel. Click inserts the block, and drag drops it on the canvas. */
+	export type PluginBlockTemplate = RegistryItem & {
+		label: string;
+		/** A category the panel has, or a new one, which shows after Builder's own. */
+		category: string;
+		/** An image URL, shown as the card's preview. */
+		preview?: string;
+		/** Shown when there is no preview. */
+		icon?: string | Component;
+		/** Called on each insert. It must be synchronous, because a drag sets its data in dragstart. */
+		getBlock: () => Record<string, unknown>;
+	};
+
+	/**
+	 * A view of the dashboard, beside All Pages. It opens at /dashboard/<name> and fills the area right of the sidebar.
+	 * Its component gets `DashboardItemProps`, so the URL after /dashboard/<name>/ can keep where the user is.
+	 */
+	export type DashboardItem = RegistryItem & {
+		label: string;
+		icon: string | Component;
+		component: Component;
+		props?: () => Record<string, unknown>;
+	};
+
 	export const leftPanelTabs: Registry<LeftPanelTab>;
 	export const toolbarItems: Registry<ToolbarItem>;
 	export const blockContextMenuOptions: Registry<ContextMenuOption>;
 	export const propertySections: Registry<PropertySection>;
 	export const settingsItems: Registry<SettingsItem>;
+	export const blockTemplates: Registry<PluginBlockTemplate>;
+	export type DashboardItemProps = {
+		/** The URL segments after /dashboard/<name>/. */
+		path: string[];
+		/** Goes to /dashboard/<name>/<path>. Replace keeps the browser history as it is. */
+		navigate: (path: string[], options?: { replace?: boolean }) => void;
+	};
+
+	export const dashboardItems: Registry<DashboardItem>;
 
 	/** One block of the page tree. */
 	export class Block {

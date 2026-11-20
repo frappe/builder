@@ -6,10 +6,17 @@
 			<nav class="space-y-0.5">
 				<SidebarItem
 					:label="__('All Pages')"
-					:active="!builderStore.activeFolder"
+					:active="!activeItem && !builderStore.activeFolder"
 					@click="setFolderActive('')">
 					<template #prefix><FilesIcon class="size-4" /></template>
 				</SidebarItem>
+				<SidebarItem
+					v-for="item in dashboardItems.visible.value"
+					:key="item.name"
+					:label="item.label"
+					:icon="item.icon"
+					:active="activeItem === item.name"
+					@click="router.push({ name: 'dashboard-item', params: { item: item.name } })" />
 				<SidebarItem :label="__('Settings')" @click="showSettingsDialog = true">
 					<template #prefix><SettingsIcon class="size-4" /></template>
 				</SidebarItem>
@@ -36,7 +43,7 @@
 					:key="project.folder_name"
 					icon="lucide-folder"
 					:label="project.folder_name"
-					:active="isFolderActive(project.folder_name)"
+					:active="!activeItem && isFolderActive(project.folder_name)"
 					@click="setFolderActive(project.folder_name)">
 					<EditableSpan
 						v-model="project.folder_name"
@@ -108,6 +115,7 @@ import { __ } from "@/translation";
 import builderLogo from "/builder_logo.png";
 import DashboardCloneCard from "@/components/DashboardCloneCard.vue";
 import DashboardTrialCard from "@/components/DashboardTrialCard.vue";
+import { dashboardItems } from "@/components/DashboardItems";
 import EditableSpan from "@/components/EditableSpan.vue";
 import FilesIcon from "@/components/Icons/Files.vue";
 import SettingsIcon from "@/components/Icons/SettingsGear.vue";
@@ -132,6 +140,7 @@ import {
 import { TrialBanner } from "@framework/ui/components/TrialBanner";
 import { DialogDescription, DialogTitle } from "reka-ui";
 import { computed, defineAsyncComponent, h, ref } from "vue";
+import { useRoute, useRouter } from "vue-router";
 
 const BuilderSettings = defineAsyncComponent(() => import("@/components/BuilderSettings.vue"));
 const isDark = useDark({
@@ -141,6 +150,9 @@ const toggleDark = useToggle(isDark);
 const builderStore = useBuilderStore();
 const { showTemplatesDialog } = useDashboardState();
 const renamingFolder = ref("");
+const route = useRoute();
+const router = useRouter();
+const activeItem = computed(() => route.params.item);
 
 const apps = createResource({
 	url: "builder.api.get_apps",
@@ -207,6 +219,7 @@ const isFolderActive = (folderName: string) => {
 };
 const setFolderActive = (folderName: string) => {
 	builderStore.activeFolder = folderName;
+	if (activeItem.value) router.push({ name: "home" });
 };
 
 const renameFolder = async (newFolderName: string, targetFolder: BuilderProjectFolder) => {

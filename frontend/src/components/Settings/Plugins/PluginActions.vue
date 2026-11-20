@@ -7,6 +7,14 @@
 			icon-left="lucide-panel-right"
 			label="Open"
 			@click="emit('open')" />
+		<Button
+			v-else-if="canEnable"
+			variant="solid"
+			size="sm"
+			icon-left="lucide-power"
+			label="Enable"
+			:disabled="working"
+			@click="emit('setEnabled', true)" />
 
 		<span v-if="moreActions.length" class="ml-auto inline-flex shrink-0">
 			<Dropdown :options="moreActions" align="end">
@@ -30,6 +38,8 @@ import { computed } from "vue";
 const props = defineProps<{
 	canOpen: boolean;
 	canManage: boolean;
+	/** An app's plugin goes with the app, so it has no Uninstall. */
+	canUninstall: boolean;
 	enabled: boolean;
 	working: boolean;
 	/** Unset when the plugin has no left bar tab. */
@@ -56,23 +66,30 @@ const tabActions = computed<DropdownOptions>(() =>
 			],
 );
 
-const managerActions = computed<DropdownOptions>(() =>
-	props.canManage
-		? [
+// a disabled plugin has nothing to open, so Enable takes the button's place
+const canEnable = computed(() => props.canManage && !props.enabled && !props.canOpen);
+
+const managerActions = computed<DropdownOptions>(() => {
+	if (!props.canManage) return [];
+	const actions: DropdownOptions = canEnable.value
+		? []
+		: [
 				{
 					label: props.enabled ? "Disable" : "Enable",
 					icon: props.enabled ? "lucide-power-off" : "lucide-power",
 					onClick: () => emit("setEnabled", !props.enabled),
 				},
-				{
-					label: "Uninstall",
-					icon: "lucide-trash-2",
-					theme: "red",
-					onClick: () => emit("uninstall"),
-				},
-			]
-		: [],
-);
+			];
+	if (props.canUninstall) {
+		actions.push({
+			label: "Uninstall",
+			icon: "lucide-trash-2",
+			theme: "red",
+			onClick: () => emit("uninstall"),
+		});
+	}
+	return actions;
+});
 
 const moreActions = computed<DropdownOptions>(() => [...tabActions.value, ...managerActions.value]);
 </script>

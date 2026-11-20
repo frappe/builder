@@ -26,6 +26,8 @@ type Installation = {
 	source: "Hub" | "App" | "Development" | "Bob";
 	/** The Builder Hub that it came from, when `source` is "Hub". */
 	hub_url?: string;
+	/** The Frappe app that ships it, when `source` is "App". */
+	source_app?: string;
 	enabled: boolean;
 	/** A Hub install is "Installing" until its background job ends. Then it is "Ready" or "Failed". */
 	install_state?: "Installing" | "Ready" | "Failed";
@@ -182,6 +184,12 @@ const promptReload = (message: string) =>
 		action: { label: "Reload", onClick: () => window.location.reload() },
 	});
 
+/** Turns plugins off or on for this user in this browser. The editor applies it when it next loads. */
+const setPluginsDisabled = (disabled: boolean) => {
+	pluginsDisabled.value = disabled;
+	promptReload(disabled ? "Plugins turned off" : "Plugins turned on");
+};
+
 const setPluginEnabled = async (plugin: string, enabled: boolean) => {
 	await call(`${METHOD}.set_plugin_enabled`, { plugin, enabled });
 	await reloadInstallations();
@@ -337,6 +345,7 @@ export {
 	installFromHub,
 	listenForPluginJobs,
 	promptReload,
+	setPluginsDisabled,
 	reloadInstallations,
 	setPluginEnabled,
 	uninstallPlugin,

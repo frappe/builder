@@ -1,16 +1,16 @@
 <template>
 	<div class="flex h-full min-h-0 flex-col">
-		<div class="flex shrink-0 items-center gap-1 bg-surface-base px-2 py-3">
+		<div class="-ml-2 flex shrink-0 items-center gap-1 bg-surface-base pb-3">
 			<Button variant="ghost" size="sm" icon-left="lucide-arrow-left" label="Back" @click="emit('back')" />
 		</div>
 
 		<div class="no-scrollbar flex min-h-0 flex-1 flex-col overflow-y-auto">
-			<p v-if="error" class="px-3 pb-3 text-p-sm text-ink-red-6">{{ error }}</p>
+			<p v-if="error" class="pb-3 text-p-sm text-ink-red-6">{{ error }}</p>
 			<div v-else-if="!details" class="flex flex-1 items-center justify-center">
 				<LoadingIndicator class="size-5 text-ink-gray-5" />
 			</div>
 
-			<div v-else class="flex flex-col gap-5 px-3 pb-5">
+			<div v-else class="flex flex-col gap-5 pb-5">
 				<div class="flex items-start gap-3">
 					<img
 						v-if="details.icon"
@@ -76,7 +76,8 @@
 
 				<div v-else-if="isFailed" class="flex flex-col gap-2">
 					<p class="text-p-sm text-ink-red-6">{{ details.install_error || "The install did not finish." }}</p>
-					<div v-if="canManagePlugins" class="flex gap-2">
+					<!-- an app plugin's build fixes it, so neither action applies -->
+					<div v-if="canManagePlugins && details.source !== 'App'" class="flex gap-2">
 						<Button
 							variant="solid"
 							size="sm"
@@ -99,6 +100,7 @@
 					v-else
 					:can-open="Boolean(openHandler)"
 					:can-manage="canManagePlugins"
+					:can-uninstall="details.source !== 'App'"
 					:enabled="details.enabled"
 					:working="working"
 					:tab-hidden="tabHidden"
@@ -108,7 +110,7 @@
 					@uninstall="uninstall" />
 
 				<Button
-					v-if="details.source === 'Bob' && builderStore.isAIEnabled"
+					v-if="isChangeWithBobShown && details.source === 'Bob' && builderStore.isAIEnabled"
 					class="self-start"
 					variant="subtle"
 					size="sm"
@@ -132,8 +134,9 @@
 				<div class="flex flex-col gap-1 border-t border-outline-gray-1 pt-4 text-xs text-ink-gray-5">
 					<p v-if="!isInstalled">{{ details.repository_url || "From the Builder Hub" }}</p>
 					<p v-else-if="details.is_development">Served by {{ details.development_server }}</p>
-					<template v-else-if="isReady">
+					<template v-else-if="isReady || details.source === 'App'">
 						<p v-if="details.source === 'Hub'">{{ details.hub_url }}</p>
+						<p v-else-if="details.source === 'App'">Comes with {{ details.source_app }}</p>
 						<p>Installed on {{ installedOn }}</p>
 					</template>
 				</div>
@@ -144,14 +147,22 @@
 			v-if="details"
 			v-model:open="isInstallDialogOpen"
 			:label="details.label ?? details.name"
-			@install="install" />
+			action="Install"
+			@confirm="install" />
+
+		<PluginInstallDialog
+			v-if="details"
+			v-model:open="isEnableDialogOpen"
+			:label="details.label ?? details.name"
+			action="Enable"
+			@confirm="enable" />
 	</div>
 </template>
 
 <script setup lang="ts">
-import PluginActions from "@/components/LeftPanelTabs/Plugins/PluginActions.vue";
-import PluginInstallDialog from "@/components/LeftPanelTabs/Plugins/PluginInstallDialog.vue";
-import PluginUpdate from "@/components/LeftPanelTabs/Plugins/PluginUpdate.vue";
+import PluginActions from "@/components/Settings/Plugins/PluginActions.vue";
+import PluginInstallDialog from "@/components/Settings/Plugins/PluginInstallDialog.vue";
+import PluginUpdate from "@/components/Settings/Plugins/PluginUpdate.vue";
 import { renderMarkdown } from "@/components/ai/markdown";
 import { leftPanelTabs } from "@/components/LeftPanelTabs";
 import {
@@ -212,6 +223,9 @@ const stop = async () => {
 const readme = computed(() => (details.value?.readme ? renderMarkdown(details.value.readme) : ""));
 
 const builderStore = useBuilderStore();
+
+/** Off for now: Settings stays open over the Chat tab, and the dashboard has no Chat tab. */
+const isChangeWithBobShown = false;
 
 const changeWithBob = () => {
 	builderStore.leftPanelActiveTab = "Chat";
@@ -293,7 +307,20 @@ watch(
 	(state, before) => before === "Installing" && state !== before && load(),
 );
 
-const setEnabled = async (enabled: boolean) => {
+const isEnableDialogOpen = ref(false);
+
+/** An app installs its plugin without asking anyone. So enabling it asks the manager to trust its code. */
+const setEnabled = (enabled: boolean) => {
+	if (enabled && details.value?.source === "App") isEnableDialogOpen.value = true;
+	else saveEnabled(enabled);
+};
+
+const enable = () => {
+	isEnableDialogOpen.value = false;
+	saveEnabled(true);
+};
+
+const saveEnabled = async (enabled: boolean) => {
 	working.value = true;
 	try {
 		await setPluginEnabled(props.plugin, enabled);

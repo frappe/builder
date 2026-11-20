@@ -5,8 +5,8 @@
 		<div class="flex min-h-7 items-center gap-2">
 			<span class="size-3.5 shrink-0" :class="icon" />
 			<template v-if="running">
-				<span class="animate-shine shrink-0 text-sm text-ink-gray-7">Building {{ page.title }}</span>
-				<span class="min-w-0 truncate text-xs text-ink-gray-5">{{ currentStep }}</span>
+				<span class="animate-shine min-w-0 truncate text-sm text-ink-gray-7">Building {{ page.title }}</span>
+				<span class="min-w-0 flex-1 truncate text-xs text-ink-gray-5">{{ currentStep }}</span>
 			</template>
 			<template v-else>
 				<span class="min-w-0 flex-1 truncate text-sm text-ink-gray-7">
@@ -36,7 +36,7 @@
 			<AITurnTimeline v-if="steps.length" :steps="steps" />
 			<div
 				v-if="text"
-				class="ai-prose prose prose-sm max-w-none break-words text-p-sm text-ink-gray-7"
+				class="ai-prose prose prose-sm max-w-none text-p-sm text-ink-gray-7"
 				v-html="renderMarkdown(text)" />
 			<button
 				v-if="debug"
@@ -75,7 +75,7 @@ const open = ref(false);
 
 const icon = computed(() => {
 	if (props.running) return "lucide-file-plus text-ink-gray-5";
-	return props.page.built ? "lucide-check text-ink-green-6" : "lucide-circle-alert text-ink-red-5";
+	return props.page.built ? "lucide-check text-ink-gray-6" : "lucide-circle-alert text-ink-red-5";
 });
 
 /** What the build is on right now: the running step, else the last one. */

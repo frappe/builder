@@ -5,6 +5,7 @@ from unittest.mock import patch
 from frappe.tests.utils import FrappeTestCase
 
 from builder.ai.agent.tools.web import (
+	MAX_LINKS,
 	MAX_RESEARCH_PER_TURN,
 	MAX_URL_READS_PER_TURN,
 	extract_title,
@@ -115,6 +116,35 @@ class TestReadUrl(FrappeTestCase):
 			out,
 		)
 		self.assertNotIn("/de/", out)
+
+	def test_lists_where_links_go_and_which_images_show(self):
+		markup = (
+			b'<nav><a href="/">Home</a> <a href="#top">Top</a> <a href="javascript:void(0)">Menu</a></nav>'
+			b'<a href="/posts/first-light"><span>First</span> light</a>'
+			b'<a href="/posts/first-light">Read more</a>'
+			b'<a href="https://video.example.org/42" aria-label="Talk video"><svg></svg></a>'
+			b'<a href="/about"><img src="/lighthouse.jpg" alt="A lighthouse at dusk"></a>'
+			b'<img src="data:image/png;base64,xx">'
+		)
+		with fetched(markup, url="https://example.com/"):
+			out = run_read_url(ctx(), {"url": "https://example.com/"})
+
+		self.assertIn(
+			"Links on the page:\n- Home: https://example.com/\n- First light: https://example.com/posts/first-light\n"
+			"- Talk video: https://video.example.org/42\n- A lighthouse at dusk: https://example.com/about",
+			out,
+		)
+		self.assertIn("Images on the page:\n- A lighthouse at dusk: https://example.com/lighthouse.jpg", out)
+		self.assertNotIn("#top", out)
+		self.assertNotIn("javascript:", out)
+		self.assertNotIn("data:image", out)
+
+	def test_caps_the_link_list(self):
+		markup = "".join(f'<a href="/p/{i}">Post {i}</a>' for i in range(MAX_LINKS + 10)).encode()
+		with fetched(markup):
+			out = run_read_url(ctx(), {"url": "https://example.com"})
+
+		self.assertIn("… and 10 more", out)
 
 	def test_refuses_non_http_schemes(self):
 		self.assertIn("FAILED", run_read_url(ctx(), {"url": "ftp://example.com/file"}))

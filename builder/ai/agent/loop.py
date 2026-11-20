@@ -50,11 +50,13 @@ import time
 import frappe
 
 from builder.ai import llm, locks, markup
+from builder.ai.agent import next_steps
 from builder.ai.agent.edits import EditScript, composition_notes
 from builder.ai.agent.page_changes import PageChanges, page_row
 from builder.ai.agent.registry import ToolRegistry, build_default_registry
 from builder.ai.agent.selectors import walk_blocks
 from builder.ai.agent.tree import WorkingTree
+from builder.ai.attachments import TurnImages
 from builder.ai.block_codec import BlockCodec
 from builder.ai.models import ModelRegistry
 from builder.ai.prompts import Prompts
@@ -370,8 +372,7 @@ class AgentRunner:
 		next_builds: list[dict] | None = None,
 		session_id: str | None = None,
 		selected_block_ids: list[str] | None = None,
-		image_url: str | None = None,
-		image_file_url: str | None = None,
+		images: list[dict] | None = None,
 		canvas_theme: str | None = None,
 		effort: str | None = None,
 		registry: ToolRegistry | None = None,
@@ -397,14 +398,15 @@ class AgentRunner:
 		# show the whole turn as one line about that page.
 		self.build_page = page_row(page_id) if self.off_screen else None
 		self.selected_block_ids = selected_block_ids or []
-		self.image_url = image_url
-		self.image_file_url = image_file_url
+		self.images = TurnImages.from_payload(images)
 		self.canvas_theme = canvas_theme
 		self.effort = llm.Effort(effort)
 		self.registry = registry or build_default_registry()
 		# Skills in context, including read_skill results; reset on every turn.
 		self.attached_skills: set[str] = set()
 		self.round_skills: set[str] = set()
+		# Tools that can't work for this user or model, set once the turn's model is known.
+		self.unavailable_tools: frozenset[str] = frozenset()
 		# The editor-URL prefix is site-configurable; resolve it so the links the
 		# agent writes (e.g. to a page it built off-canvas) actually work here.
 		self.system_prompt = (system_prompt or Prompts.AGENT_SYSTEM).replace(
@@ -438,9 +440,13 @@ class AgentRunner:
 		# since the last round was committed. finish_turn compares against it so a
 		# summary already on screen isn't said twice.
 		self.live_text = ""
+		# The part of live_text streamed so far: it stops short of next-step tags.
+		self.live_shown = ""
 		# preview_page calls this turn — hard-capped so a screenshot loop can't run up cost.
 		self.preview_count = 0
 		self.image_views = 0
+		# Cream grounds set_design_token turned back this turn; the same value again is deliberate.
+		self.stock_grounds: set[str] = set()
 		# read_page calls this turn — same idea, a reference sweep can't run up context.
 		self.page_read_count = 0
 		# A page generated this turn that no preview has looked at yet: a closing
@@ -694,6 +700,26 @@ class AgentRunner:
 			)
 		return context
 
+	def build_changed_since_context(self) -> str:
+		"""The replayed replies describe the page as this chat last left it; without this,
+		a page changed since reads as one those replies still describe."""
+		last = AISession.page_mark(self.session_id, self.page_id)
+		if not last or last == markup.page_mark(self.page_root()):
+			return ""
+		return (
+			"This page has changed outside this chat since your last turn on it. Where your earlier "
+			"replies describe it differently, go by the page as it is now, and keep those changes "
+			"unless asked."
+		)
+
+	def page_marks(self) -> dict:
+		"""How this turn leaves its page, for the next turn to tell what changed since."""
+		from builder.ai import page_writer
+
+		if not (self.page_id and self.tree):
+			return {}
+		return {"pageMarks": {self.page_id: markup.page_mark(page_writer.load_page_root(self.page_id))}}
+
 	def build_agent_context(self) -> str:
 		"""Instructions installed apps give for the open page, through the builder_agent_context hook."""
 		if not self.page_id:
@@ -715,7 +741,7 @@ class AgentRunner:
 		if name in self.attached_skills:
 			return ""
 		self.attached_skills.add(name)
-		return f"{reason}, here is the {name} skill in full; no read_skill needed this turn:\n\n{Skills.read(name)}"
+		return f"{reason}, here is the {name} skill in full; no read_skill needed this turn:\n\n{Skills.read(name, self.session_id)}"
 
 	def require_skill(self, name: str) -> str | None:
 		# A read alongside a write has not reached the model that authored that write.
@@ -762,6 +788,7 @@ class AgentRunner:
 		# ahead of it generally prevents reuse across turns.
 		blocks = [
 			self.build_open_page_context(),
+			self.build_changed_since_context(),
 			self.build_agent_context(),
 			self.build_initial_page_context(),
 			self.build_memory_context(),
@@ -775,23 +802,9 @@ class AgentRunner:
 		user_text = self.prompt
 		if self.selected_block_ids:
 			user_text += "\n\n" + self.attached_blocks_note()
-		if self.image_url and self.image_file_url:
-			# The image itself rides below; the model also needs its ADDRESS — the
-			# only handle a brief can carry into the generation step.
-			user_text += (
-				f"\n\n(Attached image, saved at {self.image_file_url} — when it should guide a build, "
-				f"carry that exact url in the brief on its own line: REFERENCE IMAGE: {self.image_file_url})"
-			)
-		if self.image_url:
-			messages.append(
-				{
-					"role": "user",
-					"content": [
-						{"type": "text", "text": user_text},
-						{"type": "image_url", "image_url": {"url": self.image_url}},
-					],
-				}
-			)
+		user_text += self.images.brief_note()
+		if image_parts := self.images.parts():
+			messages.append({"role": "user", "content": [{"type": "text", "text": user_text}, *image_parts]})
 		else:
 			messages.append({"role": "user", "content": user_text})
 		self.prompt_index = len(messages) - 1
@@ -870,11 +883,12 @@ class AgentRunner:
 		stream = llm.complete_with_tools(
 			self.loop_model,
 			messages,
-			self.registry.schemas(self.round_skills),
+			self.registry.schemas(self.round_skills, self.unavailable_tools),
 			self.effort.params("agent"),
 			api_key=self.api_key,
 			stream=True,
 			timeout=self.effort.stall_timeout,
+			cache_key=self.session_id,
 		)
 
 		content_parts: list[str] = []
@@ -887,7 +901,7 @@ class AgentRunner:
 		# A retry re-issues the identical completion, so whatever the failed attempt
 		# streamed has to come off the screen first or the answer arrives doubled.
 		if self.live_text:
-			self.live_text = ""
+			self.live_text = self.live_shown = ""
 			self.emit("stream", chunk="", replace=True)
 		thinking = self.add_step("thinking", status="running")
 		thinking_since: float | None = time.monotonic()
@@ -921,7 +935,7 @@ class AgentRunner:
 					# to have called tools commits this as a narration step below; the
 					# last round's text is the turn's answer and stays as the content.
 					self.live_text += content
-					self.emit("stream", chunk=content)
+					self.stream_visible()
 				for tc in tool_calls or []:
 					idx = tc.index if tc.index is not None else 0
 					entry = acc.setdefault(idx, {"id": None, "name": None, "args": ""})
@@ -1164,7 +1178,9 @@ class AgentRunner:
 		"terminal" (ends the turn), "server" (run the handler now), or "client"
 		(apply to the working tree + mirror to the canvas). A client tool with a
 		server twin (page scripts) always runs as a server op — see
-		SCRIPT_TWIN_TOOLS."""
+		SCRIPT_TWIN_TOOLS. "unavailable": a tool this user or model can't use."""
+		if op["tool_name"] in self.unavailable_tools:
+			return "unavailable"
 		if self.other_page(op):
 			return "other_page"
 		tool = self.registry.get(op["tool_name"])
@@ -1276,6 +1292,10 @@ class AgentRunner:
 		kind = self.op_kind(op)
 		if kind == "client":
 			return client_results[id(op)]
+		if kind == "unavailable":
+			return (
+				f"FAILED: {op['tool_name']} isn't available to this user on this site. Use the other tools."
+			)
 		if kind == "other_page":
 			return self.edit_other_page(op)
 		tool = self.registry.get(op["tool_name"])
@@ -1319,11 +1339,19 @@ class AgentRunner:
 		as they were written; this fixes them in the timeline so the next round starts
 		with a clean slate, and stands in with a description of the ops when the model
 		called tools without saying anything."""
-		note = (text or "").strip()
+		note = next_steps.split(text or "")[0].strip()
 		if not note and applied:
 			note = self.describe_operations(applied)
-		self.live_text = ""
+		self.live_text = self.live_shown = ""
 		self.add_step("text", status="done", text=note)
+
+	def stream_visible(self) -> None:
+		"""Stream what the model wrote since the last chunk, short of any next-step
+		tags: those become buttons under the reply, never text."""
+		shown = next_steps.visible(self.live_text)
+		if len(shown) > len(self.live_shown):
+			self.emit("stream", chunk=shown[len(self.live_shown) :])
+			self.live_shown = shown
 
 	def flush_pending_images(self, messages: list[dict]) -> None:
 		"""Images a tool captured this round (preview_page screenshots) ride a
@@ -1362,7 +1390,11 @@ class AgentRunner:
 		msg = "Stopped. Kept what was built so far." if self.applied_operations else "Cancelled."
 		msg += self.page_changes.dropped_note()
 		AISession.try_append_message(
-			self.session_id, "assistant", msg, message_type="status", metadata={"status": "cancelled"}
+			self.session_id,
+			"assistant",
+			msg,
+			message_type="status",
+			metadata={"status": "cancelled", **self.page_marks()},
 		)
 		self.emit("complete", message=msg, after_commit=True)
 
@@ -1370,7 +1402,11 @@ class AgentRunner:
 		"""End the turn with a persisted error message + error event."""
 		message += self.page_changes.dropped_note()
 		AISession.try_append_message(
-			self.session_id, "assistant", message, message_type="status", metadata={"status": "error"}
+			self.session_id,
+			"assistant",
+			message,
+			message_type="status",
+			metadata={"status": "error", **self.page_marks()},
 		)
 		self.emit("error", message=message, after_commit=True)
 
@@ -1421,6 +1457,7 @@ class AgentRunner:
 		# generation taste, and silently swapping a deliberately-picked model is the
 		# surest way to degrade output.
 		self.loop_model = self.model
+		self.unavailable_tools = self.registry.unavailable(self)
 		label = ModelRegistry.get_label(self.loop_model)
 		self.emit("progress", message=f"Thinking with {label}" if label else "Thinking…")
 
@@ -1534,6 +1571,7 @@ class AgentRunner:
 
 	def finish_turn(self, summary_text: str, started: float):
 		"""Wrap up a completed loop: pick/emit the final summary and persist the turn."""
+		summary_text, suggestions = next_steps.split(summary_text)
 		if self.page_changes and not summary_text:
 			summary_text = self.page_changes.reply()
 		if not self.applied_operations and not summary_text:
@@ -1574,7 +1612,7 @@ class AgentRunner:
 		# The final round's words already reached the chat as they were written. Only
 		# say it again when it is NOT what the user is looking at — a synthesised
 		# summary, or one of the guards above having replaced what the model wrote.
-		if summary_text != self.live_text:
+		if summary_text != next_steps.split(self.live_text)[0]:
 			self.emit("stream", chunk=summary_text, replace=True)
 
 		# Hit the per-turn round cap → the work is INCOMPLETE. Say so, so a big edit
@@ -1604,6 +1642,7 @@ class AgentRunner:
 		final_metadata = {
 			"status": "complete",
 			"model": self.model,
+			**self.page_marks(),
 			"operations": len(self.applied_operations),
 			# Trace for the agent debugger: why the turn ended + what the model did each
 			# round. Explains cases like "only 2 blocks updated" at a glance.
@@ -1635,6 +1674,8 @@ class AgentRunner:
 			final_metadata["plugins"] = self.plugins_written
 		if self.web_sources:
 			final_metadata["sources"] = self.web_sources
+		if suggestions:
+			final_metadata["suggestions"] = suggestions
 		if timeline := self.timeline():
 			# The turn's timeline — rendered live from step events, rehydrated from
 			# here on a session reload.
@@ -1655,7 +1696,8 @@ class AgentRunner:
 	def propose_page_changes(self) -> None:
 		"""The confirm card for the turn's other-page edits and new pages, after the
 		reply so it is the chat's last message (only that one takes a click). The
-		complete event's session reload brings it in."""
+		complete event's session reload brings it in. Approved pages still to build
+		wait for its answer: a build turn starting now would put the card out of reach."""
 		if not self.page_changes:
 			return
 		AISession.try_append_message(
@@ -1668,12 +1710,14 @@ class AgentRunner:
 				"status": "pending_action",
 				"kind": "page_changes",
 				"payload": self.page_changes.payload(),
+				"next_builds": self.next_builds,
 			},
 		)
 
 	def build_next_page(self) -> None:
-		"""Approved new pages are built one turn each; this turn hands on the rest."""
-		if self.next_builds:
+		"""Approved new pages are built one turn each; this turn hands on the rest,
+		or its card does once the user answers it."""
+		if self.next_builds and not self.page_changes:
 			from builder.ai.api import queue_page_build
 
 			queue_page_build(self.session_id, self.next_builds, self.user)
@@ -1751,9 +1795,9 @@ class AgentRunner:
 		root = ops[0]["args"]["blocks"][0]
 		self.tree = WorkingTree(root)
 		return (
-			"Page generated and saved. Now finish the build: add the client scripts the plan "
-			"calls for (set_page_script), fix obvious breakage with edit_page, verify "
-			"with preview_page at most once, then finish with a short summary."
+			"Page generated and saved. Now finish the build: add the page scripts the brief "
+			"calls for (set_page_script), preview_page it and fix what's broken with edit_page, "
+			"preview again only to confirm a layout fix, then finish with a short summary."
 			f"{self.script_hook_gap_note(root)}{composition_notes(root)}{self.dropped_lines_note()}\n"
 			f"{render_page_context(root, sets=self.style_sets)}",
 			ops,
@@ -1834,4 +1878,8 @@ class AgentRunner:
 def run_agent_job(prompt: str, model: str, **kwargs):
 	# Resolved here so the key never sits in Redis; jobs queued by older code still pass one.
 	kwargs.pop("api_key", None)
+	# ...and jobs queued before a turn could carry several images pass one, by its old names.
+	if image := kwargs.pop("image_url", None):
+		kwargs["images"] = [{"data": image, "url": kwargs.get("image_file_url") or ""}]
+	kwargs.pop("image_file_url", None)
 	AgentRunner(prompt, model, llm.resolve_api_key(model), **kwargs).run()

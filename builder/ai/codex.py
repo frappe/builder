@@ -55,13 +55,14 @@ def complete(
 	provider: str,
 	tools: list | None = None,
 	stream: bool = False,
+	cache_key: str | None = None,
 ):
 	"""Chat-completions-compatible entry for the codex route: an iterator of
 	chunks when streaming, else the response text (tool calls need streaming).
 	Of `params` (the TASK_PARAMS tier) only the reasoning effort is sent: the
 	codex backend 400s on temperature AND on max_output_tokens, and budgets
 	output itself."""
-	payload = build_payload(model, messages, tools, params.get("reasoning_effort"))
+	payload = build_payload(model, messages, tools, params.get("reasoning_effort"), cache_key)
 	log(f"Codex | model={model} stream={stream} tools={len(tools or [])} messages={len(messages)}")
 	chunks = stream_chunks(provider, payload)
 	if stream:
@@ -131,10 +132,16 @@ def open_stream(provider: str, payload: dict) -> requests.Response:
 
 
 def post_stream(payload: dict, access: str, account: str) -> requests.Response:
+	headers = request_headers(access, account)
+	if key := payload.get("prompt_cache_key"):
+		# The backend reuses a conversation's prompt cache only when its requests name the
+		# conversation, as the Codex CLI's do: without these, a round's prefix was reused
+		# about half the time; with them, nearly always.
+		headers |= {"session_id": key, "conversation_id": key}
 	return requests.post(
 		f"{API_BASE}/codex/responses",
 		json=payload,
-		headers=request_headers(access, account),
+		headers=headers,
 		stream=True,
 		timeout=(CONNECT_TIMEOUT, READ_TIMEOUT),
 	)
@@ -347,7 +354,9 @@ def error_detail(event: dict) -> str:
 # --- chat transcript -> Responses payload ------------------------------------
 
 
-def build_payload(model: str, messages: list, tools: list | None, effort: str | None = None) -> dict:
+def build_payload(
+	model: str, messages: list, tools: list | None, effort: str | None = None, cache_key: str | None = None
+) -> dict:
 	"""No tuning knobs on purpose: the backend rejects temperature and
 	max_output_tokens outright (400 Unsupported parameter). The reasoning
 	setting is required; without it the summary text never streams and the
@@ -366,6 +375,8 @@ def build_payload(model: str, messages: list, tools: list | None, effort: str | 
 	}
 	if tools:
 		payload["tools"] = responses_tools(tools)
+	if cache_key:
+		payload["prompt_cache_key"] = cache_key
 	return payload
 
 

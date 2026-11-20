@@ -23,6 +23,8 @@ MAX_URL_READS_PER_TURN = 5
 MAX_RESEARCH_PER_TURN = 2
 MAX_BYTES = 1_000_000
 TEXT_LIMIT = 10_000
+MAX_LINKS = 150
+MAX_IMAGES = 40
 FETCH_TIMEOUT = 12
 USER_AGENT = "Mozilla/5.0 (compatible; FrappeBuilderAI/1.0)"
 
@@ -57,9 +59,12 @@ def run_read_url(ctx, args: dict) -> str:
 	note_source(ctx, final_url, fields)
 	title = extract_title(raw)
 	head = f"Read {final_url}" + (f" — '{title}'" if title else "")
+	tail = ""
 	if "html" in content_type:
 		head += data_links_note(raw, final_url)
-	return f"{head}\n\n{text}" if text.strip() else f"{head}\n\n(no readable text on the page)"
+		tail = PageLinks.read(raw, final_url)
+	body = text if text.strip() else "(no readable text on the page)"
+	return f"{head}\n\n{body}{tail}"
 
 
 def fetch_public(url: str):
@@ -156,6 +161,70 @@ class DataLinks(HTMLParser):
 			self.links.append(link)
 
 
+class PageLinks(HTMLParser):
+	"""Where a page's links go and which images it shows. The text keeps a link's words but
+	not its address, so a page rebuilt from the text alone links every item to '#'."""
+
+	def __init__(self, base_url: str):
+		super().__init__()
+		self.base_url = base_url
+		self.links: dict[str, str] = {}
+		self.images: dict[str, str] = {}
+		self.href: str | None = None
+		self.words: list[str] = []
+		self.label = ""
+
+	@classmethod
+	def read(cls, markup: str, base_url: str) -> str:
+		parser = cls(base_url)
+		parser.feed(markup)
+		return parser.listing("Links on the page", parser.links, MAX_LINKS) + parser.listing(
+			"Images on the page", parser.images, MAX_IMAGES
+		)
+
+	def handle_starttag(self, tag, attrs):
+		attrs = dict(attrs)
+		if tag == "a":
+			self.open_link(attrs)
+		elif tag == "img":
+			self.add_image(attrs)
+
+	def handle_data(self, data):
+		if self.href:
+			self.words.append(data)
+
+	def handle_endtag(self, tag):
+		if tag == "a" and self.href:
+			text = " ".join(" ".join(self.words).split()) or self.label
+			if text:
+				self.links.setdefault(self.href, text[:80])
+			self.href = None
+
+	def open_link(self, attrs: dict):
+		href = (attrs.get("href") or "").strip()
+		skipped = not href or href.startswith(("#", "javascript:"))
+		self.href = None if skipped else urljoin(self.base_url, href)
+		self.words = []
+		self.label = attrs.get("aria-label") or attrs.get("title") or ""
+
+	def add_image(self, attrs: dict):
+		src = (attrs.get("src") or attrs.get("data-src") or "").strip()
+		alt = (attrs.get("alt") or "").strip()
+		if src and not src.startswith("data:"):
+			self.images.setdefault(urljoin(self.base_url, src), alt[:80] or "(no alt text)")
+		if self.href and alt:
+			self.words.append(alt)
+
+	@staticmethod
+	def listing(heading: str, entries: dict[str, str], limit: int) -> str:
+		if not entries:
+			return ""
+		rows = [f"- {text}: {url}" for url, text in list(entries.items())[:limit]]
+		if len(entries) > limit:
+			rows.append(f"… and {len(entries) - limit} more")
+		return f"\n\n{heading}:\n" + "\n".join(rows)
+
+
 def read_bounded(response) -> str:
 	chunks, total = [], 0
 	for chunk in response.iter_content(chunk_size=65536, decode_unicode=False):
@@ -196,6 +265,14 @@ RESEARCH_SYSTEM = (
 RESEARCH_LIMIT = 6_000
 
 
+def can_research(ctx) -> bool:
+	"""Research runs on OpenRouter's ':online' variant of the loop model, so other routes can't."""
+	from builder.ai import llm
+
+	routed, _overrides, _api_key = llm.route(ctx.loop_model or ctx.model, ctx.api_key)
+	return routed.startswith("openrouter/")
+
+
 def run_research(ctx, args: dict) -> str:
 	question = (args.get("question") or "").strip()
 	if not question:
@@ -233,7 +310,8 @@ read_url = Tool(
 	side="server",
 	handler=run_read_url,
 	description=(
-		"Fetch ONE public web page (http/https) and return its readable text. Use it when "
+		"Fetch ONE public web page (http/https) and return its readable text, then where its "
+		"links go and which images it shows. Use it when "
 		"the user points at a specific external page — their current site, a business "
 		"listing, a reference they want content taken from. External pages are SOURCE "
 		"MATERIAL (copy, structure, tone), not something you can clone pixel-perfect or "
@@ -260,6 +338,7 @@ research = Tool(
 	name="research",
 	side="server",
 	handler=run_research,
+	available=can_research,
 	description=(
 		"Delegate an open question to the web research specialist and get back verified "
 		"findings with source URLs. Use it for facts you must not invent: a real "

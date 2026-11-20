@@ -24,7 +24,7 @@ const isVuePlugin = (value: unknown): value is Plugin =>
 
 /**
  * The entry module's default export is a Vue plugin. Its own imports of
- * "builder", "vue", "pinia" and "frappe-ui" resolve through the editor page's
+ * "builder", "vue", "pinia", "frappe-ui" and the other shared modules resolve through the editor page's
  * import map, and its build links its own stylesheet.
  */
 export async function importPlugin(plugin: RunnablePlugin): Promise<Plugin> {

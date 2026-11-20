@@ -34,7 +34,8 @@ edit_page = Tool(
 				"description": (
 					"Another page of this site to change (id, route or title), with refs from a "
 					"read_page of it this turn. Leave out for the page you're working on. These "
-					"edits are held, not applied: the user confirms them on a card when your turn ends."
+					"edits are held, not applied: the user confirms them on a card when your turn ends, so "
+					"your reply says what you prepared, never that it's done."
 				),
 			},
 			"reply": {
