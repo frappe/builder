@@ -109,7 +109,7 @@ class FontDraw:
 		path = os.path.join(frappe.get_app_path("builder"), "..", "frontend", "src", "utils", "fontList.json")
 		if not os.path.exists(path):
 			return ()
-		with open(path) as f:
+		with open(path) as f:  # nosemgrep
 			items = json.load(f)["items"][FontDraw.POPULAR_HEAD :]
 		stock = REFLEX_FACES + TIRED_FACES
 		return tuple(

@@ -237,7 +237,7 @@ def is_empty_section(block: dict) -> bool:
 	if block.get("element") not in SECTION_TAGS or is_hidden(block):
 		return False
 	subtree = [b for b, _ in walk_blocks(block)]
-	return not any(map(shows_content, subtree)) and any(map(takes_room, subtree))
+	return not any(shows_content(b) for b in subtree) and any(takes_room(b) for b in subtree)
 
 
 def takes_room(block: dict) -> bool:
