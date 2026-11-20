@@ -53,6 +53,7 @@ from builder.utils import (
 	get_builder_path,
 	is_bulk_import,
 	is_component_used,
+	is_isolated,
 	is_mounted,
 	merge_raw_styles_into_base_styles,
 	normalize_legacy_raw_styles,
@@ -742,10 +743,8 @@ class BuilderPage(WebsiteGenerator):
 		if not html:
 			html = self.get_preview_html()
 
-		generate_preview(
-			html,
-			local_path,
-		)
+		# an isolated site's pages load nothing from outside, and its server fetches nothing from outside for them
+		generate_preview(html, local_path, block_external=is_isolated())
 		self.db_set("preview", public_path, commit=True, update_modified=False)
 
 	def get_preview_html(self, color_scheme: str | None = None) -> str:

@@ -3,10 +3,15 @@ import sys
 from contextlib import ExitStack
 from unittest.mock import Mock, patch
 
+import frappe
 from frappe.tests.utils import FrappeTestCase
 
-from builder.ai.agent.tools.preview import render_page_image
-from builder.html_preview_image import render_full_page
+from builder.ai.agent.loop import AgentRunner
+from builder.ai.agent.tools.preview import attach_block_images, render_page_image, run_preview_page
+from builder.ai.test_page_changes import heading, make_page
+from builder.builder.doctype.builder_page.builder_page import BuilderPage
+from builder.builder.tests.hosting_hooks import hosting_hooks, isolate, page_tools, preview_tools
+from builder.html_preview_image import render, render_full_page
 
 
 class TestRenderPageImage(FrappeTestCase):
@@ -17,7 +22,9 @@ class TestRenderPageImage(FrappeTestCase):
 			self.assertEqual(render_page_image(page, "mobile", "dark"), b"preview")
 
 		page.get_preview_html.assert_called_once_with(color_scheme="dark")
-		render.assert_called_once_with("<p>Hi</p>", width=390, height=844, max_height=8000)
+		render.assert_called_once_with(
+			"<p>Hi</p>", width=390, height=844, max_height=8000, block_external=False
+		)
 
 
 class TestFullPageCapture(FrappeTestCase):
@@ -104,6 +111,94 @@ class TestFullPageCapture(FrappeTestCase):
 			self.assertEqual(render_full_page("<p>Hi</p>", width=390, height=844, max_height=8000), b"tall")
 
 		render.assert_called_once_with("<p>Hi</p>", width=390, height=8000)
+
+	def test_off_the_web_chromium_fails_what_is_not_on_this_site(self):
+		"""Frappe's interceptor then fails every request off the host instead of fetching it"""
+		self.page.send.side_effect = lambda *args: ({"contentSize": {"height": 900}, "data": ""}, None)
+
+		render_full_page("<p>Hi</p>")
+		self.assertIs(self.page.block_external_requests, False)
+
+		render_full_page("<p>Hi</p>", block_external=True)
+		self.assertIs(self.page.block_external_requests, True)
+
+	def test_off_the_web_no_renderer_that_fetches_or_sends_the_page_out_is_used(self):
+		with (
+			patch.dict(sys.modules, {"frappe.utils.chromium": None}),
+			patch("builder.html_preview_image.render_via_service") as service,
+			self.assertRaisesRegex(RuntimeError, "off the web"),
+		):
+			render("<p>Hi</p>", block_external=True)
+
+		service.assert_not_called()
+
+	def test_a_viewport_render_off_the_web_is_one_screenful_of_the_blocking_capture(self):
+		with patch("builder.html_preview_image.render_full_page", return_value=b"thumb") as full_page:
+			self.assertEqual(render("<p>Hi</p>", width=1280, height=720, block_external=True), b"thumb")
+
+		full_page.assert_called_once_with(
+			"<p>Hi</p>", width=1280, height=720, max_height=720, block_external=True
+		)
+
+
+class TestPreviewOffTheWeb(FrappeTestCase):
+	"""A hosting app that withholds Bob's web tools (frappe.page's own site) keeps its server off the web, and
+	its pages load nothing from outside: the screenshots Bob takes and the page thumbnails fetch nothing either."""
+
+	def setUp(self):
+		super().setUp()
+		self.page_id = make_page("Studio", f"pv-{frappe.generate_hash(length=6)}", [heading("pvhead", "Hi")])
+
+	def blocking(self, runner) -> bool:
+		with (
+			patch("builder.html_preview_image.render_full_page", return_value=b"webp") as full_page,
+			patch("builder.ai.agent.tools.preview.refresh_page_thumbnail"),
+		):
+			run_preview_page(runner, {})
+		return full_page.call_args.kwargs["block_external"]
+
+	def test_bobs_screenshot_fetches_nothing_from_outside_off_the_web(self):
+		with hosting_hooks(builder_agent_tools=[page_tools, preview_tools]):
+			kept_off = AgentRunner("hi", model="m", api_key="k", page_id=self.page_id)
+		with hosting_hooks(builder_agent_tools=[]):
+			anywhere = AgentRunner("hi", model="m", api_key="k", page_id=self.page_id)
+
+		self.assertTrue(self.blocking(kept_off))
+		self.assertFalse(self.blocking(anywhere))
+
+	def test_a_web_image_is_not_fetched_for_bob_to_view_off_the_web(self):
+		with hosting_hooks(builder_agent_tools=[page_tools]):
+			runner = AgentRunner("hi", model="m", api_key="k", page_id=self.page_id)
+		block = {"element": "img", "attributes": {"src": "https://images.example.com/hero.png"}}
+
+		with (
+			patch("builder.ai.models.ModelRegistry.supports_vision", return_value=True),
+			patch("builder.ai.agent.tools.web.fetch_public") as fetch,
+			patch("builder.html_preview_image.render") as image,
+		):
+			out = attach_block_images(runner, block)
+
+		self.assertIn("can't be shown to you", out)
+		fetch.assert_not_called()
+		image.assert_not_called()
+
+	def test_an_isolated_sites_page_thumbnail_fetches_nothing_from_outside(self):
+		page = Mock(name="page")
+
+		def thumbnail(*hooks) -> bool:
+			with (
+				hosting_hooks(builder_is_isolated=list(hooks)),
+				patch(
+					"builder.builder.doctype.builder_page.builder_page.get_builder_page_preview_file_paths",
+					return_value=("/files/p.webp", "/tmp/p.webp"),
+				),
+				patch("builder.builder.doctype.builder_page.builder_page.generate_preview") as generate,
+			):
+				BuilderPage.generate_page_preview_image(page, html="<p>Hi</p>")
+			return generate.call_args.kwargs["block_external"]
+
+		self.assertTrue(thumbnail(isolate))
+		self.assertFalse(thumbnail())
 
 
 class TestPreviewPageErrors(FrappeTestCase):
