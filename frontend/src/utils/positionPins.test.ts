@@ -104,6 +104,35 @@ describe("BlockPins.toggle keeps the block where it is", () => {
 	});
 });
 
+describe("BlockPins on a fixed block", () => {
+	const fixed = (styles: Record<string, string>) => pinsOf({ position: "fixed", ...styles });
+
+	it("carries a vertical distance over to the side it pins, since the frame is not the window", () => {
+		expect(fixed({ top: "20px", right: "20px" }).toggle("y", "end", box)).toEqual({
+			bottom: "20px",
+			height: null,
+		});
+		expect(fixed({ top: "20px", bottom: "20px" }).toggle("y", "start", box)).toEqual({ top: null });
+		expect(fixed({ top: "10%" }).setSide("top", "", box)).toEqual({
+			top: "50%",
+			bottom: null,
+			translate: "0 -50%",
+		});
+		expect(fixed({ top: "50%", translate: "0 -50%" }).toggle("y", "end", box)).toEqual({
+			top: null,
+			bottom: "0px",
+			translate: null,
+		});
+	});
+
+	it("still measures a horizontal side, since the frame is as wide as the window", () => {
+		expect(fixed({ top: "20px", right: "260px", width: "100px" }).toggle("x", "start", box)).toEqual({
+			left: "40px",
+			width: null,
+		});
+	});
+});
+
 describe("BlockPins.setSide", () => {
 	it("pins an unpinned side typed into, stretching the axis", () => {
 		expect(pinsOf({ left: "40px", width: "100px" }).setSide("right", "20px", box)).toEqual({

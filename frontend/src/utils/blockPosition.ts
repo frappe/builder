@@ -81,20 +81,18 @@ class BlockPosition {
 		};
 	}
 
-	// switching position keeps the block where it is, so Free and Fixed start from its spot
+	// switching position keeps the block where it is, so Free and Fixed start from its spot.
+	// Between Free and Fixed the pins carry over as written: where a fixed block shows in the
+	// editor's frame is not where it shows in the window.
 	setType(type: string) {
-		const from = String(this.block.getStyle("position") || "static");
+		const wasFree = FREE_POSITIONS.includes(String(this.block.getStyle("position")));
 		const pins = this.pins;
-		const box = FREE_POSITIONS.includes(type) ? this.measureAs(type) : null;
+		const box = FREE_POSITIONS.includes(type) && !wasFree ? this.measureAs(type) : null;
 		this.writePosition(type);
 		if (type === "absolute") this.positionParent();
-		if (FREE_POSITIONS.includes(type)) {
-			if (box) this.apply(this.placeFree(pins, box, FREE_POSITIONS.includes(from)));
-		} else if (type === "sticky") {
-			this.makeSticky(FREE_POSITIONS.includes(from));
-		} else {
-			this.apply(pins.clear());
-		}
+		if (box) this.apply(this.placeFree(pins, box));
+		else if (type === "sticky") this.makeSticky(wasFree);
+		else if (!FREE_POSITIONS.includes(type)) this.apply(pins.clear());
 	}
 
 	apply(patch: StylePatch) {
@@ -130,11 +128,7 @@ class BlockPosition {
 		return new BlockPins((property) => values[property]);
 	}
 
-	private placeFree(pins: BlockPins, box: Box, wasFree: boolean) {
-		if (wasFree) {
-			const keep = (axis: Axis) => (pins.axis(axis).pin === "none" ? "start" : pins.axis(axis).pin);
-			return pins.place({ x: keep("x"), y: keep("y") }, box);
-		}
+	private placeFree(pins: BlockPins, box: Box) {
 		const patch = pins.place({ x: "start", y: "start" }, box);
 		// in flow it filled the line; out of flow an auto width would shrink to its content
 		if (!isSet(this.read("width"))) patch.width = `${Math.round(box.x.size)}px`;

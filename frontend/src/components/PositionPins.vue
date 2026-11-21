@@ -119,7 +119,8 @@ const pinnedTitle = (side: Side) => {
 // measured from the box as it shows, so a centred block counts its translate
 const shownDistance = (side: Side) => {
 	const axisBox = box.value?.[axisOf(side)];
-	if (!axisBox) return "";
+	// a fixed block's vertical distances are to the window, which the editor's frame is not
+	if (!axisBox || (props.fixed && axisOf(side) === "y")) return "";
 	const shift = pins.value.axis(axisOf(side)).pin === "center" ? axisBox.size / 2 : 0;
 	const distance = edgeOf(side) === "start" ? axisBox.start - shift : axisBox.end + shift;
 	return `${Math.round(distance)}px`;

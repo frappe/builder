@@ -27,6 +27,13 @@ type AxisPin = Edge | "stretch" | "center" | "none";
 // a property set to null is unset
 type StylePatch = Record<string, string | null>;
 type AxisChange = { pin: AxisPin; styles: StylePatch };
+type AxisContext = {
+	centered: boolean;
+	// centring writes a translate, so one written by someone else rules it out
+	custom: boolean;
+	// the vertical axis of a fixed block, whose window has no height in the editor
+	inWindow: boolean;
+};
 
 // one axis of a positioned block, in px
 type AxisBox = {
@@ -65,8 +72,10 @@ class BlockPins {
 			/translate/i.test(String(read("transform") ?? "")) ||
 			(shift[0] !== "0" && !centered.x) ||
 			(shift[1] !== "0" && !centered.y);
-		this.x = new AxisPins("x", readPin, centered.x && !this.custom, this.custom);
-		this.y = new AxisPins("y", readPin, centered.y && !this.custom, this.custom);
+		const custom = this.custom;
+		const inWindow = read("position") === "fixed";
+		this.x = new AxisPins("x", readPin, { centered: centered.x && !custom, custom, inWindow: false });
+		this.y = new AxisPins("y", readPin, { centered: centered.y && !custom, custom, inWindow });
 	}
 
 	axis(axis: Axis) {
@@ -142,12 +151,10 @@ class AxisPins {
 	constructor(
 		readonly axis: Axis,
 		private read: StyleReader,
-		centered: boolean,
-		// centring writes a translate, so one written by someone else rules it out
-		private custom: boolean,
+		private context: AxisContext,
 	) {
 		const { start, end } = this.sides;
-		this.pin = centered ? "center" : pinOfEdges(isSet(read(start)), isSet(read(end)));
+		this.pin = context.centered ? "center" : pinOfEdges(isSet(read(start)), isSet(read(end)));
 	}
 
 	get sides() {
@@ -164,7 +171,7 @@ class AxisPins {
 		if (this.pin === "stretch") return other;
 		// an axis is never left without pins: dropping the last one centres it, or
 		// pins the other side where centring is off
-		if (this.pin === edge) return this.custom ? other : "center";
+		if (this.pin === edge) return this.context.custom ? other : "center";
 		return this.pin === other ? "stretch" : edge;
 	}
 
@@ -182,6 +189,7 @@ class AxisPins {
 	}
 
 	place(pin: AxisPin, box: AxisBox): AxisChange {
+		if (this.context.inWindow && this.pin !== "none") return this.carry(pin);
 		const { start, end, size } = this.sides;
 		// the edges as seen, without the centring shift this axis may have now
 		const shift = this.pin === "center" ? box.size / 2 : 0;
@@ -195,6 +203,21 @@ class AxisPins {
 		else if (this.keepsSize(pin, { ...box, start: seenStart, end: seenEnd })) {
 			styles[size] = addPxToNumber(box.size);
 		}
+		return { pin, styles };
+	}
+
+	// The editor's frame is as tall as the page, but a fixed block's window is a screen tall
+	// at most, so a distance measured in the frame could put it off-screen. A side it gets
+	// pinned to takes the distance of the side it joins or replaces instead.
+	private carry(pin: AxisPin): AxisChange {
+		const { start, end, size } = this.sides;
+		const kept = this.isPinned("start") ? start : end;
+		const distance = this.pin === "center" ? "0px" : String(this.read(kept));
+		const styles: StylePatch = { [start]: null, [end]: null };
+		if (hasEdge(pin, "start")) styles[start] = distance;
+		if (hasEdge(pin, "end")) styles[end] = distance;
+		if (pin === "center") styles[start] = "50%";
+		if (pin === "stretch") styles[size] = null;
 		return { pin, styles };
 	}
 
