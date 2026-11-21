@@ -47,8 +47,26 @@ class BlockPosition {
 		if (box) this.apply(this.pins.toggleCenter(axes, box));
 	}
 
+	// false when the edit is refused, as clearing the last pin on an axis is
 	setSide(side: Side, value: string | null) {
-		this.apply(this.pins.setSide(side, value, this.measure()));
+		const patch = this.pins.setSide(side, value, this.measure());
+		this.apply(patch);
+		return Object.keys(patch).length > 0;
+	}
+
+	// leaving Free or Fixed, the centring the pins wrote at any breakpoint would shift the block in flow
+	dropCentering() {
+		const breakpoints = {
+			desktop: this.block.baseStyles,
+			tablet: this.block.tabletStyles,
+			mobile: this.block.mobileStyles,
+		};
+		Object.entries(breakpoints).forEach(([breakpoint, styles]) => {
+			const pins = new BlockPins((property) => this.block.getStyle(property as styleProperty, breakpoint));
+			const sides = [pins.x.pin === "center" && "left", pins.y.pin === "center" && "top"].filter(Boolean);
+			if (pins.custom || !sides.length) return;
+			[...sides, "translate"].forEach((property) => delete styles[property as styleProperty]);
+		});
 	}
 
 	// moves from where the block was when the move started, so a drag doesn't drift
@@ -91,19 +109,42 @@ class BlockPosition {
 		if (!element?.isConnected || !container) return null;
 		const style = getComputedStyle(element);
 		const px = (value: string) => parseFloat(value) || 0;
+		// offsetWidth rounds to whole px, and a text block given a rounded-down width wraps
+		const exact = (value: string, rounded: number) =>
+			(style.boxSizing === "border-box" && px(value)) || rounded;
+		const axisBox = (
+			start: string,
+			size: number,
+			container: number,
+			marginStart: string,
+			marginEnd: string,
+		) => {
+			const margins = px(marginStart) + px(marginEnd);
+			// worked out rather than read, as CSS reports the end side as written when a size overrides it
+			return {
+				start: px(start),
+				end: container - px(start) - size - margins,
+				size,
+				container,
+				marginStart: px(marginStart),
+				marginEnd: px(marginEnd),
+			};
+		};
 		return {
-			x: {
-				start: px(style.left),
-				end: px(style.right),
-				size: element.offsetWidth,
-				container: container.clientWidth,
-			},
-			y: {
-				start: px(style.top),
-				end: px(style.bottom),
-				size: element.offsetHeight,
-				container: container.clientHeight,
-			},
+			x: axisBox(
+				style.left,
+				exact(style.width, element.offsetWidth),
+				container.clientWidth,
+				style.marginLeft,
+				style.marginRight,
+			),
+			y: axisBox(
+				style.top,
+				exact(style.height, element.offsetHeight),
+				container.clientHeight,
+				style.marginTop,
+				style.marginBottom,
+			),
 		};
 	}
 
@@ -127,4 +168,3 @@ function toShift(px: number, box?: AxisBox): Shift {
 }
 
 export default BlockPosition;
-export { PIN_PROPERTIES };

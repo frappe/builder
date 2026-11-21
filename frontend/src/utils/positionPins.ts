@@ -12,7 +12,14 @@ type AxisPin = Edge | "stretch" | "center" | "none";
 type StylePatch = Record<string, string | null>;
 type StyleReader = (property: string) => StyleValue | undefined;
 // one axis of the block in its containing block, in px, before any centring translate
-type AxisBox = { start: number; end: number; size: number; container: number };
+type AxisBox = {
+	start: number;
+	end: number;
+	size: number;
+	container: number;
+	marginStart: number;
+	marginEnd: number;
+};
 type Box = Record<Axis, AxisBox>;
 // a move in px, and the same move as a % of the container, for a side written in %
 type Shift = { px: number; percent: number };
@@ -40,6 +47,7 @@ const SIDE_PINS = {
 } as const satisfies Record<Side, [Axis, Edge]>;
 const CENTER_OFFSET = /^calc\(50% ([+-]) (\d*\.?\d+)px\)$/;
 const LENGTH = /^(-?\d*\.?\d+)(px|%)?$/;
+const CALC_OFFSET = /^calc\((.+) ([+-]) (\d*\.?\d+)px\)$/;
 
 class BlockPins {
 	readonly x: AxisPins;
@@ -121,7 +129,8 @@ class AxisPins {
 		private inWindow: boolean,
 	) {
 		const start = isSet(read(this.sides.start));
-		const end = isSet(read(this.sides.end));
+		// with a size set, CSS keeps the start side and ignores the end one
+		const end = isSet(read(this.sides.end)) && !(start && isSet(read(this.sides.size)));
 		this.pin = centered ? "center" : start && end ? "stretch" : start ? "start" : end ? "end" : "none";
 	}
 
@@ -147,7 +156,9 @@ class AxisPins {
 	setCentered(center: boolean, box: AxisBox): AxisChange {
 		if (!center) return this.place("start", box);
 		const { start, end } = this.sides;
-		return { pin: "center", styles: { [start]: "50%", [end]: null, ...this.keepSize(box) } };
+		// left: 50% puts the margin edge in the middle, so the start margin is taken off
+		const styles = { [start]: centerValue(-box.marginStart), [end]: null };
+		return { pin: "center", styles: { ...styles, ...this.keepSize(box, true) } };
 	}
 
 	// typed into a side's field: a value pins that side, and clearing it is like clicking it
@@ -176,7 +187,7 @@ class AxisPins {
 
 	// pins the axis as `pin`, keeping the block where it shows
 	private place(pin: AxisPin, box: AxisBox): AxisChange {
-		const styles = this.inWindow && this.pin !== "none" ? this.carry(pin) : this.measured(pin, box);
+		const styles = this.inWindow ? this.carry(pin, box) : this.measured(pin, box);
 		Object.assign(styles, pin === "stretch" ? { [this.sides.size]: null } : this.keepSize(box));
 		return { pin, styles };
 	}
@@ -190,18 +201,46 @@ class AxisPins {
 		};
 	}
 
-	// a fixed block's vertical sides can't be measured in the editor, so a side it gets
-	// pinned to takes the distance of the side it joins or replaces
-	private carry(pin: AxisPin): StylePatch {
+	// A Fixed block's vertical sides can't be measured in the editor, whose frame is as tall as
+	// the page, so a side it gets pinned to takes the distance of the side it joins or
+	// replaces; out of the middle it keeps where it shows, and with no pin it starts at the edge.
+	private carry(pin: AxisPin, box: AxisBox): StylePatch {
 		const { start, end } = this.sides;
-		const distance = this.pin === "center" ? "0px" : String(this.read(this.isPinned("start") ? start : end));
-		return { [start]: hasEdge(pin, "start") ? distance : null, [end]: hasEdge(pin, "end") ? distance : null };
+		const distance = (edge: Edge) => {
+			if (this.pin === "center") return this.offCenter(edge, box);
+			if (this.pin === "none") return edge === "start" ? addPxToNumber(box.start) : "0px";
+			return String(this.read(this.isPinned("start") ? start : end));
+		};
+		return {
+			[start]: hasEdge(pin, "start") ? distance("start") : null,
+			[end]: hasEdge(pin, "end") ? distance("end") : null,
+		};
 	}
 
-	// out of a stretch, an auto size would shrink to its content
-	private keepSize(box: AxisBox): StylePatch {
-		const { size } = this.sides;
-		return this.pin === "stretch" && !isSet(this.read(size)) ? { [size]: addPxToNumber(box.size) } : {};
+	// The `edge` side of a centred block, where it shows. A size set relative to the window
+	// stays a length the window resolves, as the editor's page-tall frame would measure it.
+	private offCenter(edge: Edge, box: AxisBox) {
+		const offset = centerOffset(this.read(this.sides.start));
+		const shift = edge === "start" ? offset : -offset - box.marginStart - box.marginEnd;
+		const size = String(this.read(this.sides.size) ?? "");
+		if (!isSet(size) || /content|^-?\d*\.?\d+px$/.test(size)) return centerValue(shift - box.size / 2);
+		return `calc(${addOffset("50%", shift).replace(/^calc\((.*)\)$/, "$1")} - (${length(size)}) / 2)`;
+	}
+
+	// Out of a stretch an auto size would shrink to its content, and centred an auto or
+	// fit-content width to the half of the container right of the middle.
+	private keepSize(box: AxisBox, centring = false): StylePatch {
+		const { start, end, size } = this.sides;
+		const value = this.read(size);
+		if (this.pin === "stretch") {
+			if (isSet(value)) return {};
+			// a Fixed block's height comes from the window, which the editor's page-tall frame isn't
+			if (this.inWindow)
+				return { [size]: `calc(100% - ${length(this.read(start))} - ${length(this.read(end))})` };
+			return { [size]: exactPx(box.size) };
+		}
+		const shrinks = centring && this.axis === "x" && (!isSet(value) || /content/.test(String(value)));
+		return shrinks ? { [size]: exactPx(box.size) } : {};
 	}
 
 	// moves the pinned sides; an unpinned axis gets pinned to its start
@@ -228,8 +267,9 @@ function hasEdge(pin: AxisPin, edge: Edge) {
 	return pin === edge || pin === "stretch";
 }
 
+// auto, initial and unset all leave an inset unpinned
 function isSet(value: StyleValue | undefined) {
-	return value !== undefined && value !== null && value !== "" && value !== "auto";
+	return value !== undefined && value !== null && !/^\s*(auto|initial|unset)?\s*$/i.test(String(value));
 }
 
 function centerTranslate(x: boolean, y: boolean) {
@@ -254,16 +294,39 @@ function centerValue(offset: number) {
 	return px ? `calc(50% ${px < 0 ? "-" : "+"} ${Math.abs(px)}px)` : "50%";
 }
 
-// a px or % side moves in its own unit; anything else (em, calc, auto), or a % with no
-// container to measure it by, restarts from the measured px
+// a unitless number, which calc() won't take, in px
+function length(value: StyleValue | undefined) {
+	const text = String(value ?? "").trim();
+	return /^-?\d*\.?\d+$/.test(text) ? `${text}px` : text;
+}
+
+// a size a text block wraps at if rounded down, so rounded up to a hundredth
+function exactPx(px: number) {
+	return `${Math.ceil(px * 100) / 100}px`;
+}
+
+// A px or % side moves in its own unit, and any other length (calc, em, vh) gets the move
+// added in px. An unpinned side, or a % with no container to measure it by, starts from
+// the measured px.
 function shiftSide(value: StyleValue | undefined, shift: Shift, measured = 0) {
-	const match = String(value ?? "")
-		.trim()
-		.match(LENGTH);
+	const text = String(value ?? "").trim();
+	const match = text.match(LENGTH);
 	if (match?.[2] === "%" && !isNaN(shift.percent)) {
 		return `${Math.round((Number(match[1]) + shift.percent) * 10) / 10}%`;
 	}
-	return addPxToNumber((match && match[2] !== "%" ? Number(match[1]) : measured) + shift.px);
+	if (match || !isSet(text)) {
+		return addPxToNumber((match && match[2] !== "%" ? Number(match[1]) : measured) + shift.px);
+	}
+	return addOffset(text, shift.px);
+}
+
+// `px` added to a length, folded into the trailing `± Npx` of a calc() so drags don't nest
+function addOffset(text: string, px: number) {
+	const match = text.match(CALC_OFFSET);
+	const base = match ? match[1] : text;
+	const offset = Math.round(((match ? Number(match[2] + match[3]) : 0) + px) * 10) / 10;
+	if (offset) return `calc(${base} ${offset < 0 ? "-" : "+"} ${Math.abs(offset)}px)`;
+	return LENGTH.test(base) || base.startsWith("calc(") ? base : `calc(${base})`;
 }
 
 export { BlockPins, isSet, SIDE_PINS };

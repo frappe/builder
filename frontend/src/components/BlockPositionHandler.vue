@@ -20,7 +20,7 @@
 		<div class="grid w-full grid-cols-[1fr_auto_1fr] items-center gap-2" v-if="showHandler">
 			<InlineInput
 				v-for="side in SIDES"
-				:key="side"
+				:key="`${side}-${refusals[side]}`"
 				:class="SIDE_CELLS[side]"
 				:placeholder="placeholder(side)"
 				:unitOptions="POSITION_UNIT_OPTIONS"
@@ -45,7 +45,7 @@ import blockController from "@/utils/blockController";
 import BlockPosition from "@/utils/blockPosition";
 import type { Axis, Side } from "@/utils/positionPins";
 import { POSITION_UNIT_OPTIONS } from "@/utils/unitOptions";
-import { computed, watch } from "vue";
+import { computed, reactive, watch } from "vue";
 
 const position = computed({
 	get() {
@@ -70,6 +70,7 @@ const position = computed({
 
 const setPosition = (val: string | number | boolean) => {
 	if (typeof val === "string") {
+		if (free.value && !["absolute", "fixed"].includes(val)) blockPosition(null).dropCentering();
 		position.value = val;
 	}
 };
@@ -98,12 +99,19 @@ const SIDE_LABELS = { top: __("Top"), right: __("Right"), bottom: __("Bottom"), 
 
 // a Free or Fixed block is placed by its pins; a sticky one only says how far it sticks
 const free = computed(() => ["absolute", "fixed"].includes(position.value));
-const blockPosition = () => new BlockPosition(blockController.getFirstSelectedBlock());
-const pins = computed(() => new BlockPosition(blockController.getFirstSelectedBlock(), null).pins);
+const block = () => blockController.getFirstSelectedBlock();
+// without an element, for edits that don't measure
+const blockPosition = (element?: null) => new BlockPosition(block(), element);
+const pins = computed(() => blockPosition(null).pins);
+// bumped when a side's edit is refused, so its field shows the value again
+const refusals = reactive({ top: 0, right: 0, bottom: 0, left: 0 });
 
-// an unpinned side reads auto, and the sides of a centred axis center
-const sideValue = (side: Side) =>
-	free.value && !pins.value.isPinned(side) ? "" : (blockController.getStyle(side) as string);
+// a pin shows the value it reads in the active state; an unpinned side reads auto, and the
+// sides of a centred axis center
+const sideValue = (side: Side) => {
+	if (!free.value) return blockController.getStyle(side) as string;
+	return pins.value.isPinned(side) ? (block().getActiveStyleValue(side) as string) : "";
+};
 
 const placeholder = (side: Side) => {
 	if (!free.value) return SIDE_LABELS[side];
@@ -113,7 +121,7 @@ const placeholder = (side: Side) => {
 };
 
 const setSide = (side: Side, value: string) => {
-	if (free.value) blockPosition().setSide(side, value || null);
-	else blockController.setStyle(side, value);
+	if (!free.value) return blockController.setStyle(side, value);
+	if (!blockPosition().setSide(side, value || null)) refusals[side]++;
 };
 </script>
