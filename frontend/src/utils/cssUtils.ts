@@ -397,6 +397,7 @@ function normalizeValueWithUnits(value: string, defaultUnit: string): string {
 
 export {
 	addPxToNumber,
+	addUnitToNumber,
 	collapseBoxShorthand,
 	collapseGapShorthand,
 	expandBoxShorthand,
