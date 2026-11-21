@@ -111,11 +111,11 @@ describe("BlockPins.setSide", () => {
 		expect(pins.setSide("left", "8px", box)).toEqual({ left: "8px", right: null, translate: null });
 	});
 
-	it("unpins a side whose field is cleared", () => {
-		expect(pinsOf({ left: "40px", right: "260px" }).setSide("right", "", box)).toEqual({
-			right: null,
-			width: "100px",
-		});
+	it("unpins a side whose field is cleared or set to auto", () => {
+		const stretched = pinsOf({ left: "40px", right: "260px" });
+		expect(stretched.setSide("right", "", box)).toEqual({ right: null, width: "100px" });
+		expect(stretched.setSide("right", "auto", box)).toEqual({ right: null, width: "100px" });
+		expect(pinsOf({ left: "40px" }).setSide("right", "auto", box)).toEqual({});
 	});
 });
 

@@ -189,7 +189,8 @@ class AxisPins {
 	setEdge(edge: Edge, value: string | null, box?: AxisBox): AxisChange {
 		const side = this.sides[edge];
 		const otherSide = this.sides[edge === "start" ? "end" : "start"];
-		if (!value) {
+		// "auto" is how CSS says unpinned, so it unpins like an empty field
+		if (!isSet(value)) {
 			if (!this.isPinned(edge)) return { pin: this.pin, styles: {} };
 			return box ? this.toggle(edge, box) : { pin: this.pin, styles: { [side]: null } };
 		}
