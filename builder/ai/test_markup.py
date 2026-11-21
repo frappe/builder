@@ -2,6 +2,7 @@ import unittest
 
 from builder.ai import markup
 from builder.ai.block_codec import BlockCodec
+from builder.ai.page_writer import convert_node
 
 
 def block(block_id, el="p", text="", children=(), **fields):
@@ -222,6 +223,25 @@ class TestRoundTrip(unittest.TestCase):
 			self.assertEqual(parsed.get("text"), original.get("text"))
 			self.assertEqual(parsed.get("attrs"), original.get("attrs"))
 		self.assertEqual(back["c"][-1]["icon"], "star")
+
+	def test_a_panel_reads_back_with_its_target_group(self):
+		panel = block(
+			"sheet",
+			"div",
+			baseStyles={"display": "none", "position": "fixed", "target:display": "flex"},
+			mobileStyles={"target:maxHeight": "75vh"},
+			attributes={"id": "no-14-red"},
+		)
+		node = BlockCodec.compress(block("root", "div", children=[panel]))
+
+		text = markup.Dumper().dump(node)
+		back = convert_node(markup.load(text)[0]["c"][0])
+
+		self.assertIn("{display:none;position:fixed} :target{display:flex} m:target{max-height:75vh}", text)
+		self.assertEqual(
+			(back["baseStyles"], back["mobileStyles"], back["attributes"]),
+			(panel["baseStyles"], panel["mobileStyles"], panel["attributes"]),
+		)
 
 	def test_short_refs_are_unique_prefixes(self):
 		page = block("root", "div", children=[block("k3x9abcde"), block("k3x9fghij"), block("zzzz11111")])
