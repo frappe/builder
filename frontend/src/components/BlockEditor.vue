@@ -40,6 +40,7 @@
 			:targetBlock="block"
 			@resizing="resizing = $event"
 			:target="target" />
+		<PinLines v-if="showPinLines" :block="block" :target="target" />
 	</div>
 </template>
 <script setup lang="ts">
@@ -56,6 +57,7 @@ import BorderRadiusHandler from "./BorderRadiusHandler.vue";
 import BoxResizer from "./BoxResizer.vue";
 import GapHandler from "./GapHandler.vue";
 import PaddingHandler from "./PaddingHandler.vue";
+import PinLines from "./PinLines.vue";
 import RotationHandler from "./RotationHandler.vue";
 
 const canvasProps = inject("canvasProps") as CanvasProps;
@@ -124,6 +126,9 @@ const showGapHandler = computed(() => {
 		(props.block.getChildren().length > 1 || (props.target && (props.target as HTMLElement).childElementCount > 1))
 	);
 });
+
+// what a free block is pinned to, as lines out to its container
+const showPinLines = computed(() => showResizer.value && movable.value && !rotating.value);
 
 const showBorderRadiusHandler = computed(() => {
 	return (
