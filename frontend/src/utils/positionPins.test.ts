@@ -94,6 +94,12 @@ describe("BlockPins.toggle keeps the block where it is", () => {
 		expect(patch).toEqual({ left: "calc(50% - 110px)", right: null, translate: "-50% 0" });
 	});
 
+	it("centres a block of odd size without moving it by the half px", () => {
+		const odd: Box = { x: axisBox(40, 67, 400), y: box.y };
+		const patch = pinsOf({ left: "40px", top: "20px" }).toggleCenter("x", odd);
+		expect(patch.left).toBe("calc(50% - 126.5px)");
+	});
+
 	it("moves a centred axis back to a side, measured from where the block shows", () => {
 		const pins = pinsOf({ left: "calc(50% - 110px)", top: "20px", width: "100px", translate: "-50% 0" });
 		expect(pins.toggle("x", "start", centeredBox)).toEqual({ left: "40px", right: null, translate: null });

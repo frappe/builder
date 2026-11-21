@@ -262,7 +262,9 @@ class AxisPins {
 
 	moveBy(shift: Shift, box?: AxisBox): StylePatch {
 		if (this.pin === "center") {
-			return { [this.sides.start]: centerValue(centerOffset(this.read(this.sides.start)) + shift.px) };
+			// a drag moves by whole px, as on the other sides
+			const offset = Math.round(centerOffset(this.read(this.sides.start)) + shift.px);
+			return { [this.sides.start]: centerValue(offset) };
 		}
 		return this.shiftEdges(shift, shift, box);
 	}

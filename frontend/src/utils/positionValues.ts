@@ -41,9 +41,10 @@ function centerTranslate(x: boolean, y: boolean) {
 	return `${x ? CENTER_SHIFT : "0"} ${y ? CENTER_SHIFT : "0"}`;
 }
 
+// to a tenth of a px, since a block of odd size sits half a px off any whole-px offset
 function centerValue(offset: number) {
 	if (Math.abs(offset) < CENTER_SNAP) return "50%";
-	return `calc(50% ${offset < 0 ? "-" : "+"} ${Math.abs(Math.round(offset))}px)`;
+	return `calc(50% ${offset < 0 ? "-" : "+"} ${Math.abs(Math.round(offset * 10) / 10)}px)`;
 }
 
 function isCenterValue(value: StyleValue | undefined) {
