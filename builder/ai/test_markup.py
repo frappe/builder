@@ -2,6 +2,7 @@ import unittest
 
 from builder.ai import markup
 from builder.ai.block_codec import BlockCodec
+from builder.ai.page_writer import convert_node
 
 
 def block(block_id, el="p", text="", children=(), **fields):
@@ -74,6 +75,14 @@ class TestLines(unittest.TestCase):
 	def test_attributes_stay_strings(self):
 		self.assertEqual(
 			self.node("input [required=true rows=5]")["attrs"], {"required": "true", "rows": "5"}
+		)
+
+	def test_a_css_style_id_on_the_tag_is_the_id_attribute(self):
+		root = self.node('div\n  section#map.lane {padding:0px}\n  a.pin#no-14 [href=#map] "No. 14"')
+
+		self.assertEqual(
+			[(c["classes"], c["attrs"]) for c in root["c"]],
+			[(["lane"], {"id": "map"}), (["pin"], {"id": "no-14", "href": "#map"})],
 		)
 
 	def test_an_icon_and_a_tagless_line(self):
@@ -222,6 +231,34 @@ class TestRoundTrip(unittest.TestCase):
 			self.assertEqual(parsed.get("text"), original.get("text"))
 			self.assertEqual(parsed.get("attrs"), original.get("attrs"))
 		self.assertEqual(back["c"][-1]["icon"], "star")
+
+	def test_a_panel_reads_back_with_its_target_group(self):
+		panel = block(
+			"sheet",
+			"div",
+			baseStyles={
+				"display": "none",
+				"position": "fixed",
+				"overflowY": "auto",
+				"target:display": "flex",
+			},
+			mobileStyles={"maxHeight": "75vh", "target:boxShadow": "0px -8px 24px rgba(0,0,0,0.2)"},
+			attributes={"id": "no-14-red"},
+		)
+		node = BlockCodec.compress(block("root", "div", children=[panel]))
+
+		text = markup.Dumper().dump(node)
+		back = convert_node(markup.load(text)[0]["c"][0])
+
+		self.assertIn(
+			"{display:none;position:fixed;overflow-y:auto} :target{display:flex} "
+			"m{max-height:75vh} m:target{box-shadow:0px -8px 24px rgba(0,0,0,0.2)}",
+			text,
+		)
+		self.assertEqual(
+			(back["baseStyles"], back["mobileStyles"], back["attributes"]),
+			(panel["baseStyles"], panel["mobileStyles"], panel["attributes"]),
+		)
 
 	def test_short_refs_are_unique_prefixes(self):
 		page = block("root", "div", children=[block("k3x9abcde"), block("k3x9fghij"), block("zzzz11111")])

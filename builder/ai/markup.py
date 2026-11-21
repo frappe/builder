@@ -55,7 +55,8 @@ DEVICES = (("", "style"), ("t", "t_style"), ("m", "m_style"))
 DEVICE_KEYS = dict(DEVICES)
 STYLE_GROUP = re.compile(r"([tm])?(?::([a-z-]+))?\s*\{")
 WORD = re.compile(r"[A-Za-z_][\w-]*")
-HEAD = re.compile(r"([a-z][a-z0-9-]*)?((?:\.[\w:/-]+)*)", re.I)
+# tag, .classes, then an optional CSS-style #id
+HEAD = re.compile(r"([a-z][a-z0-9-]*)?((?:\.[\w:/-]+)*)(?:#([\w-]+))?", re.I)
 BARE_VALUE = re.compile(r"^[^\s\[\]{}()\"'=;]+$")
 RAW_BLOCK = re.compile(r"^(js|css)\s*\|\s*$")
 COMMENTS = ("```", "//", "#")
@@ -645,9 +646,15 @@ class LineParser:
 			return
 		if match.group(1):
 			self.node["el"] = match.group(1).lower()
+		self.selector(match)
+
+	def selector(self, match) -> None:
+		"""`.classes`, and the `#id` models write by CSS habit (section#map), which is the id attribute."""
 		if match.group(2):
 			self.node["classes"] = [c for c in match.group(2).split(".") if c]
-		scan.pos += match.end()
+		if match.group(3):
+			self.node.setdefault("attrs", {})["id"] = match.group(3)
+		self.scan.pos += match.end()
 
 	def field(self, rest: str):
 		"""`text:"Hi"` or `href:/menu` on the line: a block field in key:value form."""
@@ -697,9 +704,7 @@ class LineParser:
 			scan.pos += match.end()
 			self.call(match.group(0), scan.group())
 		elif rest[0] == ".":
-			match = HEAD.match(rest)
-			self.node["classes"] = [c for c in match.group(2).split(".") if c]
-			scan.pos += match.end()
+			self.selector(HEAD.match(rest))
 		else:
 			raise scan.fail("unexpected text")
 

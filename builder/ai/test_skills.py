@@ -3,6 +3,8 @@ from frappe.tests.utils import FrappeTestCase
 from builder.ai.agent.loop import AgentRunner
 from builder.ai.agent.registry import build_default_registry
 from builder.ai.agent.tree import WorkingTree
+from builder.ai.prompts import Prompts
+from builder.ai.skills import Skills
 
 
 def offered(skills=None) -> set[str]:
@@ -43,3 +45,10 @@ class TestSkillBoundTools(FrappeTestCase):
 
 		self.assertIn("components skill in full", out)
 		self.assertIn("components", runner.attached_skills)
+
+
+class TestSkillIndex(FrappeTestCase):
+	def test_a_personal_site_is_routed_to_its_skill(self):
+		self.assertIn("- personal-site: a person's own site", Skills.index())
+		self.assertIn("read_skill('personal-site')", Prompts.AGENT_SYSTEM)
+		self.assertTrue(Skills.read("personal-site").startswith("# Personal site"))
