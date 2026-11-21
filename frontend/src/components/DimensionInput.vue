@@ -6,20 +6,7 @@
 		:enableSlider="true"
 		:getPlaceholder="stretchedAxis ? getPlaceholder : undefined"
 		:setModelValue="stretchedAxis ? setModelValue : undefined"
-		:options="[
-			{
-				label: __('Auto'),
-				value: 'auto',
-			},
-			{
-				label: __('Fit Content'),
-				value: 'fit-content',
-			},
-			{
-				label: __('Stretch'),
-				value: '100%',
-			},
-		]"
+		:options="options"
 		:unitOptions="DIMENSION_UNIT_OPTIONS"></StylePropertyControl>
 </template>
 <script setup lang="ts">
@@ -45,11 +32,19 @@ const stretchedAxis = computed(() => {
 	return new BlockPosition(block, null).pins.axis(axis).pin === "stretch" ? axis : null;
 });
 
-const getPlaceholder = () => __("Stretch");
+// a stretched axis already fills the space between its pins, so 100% is left out
+const options = computed(() => [
+	{ label: __("Auto"), value: "auto" },
+	{ label: __("Fit Content"), value: "fit-content" },
+	...(stretchedAxis.value ? [] : [{ label: __("Stretch"), value: "100%" }]),
+]);
 
-// a size typed in keeps the start pin, so it never fights the end pin
+const getPlaceholder = () => __("Set by pins");
+
+// a size typed in keeps the start pin, so it never fights the end pin; auto is what the
+// stretch already uses
 const setModelValue = (value: string | number | boolean) => {
-	if (value && stretchedAxis.value) {
+	if (value && value !== "auto" && stretchedAxis.value) {
 		new BlockPosition(blockController.getFirstSelectedBlock(), null).releaseStretch(stretchedAxis.value);
 	}
 	blockController.setStyle(props.property, value);
