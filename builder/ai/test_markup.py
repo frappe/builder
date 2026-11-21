@@ -236,8 +236,8 @@ class TestRoundTrip(unittest.TestCase):
 		panel = block(
 			"sheet",
 			"div",
-			baseStyles={"display": "none", "position": "fixed", "target:display": "flex"},
-			mobileStyles={"target:maxHeight": "75vh"},
+			baseStyles={"display": "none", "position": "fixed", "overflowY": "auto", "target:display": "flex"},
+			mobileStyles={"maxHeight": "75vh", "target:boxShadow": "0px -8px 24px rgba(0,0,0,0.2)"},
 			attributes={"id": "no-14-red"},
 		)
 		node = BlockCodec.compress(block("root", "div", children=[panel]))
@@ -245,7 +245,11 @@ class TestRoundTrip(unittest.TestCase):
 		text = markup.Dumper().dump(node)
 		back = convert_node(markup.load(text)[0]["c"][0])
 
-		self.assertIn("{display:none;position:fixed} :target{display:flex} m:target{max-height:75vh}", text)
+		self.assertIn(
+			"{display:none;position:fixed;overflow-y:auto} :target{display:flex} "
+			"m{max-height:75vh} m:target{box-shadow:0px -8px 24px rgba(0,0,0,0.2)}",
+			text,
+		)
 		self.assertEqual(
 			(back["baseStyles"], back["mobileStyles"], back["attributes"]),
 			(panel["baseStyles"], panel["mobileStyles"], panel["attributes"]),

@@ -21,6 +21,8 @@ read_url whatever they point at first (their site, GitHub, blog, a talk), so the
 
 Close with {kind:'actions', buttons:[{label:'Show me ideas'}]}. Keep their exact words; the copy is built from them, and you edit rather than ghostwrite.
 
+A request that hands you the choice ('build it now') gets no card and no tiles: write the premises from the request and your reads, build the strongest, mechanic included, and name the premise in your reply.
+
 ## 2. Premises
 Privately write at least fifteen, each naming its source fact, what the visitor does, and the first screen. Run every generator:
 - **Literal:** the site performs what they do (an agents researcher's header is a live colony of agents; a text-game researcher's homepage is a text adventure).
@@ -39,14 +41,15 @@ Eliminate a premise when the sentence a stranger would use the next day is "a we
 One present_ui choices card: three tiles named like the premise's own object ('The Pacing Map', 'Tonight's Specials Board'), never an adjective pair. Each tile carries the "My site is a ___ where you ___" sentence, what the first screen shows, and `colors` drawn from the premise's world and their photos. Add a last option, "None of these, here's why" (input). A rejection sends you back to step 2 carrying what they said; a mix ("the map, but end like the second one") is a normal answer, so build it without re-asking.
 
 ## 4. The mechanic, in the brief
-Before generate_page, write the scene list: what a visitor does from the first screen to the end, and where every content item lives inside it. Add the plain ways in: an escape hatch ("Everything, plainly": a section at the foot of the page that links every content item in one list) and the phone version.
+The mechanic is what the visitor does. A stack of sections under an anchor nav is the section list again, however good its copy. The first screen is the premise's object (the map, the sheet, the board), and every content item the premise names (a house, a project, a talk) is a panel that a link on that object opens. Before generate_page, write the scene list: the first screen, each panel and its link, the ending, and the plain ways in: an escape hatch ("Everything, plainly": a section at the foot of the page linking every panel) and the phone version.
 
-The mechanic is links and `:target`, with no script, so it works with JS off:
-- Every scene and panel is a real block with an `[id=…]`; every choice is an `a [href=#<id>]`.
-- A closed panel starts hidden, and its own `:target{…}` group opens it while the URL names its id: `div.ks-sheet [id=no-14-red] {display:none;position:fixed;…} :target{display:flex}`. One panel is open at a time, the link can be shared, and Back closes it.
-- A panel lies over the page (position:fixed, under no ancestor with a transform or filter, which would trap it) and ends with a link back to where it opened (`#map`). On phones, sheets stay at or under 75vh so the scene shows above them.
-- Clickable regions over an image (a scanned map, a photo) are `a` blocks inside the image's position:relative wrapper, placed and sized with left, top, width and height in %, so they stay on their region at every width. Each names its region in its text or `[aria-label]`.
-- The brief names every id, link and open style, so the layout carries them.
+Build it with links and `:target`, no script, so it works with JS off:
+- Every panel is a block with an `[id=…]` (never `tag#id`); every choice is an `a [href=#<id>]`.
+- A closed panel starts hidden, and its own `:target{…}` group opens it while the URL names its id: `div.ks-sheet [id=no-14-red] {display:none;position:fixed;…;max-height:85vh;overflow-y:auto;overscroll-behavior:contain} :target{display:flex} m{max-height:75vh}`. One panel is open at a time, the link can be shared, and Back closes it.
+- No ancestor of a panel has a transform, filter or clip-path, which would trap or clip it. Its first child is the link back (`a [href=#map] "Back to the map"`), so it shows at any length; on phones the sheet scrolls inside, with the scene above it.
+- Regions over an image (a scanned map, a photo) are `a` blocks in the image's position:relative wrapper, placed and sized with left, top, width and height in %, each named by its text or `[aria-label]`. The % tracks the picture only while the wrapper is the picture's box: no height or aspect-ratio of its own, and the image width:100%;height:auto with no object-fit (this overrides the photo rule). A phone may widen the wrapper in a sideways scroll, never crop it.
+- The mechanic doesn't wait for the artifact: the regions sit over its marked placeholder (with the artifact's rough aspect-ratio) where the person's facts put them (houses in order along the lane), so the scan drops in under them.
+- The brief names every panel's id, its link, and its hidden start with its `:target` group; the generator builds only what the brief names.
 
 set_page_script is optional polish on top: Escape closes the open panel, focus moves to its heading, `sessionStorage` remembers what they opened. Every item stays reachable without it.
 
@@ -61,7 +64,7 @@ Run these in order. A failure in 1–3 sends you back to the premise, not to the
 2. **Swap:** with another person's name and photos, the site stops making sense.
 3. **Consent:** nothing they asked to keep off; other people only as they'd agree.
 4. **Hand:** their artifact is on the page, or a marked placeholder sits where it goes.
-5. **Mechanic:** the screenshot shows panels closed, so check the page itself: every `#` link names an id on the page, every panel links back, the ending is reachable, the escape hatch is complete, and the phone version works.
+5. **Mechanic:** the screenshot shows panels closed, so check the page itself. The content items open as panels from the first screen; anchor sections alone fail. Every `#` link names an id on the page, every panel has its `:target` group and a link back, the ending is reachable, the escape hatch is complete, and the phone version works.
 6. **Substance:** every item is real or a marked placeholder; no filler summaries and no links to nowhere.
 7. **Voice:** every line is something they'd say.
 8. **Polish:** new-page's self-review.
