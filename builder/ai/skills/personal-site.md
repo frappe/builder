@@ -39,7 +39,7 @@ Eliminate a premise when the sentence a stranger would use the next day is "a we
 One present_ui choices card: three tiles named like the premise's own object ('The Pacing Map', 'Tonight's Specials Board'), never an adjective pair. Each tile carries the "My site is a ___ where you ___" sentence, what the first screen shows, and `colors` drawn from the premise's world and their photos. Add a last option, "None of these, here's why" (input). A rejection sends you back to step 2 carrying what they said; a mix ("the map, but end like the second one") is a normal answer, so build it without re-asking.
 
 ## 4. The mechanic, in the brief
-Before generate_page, write the scene list: what a visitor does from the first screen to the end, and where every content item lives inside it. Add the plain ways in: an escape hatch ("Everything, plainly"), a section at the foot of the page that links every content item in one list, and the phone version.
+Before generate_page, write the scene list: what a visitor does from the first screen to the end, and where every content item lives inside it. Add the plain ways in: an escape hatch ("Everything, plainly": a section at the foot of the page that links every content item in one list) and the phone version.
 
 The mechanic is links and `:target`, with no script, so it works with JS off:
 - Every scene and panel is a real block with an `[id=…]`; every choice is an `a [href=#<id>]`.
