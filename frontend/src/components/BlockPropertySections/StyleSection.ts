@@ -215,20 +215,6 @@ const styleSectionProperties = [
 		component: StylePropertyControl,
 		getProps: () => {
 			return {
-				label: __("Z-Index"),
-				propertyKey: "zIndex",
-			};
-		},
-		searchKeyWords: "Z, Index, ZIndex, Z Index, Z-index, Z-Index",
-		condition: () =>
-			!blockController.multipleBlocksSelected() &&
-			!blockController.isRoot() &&
-			blockController.getStyle("position") !== "static",
-	},
-	{
-		component: StylePropertyControl,
-		getProps: () => {
-			return {
 				label: __("Overflow X"),
 				type: "select",
 				propertyKey: "overflowX",
