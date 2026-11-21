@@ -96,6 +96,12 @@ describe("BlockPins.toggle keeps the block where it is", () => {
 		const pins = pinsOf({ left: "40px", top: "20px", width: "100px", transform: "translate(-50%, -50%)" });
 		expect(pins.toggle("x", "end", box)).toEqual({ right: "260px", width: null });
 	});
+
+	it("pins the other side, in its unit, when a custom block's only pin is dropped", () => {
+		const pins = pinsOf({ left: "10%", top: "20px", width: "100px", transform: "translate(-50%, -50%)" });
+		expect(pins.toggle("x", "start", box)).toEqual({ left: null, right: "65%" });
+		expect(pins.setSide("top", "", box)).toEqual({ top: null, bottom: "230px" });
+	});
 });
 
 describe("BlockPins.setSide", () => {

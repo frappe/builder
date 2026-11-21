@@ -65,8 +65,8 @@ class BlockPins {
 			/translate/i.test(String(read("transform") ?? "")) ||
 			(shift[0] !== "0" && !centered.x) ||
 			(shift[1] !== "0" && !centered.y);
-		this.x = new AxisPins("x", readPin, centered.x && !this.custom);
-		this.y = new AxisPins("y", readPin, centered.y && !this.custom);
+		this.x = new AxisPins("x", readPin, centered.x && !this.custom, this.custom);
+		this.y = new AxisPins("y", readPin, centered.y && !this.custom, this.custom);
 	}
 
 	axis(axis: Axis) {
@@ -143,6 +143,8 @@ class AxisPins {
 		readonly axis: Axis,
 		private read: StyleReader,
 		centered: boolean,
+		// centring writes a translate, so one written by someone else rules it out
+		private custom: boolean,
 	) {
 		const { start, end } = this.sides;
 		this.pin = centered ? "center" : pinOfEdges(isSet(read(start)), isSet(read(end)));
@@ -156,8 +158,18 @@ class AxisPins {
 		return hasEdge(this.pin, edge);
 	}
 
+	// what toggling an edge pins the axis to
+	toggled(edge: Edge): AxisPin {
+		const other = edge === "start" ? "end" : "start";
+		if (this.pin === "stretch") return other;
+		// an axis is never left without pins: dropping the last one centres it, or
+		// pins the other side where centring is off
+		if (this.pin === edge) return this.custom ? other : "center";
+		return this.pin === other ? "stretch" : edge;
+	}
+
 	toggle(edge: Edge, box: AxisBox) {
-		const change = this.place(toggledPin(this.pin, edge), box);
+		const change = this.place(this.toggled(edge), box);
 		// a side that stays pinned keeps its value as written
 		(["start", "end"] as Edge[])
 			.filter((kept) => this.isPinned(kept) && hasEdge(change.pin, kept))
@@ -280,14 +292,6 @@ function hasEdge(pin: AxisPin, edge: Edge) {
 function pinOfEdges(start: boolean, end: boolean): AxisPin {
 	if (start && end) return "stretch";
 	return start ? "start" : end ? "end" : "none";
-}
-
-// a block is never left without pins: dropping the last one centres it
-function toggledPin(pin: AxisPin, edge: Edge): AxisPin {
-	const other = edge === "start" ? "end" : "start";
-	if (pin === "stretch") return other;
-	if (pin === edge) return "center";
-	return pin === other ? "stretch" : edge;
 }
 
 export { AXIS_SIDES, axisOf, BlockPins, edgeOf, PIN_PROPERTIES };

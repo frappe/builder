@@ -23,6 +23,7 @@
 				class="flex-1"
 				iconLeft="lucide-maximize"
 				:tooltip="__('Pin all four sides at 0 to cover the parent')"
+				:disabled="pins.custom"
 				@click="position().fill()">
 				{{ __("Fill") }}
 			</Button>
@@ -62,6 +63,7 @@ const SIDE_CELLS = {
 };
 
 const SIDE_NAMES = { top: __("top"), right: __("right"), bottom: __("bottom"), left: __("left") };
+const OPPOSITE = { top: "bottom", right: "left", bottom: "top", left: "right" } as const;
 
 const block = computed(() => blockController.getFirstSelectedBlock());
 const position = () => new BlockPosition(block.value);
@@ -96,9 +98,22 @@ const fieldPlaceholder = (side: Side) => {
 
 const fieldTitle = (side: Side) => {
 	const distance = shownDistance(side);
-	if (isPinned(side)) return __("Distance from the {0} edge", [SIDE_NAMES[side]]);
+	if (isPinned(side)) return pinnedTitle(side);
 	if (!distance) return __("Not pinned. Type a value to pin to the {0} edge", [SIDE_NAMES[side]]);
 	return __("Not pinned (now {0} from the {1} edge). Type a value to pin it", [distance, SIDE_NAMES[side]]);
+};
+
+// clearing the last pin on an axis centres it, or pins the other side
+const pinnedTitle = (side: Side) => {
+	const axis = pins.value.axis(axisOf(side));
+	if (axis.pin === "stretch") return __("Distance from the {0} edge", [SIDE_NAMES[side]]);
+	if (axis.toggled(edgeOf(side)) === "center") {
+		return __("Distance from the {0} edge. Clear it to center instead", [SIDE_NAMES[side]]);
+	}
+	return __("Distance from the {0} edge. Clear it to pin the {1} edge instead", [
+		SIDE_NAMES[side],
+		SIDE_NAMES[OPPOSITE[side]],
+	]);
 };
 
 // measured from the box as it shows, so a centred block counts its translate

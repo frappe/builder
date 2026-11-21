@@ -65,10 +65,30 @@ const CENTERS = [
 ] as const;
 
 const EDGE_TOOLTIPS = {
-	top: [__("Pin to top"), __("Pinned to top. Click to unpin")],
-	right: [__("Pin to right"), __("Pinned to right. Click to unpin")],
-	bottom: [__("Pin to bottom"), __("Pinned to bottom. Click to unpin")],
-	left: [__("Pin to left"), __("Pinned to left. Click to unpin")],
+	top: {
+		pin: __("Pin to top"),
+		unpin: __("Pinned to top. Click to unpin"),
+		center: __("Pinned to top. Click to center instead"),
+		swap: __("Pinned to top. Click to pin to bottom instead"),
+	},
+	right: {
+		pin: __("Pin to right"),
+		unpin: __("Pinned to right. Click to unpin"),
+		center: __("Pinned to right. Click to center instead"),
+		swap: __("Pinned to right. Click to pin to left instead"),
+	},
+	bottom: {
+		pin: __("Pin to bottom"),
+		unpin: __("Pinned to bottom. Click to unpin"),
+		center: __("Pinned to bottom. Click to center instead"),
+		swap: __("Pinned to bottom. Click to pin to top instead"),
+	},
+	left: {
+		pin: __("Pin to left"),
+		unpin: __("Pinned to left. Click to unpin"),
+		center: __("Pinned to left. Click to center instead"),
+		swap: __("Pinned to left. Click to pin to right instead"),
+	},
 };
 
 const CENTER_TOOLTIPS = {
@@ -85,7 +105,7 @@ const controls = computed(() => [
 			line,
 			pressed,
 			disabled: false,
-			tooltip: EDGE_TOOLTIPS[side][pressed ? 1 : 0],
+			tooltip: EDGE_TOOLTIPS[side][edgeAction(side)],
 			toggle: () => emit("toggle", side),
 		};
 	}),
@@ -105,4 +125,13 @@ const controls = computed(() => [
 		};
 	}),
 ]);
+
+// the last pin on an axis can't just go, so its bar says what takes its place
+function edgeAction(side: Side) {
+	const axis = props.pins.axis(axisOf(side));
+	const edge = edgeOf(side);
+	if (!axis.isPinned(edge)) return "pin";
+	if (axis.pin === "stretch") return "unpin";
+	return axis.toggled(edge) === "center" ? "center" : "swap";
+}
 </script>
