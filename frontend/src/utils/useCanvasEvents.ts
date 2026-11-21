@@ -208,7 +208,7 @@ export function useCanvasEvents(
 					: selectSibling("previous", selectParent);
 			},
 			ArrowRight: () => {
-				selectedBlock.hasChildren() && selectedBlock.isVisible()
+				selectedBlock.hasChildren() && selectedBlock.isVisibleOnSelectionPath()
 					? (builderStore.activeLayers?.toggleExpanded(selectedBlock), selectFirstChild())
 					: selectNextSiblingOrParent();
 			},
@@ -219,7 +219,7 @@ export function useCanvasEvents(
 			ArrowDown: () => {
 				builderStore.activeLayers?.isExpandedInTree(selectedBlock) &&
 				selectedBlock.hasChildren() &&
-				selectedBlock.isVisible()
+				selectedBlock.isVisibleOnSelectionPath()
 					? selectFirstChild()
 					: selectNextSiblingOrParent();
 			},

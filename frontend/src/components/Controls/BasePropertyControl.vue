@@ -64,6 +64,7 @@
 			:key="variant.name"
 			:data-variant="variant.name"
 			:label="variant.label"
+			:description="variant.description"
 			:labelPlacement="labelPlacement"
 			:component="props.component"
 			:controlAttrs="resolveControlAttrs(variant.name)"
@@ -130,7 +131,7 @@ const props = withDefaults(
 		defaultValue?: string | number | boolean;
 		allowDynamicValue?: boolean;
 		labelPlacement?: "left" | "top";
-		variants?: Array<{ name: string; property: string; label: string }>;
+		variants?: Array<{ name: string; property: string; label: string; description?: string }>;
 		getVariantValue?: (variant: string) => string | number | boolean;
 		setVariantValue?: (variant: string, value: string | number | boolean | null) => void;
 		getControlAttrs?: (variant: string | null) => Record<string, unknown>;
@@ -283,6 +284,7 @@ const dropdownOptions = computed(() => {
 				.filter((variant) => !getRawVariantValue(variant.name))
 				.map((variant) => ({
 					label: variant.label,
+					description: variant.description,
 					onClick: () => {
 						if (props.setVariantValue) {
 							props.setVariantValue(variant.name, rawModelValue.value as string);

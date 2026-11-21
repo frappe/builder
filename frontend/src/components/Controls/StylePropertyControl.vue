@@ -12,8 +12,8 @@
 
 <script lang="ts" setup>
 import BasePropertyControl from "@/components/Controls/BasePropertyControl.vue";
-import { __ } from "@/translation";
 import blockController from "@/utils/blockController";
+import styleStates from "@/utils/styleStates";
 import type { Component } from "vue";
 import { computed } from "vue";
 
@@ -51,22 +51,17 @@ const props = withDefaults(
 	}>(),
 	{
 		enableStates: true,
-		enabledStates: () => ["hover", "active", "focus"],
+		enabledStates: () => Object.keys(styleStates),
 		variants: () => [],
 	},
 );
-
-const stateLabels: Record<string, string> = {
-	hover: __("On Hover"),
-	active: __("On Active"),
-	focus: __("On Focus"),
-};
 
 const stateVariants = computed(() =>
 	props.enabledStates.map((state) => ({
 		name: state,
 		property: `${state}:${props.propertyKey}`,
-		label: stateLabels[state] || state,
+		label: styleStates[state]?.label || state,
+		description: styleStates[state]?.description,
 	})),
 );
 

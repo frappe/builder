@@ -1,6 +1,6 @@
 import type Block from "@/block";
 import { findBlockInTree } from "@/utils/block/tree";
-import { computed, Ref, ref } from "vue";
+import { computed, reactive, Ref, ref, watch } from "vue";
 
 export function useBlockSelection(rootBlock: Ref<Block>) {
 	const selectedBlockIds = ref<Set<string>>(new Set());
@@ -18,6 +18,13 @@ export function useBlockSelection(rootBlock: Ref<Block>) {
 	const isSelected = (block: Block) => {
 		return selectedBlockIds.value.has(block.blockId);
 	};
+
+	// Updated in place, so a block reading it reruns only when its own entry changes.
+	const selectionPathIds = reactive(new Set<string>());
+	watch(selectedBlocks, (blocks) => syncSet(selectionPathIds, getSelectionPathIds(blocks)));
+
+	// a selected block, or one with a selected block inside it
+	const isOnSelectionPath = (block: Block) => selectionPathIds.has(block.blockId);
 
 	function hasAncestorIn(blockIds: Set<string>, block: Block) {
 		let parentBlock = block.getParentBlock();
@@ -80,10 +87,28 @@ export function useBlockSelection(rootBlock: Ref<Block>) {
 		selectedBlockIds,
 		selectedBlocks,
 		isSelected,
+		isOnSelectionPath,
 		selectBlock,
 		removeNestedBlocks,
 		toggleBlockSelection,
 		clearSelection,
 		selectBlockRange,
 	};
+}
+
+// ids of the given blocks and all their ancestors
+export function getSelectionPathIds(blocks: Block[]) {
+	const ids = new Set<string>();
+	blocks.forEach((block) => {
+		for (let current: Block | null = block; current; current = current.getParentBlock()) {
+			ids.add(current.blockId);
+		}
+	});
+	return ids;
+}
+
+// makes target equal source, touching only the entries that differ
+export function syncSet<T>(target: Set<T>, source: Set<T>) {
+	target.forEach((item) => source.has(item) || target.delete(item));
+	source.forEach((item) => target.add(item));
 }

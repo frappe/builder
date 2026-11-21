@@ -47,7 +47,8 @@ import type Block from "@/block";
 import useBuilderStore from "@/stores/builderStore";
 import useCanvasStore from "@/stores/canvasStore";
 import blockController from "@/utils/blockController";
-import { addPxToNumber, getRenderedPosition } from "@/utils/helpers";
+import { toUnitOf } from "@/utils/cssUtils";
+import { getRenderedPosition } from "@/utils/helpers";
 import { isReorderable, startBlockReorder } from "@/utils/useBlockReorder";
 import { Ref, computed, inject, nextTick, onMounted, ref, watch, watchEffect } from "vue";
 import setGuides from "../utils/guidesTracker";
@@ -296,6 +297,14 @@ const handleMove = (ev: MouseEvent) => {
 	const startX = ev.clientX;
 	const startY = ev.clientY;
 	const { left: startLeft, top: startTop } = getRenderedPosition(props.target as HTMLElement);
+	// a block placed in % moves in %, so it keeps its spot on its container at every width
+	const container = (props.target as HTMLElement).offsetParent as HTMLElement | null;
+	const startLeftValue = props.block.getActiveStyleValue("left");
+	const startTopValue = props.block.getActiveStyleValue("top");
+	const setLeft = (px: number) =>
+		props.block.setActiveStyle("left", toUnitOf(startLeftValue, px, container?.clientWidth || 0));
+	const setTop = (px: number) =>
+		props.block.setActiveStyle("top", toUnitOf(startTopValue, px, container?.clientHeight || 0));
 
 	moving.value = true;
 	guides.showX();
@@ -312,15 +321,15 @@ const handleMove = (ev: MouseEvent) => {
 		const movementY = (mouseMoveEvent.clientY - startY) / scale;
 		let finalLeft = startLeft + movementX;
 		let finalTop = startTop + movementY;
-		props.block.setActiveStyle("left", addPxToNumber(finalLeft));
-		props.block.setActiveStyle("top", addPxToNumber(finalTop));
+		setLeft(finalLeft);
+		setTop(finalTop);
 		await nextTick();
 		const { leftOffset, rightOffset } = guides.getPositionOffset();
 		if (leftOffset !== 0) {
-			props.block.setActiveStyle("left", addPxToNumber(finalLeft + leftOffset));
+			setLeft(finalLeft + leftOffset);
 		}
 		if (rightOffset !== 0) {
-			props.block.setActiveStyle("left", addPxToNumber(finalLeft + rightOffset));
+			setLeft(finalLeft + rightOffset);
 		}
 
 		mouseMoveEvent.preventDefault();

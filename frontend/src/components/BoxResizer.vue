@@ -36,6 +36,7 @@ import useCanvasStore from "@/stores/canvasStore";
 import { startDrag } from "@/utils/cursor";
 import { getResizePositionDelta, toLocalDelta } from "@/utils/rotation";
 import type { ResizeDirection } from "@/utils/rotation";
+import { toUnitOf } from "@/utils/cssUtils";
 import { getNumberFromPx, getRenderedPosition } from "@/utils/helpers";
 import { clamp } from "@vueuse/core";
 import { computed, inject, onMounted, ref, watch } from "vue";
@@ -150,6 +151,9 @@ const handleResize = (ev: MouseEvent, { horizontal, vertical }: ResizeDirection)
 	const blockStartHeight = props.targetBlock.getActiveStyleValue("height") as string;
 	const startFontSize = fontSize.value || 0;
 	const canReposition = props.targetBlock.isMovable();
+	const container = target.offsetParent as HTMLElement | null;
+	const blockStartLeft = props.targetBlock.getActiveStyleValue("left");
+	const blockStartTop = props.targetBlock.getActiveStyleValue("top");
 	// pressing `esc` resets to startStyles. The drag writes to the active state, so read
 	// and restore that same key.
 	const resizedStyles = ["width", "height", "left", "top", "fontSize"] as styleProperty[];
@@ -204,8 +208,10 @@ const handleResize = (ev: MouseEvent, { horizontal, vertical }: ResizeDirection)
 					{ horizontal, vertical },
 					ownRotation,
 				);
-				props.targetBlock.setActiveStyle("left", `${Math.round(startLeft + positionDelta.x)}px`);
-				props.targetBlock.setActiveStyle("top", `${Math.round(startTop + positionDelta.y)}px`);
+				const left = startLeft + positionDelta.x;
+				const top = startTop + positionDelta.y;
+				props.targetBlock.setActiveStyle("left", toUnitOf(blockStartLeft, left, container?.clientWidth || 0));
+				props.targetBlock.setActiveStyle("top", toUnitOf(blockStartTop, top, container?.clientHeight || 0));
 			}
 		},
 		onCancel: () => {

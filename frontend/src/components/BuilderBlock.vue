@@ -23,7 +23,7 @@
 			:isChildOfComponent="block.isExtendedFromComponent() || isChildOfComponent"
 			:key="child.blockId"
 			:repeater-index="repeaterIndex"
-			v-for="child in block.getChildren().filter((child) => child.isVisible(breakpoint))" />
+			v-for="child in block.getChildren().filter(isRendered)" />
 	</component>
 	<teleport
 		:to="canvasProps?.overlayElement"
@@ -142,6 +142,14 @@ const isHovered = computed(() => {
 const selectedInCanvas = computed(() => {
 	return !props.preview && Boolean(canvasStore.activeCanvas?.isSelected(props.block));
 });
+
+// :target never matches in the canvas, so a block hidden until linked to shows its
+// target styles while it or a block inside it is selected
+const previewsTarget = (block: Block) =>
+	!props.preview && Boolean(canvasStore.activeCanvas?.isOnSelectionPath(block));
+
+const isRendered = (child: Block) =>
+	child.isVisible(props.breakpoint) || (previewsTarget(child) && child.isVisible(props.breakpoint, "target"));
 
 // For repeater items the same Block object is rendered multiple times,
 // so we need a unique identifier per rendered instance (used by client scripts)
@@ -272,6 +280,10 @@ const styles = computed(() => {
 		...dynamicStyles,
 	} as BlockStyleMap;
 
+	if (previewsTarget(props.block)) {
+		Object.assign(styleMap, props.block.getStateStyles("target", props.breakpoint));
+	}
+
 	if (!props.preview && isSelected.value && props.block.activeState) {
 		const [state] = props.block.activeState.split(":");
 
@@ -313,7 +325,7 @@ const styles = computed(() => {
 const loadEditor = computed(() => {
 	return (
 		target.value &&
-		props.block.getStyle("display") !== "none" &&
+		styles.value.display !== "none" &&
 		((isSelected.value && props.breakpoint === canvasStore.activeCanvas?.activeBreakpoint) ||
 			(isHovered.value && canvasStore.activeCanvas?.hoveredBreakpoint === props.breakpoint)) &&
 		!canvasProps?.scaling &&
