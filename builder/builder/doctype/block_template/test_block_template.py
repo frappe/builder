@@ -59,6 +59,10 @@ class TestBlockTemplate(FrappeTestCase):
 				css,
 			)
 
+		# the image keeps its box while it loads, so the hotspots are not clipped to nothing
+		image = BeautifulSoup(html, "html.parser").find("img")
+		self.assertEqual((image["width"], image["height"]), ("1920", "1280"))
+
 		# the page's client script tag stays empty
 		self.assertNotRegex(html, r"<script>(?!</script>)")
 
