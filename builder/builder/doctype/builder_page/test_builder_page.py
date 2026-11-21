@@ -2,6 +2,7 @@
 # See license.txt
 
 
+import re
 from unittest.mock import patch
 
 import frappe
@@ -2292,6 +2293,45 @@ component.update({
 		self.assertIn("fb-", html)
 		self.assertIn("@media only screen and (max-width: 576px)", css)
 		self.assertIn("text-overflow: ellipsis", css)
+
+	def test_renders_target_and_focus_states_for_every_device(self):
+		from builder.builder.doctype.builder_page.builder_page import get_block_html
+
+		def state_styles(width):
+			return {
+				"target:borderWidth": width,
+				"focus-visible:outlineWidth": width,
+				"focus-within:outlineOffset": width,
+			}
+
+		blocks = [
+			{
+				"blockId": "panel",
+				"element": "div",
+				"baseStyles": {"visibility": "hidden", "target:visibility": "visible", **state_styles("1px")},
+				"tabletStyles": state_styles("2px"),
+				"mobileStyles": state_styles("3px"),
+			}
+		]
+
+		html, css, _, _ = get_block_html(blocks)
+		style_class = re.search(r"\bfb-\w+", html).group()
+
+		def state_rules(width):
+			return [
+				f".{style_class}:target {{ border-width: {width}; }}",
+				f".{style_class}:focus-visible {{ outline-width: {width}; }}",
+				f".{style_class}:focus-within {{ outline-offset: {width}; }}",
+			]
+
+		self.assertIn(f".{style_class} {{ visibility: hidden;", css)
+		self.assertIn(f".{style_class}:target {{ visibility: visible; }}", css)
+		for rule in state_rules("1px"):
+			self.assertIn(rule, css)
+		for rule in state_rules("2px"):
+			self.assertIn(f"@media only screen and (max-width: 1023px) {{ {rule} }}", css)
+		for rule in state_rules("3px"):
+			self.assertIn(f"@media only screen and (max-width: 576px) {{ {rule} }}", css)
 
 	def test_conflicting_routes_picks_last_published(self):
 		"""Pages sharing a route should resolve to the most recently published one."""
