@@ -1,0 +1,356 @@
+// Pins are read from a block's own CSS, so raw CSS, AI output and breakpoint overrides
+// round-trip. On each axis a block is pinned to its start side (left/top), its end side
+// (right/bottom), both (stretched, size auto), or centred with left: 50% and
+// `translate: -50%`. The individual translate property leaves rotate, transform and
+// margins to the rest of the editor, and -50% is always half the block's own size.
+
+import { addPxToNumber, toUnitOf } from "@/utils/cssUtils";
+import {
+	CENTER_SHIFT,
+	centerOffset,
+	centerTranslate,
+	centerValue,
+	isCenterValue,
+	isSet,
+	parseTranslate,
+	readMargin,
+	readSide,
+	shiftInset,
+	SIDES,
+	type Shift,
+	type Side,
+	type StyleReader,
+} from "@/utils/positionValues";
+
+type Axis = "x" | "y";
+type Edge = "start" | "end";
+type AxisPin = Edge | "stretch" | "center" | "none";
+// a property set to null is unset
+type StylePatch = Record<string, string | null>;
+type AxisChange = { pin: AxisPin; styles: StylePatch };
+type AxisContext = {
+	centered: boolean;
+	// centring writes a translate, so one written by someone else rules it out
+	custom: boolean;
+	// the vertical axis of a fixed block, whose window has no height in the editor
+	inWindow: boolean;
+};
+
+// one axis of a positioned block, in px
+type AxisBox = {
+	// distances from the containing block's padding edges, before any translate
+	start: number;
+	end: number;
+	// border box
+	size: number;
+	marginStart: number;
+	marginEnd: number;
+	container: number;
+	// an auto size without the stretch: the content's, measured for a stretched axis only
+	content?: number;
+};
+type Box = Record<Axis, AxisBox>;
+
+const AXIS_SIDES = {
+	x: { start: "left", end: "right", size: "width" },
+	y: { start: "top", end: "bottom", size: "height" },
+} as const;
+const PIN_PROPERTIES = [...SIDES, "inset", "width", "height", "translate", "transform"];
+
+class BlockPins {
+	readonly x: AxisPins;
+	readonly y: AxisPins;
+	// moved by a translate or transform the pins did not write, which is left alone
+	readonly custom: boolean;
+
+	constructor(read: StyleReader) {
+		const readPin = (property: string) => readSide(read, property);
+		const shift = parseTranslate(read("translate"));
+		const centered = {
+			x: shift?.[0] === CENTER_SHIFT && isCenterValue(readPin("left")) && !isSet(readPin("right")),
+			y: shift?.[1] === CENTER_SHIFT && isCenterValue(readPin("top")) && !isSet(readPin("bottom")),
+		};
+		this.custom =
+			!shift ||
+			/translate/i.test(String(read("transform") ?? "")) ||
+			(shift[0] !== "0" && !centered.x) ||
+			(shift[1] !== "0" && !centered.y);
+		const custom = this.custom;
+		const inWindow = read("position") === "fixed";
+		this.x = new AxisPins("x", readPin, { centered: centered.x && !custom, custom, inWindow: false });
+		this.y = new AxisPins("y", readPin, { centered: centered.y && !custom, custom, inWindow });
+	}
+
+	axis(axis: Axis) {
+		return axis === "x" ? this.x : this.y;
+	}
+
+	toggle(axis: Axis, edge: Edge, box: Box) {
+		return this.combine({ [axis]: this.axis(axis).toggle(edge, box[axis]) });
+	}
+
+	toggleCenter(axis: Axis, box: Box) {
+		return this.combine({ [axis]: this.axis(axis).toggleCenter(box[axis]) });
+	}
+
+	// a value typed into a side's field: it pins that side, and an empty one unpins it
+	setSide(side: Side, value: string | null, box: Box | null) {
+		const axis = axisOf(side);
+		return this.combine({ [axis]: this.axis(axis).setEdge(edgeOf(side), value, box?.[axis]) });
+	}
+
+	// pins each axis as given and keeps the block where it is
+	place(pins: Record<Axis, AxisPin>, box: Box) {
+		return this.combine({ x: this.x.place(pins.x, box.x), y: this.y.place(pins.y, box.y) });
+	}
+
+	fill(): StylePatch {
+		const fill = (axis: AxisPins) => ({ pin: "stretch" as const, styles: axis.fill() });
+		return this.combine({ x: fill(this.x), y: fill(this.y) });
+	}
+
+	center(box: Box | null) {
+		const center = (axis: AxisPins, axisBox?: AxisBox) => ({
+			pin: "center" as const,
+			styles: axis.center(axisBox),
+		});
+		return this.combine({ x: center(this.x, box?.x), y: center(this.y, box?.y) });
+	}
+
+	clear(): StylePatch {
+		const clear = (axis: AxisPins) => ({ pin: "none" as const, styles: axis.clear() });
+		return this.combine({ x: clear(this.x), y: clear(this.y) });
+	}
+
+	// moves the pinned sides, so a right-pinned block changes `right`
+	moveBy(x: Shift, y: Shift, box: Box | null): StylePatch {
+		return { ...this.x.moveBy(x, box?.x), ...this.y.moveBy(y, box?.y) };
+	}
+
+	// `startMove` is how far the box's left/top edge moves, `growth` how much its size changes
+	resizeBy(startMove: Record<Axis, Shift>, growth: Record<Axis, Shift>, box: Box | null): StylePatch {
+		return {
+			...this.x.resizeBy(startMove.x, growth.x, box?.x),
+			...this.y.resizeBy(startMove.y, growth.y, box?.y),
+		};
+	}
+
+	// translate follows the centred axes, unless it was written by someone else
+	private combine(changes: Partial<Record<Axis, AxisChange>>): StylePatch {
+		const patch = { ...changes.x?.styles, ...changes.y?.styles };
+		if (this.custom) return patch;
+		const isCentered = (axis: Axis) => (changes[axis]?.pin ?? this.axis(axis).pin) === "center";
+		const translate = centerTranslate(isCentered("x"), isCentered("y"));
+		if (translate !== centerTranslate(this.x.pin === "center", this.y.pin === "center")) {
+			patch.translate = translate;
+		}
+		return patch;
+	}
+}
+
+class AxisPins {
+	readonly pin: AxisPin;
+
+	constructor(
+		readonly axis: Axis,
+		private read: StyleReader,
+		private context: AxisContext,
+	) {
+		const { start, end } = this.sides;
+		this.pin = context.centered ? "center" : pinOfEdges(isSet(read(start)), isSet(read(end)));
+	}
+
+	get sides() {
+		return AXIS_SIDES[this.axis];
+	}
+
+	isPinned(edge: Edge) {
+		return hasEdge(this.pin, edge);
+	}
+
+	// what toggling an edge pins the axis to
+	toggled(edge: Edge): AxisPin {
+		const other = edge === "start" ? "end" : "start";
+		if (this.pin === "stretch") return other;
+		// an axis is never left without pins: dropping the last one centres it, or
+		// pins the other side where centring is off
+		if (this.pin === edge) return this.context.custom ? other : "center";
+		return this.pin === other ? "stretch" : edge;
+	}
+
+	toggle(edge: Edge, box: AxisBox) {
+		const change = this.place(this.toggled(edge), box);
+		// a side that stays pinned keeps its value as written, unless it leaned on an auto margin
+		(["start", "end"] as Edge[])
+			.filter(
+				(kept) =>
+					this.isPinned(kept) && hasEdge(change.pin, kept) && !this.freedMargin(kept, change.pin, box),
+			)
+			.forEach((kept) => delete change.styles[this.sides[kept]]);
+		return change;
+	}
+
+	toggleCenter(box: AxisBox) {
+		return this.place(this.pin === "center" ? "start" : "center", box);
+	}
+
+	place(pin: AxisPin, box: AxisBox): AxisChange {
+		if (this.context.inWindow && this.pin !== "none") return this.carry(pin);
+		const { start, end, size } = this.sides;
+		const seen = this.seenBox(pin, box);
+		const styles: StylePatch = { [start]: null, [end]: null };
+		if (pin === "start" || pin === "stretch") styles[start] = this.format(start, seen.start, box);
+		if (pin === "end" || pin === "stretch") styles[end] = this.format(end, seen.end, box);
+		if (pin === "center") styles[start] = centerValue(seen.start + box.size / 2 - box.container / 2);
+		if (pin === "stretch") styles[size] = null;
+		else if (this.keepsSize(pin, seen)) styles[size] = addPxToNumber(box.size);
+		return { pin, styles };
+	}
+
+	// The editor's frame is as tall as the page, but a fixed block's window is a screen tall
+	// at most, so a distance measured in the frame could put it off-screen. A side it gets
+	// pinned to takes the distance of the side it joins or replaces instead.
+	private carry(pin: AxisPin): AxisChange {
+		const { start, end, size } = this.sides;
+		const kept = this.isPinned("start") ? start : end;
+		const distance = this.pin === "center" ? "0px" : String(this.read(kept));
+		const styles: StylePatch = { [start]: null, [end]: null };
+		if (hasEdge(pin, "start")) styles[start] = distance;
+		if (hasEdge(pin, "end")) styles[end] = distance;
+		if (pin === "center") styles[start] = "50%";
+		if (pin === "stretch") styles[size] = null;
+		return { pin, styles };
+	}
+
+	setEdge(edge: Edge, value: string | null, box?: AxisBox): AxisChange {
+		const side = this.sides[edge];
+		const otherSide = this.sides[edge === "start" ? "end" : "start"];
+		// "auto" is how CSS says unpinned, so it unpins like an empty field
+		if (!isSet(value)) {
+			if (!this.isPinned(edge)) return { pin: this.pin, styles: {} };
+			return box ? this.toggle(edge, box) : { pin: this.pin, styles: { [side]: null } };
+		}
+		// what a centred axis's fields read, so typing it centres the axis
+		if (value === "center") {
+			const centers = box && this.pin !== "center" && !this.context.custom;
+			return centers ? this.place("center", box) : { pin: this.pin, styles: {} };
+		}
+		if (this.isPinned(edge)) return { pin: this.pin, styles: { [side]: value } };
+		if (this.isPinned(edge === "start" ? "end" : "start")) {
+			return { pin: "stretch", styles: { [side]: value, [this.sides.size]: null } };
+		}
+		return { pin: edge, styles: { [side]: value, [otherSide]: null } };
+	}
+
+	fill(): StylePatch {
+		const { start, end, size } = this.sides;
+		return { [start]: "0px", [end]: "0px", [size]: null };
+	}
+
+	center(box?: AxisBox): StylePatch {
+		const { start, end, size } = this.sides;
+		const styles: StylePatch = { [start]: "50%", [end]: null };
+		if (box && this.keepsSize("center", { ...box, start: (box.container - box.size) / 2 })) {
+			styles[size] = addPxToNumber(box.size);
+		}
+		return styles;
+	}
+
+	clear(): StylePatch {
+		return { [this.sides.start]: null, [this.sides.end]: null };
+	}
+
+	moveBy(shift: Shift, box?: AxisBox): StylePatch {
+		if (this.pin === "center") {
+			// a drag moves by whole px, as on the other sides
+			const offset = Math.round(centerOffset(this.read(this.sides.start)) + shift.px);
+			return { [this.sides.start]: centerValue(offset) };
+		}
+		return this.shiftEdges(shift, shift, box);
+	}
+
+	// a centred block grows around its centre, so its offset stays
+	resizeBy(startMove: Shift, growth: Shift, box?: AxisBox): StylePatch {
+		if (this.pin === "center") return {};
+		const endMove = { px: startMove.px + growth.px, percent: startMove.percent + growth.percent };
+		return this.shiftEdges(startMove, endMove, box);
+	}
+
+	private shiftEdges(startMove: Shift, endMove: Shift, box?: AxisBox): StylePatch {
+		const { start, end } = this.sides;
+		const negate = ({ px, percent }: Shift) => ({ px: -px, percent: -percent });
+		const styles: StylePatch = {};
+		// an unpinned block sits where it is and gets pinned to its start; a side that
+		// doesn't move keeps its value as written
+		if (startMove.px && (this.isPinned("start") || this.pin === "none")) {
+			styles[start] = shiftInset(this.read(start), startMove, box?.start);
+		}
+		if (endMove.px && this.isPinned("end")) {
+			styles[end] = shiftInset(this.read(end), negate(endMove), box?.end);
+		}
+		return styles;
+	}
+
+	// the box once pinned as `pin`: without the centring shift this axis may have now, and
+	// with the space of an auto margin that stops centring it moved into the inset
+	private seenBox(pin: AxisPin, box: AxisBox): AxisBox {
+		const shift = this.pin === "center" ? box.size / 2 : 0;
+		const freedStart = this.freedMargin("start", pin, box);
+		const freedEnd = this.freedMargin("end", pin, box);
+		return {
+			...box,
+			start: box.start - shift + freedStart,
+			end: box.end + shift + freedEnd,
+			marginStart: box.marginStart - freedStart,
+			marginEnd: box.marginEnd - freedEnd,
+		};
+	}
+
+	// Auto margins centre a block pinned to both sides of an axis with a set size; with one
+	// side unpinned they are 0, so the space they took has to move into the inset.
+	private freedMargin(edge: Edge, pin: AxisPin, box: AxisBox) {
+		if (pin === "stretch" || readMargin(this.read, this.sides[edge]) !== "auto") return 0;
+		return edge === "start" ? box.marginStart : box.marginEnd;
+	}
+
+	// pinned to one side, an auto size shrinks to its content and the room left on the other
+	private keepsSize(pin: AxisPin, box: AxisBox) {
+		if (isSet(this.read(this.sides.size))) return false;
+		const startInset = pin === "center" ? box.start + box.size / 2 : pin === "end" ? box.end : box.start;
+		const room = box.container - startInset - box.marginStart - box.marginEnd;
+		if (this.pin === "stretch") {
+			if (box.content === undefined) return true;
+			const autoSize = this.axis === "x" ? Math.min(box.content, room) : box.content;
+			return Math.abs(autoSize - box.size) > 0.5;
+		}
+		return this.axis === "x" && box.size > room + 0.5;
+	}
+
+	// a side keeps the unit it, or the other side of its axis, is written in
+	private format(side: string, px: number, box: AxisBox) {
+		const { start, end } = this.sides;
+		const unitOf =
+			this.pin === "center" ? undefined : [side, side === start ? end : start].map(this.read).find(isSet);
+		return toUnitOf(unitOf, px, box.container);
+	}
+}
+
+function axisOf(side: Side): Axis {
+	return side === "left" || side === "right" ? "x" : "y";
+}
+
+function edgeOf(side: Side): Edge {
+	return side === "left" || side === "top" ? "start" : "end";
+}
+
+function hasEdge(pin: AxisPin, edge: Edge) {
+	return pin === edge || pin === "stretch";
+}
+
+function pinOfEdges(start: boolean, end: boolean): AxisPin {
+	if (start && end) return "stretch";
+	return start ? "start" : end ? "end" : "none";
+}
+
+export { AXIS_SIDES, axisOf, BlockPins, edgeOf, PIN_PROPERTIES };
+export type { Axis, AxisBox, AxisPin, Box, Edge, StylePatch };

@@ -9,6 +9,7 @@
 			v-if="isTopLabel"
 			class="text-sm"
 			:class="{ 'cursor-ns-resize': enableSlider }"
+			:title="title"
 			@mousedown="$emit('labelMousedown', $event)">
 			{{ label }}
 		</InputLabel>
@@ -33,6 +34,7 @@
 				<InputLabel
 					class="w-full"
 					:class="{ 'cursor-ns-resize': enableSlider }"
+					:title="title"
 					@mousedown="$emit('labelMousedown', $event)">
 					{{ label }}
 				</InputLabel>
@@ -74,6 +76,7 @@ import { computed, onMounted, ref } from "vue";
 
 const props = defineProps<{
 	label: string;
+	description?: string;
 	labelPlacement: "left" | "top";
 	component: Component;
 	controlAttrs?: Record<string, unknown>;
@@ -95,6 +98,9 @@ const emit = defineEmits<{
 }>();
 
 const isTopLabel = computed(() => props.labelPlacement === "top");
+
+// the label column is narrow, so the full label and its hint show on hover
+const title = computed(() => (props.description ? `${props.label}: ${props.description}` : props.label));
 
 const handleKeyDown = (event: KeyboardEvent) => {
 	if (!isCtrlOrCmd(event)) event.stopPropagation();

@@ -4,6 +4,7 @@ import useBlockTemplateStore from "@/stores/blockTemplateStore";
 import useBuilderStore from "@/stores/builderStore";
 import useCanvasStore from "@/stores/canvasStore";
 import useComponentStore from "@/stores/componentStore";
+import { makeIdsUnique } from "@/utils/block/elementIds";
 import { getLayoutDirection, type LayoutDirection } from "@/utils/dropGeometry";
 import {
 	getBlockCopy,
@@ -227,6 +228,7 @@ export function useCanvasDropZone(
 		} else if (blockTemplate) {
 			await blockTemplateStore.fetchBlockTemplate(blockTemplate);
 			const newBlock = getBlockInstance(blockTemplateStore.getBlockTemplate(blockTemplate).block, false);
+			makeIdsUnique(newBlock, block.value as Block);
 			// if shift key is pressed, replace parent block with new block
 			if (ev.shiftKey) {
 				parentBlock = getBlockToReplace(ev);

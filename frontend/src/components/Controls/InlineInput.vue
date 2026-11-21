@@ -22,6 +22,7 @@
 			v-if="type != 'autocomplete'"
 			@update:modelValue="handleChange"
 			:hideClearButton="hideClearButton"
+			:hideArrows="hideArrows"
 			@keydown="handleKeyDown" />
 		<Autocomplete
 			v-if="type == 'autocomplete'"
@@ -38,6 +39,7 @@
 	</div>
 </template>
 <script setup lang="ts">
+import { addUnitToNumber } from "@/utils/cssUtils";
 import { extractNumberAndUnit, isCtrlOrCmd } from "@/utils/helpers";
 import { isNumber } from "@tiptap/vue-3";
 import { computed, ref } from "vue";
@@ -68,6 +70,7 @@ const props = withDefaults(
 		actionButton?: Action;
 		placeholder?: StyleValue;
 		hideClearButton?: boolean;
+		hideArrows?: boolean;
 	}>(),
 	{
 		label: "",
@@ -82,6 +85,7 @@ const props = withDefaults(
 		showInputAsOption: false,
 		placeholder: "unset",
 		hideClearButton: false,
+		hideArrows: false,
 	},
 );
 
@@ -110,10 +114,13 @@ const handleChange = (value: string | number | null | { label: string; value: st
 		value = value.value;
 	}
 	if (value && typeof value === "string" && props.unitOptions.length) {
-		const { number, unit } = extractNumberAndUnit(value);
-		if (!unit && number) {
-			value = number + props.unitOptions[0];
-		}
+		// a bare number keeps the unit the value already uses, so 40% edited to 35 stays a %;
+		// a keyword such as auto passes through
+		const { unit: currentUnit } = extractNumberAndUnit(String(props.modelValue || ""));
+		value = addUnitToNumber(
+			value.trim(),
+			props.unitOptions.includes(currentUnit) ? currentUnit : props.unitOptions[0],
+		);
 	}
 
 	emit("update:modelValue", value);

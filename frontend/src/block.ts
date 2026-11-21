@@ -6,22 +6,21 @@ import {
 	resetWithComponent,
 	syncBlockWithComponent,
 } from "@/utils/block/componentInstance";
+import { makeIdsUnique } from "@/utils/block/elementIds";
 import { findBlockInTree, resetBlock } from "@/utils/block/tree";
+import BlockPosition from "@/utils/blockPosition";
 import type { SpacingType } from "@/utils/cssUtils";
 import {
-	addPxToNumber,
 	cssUrl,
 	dataURLFileName,
 	dataURLtoFile,
 	generateId,
 	getBlockCopy,
 	getBlockInstance,
-	getNumberFromPx,
 	getSpacing,
 	getTextContent,
 	handleBase64Attribute,
 	isHTMLString,
-	kebabToCamelCase,
 	parseAndSetBackground,
 	setSpacing,
 	toStyleProperty,
@@ -420,7 +419,7 @@ class Block implements BlockOptions {
 	setStyle(style: styleProperty, value: StyleValue) {
 		const canvasStore = useCanvasStore();
 		let styleObj = this.baseStyles;
-		style = kebabToCamelCase(style as string) as styleProperty;
+		style = toStyleProperty(style as string);
 		if (canvasStore.activeCanvas?.activeBreakpoint === "mobile") {
 			styleObj = this.mobileStyles;
 		} else if (canvasStore.activeCanvas?.activeBreakpoint === "tablet") {
@@ -476,7 +475,7 @@ class Block implements BlockOptions {
 		delete this.tabletStyles[style];
 	}
 	setBaseStyle(style: styleProperty, value: StyleValue) {
-		style = kebabToCamelCase(style as string) as styleProperty;
+		style = toStyleProperty(style as string);
 		this.baseStyles[style] = value;
 	}
 	getStyle(
@@ -620,21 +619,8 @@ class Block implements BlockOptions {
 		if (!this.isMovable()) {
 			return;
 		}
-		let top = getNumberFromPx(this.getStyle("top")) || 0;
-		let left = getNumberFromPx(this.getStyle("left")) || 0;
-		if (direction === "up") {
-			top -= 10;
-			this.setStyle("top", addPxToNumber(top));
-		} else if (direction === "down") {
-			top += 10;
-			this.setStyle("top", addPxToNumber(top));
-		} else if (direction === "left") {
-			left -= 10;
-			this.setStyle("left", addPxToNumber(left));
-		} else if (direction === "right") {
-			left += 10;
-			this.setStyle("left", addPxToNumber(left));
-		}
+		const step = { up: [0, -10], down: [0, 10], left: [-10, 0], right: [10, 0] }[direction];
+		new BlockPosition(this).moveBy(step[0], step[1]);
 	}
 	addChild(child: BlockOptions, index?: number | null, select: boolean = true) {
 		if (index === undefined || index === null) {
@@ -936,8 +922,15 @@ class Block implements BlockOptions {
 			this.setStyle("display", "none");
 		}
 	}
-	isVisible(breakpoint?: string) {
-		return this.getStyle("display", breakpoint) !== "none";
+	// given a state, whether the block shows while that state applies
+	isVisible(breakpoint?: string, state?: string) {
+		const stateDisplay = state && this.getStyle(`${state}:display` as styleProperty, breakpoint);
+		return (stateDisplay || this.getStyle("display", breakpoint)) !== "none";
+	}
+	// The canvas shows target styles on selected blocks and their ancestors, as :target
+	// never matches there, so a block hidden until linked to also shows on that path.
+	isVisibleOnSelectionPath(breakpoint?: string) {
+		return this.isVisible(breakpoint) || this.isVisible(breakpoint, "target");
 	}
 	extendFromComponent(componentName: string) {
 		this.extendedFromComponent = componentName;
@@ -1057,13 +1050,14 @@ class Block implements BlockOptions {
 		const pauseId = canvasStore.activeCanvas?.history?.pause();
 		const blockCopy = getBlockCopy(this);
 		const parentBlock = this.getParentBlock();
+		const rootBlock = canvasStore.activeCanvas?.getRootBlock();
+		if (rootBlock) makeIdsUnique(blockCopy, rootBlock);
 
-		if (blockCopy.getStyle("position") === "absolute") {
-			// shift the block a bit
-			const left = getNumberFromPx(blockCopy.getStyle("left"));
-			const top = getNumberFromPx(blockCopy.getStyle("top"));
-			blockCopy.setStyle("left", `${left + 20}px`);
-			blockCopy.setStyle("top", `${top + 20}px`);
+		if (blockCopy.isMovable()) {
+			// shift the copy a bit along its pins, keeping a % position in %
+			const position = new BlockPosition(blockCopy, null);
+			const shift = { px: 20, percent: 2 };
+			position.apply(position.pins.moveBy(shift, shift, null));
 		}
 
 		let child = null as Block | null;
