@@ -96,7 +96,8 @@ export function useBlockSelection(rootBlock: Ref<Block>) {
 	};
 }
 
-function getSelectionPathIds(blocks: Block[]) {
+// ids of the given blocks and all their ancestors
+export function getSelectionPathIds(blocks: Block[]) {
 	const ids = new Set<string>();
 	blocks.forEach((block) => {
 		for (let current: Block | null = block; current; current = current.getParentBlock()) {
@@ -106,7 +107,8 @@ function getSelectionPathIds(blocks: Block[]) {
 	return ids;
 }
 
-function syncSet<T>(target: Set<T>, source: Set<T>) {
+// makes target equal source, touching only the entries that differ
+export function syncSet<T>(target: Set<T>, source: Set<T>) {
 	target.forEach((item) => source.has(item) || target.delete(item));
 	source.forEach((item) => target.add(item));
 }

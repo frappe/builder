@@ -1,90 +1,58 @@
 import type Block from "@/block";
 import { describe, expect, it, vi } from "vitest";
-import { computed, nextTick, ref } from "vue";
-import { useBlockSelection } from "./useBlockSelection";
+import { computed, reactive } from "vue";
+import { getSelectionPathIds, syncSet } from "./useBlockSelection";
 
 vi.mock("@/utils/helpers", () => ({ generateId: () => "id" }));
 
-type FakeBlock = {
-	blockId: string;
-	children: FakeBlock[];
-	parentBlock: FakeBlock | null;
-	getParentBlock: () => FakeBlock | null;
-};
+type FakeBlock = { blockId: string; parentBlock: FakeBlock | null; getParentBlock: () => FakeBlock | null };
 
-const makeBlock = (blockId: string, children: FakeBlock[] = []): FakeBlock => {
-	const block: FakeBlock = { blockId, children, parentBlock: null, getParentBlock: () => block.parentBlock };
-	children.forEach((child) => (child.parentBlock = block));
+const makeBlock = (blockId: string, parentBlock: FakeBlock | null = null): FakeBlock => {
+	const block: FakeBlock = { blockId, parentBlock, getParentBlock: () => block.parentBlock };
 	return block;
 };
 
 // body > section > panel > text, and body > footer
 const makePage = () => {
-	const text = makeBlock("text");
-	const panel = makeBlock("panel", [text]);
-	const section = makeBlock("section", [panel]);
-	const footer = makeBlock("footer");
-	const body = makeBlock("body", [section, footer]);
-	const blocks = { body, section, panel, text, footer };
-	const selection = useBlockSelection(ref(body as unknown as Block));
-	return { blocks: blocks as unknown as Record<keyof typeof blocks, Block>, selection };
+	const body = makeBlock("body");
+	const section = makeBlock("section", body);
+	const panel = makeBlock("panel", section);
+	const text = makeBlock("text", panel);
+	const footer = makeBlock("footer", body);
+	return { body, section, panel, text, footer } as unknown as Record<string, Block>;
 };
 
-const pathOf = (selection: ReturnType<typeof useBlockSelection>, blocks: Record<string, Block>) =>
-	Object.keys(blocks).filter((name) => selection.isOnSelectionPath(blocks[name]));
-
-describe("useBlockSelection", () => {
-	it("puts a selected block and its ancestors on the selection path", async () => {
-		const { blocks, selection } = makePage();
-		selection.selectBlock(blocks.panel);
-		await nextTick();
-
-		expect(pathOf(selection, blocks)).toEqual(["body", "section", "panel"]);
+describe("getSelectionPathIds", () => {
+	it("holds each selected block and its ancestors", () => {
+		const page = makePage();
+		expect([...getSelectionPathIds([page.panel])]).toEqual(["panel", "section", "body"]);
+		expect([...getSelectionPathIds([page.text, page.footer])]).toEqual([
+			"text",
+			"panel",
+			"section",
+			"body",
+			"footer",
+		]);
+		expect(getSelectionPathIds([]).size).toBe(0);
 	});
+});
 
-	it("follows every block of a multiple selection", async () => {
-		const { blocks, selection } = makePage();
-		selection.selectBlock(blocks.text);
-		selection.selectBlock(blocks.footer, true);
-		await nextTick();
-		expect(pathOf(selection, blocks)).toEqual(["body", "section", "panel", "text", "footer"]);
-
-		selection.toggleBlockSelection(blocks.text);
-		await nextTick();
-		expect(pathOf(selection, blocks)).toEqual(["body", "footer"]);
-	});
-
-	it("empties the selection path when the selection is cleared", async () => {
-		const { blocks, selection } = makePage();
-		selection.selectBlock(blocks.text);
-		await nextTick();
-		selection.clearSelection();
-		await nextTick();
-
-		expect(pathOf(selection, blocks)).toEqual([]);
-	});
-
-	it("reruns a block's check only when that block joins or leaves the path", async () => {
-		const { blocks, selection } = makePage();
+describe("syncSet", () => {
+	it("updates the set in place, so a check on an unchanged entry does not rerun", () => {
+		const path = reactive(new Set(["body", "section", "panel"]));
 		const runs: Record<string, number> = {};
-		const checks = Object.entries(blocks).map(([name, block]) =>
+		const checks = ["body", "section", "panel", "footer"].map((id) =>
 			computed(() => {
-				runs[name] = (runs[name] || 0) + 1;
-				return selection.isOnSelectionPath(block);
+				runs[id] = (runs[id] || 0) + 1;
+				return path.has(id);
 			}),
 		);
-		const readAll = () => checks.forEach((check) => check.value);
-
-		selection.selectBlock(blocks.text);
-		await nextTick();
-		readAll();
-		const runsAfterFirstRead = { ...runs };
-
-		selection.selectBlock(blocks.footer);
-		await nextTick();
+		const readAll = () => checks.map((check) => check.value);
 		readAll();
 
-		const reran = Object.keys(runs).filter((name) => runs[name] > runsAfterFirstRead[name]);
-		expect(reran).toEqual(["section", "panel", "text", "footer"]);
+		syncSet(path, new Set(["body", "footer"]));
+
+		expect(readAll()).toEqual([true, false, false, true]);
+		expect(runs).toEqual({ body: 1, section: 2, panel: 2, footer: 2 });
 	});
 });
