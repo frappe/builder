@@ -236,7 +236,12 @@ class TestRoundTrip(unittest.TestCase):
 		panel = block(
 			"sheet",
 			"div",
-			baseStyles={"display": "none", "position": "fixed", "overflowY": "auto", "target:display": "flex"},
+			baseStyles={
+				"display": "none",
+				"position": "fixed",
+				"overflowY": "auto",
+				"target:display": "flex",
+			},
 			mobileStyles={"maxHeight": "75vh", "target:boxShadow": "0px -8px 24px rgba(0,0,0,0.2)"},
 			attributes={"id": "no-14-red"},
 		)
