@@ -1068,11 +1068,13 @@ class Block implements BlockOptions {
 		if (rootBlock) makeIdsUnique(blockCopy, rootBlock);
 
 		if (blockCopy.getStyle("position") === "absolute") {
-			// shift the block a bit
-			const left = getNumberFromPx(blockCopy.getStyle("left"));
-			const top = getNumberFromPx(blockCopy.getStyle("top"));
-			blockCopy.setStyle("left", `${left + 20}px`);
-			blockCopy.setStyle("top", `${top + 20}px`);
+			// shift the block a bit, keeping a % position in %
+			const shift = (style: styleProperty) => {
+				const value = String(blockCopy.getStyle(style) ?? "");
+				return value.endsWith("%") ? `${parseFloat(value) + 2}%` : `${getNumberFromPx(value) + 20}px`;
+			};
+			blockCopy.setStyle("left", shift("left"));
+			blockCopy.setStyle("top", shift("top"));
 		}
 
 		let child = null as Block | null;

@@ -112,7 +112,9 @@ const handleChange = (value: string | number | null | { label: string; value: st
 	if (value && typeof value === "string" && props.unitOptions.length) {
 		const { number, unit } = extractNumberAndUnit(value);
 		if (!unit && number) {
-			value = number + props.unitOptions[0];
+			// a bare number keeps the unit the value already uses, so 40% edited to 35 stays a %
+			const { unit: currentUnit } = extractNumberAndUnit(String(props.modelValue || ""));
+			value = number + (props.unitOptions.includes(currentUnit) ? currentUnit : props.unitOptions[0]);
 		}
 	}
 
