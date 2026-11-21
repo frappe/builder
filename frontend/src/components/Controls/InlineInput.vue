@@ -22,6 +22,7 @@
 			v-if="type != 'autocomplete'"
 			@update:modelValue="handleChange"
 			:hideClearButton="hideClearButton"
+			:hideArrows="hideArrows"
 			@keydown="handleKeyDown" />
 		<Autocomplete
 			v-if="type == 'autocomplete'"
@@ -69,6 +70,7 @@ const props = withDefaults(
 		actionButton?: Action;
 		placeholder?: StyleValue;
 		hideClearButton?: boolean;
+		hideArrows?: boolean;
 	}>(),
 	{
 		label: "",
@@ -83,6 +85,7 @@ const props = withDefaults(
 		showInputAsOption: false,
 		placeholder: "unset",
 		hideClearButton: false,
+		hideArrows: false,
 	},
 );
 

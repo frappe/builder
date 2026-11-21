@@ -9,6 +9,8 @@
 				:unitOptions="POSITION_UNIT_OPTIONS"
 				:modelValue="fieldValue(side)"
 				:placeholder="fieldPlaceholder(side)"
+				:hideArrows="true"
+				@keydown.capture="(event: KeyboardEvent) => isPinned(side) || ignoreStep(event)"
 				@update:modelValue="(value: string | null) => position().setSide(side, value || null)" />
 			<PinDiagram
 				class="col-start-2 row-start-2"
@@ -73,6 +75,13 @@ const readOwn = (property: string) =>
 	block.value.getStyle(block.value.getActiveStyleProperty(property as styleProperty), null, true);
 
 const isPinned = (side: Side) => pins.value.axis(axisOf(side)).isPinned(edgeOf(side));
+
+// an unpinned side has no value to step from, and a step would pin it
+const ignoreStep = (event: KeyboardEvent) => {
+	if (event.key !== "ArrowUp" && event.key !== "ArrowDown") return;
+	event.preventDefault();
+	event.stopPropagation();
+};
 
 // a pinned side shows the value this breakpoint sets; one it inherits shows as the placeholder
 const fieldValue = (side: Side) => {
