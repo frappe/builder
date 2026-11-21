@@ -1,6 +1,6 @@
 import type Block from "@/block";
 
-// A template's ids are saved with it, so a second copy would share them and its #links
+// A template, a duplicate or a pasted copy keeps the ids it came with, so its #links
 // would open the first copy. Renames the ids the page already uses, and points the
 // block's own #links at the new names.
 export function makeIdsUnique(block: Block, pageBlock: Block) {

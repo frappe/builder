@@ -1,6 +1,10 @@
 import { describe, expect, it, vi } from "vitest";
 
-vi.mock("@/stores/canvasStore", () => ({ default: () => ({ activeCanvas: null }) }));
+const canvasStore = vi.hoisted(() => ({
+	activeCanvas: null as { getRootBlock: () => unknown } | null,
+	selectBlock: () => {},
+}));
+vi.mock("@/stores/canvasStore", () => ({ default: () => canvasStore }));
 vi.mock("@/stores/componentStore", () => ({ default: () => ({}) }));
 vi.mock("@/translation", () => ({ __: (text: string) => text }));
 vi.mock("frappe-ui", () => ({ toast: {}, dialog: vi.fn(), FileUploadHandler: class {} }));
@@ -23,7 +27,10 @@ const makeOverlay = () =>
 
 const makePage = (...children: Block[]) => {
 	const page = new Block({ element: "div", attributes: { id: "about" } } as BlockOptions);
-	children.forEach((child) => page.children.push(child));
+	children.forEach((child) => {
+		child.parentBlock = page;
+		page.children.push(child);
+	});
 	return page;
 };
 
@@ -69,5 +76,27 @@ describe("makeIdsUnique", () => {
 		makeIdsUnique(third, page);
 
 		expect(describeOverlay(third).id).toBe("overlay-3");
+	});
+});
+
+describe("Block.duplicateBlock", () => {
+	it("gives the copy its own ids and points its links at them", () => {
+		const overlay = makeOverlay();
+		const page = makePage(overlay);
+		canvasStore.activeCanvas = { getRootBlock: () => page };
+
+		overlay.duplicateBlock();
+		const [original, copy] = page.getChildren();
+
+		expect(describeOverlay(original)).toEqual({
+			opens: "#overlay",
+			id: "overlay",
+			links: ["#close", "#about"],
+		});
+		expect(describeOverlay(copy)).toEqual({
+			opens: "#overlay-2",
+			id: "overlay-2",
+			links: ["#close", "#about"],
+		});
 	});
 });

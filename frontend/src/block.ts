@@ -6,6 +6,7 @@ import {
 	resetWithComponent,
 	syncBlockWithComponent,
 } from "@/utils/block/componentInstance";
+import { makeIdsUnique } from "@/utils/block/elementIds";
 import { findBlockInTree, resetBlock } from "@/utils/block/tree";
 import type { SpacingType } from "@/utils/cssUtils";
 import {
@@ -1063,6 +1064,8 @@ class Block implements BlockOptions {
 		const pauseId = canvasStore.activeCanvas?.history?.pause();
 		const blockCopy = getBlockCopy(this);
 		const parentBlock = this.getParentBlock();
+		const rootBlock = canvasStore.activeCanvas?.getRootBlock();
+		if (rootBlock) makeIdsUnique(blockCopy, rootBlock);
 
 		if (blockCopy.getStyle("position") === "absolute") {
 			// shift the block a bit

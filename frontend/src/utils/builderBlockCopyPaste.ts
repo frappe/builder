@@ -6,6 +6,7 @@ import usePageStore from "@/stores/pageStore";
 import { BuilderClientScript, BuilderComponent, BuilderPage, BuilderToken } from "@/types/doctypes";
 
 import builderTokens from "@/data/builderToken";
+import { makeIdsUnique } from "@/utils/block/elementIds";
 import {
 	collectRemoteAssets,
 	dropImportedFontFaces,
@@ -449,13 +450,21 @@ async function insertBlocks(blocks: (Block | BlockOptions)[]) {
 		while (parentBlock && !parentBlock.canHaveChildren()) {
 			parentBlock = parentBlock.getParentBlock() as Block;
 		}
-		blocks.forEach((block) => parentBlock.addChild(getBlockCopy(block), null, true));
+		blocks.forEach((block) => parentBlock.addChild(getPastedCopy(block), null, true));
 	} else {
 		canvasStore.pushBlocks(
-			blocks.map((block) => getBlockCopy(block)),
+			blocks.map((block) => getPastedCopy(block)),
 			false,
 		);
 	}
+}
+
+// a pasted root replaces the page, so only other blocks need ids of their own
+function getPastedCopy(block: Block | BlockOptions) {
+	const blockCopy = getBlockCopy(block);
+	const rootBlock = useCanvasStore().activeCanvas?.getRootBlock();
+	if (rootBlock && !blockCopy.isRoot()) makeIdsUnique(blockCopy, rootBlock);
+	return blockCopy;
 }
 
 async function handlePageScripts(clipboardData: BuilderClipboardData, currentSiteURL: string): Promise<void> {
