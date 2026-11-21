@@ -39,7 +39,7 @@ export function useCanvasUtils(
 			!canvasContainer.value ||
 			!canvas.value ||
 			blockToFocus.isRoot() ||
-			!blockToFocus.isVisible() ||
+			!blockToFocus.isVisibleOnSelectionPath() ||
 			blockToFocus.getParentBlock()?.isSVG()
 		) {
 			return;
