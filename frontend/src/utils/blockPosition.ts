@@ -265,7 +265,8 @@ function contentSize(element: HTMLElement, property: "width" | "height") {
 }
 
 function toShift(px: number, box?: AxisBox): Shift {
-	return { px, percent: box?.container ? (px / box.container) * 100 : 0 };
+	if (box && !box.container) return { px, percent: NaN };
+	return { px, percent: box ? (px / box.container) * 100 : 0 };
 }
 
 export default BlockPosition;

@@ -203,6 +203,12 @@ describe("BlockPins.moveBy moves the pinned sides", () => {
 		expect(pins.moveBy(shift(20), shift(-1), box)).toEqual({ left: "calc(50% + 20px)", top: "50%" });
 	});
 
+	it("moves a % side in px when its container has no size", () => {
+		const empty: Box = { x: axisBox(0, 40, 0), y: axisBox(0, 40, 0) };
+		const pins = pinsOf({ left: "50%", top: "10%" });
+		expect(pins.moveBy(shift(40, NaN), shift(30, NaN), empty)).toEqual({ left: "40px", top: "30px" });
+	});
+
 	it("pins a block with no sides at where it is", () => {
 		expect(pinsOf({}).moveBy(shift(10), shift(10), box)).toEqual({ left: "50px", top: "30px" });
 	});

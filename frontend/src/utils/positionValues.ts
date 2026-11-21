@@ -4,7 +4,8 @@ import { addPxToNumber } from "@/utils/cssUtils";
 
 type Side = "top" | "right" | "bottom" | "left";
 type StyleReader = (property: string) => StyleValue | undefined;
-// how far a move goes on a side written in px, and on one written in %
+// how far a move goes on a side written in px, and on one written in %; NaN in % when the
+// container has no size to measure it by
 type Shift = { px: number; percent: number };
 
 const SIDES: Side[] = ["top", "right", "bottom", "left"];
@@ -58,13 +59,17 @@ function centerOffset(value: StyleValue | undefined) {
 	return (match[1] === "-" ? -1 : 1) * Number(match[2]);
 }
 
-// a px or % side moves in its own unit; anything else (em, calc, auto) restarts in px
+// a px or % side moves in its own unit; anything else (em, calc, auto), or a % that can't
+// move, restarts in px
 function shiftInset(value: StyleValue | undefined, shift: Shift, measured = 0) {
 	const match = String(value ?? "")
 		.trim()
 		.match(PLAIN_LENGTH);
-	if (match?.[2] === "%") return `${Math.round((Number(match[1]) + shift.percent) * 10) / 10}%`;
-	return addPxToNumber((match ? Number(match[1]) : measured) + shift.px);
+	const inPercent = match?.[2] === "%";
+	if (inPercent && !isNaN(shift.percent)) {
+		return `${Math.round((Number(match[1]) + shift.percent) * 10) / 10}%`;
+	}
+	return addPxToNumber((match && !inPercent ? Number(match[1]) : measured) + shift.px);
 }
 
 // [x, y] of a translate, with zero lengths as "0"; null for one the pins can't read
