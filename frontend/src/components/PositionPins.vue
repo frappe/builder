@@ -45,6 +45,7 @@ import PinDiagram from "@/components/PinDiagram.vue";
 import { __ } from "@/translation";
 import blockController from "@/utils/blockController";
 import BlockPosition from "@/utils/blockPosition";
+import { removeDefaultUnit } from "@/utils/cssUtils";
 import { axisOf, edgeOf, type Axis, type Box } from "@/utils/positionPins";
 import { isSet, readSide, SIDES, type Side } from "@/utils/positionValues";
 import { POSITION_UNIT_OPTIONS } from "@/utils/unitOptions";
@@ -85,15 +86,16 @@ const ignoreStep = (event: KeyboardEvent) => {
 	event.stopPropagation();
 };
 
-// a pinned side shows the value this breakpoint sets; one it inherits shows as the placeholder
+// a pinned side shows the value this breakpoint sets; one it inherits shows as the placeholder.
+// px is left out, as in the other fields, so three digits fit beside the clear button.
 const fieldValue = (side: Side) => {
 	const own = readSide(readOwn, side);
-	return isPinned(side) && isSet(own) ? String(own) : "";
+	return isPinned(side) && isSet(own) ? removeDefaultUnit(String(own), "px") : "";
 };
 
 const fieldPlaceholder = (side: Side) => {
 	if (pins.value.axis(axisOf(side)).pin === "center") return __("center");
-	return isPinned(side) ? String(readSide(read, side)) : __("auto");
+	return isPinned(side) ? removeDefaultUnit(String(readSide(read, side)), "px") : __("auto");
 };
 
 const fieldTitle = (side: Side) => {
