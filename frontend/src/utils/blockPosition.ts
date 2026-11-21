@@ -85,7 +85,7 @@ class BlockPosition {
 
 	// the block's box in its containing block: the parent's padding box for Free, the canvas
 	// frame (the window, once published) for Fixed
-	private measure(): Box | null {
+	measure(): Box | null {
 		const element = this.element;
 		const container = (element?.offsetParent || element?.closest(".canvas")) as HTMLElement | null;
 		if (!element?.isConnected || !container) return null;
@@ -127,3 +127,4 @@ function toShift(px: number, box?: AxisBox): Shift {
 }
 
 export default BlockPosition;
+export { PIN_PROPERTIES };
