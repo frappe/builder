@@ -23,3 +23,18 @@ describe("Block.setStyle", () => {
 		expect(block.getStyle("focus-visible:outlineColor" as styleProperty)).toBe("blue");
 	});
 });
+
+describe("Block.isVisible", () => {
+	it("reads a state's display while that state applies", () => {
+		const block = new Block({
+			blockId: "panel",
+			baseStyles: { display: "none", "target:display": "flex" },
+			mobileStyles: { "target:display": "none" },
+		} as unknown as BlockOptions);
+
+		expect(block.isVisible("desktop")).toBe(false);
+		expect(block.isVisible("desktop", "target")).toBe(true);
+		expect(block.isVisible("desktop", "hover")).toBe(false);
+		expect(block.isVisible("mobile", "target")).toBe(false);
+	});
+});

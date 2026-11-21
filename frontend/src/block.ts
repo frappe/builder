@@ -935,8 +935,10 @@ class Block implements BlockOptions {
 			this.setStyle("display", "none");
 		}
 	}
-	isVisible(breakpoint?: string) {
-		return this.getStyle("display", breakpoint) !== "none";
+	// given a state, whether the block shows while that state applies
+	isVisible(breakpoint?: string, state?: string) {
+		const stateDisplay = state && this.getStyle(`${state}:display` as styleProperty, breakpoint);
+		return (stateDisplay || this.getStyle("display", breakpoint)) !== "none";
 	}
 	extendFromComponent(componentName: string) {
 		this.extendedFromComponent = componentName;
