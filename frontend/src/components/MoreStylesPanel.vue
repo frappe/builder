@@ -83,10 +83,9 @@ import {
 	toStyleProperty,
 	toTitleCase,
 } from "@/utils/helpers";
+import styleStates from "@/utils/styleStates";
 import { Combobox, toast, type ComboboxOptionValue, type SelectionExposed } from "frappe-ui";
 import { computed, nextTick, reactive, ref, watch } from "vue";
-
-const STATES = ["hover", "active", "focus"];
 
 const canvasStore = useCanvasStore();
 const propertySearch = ref("");
@@ -230,7 +229,9 @@ const addProperty = (property: ComboboxOptionValue | null | undefined) => {
 const removeProperty = (property: string) => {
 	addedProperties.delete(property);
 	blockController.setStyle(toStyleProperty(property), null);
-	STATES.forEach((state) => blockController.setStyle(toStyleProperty(`${state}:${property}`), null));
+	Object.keys(styleStates).forEach((state) =>
+		blockController.setStyle(toStyleProperty(`${state}:${property}`), null),
+	);
 	resetPropertyPicker();
 };
 

@@ -21,7 +21,6 @@ import {
 	getTextContent,
 	handleBase64Attribute,
 	isHTMLString,
-	kebabToCamelCase,
 	parseAndSetBackground,
 	setSpacing,
 	toStyleProperty,
@@ -420,7 +419,7 @@ class Block implements BlockOptions {
 	setStyle(style: styleProperty, value: StyleValue) {
 		const canvasStore = useCanvasStore();
 		let styleObj = this.baseStyles;
-		style = kebabToCamelCase(style as string) as styleProperty;
+		style = toStyleProperty(style as string);
 		if (canvasStore.activeCanvas?.activeBreakpoint === "mobile") {
 			styleObj = this.mobileStyles;
 		} else if (canvasStore.activeCanvas?.activeBreakpoint === "tablet") {
@@ -476,7 +475,7 @@ class Block implements BlockOptions {
 		delete this.tabletStyles[style];
 	}
 	setBaseStyle(style: styleProperty, value: StyleValue) {
-		style = kebabToCamelCase(style as string) as styleProperty;
+		style = toStyleProperty(style as string);
 		this.baseStyles[style] = value;
 	}
 	getStyle(
