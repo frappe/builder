@@ -1,5 +1,5 @@
 ---
-description: a person's own site (personal site, portfolio, homepage, about page, "a site for me"): premise-first, replacing new-page's asking card and direction tiles with friction questions, premises, consent, the mechanic and a memorability-first review
+description: a person's own site (personal site, portfolio, homepage, about page): the friction card, premises to choose from, a mechanic built on links, and a memorability-first review
 ---
 # Personal site
 
@@ -39,13 +39,16 @@ Eliminate a premise when the sentence a stranger would use the next day is "a we
 One present_ui choices card: three tiles named like the premise's own object ('The Pacing Map', 'Tonight's Specials Board'), never an adjective pair. Each tile carries the "My site is a ___ where you ___" sentence, what the first screen shows, and `colors` drawn from the premise's world and their photos. Add a last option, "None of these, here's why" (input). A rejection sends you back to step 2 carrying what they said; a mix ("the map, but end like the second one") is a normal answer, so build it without re-asking.
 
 ## 4. The mechanic, in the brief
-Before generate_page, write the scene list: what a visitor does from the first screen to the end, and where every content item lives inside it. Add the plain ways in:
-- an escape hatch ("Everything, plainly") that lists every content item in one click;
-- a no-JS reading order (the scenes stacked top to bottom);
-- keyboard paths;
-- the phone version.
+Before generate_page, write the scene list: what a visitor does from the first screen to the end, and where every content item lives inside it. Add the plain ways in: an escape hatch ("Everything, plainly"), a section at the foot of the page that links every content item in one list, and the phone version.
 
-Build scenes and panels as real blocks, each a section with an id; choices are links to `#<id>`. One set_page_script runs the mechanic: it routes on `location.hash`, keeps state in `sessionStorage`, moves focus to the opened scene's heading, and adds a class on `<html>` so the one-at-a-time CSS applies only when the script runs. Closed panels get `visibility: hidden` so their links leave the tab order, and their shadow appears only when open. On phones, sheets stay at or under 75vh so the scene shows above them. Clickable regions over an image or inside an SVG are `<g role="link" tabindex="0" data-href>` elements the script handles; an SVG `<a>` breaks third-party scripts such as Cloudflare's email-decode.
+The mechanic is links and `:target`, with no script, so it works with JS off:
+- Every scene and panel is a real block with an `[id=…]`; every choice is an `a [href=#<id>]`.
+- A closed panel starts hidden, and its own `:target{…}` group opens it while the URL names its id: `div.ks-sheet [id=no-14-red] {display:none;position:fixed;…} :target{display:flex}`. One panel is open at a time, the link can be shared, and Back closes it.
+- A panel lies over the page (position:fixed, under no ancestor with a transform or filter, which would trap it) and ends with a link back to where it opened (`#map`). On phones, sheets stay at or under 75vh so the scene shows above them.
+- Clickable regions over an image (a scanned map, a photo) are `a` blocks inside the image's position:relative wrapper, placed and sized with left, top, width and height in %, so they stay on their region at every width. Each names its region in its text or `[aria-label]`.
+- The brief names every id, link and open style, so the layout carries them.
+
+set_page_script is optional polish on top: Escape closes the open panel, focus moves to its heading, `sessionStorage` remembers what they opened. Every item stays reachable without it.
 
 Other people appear only as they'd agree to, and the person's home stays unlocatable. A hand artifact they haven't sent yet is a marked placeholder in its real place, never an imitation of their hand.
 
@@ -58,7 +61,7 @@ Run these in order. A failure in 1–3 sends you back to the premise, not to the
 2. **Swap:** with another person's name and photos, the site stops making sense.
 3. **Consent:** nothing they asked to keep off; other people only as they'd agree.
 4. **Hand:** their artifact is on the page, or a marked placeholder sits where it goes.
-5. **Mechanic:** every scene and the ending are reachable; the escape hatch is complete; the phone version works.
+5. **Mechanic:** the screenshot shows panels closed, so check the page itself: every `#` link names an id on the page, every panel links back, the ending is reachable, the escape hatch is complete, and the phone version works.
 6. **Substance:** every item is real or a marked placeholder; no filler summaries and no links to nowhere.
 7. **Voice:** every line is something they'd say.
 8. **Polish:** new-page's self-review.
