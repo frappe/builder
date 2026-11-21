@@ -1,6 +1,7 @@
 import type Block from "@/block";
 import useCanvasStore from "@/stores/canvasStore";
 import {
+	AXIS_SIDES,
 	BlockPins,
 	PIN_PROPERTIES,
 	type Axis,
@@ -29,17 +30,17 @@ class BlockPosition {
 	}
 
 	toggle(axis: Axis, edge: Edge) {
-		const box = this.measure();
+		const box = this.measureToPin();
 		if (box) this.apply(this.pins.toggle(axis, edge, box));
 	}
 
 	toggleCenter(axis: Axis) {
-		const box = this.measure();
+		const box = this.measureToPin();
 		if (box) this.apply(this.pins.toggleCenter(axis, box));
 	}
 
 	setSide(side: Side, value: string | null) {
-		this.apply(this.pins.setSide(side, value, this.measure()));
+		this.apply(this.pins.setSide(side, value, this.measureToPin()));
 	}
 
 	fill() {
@@ -47,7 +48,7 @@ class BlockPosition {
 	}
 
 	center() {
-		this.apply(this.pins.center(this.measure()));
+		this.apply(this.pins.center(this.measureToPin()));
 	}
 
 	// a width or height typed while the axis is stretched keeps the start pin only
@@ -186,6 +187,22 @@ class BlockPosition {
 		};
 	}
 
+	// with the size a stretched axis's auto size falls back to, so unpinning a side keeps
+	// a block sized by its content that way
+	private measureToPin(): Box | null {
+		const box = this.measure();
+		const element = this.element;
+		if (!box || !(element instanceof HTMLElement)) return box;
+		const pins = this.pins;
+		(["x", "y"] as Axis[]).forEach((axis) => {
+			const { size } = AXIS_SIDES[axis];
+			if (pins.axis(axis).pin === "stretch" && !isSet(this.read(size))) {
+				box[axis].content = contentSize(element, size);
+			}
+		});
+		return box;
+	}
+
 	// where the block sits now, measured in the containing block it gets as `type`
 	private measureAs(type: string): Box | null {
 		const element = this.element;
@@ -235,6 +252,16 @@ function layoutOffset(element: HTMLElement) {
 		offset.y += current.offsetTop + (current === element ? 0 : current.clientTop);
 	}
 	return offset;
+}
+
+// the size an auto width or height takes from the content, set for a moment to measure it
+function contentSize(element: HTMLElement, property: "width" | "height") {
+	const { style } = element;
+	const [value, priority] = [style.getPropertyValue(property), style.getPropertyPriority(property)];
+	style.setProperty(property, "max-content", "important");
+	const size = property === "width" ? element.offsetWidth : element.offsetHeight;
+	style.setProperty(property, value, priority);
+	return size;
 }
 
 function toShift(px: number, box?: AxisBox): Shift {

@@ -72,6 +72,18 @@ describe("BlockPins.toggle keeps the block where it is", () => {
 		expect(pins.toggle("x", "start", centred)).toMatchObject({ left: null, right: "300px" });
 	});
 
+	it("leaves a content-sized block's size unset when it leaves a stretch at that size", () => {
+		const text: Box = {
+			x: { ...axisBox(40, 100, 400), content: 100 },
+			y: { ...axisBox(20, 50, 300), content: 50 },
+		};
+		const pins = pinsOf({ left: "40px", right: "260px", top: "20px", bottom: "230px" });
+		expect(pins.toggle("x", "end", text)).toEqual({ right: null });
+		expect(pins.toggle("y", "end", text)).toEqual({ bottom: null });
+		const empty: Box = { x: { ...axisBox(40, 100, 400), content: 0 }, y: box.y };
+		expect(pins.toggle("x", "end", empty)).toEqual({ right: null, width: "100px" });
+	});
+
 	it("writes a new side in the unit its axis already uses", () => {
 		const patch = pinsOf({ left: "10%", width: "100px" }).toggle("x", "end", box);
 		expect(patch).toEqual({ right: "65%", width: null });

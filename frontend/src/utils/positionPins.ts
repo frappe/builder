@@ -46,6 +46,8 @@ type AxisBox = {
 	marginStart: number;
 	marginEnd: number;
 	container: number;
+	// an auto size without the stretch: the content's, measured for a stretched axis only
+	content?: number;
 };
 type Box = Record<Axis, AxisBox>;
 
@@ -304,12 +306,17 @@ class AxisPins {
 		return edge === "start" ? box.marginStart : box.marginEnd;
 	}
 
-	// pinned to one side, an auto size would shrink to fit the space left on the other
+	// pinned to one side, an auto size shrinks to its content and the room left on the other
 	private keepsSize(pin: AxisPin, box: AxisBox) {
-		if (this.pin === "stretch") return true;
-		if (this.axis === "y" || isSet(this.read(this.sides.size))) return false;
+		if (isSet(this.read(this.sides.size))) return false;
 		const startInset = pin === "center" ? box.start + box.size / 2 : pin === "end" ? box.end : box.start;
-		return box.marginStart + box.size + box.marginEnd > box.container - startInset + 0.5;
+		const room = box.container - startInset - box.marginStart - box.marginEnd;
+		if (this.pin === "stretch") {
+			if (box.content === undefined) return true;
+			const autoSize = this.axis === "x" ? Math.min(box.content, room) : box.content;
+			return Math.abs(autoSize - box.size) > 0.5;
+		}
+		return this.axis === "x" && box.size > room + 0.5;
 	}
 
 	// a side keeps the unit it, or the other side of its axis, is written in
