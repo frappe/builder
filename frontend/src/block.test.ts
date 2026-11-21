@@ -37,4 +37,20 @@ describe("Block.isVisible", () => {
 		expect(block.isVisible("desktop", "hover")).toBe(false);
 		expect(block.isVisible("mobile", "target")).toBe(false);
 	});
+
+	it("counts a block hidden until linked to as visible on the selection path", () => {
+		const block = new Block({
+			blockId: "panel",
+			baseStyles: { display: "none", "target:display": "flex" },
+			mobileStyles: { "target:display": "none" },
+		} as unknown as BlockOptions);
+		const hidden = new Block({
+			blockId: "hidden",
+			baseStyles: { display: "none" },
+		} as unknown as BlockOptions);
+
+		expect(block.isVisibleOnSelectionPath("desktop")).toBe(true);
+		expect(block.isVisibleOnSelectionPath("mobile")).toBe(false);
+		expect(hidden.isVisibleOnSelectionPath("desktop")).toBe(false);
+	});
 });

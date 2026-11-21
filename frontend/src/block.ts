@@ -940,6 +940,11 @@ class Block implements BlockOptions {
 		const stateDisplay = state && this.getStyle(`${state}:display` as styleProperty, breakpoint);
 		return (stateDisplay || this.getStyle("display", breakpoint)) !== "none";
 	}
+	// The canvas shows target styles on selected blocks and their ancestors, as :target
+	// never matches there, so a block hidden until linked to also shows on that path.
+	isVisibleOnSelectionPath(breakpoint?: string) {
+		return this.isVisible(breakpoint) || this.isVisible(breakpoint, "target");
+	}
 	extendFromComponent(componentName: string) {
 		this.extendedFromComponent = componentName;
 		// @ts-expect-error
