@@ -28,7 +28,7 @@
 </template>
 <script setup lang="ts">
 import { __ } from "@/translation";
-import type { Axis, BlockPins } from "@/utils/positionPins";
+import { axisOf, edgeOf, type Axis, type BlockPins } from "@/utils/positionPins";
 import type { Side } from "@/utils/positionValues";
 import { Tooltip } from "frappe-ui";
 import { computed } from "vue";
@@ -78,8 +78,7 @@ const CENTER_TOOLTIPS = {
 
 const controls = computed(() => [
 	...EDGES.map(({ side, area, line }) => {
-		const axis = side === "left" || side === "right" ? "x" : "y";
-		const pressed = props.pins.axis(axis).isPinned(side === "left" || side === "top" ? "start" : "end");
+		const pressed = props.pins.axis(axisOf(side)).isPinned(edgeOf(side));
 		return {
 			key: side,
 			area,
