@@ -17,6 +17,8 @@ BOX_TAGS = frozenset({"div", "section", "p", "ul", "ol", "figure", "article", "h
 # block fields that land in styles when a model writes them inside the CSS: dead on the page
 NOT_CSS = frozenset({"text", "innerHTML", "html", "src", "href", "alt", "class", "classes", "el", "tag"})
 CSS_KEY = re.compile(r"^(--[\w-]+|-?[A-Za-z][A-Za-z0-9-]*)$")
+# start states that keep a block invisible until something shows it
+HIDING = {"opacity": ("0", "0.0"), "visibility": ("hidden",)}
 
 
 class PageMeasure:
@@ -48,6 +50,7 @@ class PageMeasure:
 			"dashes": len(re.findall(DASHES, text)),
 			"stock_phrases": len(self.STOCK.findall(text)),
 			"no_mobile_fallback": sum(lacks_mobile_fallback(b) for b in self.blocks),
+			"hidden_start": sum(starts_hidden(b) for b in self.blocks),
 			"reflex_faces": sum(is_reflex(face) for face in self.fonts()),
 			"cream_ground": int(is_cream(self.ground())),
 			"pinned_absolute": self.pinned_absolute(),
@@ -252,11 +255,38 @@ def is_gradient_text(block: dict) -> bool:
 def lacks_mobile_fallback(block: dict) -> bool:
 	style, mobile = styles(block), block.get("mobileStyles") or {}
 	risky = {
-		"position": style.get("position") in ("absolute", "sticky"),
+		"position": style.get("position") == "sticky"
+		or (style.get("position") == "absolute" and not scales_with_parent(style)),
 		"fontSize": str(style.get("fontSize") or "").endswith("vw"),
 		"gridTemplateAreas": bool(style.get("gridTemplateAreas")),
 	}
 	return any(flag and prop not in mobile for prop, flag in risky.items())
+
+
+def scales_with_parent(style: dict) -> bool:
+	"""Placed and sized in % of its parent, as a region link over an image is: it keeps
+	its place at every width, so phones need no fallback."""
+	return all(str(style.get(prop) or "").endswith("%") for prop in ("left", "top", "width", "height"))
+
+
+def starts_hidden(block: dict) -> bool:
+	"""Content invisible from the start with no state of its own to show it, so it waits
+	on a script and stays hidden when the script is slow or fails. A panel its :target{}
+	group opens is hidden on purpose: a link reaches it."""
+	base = styles(block)
+	return any(
+		str(base.get(prop)).strip() in values and not shown_by_a_state(block, prop)
+		for prop, values in HIDING.items()
+	)
+
+
+def shown_by_a_state(block: dict, prop: str) -> bool:
+	"""A :target{}, :hover{} or other state group on the block that undoes `prop`'s hiding."""
+	return any(
+		key.partition(":")[2] == prop and str(value).strip() not in HIDING[prop]
+		for device in ("baseStyles", "tabletStyles", "mobileStyles")
+		for key, value in (block.get(device) or {}).items()
+	)
 
 
 def write_json(path: str, data):

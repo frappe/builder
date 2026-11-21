@@ -34,6 +34,25 @@ class TestPageMeasures(FrappeTestCase):
 
 		self.assertEqual(PageMeasure(root).measures()["empty_sections"], 2)
 
+	def test_a_panel_a_link_opens_is_not_content_waiting_on_a_script(self):
+		panel = {"element": "div", "baseStyles": {"visibility": "hidden", "target:visibility": "visible"}}
+		sheet = {"element": "div", "baseStyles": {"display": "none", "target:display": "flex"}}
+		caption = {"element": "p", "baseStyles": {"opacity": "0", "hover:opacity": "1"}}
+		reveal = {"element": "p", "baseStyles": {"opacity": "0", "transition": "opacity .6s ease"}}
+
+		root = page(section(panel, sheet, caption, reveal))
+
+		self.assertEqual(PageMeasure(root).measures()["hidden_start"], 1)
+
+	def test_region_links_placed_in_percent_need_no_phone_fallback(self):
+		placed = {"left": "31%", "top": "42%", "width": "6%", "height": "9%"}
+		region = {"element": "a", "baseStyles": {"position": "absolute", **placed}}
+		sticker = {"element": "p", "baseStyles": {"position": "absolute", "left": "55%", "top": "10%"}}
+
+		root = page(section(region, sticker, position="relative"))
+
+		self.assertEqual(PageMeasure(root).measures()["no_mobile_fallback"], 1)
+
 	def test_a_reflex_face_counts_in_any_of_its_cuts(self):
 		self.assertTrue(is_reflex("Cormorant Garamond"))
 		self.assertTrue(is_reflex("IBM Plex Sans"))
