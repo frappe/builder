@@ -18,7 +18,7 @@ BOX_TAGS = frozenset({"div", "section", "p", "ul", "ol", "figure", "article", "h
 NOT_CSS = frozenset({"text", "innerHTML", "html", "src", "href", "alt", "class", "classes", "el", "tag"})
 CSS_KEY = re.compile(r"^(--[\w-]+|-?[A-Za-z][A-Za-z0-9-]*)$")
 # start states that keep a block invisible until something shows it
-HIDING = {"opacity": ("0", "0.0"), "visibility": ("hidden",)}
+HIDING = {"opacity": ("0", "0.0"), "visibility": ("hidden",), "display": ("none",)}
 
 
 class PageMeasure:
@@ -256,36 +256,43 @@ def lacks_mobile_fallback(block: dict) -> bool:
 	style, mobile = styles(block), block.get("mobileStyles") or {}
 	risky = {
 		"position": style.get("position") == "sticky"
-		or (style.get("position") == "absolute" and not scales_with_parent(style)),
+		or (style.get("position") == "absolute" and not is_region_link(block)),
 		"fontSize": str(style.get("fontSize") or "").endswith("vw"),
 		"gridTemplateAreas": bool(style.get("gridTemplateAreas")),
 	}
 	return any(flag and prop not in mobile for prop, flag in risky.items())
 
 
-def scales_with_parent(style: dict) -> bool:
-	"""Placed and sized in % of its parent, as a region link over an image is: it keeps
-	its place at every width, so phones need no fallback."""
-	return all(str(style.get(prop) or "").endswith("%") for prop in ("left", "top", "width", "height"))
+def is_region_link(block: dict) -> bool:
+	"""A link placed and sized in % over an image: it keeps its region at every width,
+	so phones need no fallback. Any other absolute block still does."""
+	style = styles(block)
+	return block.get("element") == "a" and all(
+		str(style.get(prop) or "").endswith("%") for prop in ("left", "top", "width", "height")
+	)
 
 
 def starts_hidden(block: dict) -> bool:
-	"""Content invisible from the start with no state of its own to show it, so it waits
-	on a script and stays hidden when the script is slow or fails. A panel its :target{}
-	group opens is hidden on purpose: a link reaches it."""
+	"""Content invisible from the start that nothing in its styles shows, so it waits on a
+	script and stays hidden when the script is slow or fails. A panel its own :target{}
+	group opens is hidden on purpose, since a link reaches it, and so is a block a smaller
+	screen shows (the hamburger's {display:none} m{display:flex})."""
 	base = styles(block)
 	return any(
-		str(base.get(prop)).strip() in values and not shown_by_a_state(block, prop)
+		str(base.get(prop)).strip() in values and not shown_later(block, prop)
 		for prop, values in HIDING.items()
 	)
 
 
-def shown_by_a_state(block: dict, prop: str) -> bool:
-	"""A :target{}, :hover{} or other state group on the block that undoes `prop`'s hiding."""
+def shown_later(block: dict, prop: str) -> bool:
+	"""A :target{} group undoes `prop`'s hiding; for display, so does a t{} or m{} value.
+	A :hover{} reveal doesn't count: touch screens never show it."""
+	reveals = [(device, f"target:{prop}") for device in ("baseStyles", "tabletStyles", "mobileStyles")]
+	if prop == "display":
+		reveals += [("tabletStyles", prop), ("mobileStyles", prop)]
 	return any(
-		key.partition(":")[2] == prop and str(value).strip() not in HIDING[prop]
-		for device in ("baseStyles", "tabletStyles", "mobileStyles")
-		for key, value in (block.get(device) or {}).items()
+		key in (block.get(device) or {}) and str(block[device][key]).strip() not in HIDING[prop]
+		for device, key in reveals
 	)
 
 

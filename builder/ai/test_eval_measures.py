@@ -37,21 +37,24 @@ class TestPageMeasures(FrappeTestCase):
 	def test_a_panel_a_link_opens_is_not_content_waiting_on_a_script(self):
 		panel = {"element": "div", "baseStyles": {"visibility": "hidden", "target:visibility": "visible"}}
 		sheet = {"element": "div", "baseStyles": {"display": "none", "target:display": "flex"}}
+		hamburger = {"element": "a", "baseStyles": {"display": "none"}, "mobileStyles": {"display": "flex"}}
 		caption = {"element": "p", "baseStyles": {"opacity": "0", "hover:opacity": "1"}}
 		reveal = {"element": "p", "baseStyles": {"opacity": "0", "transition": "opacity .6s ease"}}
+		unopened = {"element": "div", "baseStyles": {"display": "none", "position": "fixed"}}
 
-		root = page(section(panel, sheet, caption, reveal))
+		root = page(section(panel, sheet, hamburger, caption, reveal, unopened))
 
-		self.assertEqual(PageMeasure(root).measures()["hidden_start"], 1)
+		self.assertEqual(PageMeasure(root).measures()["hidden_start"], 3)
 
 	def test_region_links_placed_in_percent_need_no_phone_fallback(self):
-		placed = {"left": "31%", "top": "42%", "width": "6%", "height": "9%"}
-		region = {"element": "a", "baseStyles": {"position": "absolute", **placed}}
+		placed = {"position": "absolute", "left": "31%", "top": "42%", "width": "6%", "height": "9%"}
+		region = {"element": "a", "baseStyles": placed}
+		card = {"element": "div", "baseStyles": {**placed, "width": "40%", "height": "40%"}}
 		sticker = {"element": "p", "baseStyles": {"position": "absolute", "left": "55%", "top": "10%"}}
 
-		root = page(section(region, sticker, position="relative"))
+		root = page(section(region, card, sticker, position="relative"))
 
-		self.assertEqual(PageMeasure(root).measures()["no_mobile_fallback"], 1)
+		self.assertEqual(PageMeasure(root).measures()["no_mobile_fallback"], 2)
 
 	def test_a_reflex_face_counts_in_any_of_its_cuts(self):
 		self.assertTrue(is_reflex("Cormorant Garamond"))
