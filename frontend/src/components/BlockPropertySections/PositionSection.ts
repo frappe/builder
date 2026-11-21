@@ -6,6 +6,14 @@ import { __ } from "@/translation";
 
 const position = () => String(blockController.getStyle("position"));
 const isPositioned = () => ["relative", "absolute", "fixed", "sticky"].includes(position());
+// z-index also stacks the items of a flex or grid parent, positioned or not
+const isLayoutItem = () => {
+	const parent = blockController.getParentBlock();
+	return Boolean(parent?.isFlex() || parent?.isGrid());
+};
+
+// the block the section was open for, so switching it to Auto or Relative doesn't fold it away
+let openFor: string | undefined;
 
 const positionSectionProperties = [
 	{
@@ -24,8 +32,8 @@ const positionSectionProperties = [
 			};
 		},
 		searchKeyWords: "Z, Index, ZIndex, Z Index, Z-index, Z-Index, Layer, Stack, Order",
-		// z-index only orders positioned blocks; one already set stays editable
-		condition: () => isPositioned() || Boolean(blockController.getStyle("zIndex")),
+		// z-index orders positioned blocks and layout items; one already set stays editable
+		condition: () => isPositioned() || isLayoutItem() || Boolean(blockController.getStyle("zIndex")),
 	},
 ];
 
@@ -33,6 +41,10 @@ export default {
 	name: __("Position"),
 	properties: positionSectionProperties,
 	condition: () => !blockController.multipleBlocksSelected() && !blockController.isRoot(),
-	// open where the section has pins or offsets to show
-	collapsed: computed(() => !["absolute", "fixed", "sticky"].includes(position())),
+	// open where the section has pins or offsets to show, until another block is selected
+	collapsed: computed(() => {
+		const blockId = blockController.getFirstSelectedBlock()?.blockId;
+		if (["absolute", "fixed", "sticky"].includes(position())) openFor = blockId;
+		return openFor !== blockId;
+	}),
 };
