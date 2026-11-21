@@ -79,4 +79,27 @@ describe("Block.duplicateBlock", () => {
 			["140px", "60px"],
 		]);
 	});
+
+	it("shifts a copy along the sides it is pinned to, fixed blocks too", () => {
+		const block = (blockId: string, baseStyles: Record<string, string>) => ({ blockId, baseStyles });
+		const card = new Block({
+			blockId: "card",
+			baseStyles: { position: "relative" },
+			children: [
+				block("badge", { position: "absolute", right: "16px", bottom: "5%" }),
+				block("button", { position: "fixed", right: "24px", bottom: "24px" }),
+				block("label", { position: "absolute", left: "50%", top: "8px", translate: "-50% 0" }),
+			],
+		} as unknown as BlockOptions);
+		const [badge, button, label] = card.children;
+
+		[badge, button, label].forEach((original) => original.duplicateBlock());
+
+		const copies = card.children.filter((_, index) => index % 2).map((copy) => copy.baseStyles);
+		expect(copies).toEqual([
+			{ position: "absolute", right: "-4px", bottom: "3%" },
+			{ position: "fixed", right: "4px", bottom: "4px" },
+			{ position: "absolute", left: "calc(50% + 20px)", top: "28px", translate: "-50% 0" },
+		]);
+	});
 });

@@ -47,8 +47,7 @@ import type Block from "@/block";
 import useBuilderStore from "@/stores/builderStore";
 import useCanvasStore from "@/stores/canvasStore";
 import blockController from "@/utils/blockController";
-import { toUnitOf } from "@/utils/cssUtils";
-import { getRenderedPosition } from "@/utils/helpers";
+import BlockPosition from "@/utils/blockPosition";
 import { isReorderable, startBlockReorder } from "@/utils/useBlockReorder";
 import { Ref, computed, inject, nextTick, onMounted, ref, watch, watchEffect } from "vue";
 import setGuides from "../utils/guidesTracker";
@@ -296,15 +295,8 @@ const handleMove = (ev: MouseEvent) => {
 	const target = ev.target as HTMLElement;
 	const startX = ev.clientX;
 	const startY = ev.clientY;
-	const { left: startLeft, top: startTop } = getRenderedPosition(props.target as HTMLElement);
-	// a block placed in % moves in %, so it keeps its spot on its container at every width
-	const container = (props.target as HTMLElement).offsetParent as HTMLElement | null;
-	const startLeftValue = props.block.getActiveStyleValue("left");
-	const startTopValue = props.block.getActiveStyleValue("top");
-	const setLeft = (px: number) =>
-		props.block.setActiveStyle("left", toUnitOf(startLeftValue, px, container?.clientWidth || 0));
-	const setTop = (px: number) =>
-		props.block.setActiveStyle("top", toUnitOf(startTopValue, px, container?.clientHeight || 0));
+	// moves the sides the block is pinned to, each in the unit it is written in
+	const moveBy = new BlockPosition(props.block, props.target).startMove();
 
 	moving.value = true;
 	guides.showX();
@@ -319,17 +311,14 @@ const handleMove = (ev: MouseEvent) => {
 		const scale = canvasProps.scale;
 		const movementX = (mouseMoveEvent.clientX - startX) / scale;
 		const movementY = (mouseMoveEvent.clientY - startY) / scale;
-		let finalLeft = startLeft + movementX;
-		let finalTop = startTop + movementY;
-		setLeft(finalLeft);
-		setTop(finalTop);
+		moveBy(movementX, movementY);
 		await nextTick();
 		const { leftOffset, rightOffset } = guides.getPositionOffset();
 		if (leftOffset !== 0) {
-			setLeft(finalLeft + leftOffset);
+			moveBy(movementX + leftOffset, movementY);
 		}
 		if (rightOffset !== 0) {
-			setLeft(finalLeft + rightOffset);
+			moveBy(movementX + rightOffset, movementY);
 		}
 
 		mouseMoveEvent.preventDefault();

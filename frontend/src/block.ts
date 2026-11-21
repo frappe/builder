@@ -8,16 +8,15 @@ import {
 } from "@/utils/block/componentInstance";
 import { makeIdsUnique } from "@/utils/block/elementIds";
 import { findBlockInTree, resetBlock } from "@/utils/block/tree";
+import BlockPosition from "@/utils/blockPosition";
 import type { SpacingType } from "@/utils/cssUtils";
 import {
-	addPxToNumber,
 	cssUrl,
 	dataURLFileName,
 	dataURLtoFile,
 	generateId,
 	getBlockCopy,
 	getBlockInstance,
-	getNumberFromPx,
 	getSpacing,
 	getTextContent,
 	handleBase64Attribute,
@@ -620,21 +619,8 @@ class Block implements BlockOptions {
 		if (!this.isMovable()) {
 			return;
 		}
-		let top = getNumberFromPx(this.getStyle("top")) || 0;
-		let left = getNumberFromPx(this.getStyle("left")) || 0;
-		if (direction === "up") {
-			top -= 10;
-			this.setStyle("top", addPxToNumber(top));
-		} else if (direction === "down") {
-			top += 10;
-			this.setStyle("top", addPxToNumber(top));
-		} else if (direction === "left") {
-			left -= 10;
-			this.setStyle("left", addPxToNumber(left));
-		} else if (direction === "right") {
-			left += 10;
-			this.setStyle("left", addPxToNumber(left));
-		}
+		const step = { up: [0, -10], down: [0, 10], left: [-10, 0], right: [10, 0] }[direction];
+		new BlockPosition(this).moveBy(step[0], step[1]);
 	}
 	addChild(child: BlockOptions, index?: number | null, select: boolean = true) {
 		if (index === undefined || index === null) {
@@ -1067,14 +1053,11 @@ class Block implements BlockOptions {
 		const rootBlock = canvasStore.activeCanvas?.getRootBlock();
 		if (rootBlock) makeIdsUnique(blockCopy, rootBlock);
 
-		if (blockCopy.getStyle("position") === "absolute") {
-			// shift the block a bit, keeping a % position in %
-			const shift = (style: styleProperty) => {
-				const value = String(blockCopy.getStyle(style) ?? "");
-				return value.endsWith("%") ? `${parseFloat(value) + 2}%` : `${getNumberFromPx(value) + 20}px`;
-			};
-			blockCopy.setStyle("left", shift("left"));
-			blockCopy.setStyle("top", shift("top"));
+		if (blockCopy.isMovable()) {
+			// shift the copy a bit along its pins, keeping a % position in %
+			const position = new BlockPosition(blockCopy, null);
+			const shift = { px: 20, percent: 2 };
+			position.apply(position.pins.moveBy(shift, shift, null));
 		}
 
 		let child = null as Block | null;
