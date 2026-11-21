@@ -17,53 +17,22 @@
 				},
 				{ label: __('Sticky'), value: 'sticky' },
 			]"></StylePropertyControl>
-		<div class="grid-rows grid grid-cols-3 gap-4" v-if="showHandler">
-			<div class="col-span-1 col-start-2 w-16 self-center">
-				<InlineInput
-					:placeholder="__('Top')"
-					:unitOptions="POSITION_UNIT_OPTIONS"
-					:hideClearButton="true"
-					:modelValue="blockController.getStyle('top') as string"
-					@update:modelValue="(value: string) => blockController.setStyle('top', value)" />
-			</div>
-			<div class="col-span-1 col-start-1 w-16 self-center">
-				<InlineInput
-					:placeholder="__('Left')"
-					:unitOptions="POSITION_UNIT_OPTIONS"
-					:hideClearButton="true"
-					:modelValue="blockController.getStyle('left') as string"
-					@update:modelValue="(value: string) => blockController.setStyle('left', value)" />
-			</div>
-			<div
-				class="grid-col-3 grid h-16 w-16 grid-rows-3 gap-1 self-center justify-self-center rounded-4 bg-surface-gray-2 p-2">
-				<div
-					class="col-span-3 row-start-1 h-2 w-[2px] self-center justify-self-center rounded-4 bg-surface-gray-4"></div>
-				<div
-					class="col-span-3 row-start-3 h-2 w-[2px] self-center justify-self-center rounded-4 bg-surface-gray-4"></div>
-				<div class="h-5 w-5 self-center justify-self-center rounded-4 bg-gray-400 bg-surface-gray-4"></div>
-				<div
-					class="col-span-1 col-start-1 row-start-2 h-[2px] w-2 self-center justify-self-center rounded-4 bg-surface-gray-4"></div>
-				<div
-					class="col-span-1 col-start-3 row-start-2 h-[2px] w-2 self-center justify-self-center rounded-4 bg-surface-gray-4"></div>
-			</div>
-			<div class="col-span-1 col-start-3 w-16 self-center">
-				<!-- prettier-ignore -->
-				<InlineInput
-					:placeholder="__('Right')"
-					:unitOptions="POSITION_UNIT_OPTIONS"
-					:hideClearButton="true"
-					:modelValue="(blockController.getStyle('right') as string)"
-					@update:modelValue="(value: string) => blockController.setStyle('right', value)" />
-			</div>
-			<div class="col-span-1 col-start-2 w-16 self-center">
-				<!-- prettier-ignore -->
-				<InlineInput
-					:placeholder="__('Bottom')"
-					:unitOptions="POSITION_UNIT_OPTIONS"
-					:hideClearButton="true"
-					:modelValue="(blockController.getStyle('bottom') as string)"
-					@update:modelValue="(value: string) => blockController.setStyle('bottom', value)" />
-			</div>
+		<div class="grid w-full grid-cols-[1fr_auto_1fr] items-center gap-2" v-if="showHandler">
+			<InlineInput
+				v-for="side in SIDES"
+				:key="side"
+				:class="SIDE_CELLS[side]"
+				:placeholder="placeholder(side)"
+				:unitOptions="POSITION_UNIT_OPTIONS"
+				:hideClearButton="true"
+				:modelValue="sideValue(side)"
+				@update:modelValue="(value: string) => setSide(side, value)" />
+			<PinDiagram
+				v-if="free"
+				class="col-start-2 row-start-2"
+				:pins="pins"
+				@toggle="(side: Side) => blockPosition().toggle(side)"
+				@toggleCenter="(axes: Axis[]) => blockPosition().toggleCenter(axes)" />
 		</div>
 	</div>
 </template>
@@ -71,7 +40,10 @@
 import { __ } from "@/translation";
 import InlineInput from "@/components/Controls/InlineInput.vue";
 import StylePropertyControl from "@/components/Controls/StylePropertyControl.vue";
+import PinDiagram from "@/components/PinDiagram.vue";
 import blockController from "@/utils/blockController";
+import BlockPosition from "@/utils/blockPosition";
+import type { Axis, Side } from "@/utils/positionPins";
 import { POSITION_UNIT_OPTIONS } from "@/utils/unitOptions";
 import { computed, watch } from "vue";
 
@@ -114,4 +86,34 @@ watch(position, (value) => {
 const showHandler = computed(() => {
 	return ["absolute", "fixed", "sticky"].includes(position.value);
 });
+
+const SIDES: Side[] = ["top", "right", "bottom", "left"];
+const SIDE_CELLS = {
+	top: "col-start-2 row-start-1 w-20 justify-self-center",
+	right: "col-start-3 row-start-2",
+	bottom: "col-start-2 row-start-3 w-20 justify-self-center",
+	left: "col-start-1 row-start-2",
+};
+const SIDE_LABELS = { top: __("Top"), right: __("Right"), bottom: __("Bottom"), left: __("Left") };
+
+// a Free or Fixed block is placed by its pins; a sticky one only says how far it sticks
+const free = computed(() => ["absolute", "fixed"].includes(position.value));
+const blockPosition = () => new BlockPosition(blockController.getFirstSelectedBlock());
+const pins = computed(() => new BlockPosition(blockController.getFirstSelectedBlock(), null).pins);
+
+// an unpinned side reads auto, and the sides of a centred axis center
+const sideValue = (side: Side) =>
+	free.value && !pins.value.isPinned(side) ? "" : (blockController.getStyle(side) as string);
+
+const placeholder = (side: Side) => {
+	if (!free.value) return SIDE_LABELS[side];
+	return pins.value.axis(side === "left" || side === "right" ? "x" : "y").pin === "center"
+		? __("center")
+		: __("auto");
+};
+
+const setSide = (side: Side, value: string) => {
+	if (free.value) blockPosition().setSide(side, value || null);
+	else blockController.setStyle(side, value);
+};
 </script>

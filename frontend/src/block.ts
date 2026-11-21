@@ -7,6 +7,7 @@ import {
 	syncBlockWithComponent,
 } from "@/utils/block/componentInstance";
 import { findBlockInTree, resetBlock } from "@/utils/block/tree";
+import BlockPosition from "@/utils/blockPosition";
 import type { SpacingType } from "@/utils/cssUtils";
 import {
 	addPxToNumber,
@@ -176,7 +177,7 @@ class Block implements BlockOptions {
 					// falling back to the live component
 					const componentBlock = this.componentVersion
 						? componentStore.getComponentVersionBlock(this.componentVersion as string) ||
-						  componentStore.getComponentBlock(this.isChildOfComponent as string)
+							componentStore.getComponentBlock(this.isChildOfComponent as string)
 						: componentStore.getComponentBlock(this.isChildOfComponent as string);
 					return findBlockInTree(this.referenceBlockId as string, [componentBlock]);
 				}
@@ -1058,14 +1059,11 @@ class Block implements BlockOptions {
 		const blockCopy = getBlockCopy(this);
 		const parentBlock = this.getParentBlock();
 
-		if (blockCopy.getStyle("position") === "absolute") {
-			// shift the block a bit, keeping a % position in %
-			const shift = (style: styleProperty) => {
-				const value = String(blockCopy.getStyle(style) ?? "");
-				return value.endsWith("%") ? `${parseFloat(value) + 2}%` : `${getNumberFromPx(value) + 20}px`;
-			};
-			blockCopy.setStyle("left", shift("left"));
-			blockCopy.setStyle("top", shift("top"));
+		if (blockCopy.isMovable()) {
+			// shift the copy a bit along its pins, keeping a % position in %
+			const position = new BlockPosition(blockCopy, null);
+			const shift = { px: 20, percent: 2 };
+			position.apply(position.pins.moveBy(shift, shift, null));
 		}
 
 		let child = null as Block | null;
