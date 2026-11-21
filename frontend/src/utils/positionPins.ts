@@ -13,6 +13,7 @@ import {
 	isCenterValue,
 	isSet,
 	parseTranslate,
+	readMargin,
 	readSide,
 	shiftInset,
 	SIDES,
@@ -177,9 +178,12 @@ class AxisPins {
 
 	toggle(edge: Edge, box: AxisBox) {
 		const change = this.place(this.toggled(edge), box);
-		// a side that stays pinned keeps its value as written
+		// a side that stays pinned keeps its value as written, unless it leaned on an auto margin
 		(["start", "end"] as Edge[])
-			.filter((kept) => this.isPinned(kept) && hasEdge(change.pin, kept))
+			.filter(
+				(kept) =>
+					this.isPinned(kept) && hasEdge(change.pin, kept) && !this.freedMargin(kept, change.pin, box),
+			)
 			.forEach((kept) => delete change.styles[this.sides[kept]]);
 		return change;
 	}
@@ -191,18 +195,13 @@ class AxisPins {
 	place(pin: AxisPin, box: AxisBox): AxisChange {
 		if (this.context.inWindow && this.pin !== "none") return this.carry(pin);
 		const { start, end, size } = this.sides;
-		// the edges as seen, without the centring shift this axis may have now
-		const shift = this.pin === "center" ? box.size / 2 : 0;
-		const seenStart = box.start - shift;
-		const seenEnd = box.end + shift;
+		const seen = this.seenBox(pin, box);
 		const styles: StylePatch = { [start]: null, [end]: null };
-		if (pin === "start" || pin === "stretch") styles[start] = this.format(start, seenStart, box);
-		if (pin === "end" || pin === "stretch") styles[end] = this.format(end, seenEnd, box);
-		if (pin === "center") styles[start] = centerValue(seenStart + box.size / 2 - box.container / 2);
+		if (pin === "start" || pin === "stretch") styles[start] = this.format(start, seen.start, box);
+		if (pin === "end" || pin === "stretch") styles[end] = this.format(end, seen.end, box);
+		if (pin === "center") styles[start] = centerValue(seen.start + box.size / 2 - box.container / 2);
 		if (pin === "stretch") styles[size] = null;
-		else if (this.keepsSize(pin, { ...box, start: seenStart, end: seenEnd })) {
-			styles[size] = addPxToNumber(box.size);
-		}
+		else if (this.keepsSize(pin, seen)) styles[size] = addPxToNumber(box.size);
 		return { pin, styles };
 	}
 
@@ -281,6 +280,28 @@ class AxisPins {
 			styles[end] = shiftInset(this.read(end), negate(endMove), box?.end);
 		}
 		return styles;
+	}
+
+	// the box once pinned as `pin`: without the centring shift this axis may have now, and
+	// with the space of an auto margin that stops centring it moved into the inset
+	private seenBox(pin: AxisPin, box: AxisBox): AxisBox {
+		const shift = this.pin === "center" ? box.size / 2 : 0;
+		const freedStart = this.freedMargin("start", pin, box);
+		const freedEnd = this.freedMargin("end", pin, box);
+		return {
+			...box,
+			start: box.start - shift + freedStart,
+			end: box.end + shift + freedEnd,
+			marginStart: box.marginStart - freedStart,
+			marginEnd: box.marginEnd - freedEnd,
+		};
+	}
+
+	// Auto margins centre a block pinned to both sides of an axis with a set size; with one
+	// side unpinned they are 0, so the space they took has to move into the inset.
+	private freedMargin(edge: Edge, pin: AxisPin, box: AxisBox) {
+		if (pin === "stretch" || readMargin(this.read, this.sides[edge]) !== "auto") return 0;
+		return edge === "start" ? box.marginStart : box.marginEnd;
 	}
 
 	// pinned to one side, an auto size would shrink to fit the space left on the other

@@ -21,6 +21,12 @@ function readSide(read: StyleReader, property: string) {
 	return parseInset(read("inset"))?.[property as Side];
 }
 
+// a side's margin, from its longhand or the margin shorthand
+function readMargin(read: StyleReader, side: Side) {
+	const longhand = read(`margin${side[0].toUpperCase()}${side.slice(1)}`);
+	return isEmpty(longhand) ? parseInset(read("margin"))?.[side] : longhand;
+}
+
 function isSet(value: StyleValue | undefined) {
 	return !isEmpty(value) && value !== "auto";
 }
@@ -89,6 +95,7 @@ export {
 	isSet,
 	parseInset,
 	parseTranslate,
+	readMargin,
 	readSide,
 	shiftInset,
 	SIDES,

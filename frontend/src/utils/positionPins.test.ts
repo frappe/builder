@@ -62,6 +62,16 @@ describe("BlockPins.toggle keeps the block where it is", () => {
 		expect(patch).toEqual({ left: null, width: "100px" });
 	});
 
+	it("moves an auto margin's space into the side that stays, once the margins stop centring", () => {
+		const centred: Box = {
+			x: { ...axisBox(0, 200, 800), end: 0, marginStart: 300, marginEnd: 300 },
+			y: box.y,
+		};
+		const pins = pinsOf({ left: "0px", right: "0px", width: "200px", margin: "0 auto" });
+		expect(pins.toggle("x", "end", centred)).toMatchObject({ left: "300px", right: null });
+		expect(pins.toggle("x", "start", centred)).toMatchObject({ left: null, right: "300px" });
+	});
+
 	it("writes a new side in the unit its axis already uses", () => {
 		const patch = pinsOf({ left: "10%", width: "100px" }).toggle("x", "end", box);
 		expect(patch).toEqual({ right: "65%", width: null });
