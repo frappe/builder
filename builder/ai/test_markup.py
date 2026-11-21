@@ -77,6 +77,14 @@ class TestLines(unittest.TestCase):
 			self.node("input [required=true rows=5]")["attrs"], {"required": "true", "rows": "5"}
 		)
 
+	def test_a_css_style_id_on_the_tag_is_the_id_attribute(self):
+		root = self.node('div\n  section#map.lane {padding:0px}\n  a.pin#no-14 [href=#map] "No. 14"')
+
+		self.assertEqual(
+			[(c["classes"], c["attrs"]) for c in root["c"]],
+			[(["lane"], {"id": "map"}), (["pin"], {"id": "no-14", "href": "#map"})],
+		)
+
 	def test_an_icon_and_a_tagless_line(self):
 		self.assertEqual(self.node("icon(arrow-right) {width:20px}")["icon"], "arrow-right")
 		self.assertNotIn("el", self.node('"Just text"'))
