@@ -174,6 +174,15 @@ describe("BlockPins.setSide", () => {
 		expect(stretched.setSide("right", "auto", box)).toEqual({ right: null, width: "100px" });
 		expect(pinsOf({ left: "40px" }).setSide("right", "auto", box)).toEqual({});
 	});
+
+	it("centres the axis of a side set to center, as a centred axis's fields read", () => {
+		expect(pinsOf({ left: "40px", top: "20px", width: "100px" }).setSide("right", "center", box)).toEqual({
+			left: "calc(50% - 110px)",
+			right: null,
+			translate: "-50% 0",
+		});
+		expect(pinsOf({ left: "50%", translate: "-50% 0" }).setSide("left", "center", box)).toEqual({});
+	});
 });
 
 describe("BlockPins.moveBy moves the pinned sides", () => {

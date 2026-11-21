@@ -230,6 +230,11 @@ class AxisPins {
 			if (!this.isPinned(edge)) return { pin: this.pin, styles: {} };
 			return box ? this.toggle(edge, box) : { pin: this.pin, styles: { [side]: null } };
 		}
+		// what a centred axis's fields read, so typing it centres the axis
+		if (value === "center") {
+			const centers = box && this.pin !== "center" && !this.context.custom;
+			return centers ? this.place("center", box) : { pin: this.pin, styles: {} };
+		}
 		if (this.isPinned(edge)) return { pin: this.pin, styles: { [side]: value } };
 		if (this.isPinned(edge === "start" ? "end" : "start")) {
 			return { pin: "stretch", styles: { [side]: value, [this.sides.size]: null } };
