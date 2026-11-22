@@ -8,7 +8,7 @@ def run_read_skill(ctx, args: dict) -> str:
 	name = (args.get("name") or "").strip()
 	if name in ctx.attached_skills:
 		return f"The {name} skill is already in your context this turn."
-	if guide := Skills.read(name):
+	if guide := Skills.read(name, getattr(ctx, "session_id", None)):
 		ctx.attached_skills.add(name)
 		return guide
 	return f"FAILED: no skill '{name}'. Skills: {', '.join(Skills.names())}."

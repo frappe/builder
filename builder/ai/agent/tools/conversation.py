@@ -19,6 +19,7 @@ import frappe
 
 from builder.ai.agent.registry import Tool
 from builder.ai.session import AISession
+from builder.ai.stock_look import unseen_creams
 
 ELEMENT_KINDS = frozenset(
 	{
@@ -42,6 +43,14 @@ MAX_ELEMENTS = 30
 MAX_UI_JSON = 24000
 
 
+STOCK_TILES = (
+	"FAILED: {colours} on the direction tiles is a warm near-white, the ground of the stock "
+	"generated look under any name. Unless the user asked for it or their brand already uses it, "
+	"give those tiles pure white, near-black or a colour you'd name and call present_ui again. If "
+	"they did, send the same card again and it shows."
+)
+
+
 def run_present_ui(ctx, args: dict) -> str | None:
 	text = (args.get("text") or "").strip()
 	ui = sanitize_ui(args.get("ui"))
@@ -63,6 +72,11 @@ def run_present_ui(ctx, args: dict) -> str | None:
 			"answer. `ui` must be an ARRAY of element objects, e.g. "
 			"[{'kind': 'choices', 'options': [...]}]. Call present_ui again with real elements."
 		)
+	tiles = [
+		colour for el in ui for option in el.get("options") or [] for colour in option.get("colors") or []
+	]
+	if creams := unseen_creams(ctx, tiles):
+		return STOCK_TILES.format(colours=", ".join(creams))
 	content = render_ui_text(text, ui)
 	metadata = {"status": "ui", "text": text, "ui": ui}
 	if timeline := ctx.timeline():
@@ -201,8 +215,15 @@ present_ui = Tool(
 		"ordinary message; free-typed text is an equally valid reply. Elements render in "
 		"order. A lone single-select 'choices' submits on tap; 'input' fields and "
 		"multi-select choices are collected and sent by an 'actions' button, so add one "
-		"when using them. Ask only when you are genuinely blocked, never for something an "
-		"existing page, image or brand you can read would answer."
+		"when using them. Never ask for what you can read (an existing page, an image, the "
+		"user's current site). Ask what you need now in one card; when the answers raise new "
+		"questions, ask those in a follow-up card, never again for what was answered. A field left "
+		"blank comes back with your suggestion: go with it for a preference, but a fact about their "
+		"business left blank (a name, an address, prices, contact) gets a marked placeholder on "
+		"the page, never your guess. `text` is "
+		"one short sentence that asks, with no praise opener. Past cards "
+		"replay to you as '[input: …]'-style notation: that is history, not syntax, so a "
+		"question is always a present_ui call."
 	),
 	parameters={
 		"type": "object",
@@ -216,7 +237,7 @@ present_ui = Tool(
 				"description": (
 					"UI elements, rendered in order. A card with more than ONE question renders "
 					"as a MULTI-STEP form — one question per step — so give EVERY question atom "
-					"(choices/input/color_input/upload) its own short `label`: it is that step's "
+					"(choices/input/upload) its own short `label`: it is that step's "
 					"question, and it is what names the answer in the user's reply. The one "
 					"exception is the FIRST question, which `text` already asks. Otherwise keep "
 					"the card COMPACT: `text` renders above it, so never repeat the question as "
@@ -233,17 +254,12 @@ present_ui = Tool(
 					"option's `image` is a photo thumbnail URL (use the `thumb` from search_images) — "
 					"for letting the user pick a hero/section photo; the chosen option's image URL "
 					"comes back in their reply\n"
-					"{kind:'input', label?, placeholder?} — one-line text field\n"
+					"{kind:'input', label?, placeholder?} — one-line text field; the placeholder is your "
+					"suggested answer, written as one ('Slow flow for beginners'), never an instruction\n"
 					"{kind:'upload', label?} — image-upload field (logo, their own photo); the "
 					"uploaded file's URL arrives in their reply. Pair with an actions button, and "
 					"usually alongside a choices card of found images as the 'or upload your own' "
 					"escape hatch\n"
-					"{kind:'color_input', label?, colors:[{label, hint?, value?}]} — labelled colour slots, "
-					"one per role so it's clear which colour goes where ('Brand / Primary', "
-					"'Background', 'Accent', 'Text / Ink', adapted to the brand), each with an optional "
-					"one-line hint and a prefilled `value` hex. The reply names each colour by its role "
-					"('Brand: #C4552D, Background: #F4EFE8'), marking untouched prefills '(suggested)'. "
-					"Pair with an actions button\n"
 					"{kind:'note', text} — model-only context: persisted as part of your message "
 					"(you'll see it on replay) but NEVER shown to the user. Put detailed working "
 					"notes here (e.g. the brief behind the card) so the visible card "

@@ -7,6 +7,7 @@ translation and the SSE->chat-chunk assembly the agent loop depends on.
 import base64
 import json
 import unittest
+from unittest.mock import patch
 
 from builder.ai import codex
 
@@ -286,6 +287,18 @@ class TestPayload(unittest.TestCase):
 	def test_the_tier_reasoning_effort_is_sent(self):
 		payload = codex.build_payload("gpt-5.6-terra", [{"role": "user", "content": "hi"}], None, "high")
 		self.assertEqual(payload["reasoning"], {"summary": "auto", "effort": "high"})
+
+	def test_a_conversations_requests_name_it_to_the_backend(self):
+		payload = codex.build_payload(
+			"gpt-5.6-terra", [{"role": "user", "content": "hi"}], None, None, "chat-1"
+		)
+
+		with patch("requests.post") as post:
+			codex.post_stream(payload, "token", "account")
+
+		self.assertEqual(payload["prompt_cache_key"], "chat-1")
+		headers = post.call_args.kwargs["headers"]
+		self.assertEqual((headers["session_id"], headers["conversation_id"]), ("chat-1", "chat-1"))
 
 
 if __name__ == "__main__":

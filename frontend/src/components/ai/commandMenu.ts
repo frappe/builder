@@ -112,6 +112,12 @@ export function useCommandMenu(prompt: Ref<string>) {
 		note.value = "";
 	}
 
+	/** A click away from the composer: a level closes, and a typed "/" command keeps its text. */
+	function dismiss() {
+		if (level.value) close();
+		else dismissed.value = true;
+	}
+
 	async function enter() {
 		stopLevel?.();
 		prompt.value = level.value?.query ?? "";
@@ -204,6 +210,7 @@ export function useCommandMenu(prompt: Ref<string>) {
 		replace,
 		back,
 		close,
+		dismiss,
 		reload,
 		choose,
 		submit,

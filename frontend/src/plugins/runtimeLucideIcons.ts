@@ -1,6 +1,9 @@
+import { version } from "lucide-static/package.json";
+
 const ICON_NAME = /^[a-z0-9-]+$/;
 const iconCache = new Map<string, Promise<string | undefined>>();
-const iconBaseUrl = "https://unpkg.com/lucide-static@1.16.0/icons/";
+// the installed version, which frappe-ui builds the editor's own icons from
+const iconBaseUrl = `https://unpkg.com/lucide-static@${version}/icons/`;
 
 export const loadRuntimeLucideIcon = (name: string) => {
 	if (!name.startsWith("lucide-")) return;

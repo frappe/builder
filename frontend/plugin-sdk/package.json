@@ -14,6 +14,7 @@
 	},
 	"files": [
 		"bin",
+		"app.js",
 		"create.js",
 		"package.js",
 		"src",

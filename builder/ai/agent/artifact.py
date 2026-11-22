@@ -63,7 +63,7 @@ def image_url_resolves(url: str) -> bool:
 		return False
 
 
-def brief_image_parts(brief: str) -> list[dict]:
+def brief_image_parts(brief: str, skip: set[str] | None = None) -> list[dict]:
 	"""Resolve the brief's image markers into message image parts. https URLs are
 	attached directly (the provider fetches them); site file paths (public or
 	private) are read from the site and inlined as data URLs. The marker lines always stay in the brief text,
@@ -72,6 +72,8 @@ def brief_image_parts(brief: str) -> list[dict]:
 	for url in IMAGE_MARKER_RE.findall(brief or ""):
 		if len(parts) >= MAX_ATTACHED_IMAGES:
 			break
+		if url in (skip or ()):  # already attached as the turn's own image
+			continue
 		if url.startswith("https://"):
 			if not image_url_resolves(url):
 				logger.warning(f"skipping unreachable brief image: {url}")
@@ -273,9 +275,8 @@ def generate_page_markup(ctx, args: dict) -> list[dict]:
 		# images. Text-only models keep working from the marker URLs.
 		image_parts: list[dict] = []
 		if ModelRegistry.supports_vision(ctx.model):
-			if ctx.image_url:
-				image_parts.append({"type": "image_url", "image_url": {"url": ctx.image_url}})
-			image_parts.extend(brief_image_parts(brief))
+			image_parts.extend(ctx.images.parts())
+			image_parts.extend(brief_image_parts(brief, skip=ctx.images.file_urls()))
 		if image_parts:
 			messages.append({"role": "user", "content": [{"type": "text", "text": build_text}, *image_parts]})
 		else:

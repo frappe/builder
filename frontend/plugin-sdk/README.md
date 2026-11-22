@@ -2,7 +2,7 @@
 
 The build tooling for trusted Frappe Builder plugins.
 
-A trusted plugin is a Vue plugin that the Builder editor loads into its own app. The plugin imports `builder`, `vue`, `pinia` and `frappe-ui` from the editor, so this package has no runtime code. It gives a plugin project:
+A trusted plugin is a Vue plugin that the Builder editor loads into its own app. The plugin imports `builder`, `vue`, `pinia`, `frappe-ui`, `frappe-ui/editor` and `frappe-ui/list` from the editor, so this package has no runtime code. It gives a plugin project:
 
 - the Vite plugin that builds a package Builder can load, and serves the plugin to the editor in development
 - the types of the `builder` module
@@ -18,6 +18,23 @@ npx frappe-builder-plugin-sdk create my-plugin
 ```
 
 The command asks for a name, a publisher, a description, the Builder URL and a copyright holder. Then it writes a project with a sample left panel tab.
+
+## Ship a plugin with a Frappe app
+
+```sh
+npx frappe-builder-plugin-sdk create --app apps/my_app
+```
+
+The command writes the project into the app's source folder, for example `apps/my_app/my_app/seo-tools`. Then it changes two files of the app:
+
+- `hooks.py` gets `builder_plugins = ["seo-tools"]`. This hook tells Builder which folders hold plugins.
+- The root `package.json` gets a `build:seo-tools` script, and `build` runs it. `bench build` runs the root `build` script, so it also builds the plugin.
+
+The build goes into `my_app/public/builder_plugins/seo-tools`, and the app's `.gitignore` gets that folder. So the build ships as the app's other assets do, and `/assets/my_app/` serves it.
+
+To use a different folder name, give it after `--app`: `create --app apps/my_app seo`.
+
+Commit the project, but not the build. When the editor opens, Builder lists the plugin from the build that the app ships. A new plugin starts disabled, so a manager approves it before it runs. A new build applies on the next editor load. The plugin goes when the app is uninstalled. An app's plugin does not use Builder Hub, so the project has no release workflow.
 
 ## The entry module
 
@@ -46,6 +63,8 @@ export default {
 | Export                                                                                          | What it gives                                                                      |
 | ----------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
 | `leftPanelTabs`, `toolbarItems`, `blockContextMenuOptions`, `propertySections`, `settingsItems` | The registries of the editor surfaces. `register` answers with its own unregister. |
+| `blockTemplates`                                                                                | Block templates in the Block Templates panel. `getBlock()` gives the block to insert. |
+| `dashboardItems`                                                                                | Views of the dashboard, beside All Pages. Each opens at `/dashboard/<name>`.      |
 | `usePageStore`, `useCanvasStore`, `useBuilderStore`                                             | The editor's stores                                                                |
 | `blockController`, `Block`                                                                      | The selected blocks, and the block tree                                            |
 | `lucideIcon(name)`                                                                              | Any lucide icon, as a component for an `icon` field                                |
@@ -95,11 +114,13 @@ The editor loads the plugin's styles before its own. Where a plugin class and an
 
 A manifest has no `permissions` field. A plugin runs with the access of the user who opens the editor.
 
+The plugin's details page in **Settings** > **Plugins** shows `DESCRIPTION.md`, written for its users. Without one, it shows `README.md`, which is for developers.
+
 ## Develop
 
 1. Set `builderUrl` in `vite.config.ts` to the origin that serves Builder.
 2. Run `npm run dev`.
-3. In the editor, open the **Plugins** tab and choose **Load dev plugin**. The site must run in developer mode.
+3. In Builder, open **Settings** > **Plugins** and choose **Load dev plugin**. The site must run in developer mode.
 4. Paste the URL that Vite prints.
 
 The dev plugin runs until you reload the editor. Vite's hot reload updates its components.

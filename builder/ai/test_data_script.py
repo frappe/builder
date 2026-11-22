@@ -16,8 +16,11 @@ class TestWriteDataScript(FrappeTestCase):
 		self.page = frappe.get_doc({"doctype": "Builder Page", "page_title": "Data Script Page"}).insert()
 		self.ctx = Ctx(self.page.name)
 
-	def write(self, script, safe_exec_enabled):
-		with patch("frappe.utils.safe_exec.is_safe_exec_enabled", return_value=safe_exec_enabled):
+	def write(self, script, safe_exec_enabled=True):
+		with (
+			patch("frappe.utils.safe_exec.is_safe_exec_enabled", return_value=safe_exec_enabled),
+			patch("builder.utils.is_safe_exec_enabled", return_value=safe_exec_enabled),
+		):
 			return write_page_data_script(self.ctx, {"script": script})
 
 	def saved_script(self):
@@ -60,3 +63,51 @@ class TestWriteDataScript(FrappeTestCase):
 		script = "data.events = frappe.get_list('Event', fields=['subject'])"
 
 		self.assertFalse(self.write(script, True).startswith("FAILED"))
+
+
+class TestDataScriptTrial(FrappeTestCase):
+	"""The script runs once before it saves, so a broken one never reaches the published page."""
+
+	def setUp(self):
+		self.page = frappe.get_doc({"doctype": "Builder Page", "page_title": "Trial Page"}).insert()
+		self.ctx = Ctx(self.page.name)
+
+	def write(self, script):
+		return TestWriteDataScript.write(self, script)
+
+	def saved_script(self):
+		return frappe.db.get_value("Builder Page", self.page.name, "page_data_script")
+
+	def test_saves_a_script_that_runs(self):
+		out = self.write("data.total = len([1, 2])")
+
+		self.assertTrue(out.startswith("Saved"), out)
+		self.assertNotIn("test run", out)
+		self.assertEqual(self.saved_script(), "data.total = len([1, 2])")
+
+	def test_refuses_unpacking_in_an_assignment(self):
+		out = self.write("data.year = 1\ny, m, d = '2026-05-03'.split('-')")
+
+		self.assertTrue(out.startswith("FAILED"), out)
+		self.assertIn("line 2: y, m, d = '2026-05-03'.split('-')", out)
+		self.assertIn("NameError: name '_unpack_sequence_' is not defined", out)
+		self.assertFalse(self.saved_script())
+
+	def test_forwards_every_script_frame_of_the_error(self):
+		out = self.write("rows = [1, 2]\ndef count():\n    return len(rows)\ndata.total = count()")
+
+		self.assertTrue(out.startswith("FAILED"), out)
+		self.assertIn(
+			"  line 4: data.total = count()\n  line 3: return len(rows)\nNameError: name 'rows' is not defined",
+			out,
+		)
+		self.assertFalse(self.saved_script())
+
+	def test_a_missing_request_param_only_warns(self):
+		script = "data.slug = frappe.form_dict.slug.upper()"
+
+		out = self.write(script)
+
+		self.assertTrue(out.startswith("Saved"), out)
+		self.assertIn("A test run without URL or query params raised", out)
+		self.assertEqual(self.saved_script(), script)

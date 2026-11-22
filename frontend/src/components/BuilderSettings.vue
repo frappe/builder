@@ -9,12 +9,12 @@
 				<Button
 					v-for="link in group.items"
 					:key="link.name"
-					:variant="selectedItem === link.name ? 'subtle' : 'ghost'"
+					:variant="selectedItemDoc?.name === link.name ? 'subtle' : 'ghost'"
 					:disabled="link.disabled"
 					:icon-left="link.icon"
 					@click="!link.disabled && selectItem(link.name)"
 					:class="{
-						'!bg-surface-gray-3': selectedItem === link.name,
+						'!bg-surface-gray-3': selectedItemDoc?.name === link.name,
 					}"
 					class="!justify-start">
 					{{ link.label }}
@@ -95,9 +95,11 @@ const visibleGroups = computed(() =>
 		.filter((group) => group.items.length),
 );
 
-const selectedItemDoc = computed(() =>
-	visibleGroups.value.flatMap((group) => group.items).find((item) => item.name === selectedItem.value),
-);
+// a saved tab can be gone, such as a plugin's tab once the plugin is off. Settings then opens on its first tab
+const selectedItemDoc = computed(() => {
+	const items = visibleGroups.value.flatMap((group) => group.items);
+	return items.find((item) => item.name === selectedItem.value) ?? items[0];
+});
 
 const selectItem = (value: string) => {
 	selectedItem.value = value;

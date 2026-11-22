@@ -1,7 +1,6 @@
 # Copyright (c) 2026, Frappe Technologies Pvt Ltd and contributors
 # For license information, please see license.txt
 
-import base64
 import shutil
 import uuid
 from pathlib import Path
@@ -12,6 +11,7 @@ from frappe.model.document import Document
 from frappe.utils import get_files_path, now
 
 from builder.plugins.constants import (
+	APP_PLUGINS_FINGERPRINT_KEY,
 	CHECKSUM_PATTERN,
 	ENTRY_FILE,
 	ICON_PATTERN,
@@ -20,6 +20,7 @@ from builder.plugins.constants import (
 	PLUGINS_FOLDER,
 	VERSION_PATTERN,
 )
+from builder.plugins.package import ValidatedPackage
 
 STATE_DOCTYPE = "Builder Plugin State"
 KEPT_PREVIOUS_RELEASES = 1
@@ -48,6 +49,7 @@ class BuilderPlugin(Document):
 		label: DF.Data | None
 		readme: DF.LongText | None
 		source: DF.Literal["Hub", "App", "Development", "Bob"]
+		source_app: DF.Data | None
 		version: DF.Data
 	# end: auto-generated types
 
@@ -72,6 +74,8 @@ class BuilderPlugin(Document):
 
 	def on_trash(self):
 		self.delete_plugin_state()
+		# an app plugin may wait for this name, so the next list syncs again
+		frappe.cache.delete_value(APP_PLUGINS_FINGERPRINT_KEY)
 		# the rows roll back with a failed delete, and files would not
 		frappe.db.after_commit.add(self.delete_plugin_files)
 
@@ -84,25 +88,25 @@ class BuilderPlugin(Document):
 	def release_path(self) -> Path | None:
 		return self.install_path / self.checksum if self.checksum else None
 
+	def get_file_url(self, file: str | None) -> str | None:
+		"""Where the editor gets one of this plugin's files. A new build gets a new URL, so no browser keeps the old one.
+
+		None for no file, such as a package with no icon. The package checks make sure that a
+		file the manifest names is in the files.
+		"""
+		if not file or not self.checksum:
+			return None
+		if self.source != "App":
+			return f"/files/{PLUGINS_FOLDER}/{self.name}/{self.checksum}/{file}"
+		from builder.plugins.app_plugins import find_app_plugin
+
+		plugin = find_app_plugin(self.source_app, self.plugin)
+		# an app's build changes in place, so the checksum goes in the query
+		return f"{plugin.build_url}/{file}?v={self.checksum}" if plugin else None
+
 	@property
 	def entry_url(self) -> str | None:
-		"""Where the editor imports the entry. The checksum names the build, so a new release gets a new URL."""
-		if not self.checksum:
-			return None
-		return f"/files/{PLUGINS_FOLDER}/{self.name}/{self.checksum}/{ENTRY_FILE}"
-
-	@property
-	def icon_data_uri(self) -> str | None:
-		"""None when the package ships no icon. The editor draws its own glyph then.
-
-		A data URI, so the panel draws it with no request of its own.
-		"""
-		if not self.icon or not self.release_path:
-			return None
-		icon = self.release_path / self.icon
-		if not icon.is_file():
-			return None
-		return f"data:image/svg+xml;base64,{base64.b64encode(icon.read_bytes()).decode()}"
+		return self.get_file_url(ENTRY_FILE)
 
 	def validate_identity(self):
 		if not PLUGIN_NAME_PATTERN.fullmatch(self.plugin or ""):
@@ -121,6 +125,24 @@ class BuilderPlugin(Document):
 	def validate_readme(self):
 		if self.readme and len(self.readme.encode()) > MAX_README_BYTES:
 			frappe.throw(_("A README may hold {0} bytes at most.").format(MAX_README_BYTES))
+
+	def apply_package(self, package: ValidatedPackage, checksum: str, origin: dict):
+		"""Install this package: fill the row from its manifest and `origin`, save it, and write the files."""
+		manifest = package.manifest
+		self.update(
+			{
+				**origin,
+				"label": manifest["label"],
+				"description": manifest["description"],
+				"icon": manifest.get("icon"),
+				"version": manifest["version"],
+				"checksum": checksum,
+				"install_state": "Ready",
+				"install_error": None,
+			}
+		)
+		self.save()
+		self.write_plugin_files(package.files)
 
 	def write_plugin_files(self, files: dict[str, bytes]):
 		"""Write one release to its own folder, keyed by path under the release root.

@@ -35,11 +35,24 @@ MAX_TILES = 3
 
 
 def render_page_image(page, viewport: str = "desktop", color_scheme: str | None = None) -> bytes:
+	return render_markup_image(page.get_preview_html(color_scheme=color_scheme), viewport)
+
+
+def render_markup_image(markup: str, viewport: str = "desktop") -> bytes:
 	from builder.html_preview_image import render_full_page
 
-	markup = page.get_preview_html(color_scheme=color_scheme)
 	width, height = VIEWPORTS[viewport]
 	return render_full_page(markup, width=width, height=height, max_height=CAPTURE_HEIGHT)
+
+
+def page_error(page, error: Exception) -> str:
+	"""The page raised before any screenshot: the same error its visitors get, so say it."""
+	from builder.ai.agent.tools.data import ScriptError
+
+	return (
+		"FAILED: the page itself fails to render, so its visitors get the error below too. Fix "
+		f"it, then preview again.\n{ScriptError(error, page.page_data_script)}"
+	)
 
 
 # How far a pixel may drift from the background before it counts as content. The
@@ -132,13 +145,18 @@ def run_preview_page(ctx, args: dict) -> str:
 		return "FAILED: no page in context — open or create a page first."
 	if ctx.preview_count >= MAX_PREVIEWS_PER_TURN:
 		return "Preview limit reached for this turn — proceed with what you have."
-	ctx.preview_count += 1
 	page = frappe.get_doc("Builder Page", page_id)
 	viewport = args.get("viewport") if args.get("viewport") in VIEWPORTS else "desktop"
 	color_scheme = args.get("color_scheme") if args.get("color_scheme") in COLOR_SCHEMES else "light"
 	variant = f"{viewport}, {color_scheme} mode"
 	try:
-		image = render_page_image(page, viewport, color_scheme)
+		markup = page.get_preview_html(color_scheme=color_scheme)
+	except Exception as error:
+		logger.warning("preview_page: %s failed to render", page_id, exc_info=True)
+		return page_error(page, error)
+	ctx.preview_count += 1
+	try:
+		image = render_markup_image(markup, viewport)
 	except Exception:
 		logger.warning("preview_page: render failed for %s", page_id, exc_info=True)
 		return (
@@ -192,8 +210,9 @@ def run_preview_page(ctx, args: dict) -> str:
 		"with background swaps? (c) does the largest text read at least ~3.5x the body size? "
 		"(d) are photos treated (scrim, duotone, knockout, frame) rather than plain "
 		"rectangles? (e) does the page look like the brief's named concept? (f) is it free of "
-		"the AI tells in your instructions (an eyebrow over every heading, gradient headline "
-		"text, stock phrases, invented stats or testimonials, an icon tile on every item)?\n"
+		"AI tells (an eyebrow over every heading, gradient headline text, purple-to-pink "
+		"gradients, glassmorphism or glowing blobs, an icon tile on every item, the same "
+		"rounded card on everything, stock phrases, invented stats or testimonials)?\n"
 		"Fix failures with surgical edits on the specific blocks (edit_page, "
 		"set_page_script), never by regenerating the page. If a fix changes layout or "
 		"structure, spend your remaining preview confirming it landed before you summarize. "

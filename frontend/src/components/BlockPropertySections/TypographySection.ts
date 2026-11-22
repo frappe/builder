@@ -7,6 +7,7 @@ import blockController from "@/utils/blockController";
 import { setFont as _setFont, getFontWeightOptions, loadFontList } from "@/utils/fontManager";
 import { BOX_UNIT_OPTIONS } from "@/utils/unitOptions";
 import { __ } from "@/translation";
+import { computed } from "vue";
 
 const setFont = (font: string) => {
 	_setFont(font).then(() => {
@@ -186,4 +187,11 @@ export default {
 	name: __("Typography"),
 	properties: typographySectionProperties,
 	condition: () => blockController.isText() || blockController.isContainer() || blockController.isInput(),
+	// a container only sets the font its children inherit, so it opens once one is set
+	collapsed: computed(
+		() =>
+			blockController.isContainer() &&
+			!blockController.getStyle("fontFamily") &&
+			!blockController.getStyle("fontWeight"),
+	),
 };

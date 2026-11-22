@@ -57,7 +57,7 @@
 					:key="j"
 					class="flex items-start gap-2 text-p-sm leading-snug text-ink-gray-7">
 					<span class="mt-[6px] size-1 shrink-0 rounded-full bg-surface-gray-4" />
-					<span class="min-w-0 break-words">{{ item }}</span>
+					<span class="min-w-0">{{ item }}</span>
 				</li>
 			</ul>
 
@@ -451,6 +451,11 @@ function submitCollected(actionLabel?: string) {
 			const label = atomLabel(i);
 			lines.push(label ? `${label}: ${inputs[i].trim()}` : inputs[i].trim());
 			values.push(inputs[i].trim());
+		} else if (el.kind === "input") {
+			// A skipped field still reaches the model, with the suggestion it wrote as the
+			// placeholder: it takes that for a preference, never for a fact about the business.
+			const suggested = el.placeholder?.trim() ? `; you suggested "${el.placeholder.trim()}"` : "";
+			lines.push(`${atomLabel(i) || "Answer"}: (left blank${suggested})`);
 		}
 		if (el.kind === "upload" && uploads[i]) {
 			lines.push(`${el.label || "Uploaded image"}: ${uploads[i]}`);

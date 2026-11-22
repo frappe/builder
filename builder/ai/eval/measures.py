@@ -1,13 +1,17 @@
 """What the eval reads off a finished turn: the run, the reply, a card, and the
 built page's design fingerprint. No judge model, so two runs compare exactly."""
 
-import colorsys
 import json
 import re
 from itertools import pairwise
 
+from builder.ai.agent.edits import empty_sections
+from builder.ai.stock_look import REFLEX_FACES, is_cream
+
 DASHES = "[\u2014\u2013]"
 POSITIONED = frozenset({"relative", "absolute", "fixed", "sticky"})
+# Bob narrating its own turn to the user: previews, retries, rejected edits
+PROCESS = re.compile(r"\b(preview|screenshot|operation|rejected|retr(?:y|ied)|tool calls?|rounds?)\b", re.I)
 TEXT_TAGS = frozenset({"p", "h1", "h2", "h3", "h4", "h5", "h6", "span", "a", "button", "label"})
 BOX_TAGS = frozenset({"div", "section", "p", "ul", "ol", "figure", "article", "header", "footer"})
 # block fields that land in styles when a model writes them inside the CSS: dead on the page
@@ -24,32 +28,6 @@ class PageMeasure:
 		r"\b(elevate|unlock|seamless|effortless|empower|curated|vibrant|nestled|look no further|"
 		r"more than just|crafted with care|your journey starts here)\b",
 		re.I,
-	)
-
-	# the faces models reach for when they stop looking (Impeccable's reflex list)
-	REFLEX_FACES = frozenset(
-		{
-			"fraunces",
-			"playfair display",
-			"cormorant",
-			"cormorant garamond",
-			"lora",
-			"crimson",
-			"crimson pro",
-			"newsreader",
-			"syne",
-			"space grotesk",
-			"space mono",
-			"ibm plex sans",
-			"ibm plex serif",
-			"ibm plex mono",
-			"dm sans",
-			"dm serif display",
-			"dm serif text",
-			"outfit",
-			"plus jakarta sans",
-			"instrument sans",
-		}
 	)
 
 	def __init__(self, root: dict, tokens: dict | None = None):
@@ -70,12 +48,13 @@ class PageMeasure:
 			"dashes": len(re.findall(DASHES, text)),
 			"stock_phrases": len(self.STOCK.findall(text)),
 			"no_mobile_fallback": sum(lacks_mobile_fallback(b) for b in self.blocks),
-			"reflex_faces": sum(face.lower() in self.REFLEX_FACES for face in self.fonts()),
+			"reflex_faces": sum(is_reflex(face) for face in self.fonts()),
 			"cream_ground": int(is_cream(self.ground())),
 			"pinned_absolute": self.pinned_absolute(),
 			"escaped_text": sum(escapes_text(b) for b in self.blocks),
 			"dead_styles": sum(dead_styles(b) for b in self.blocks),
 			"overflow_width": sum(overflows_width(b) for b in self.blocks),
+			"empty_sections": len(empty_sections(self.root)),
 		}
 
 	def pinned_absolute(self) -> int:
@@ -107,6 +86,11 @@ class PageMeasure:
 			for first, second in pairwise(children):
 				count += is_micro_label(first) and second.get("element") in ("h1", "h2", "h3")
 		return count
+
+
+def is_reflex(face: str) -> bool:
+	"""One of the faces models reach for by reflex, in any of its cuts."""
+	return face.lower().startswith(tuple(reflex.lower() for reflex in REFLEX_FACES))
 
 
 def escapes_text(block: dict) -> bool:
@@ -176,6 +160,7 @@ def reply_measures(text: str) -> dict:
 		"hype": len(re.findall(r"\b(stunning|beautiful|perfect|elevate|seamless)\b", text, re.I)),
 		"exclamations": text.count("!"),
 		"emoji": len(re.findall("[\U0001f300-\U0001faff☀-➿]", text)),
+		"process_talk": len(PROCESS.findall(text)),
 	}
 
 
@@ -199,10 +184,14 @@ def strings(value):
 def card_measures(reply: dict) -> dict:
 	ui = json.loads(reply.get("metadata_json") or "{}").get("ui") or []
 	asks = [el for el in ui if el.get("kind") in ("input", "choices", "color_input", "upload")]
+	tiles = [o for el in asks for o in el.get("options") or [] if o.get("colors")]
 	return {
 		"asks": len(asks),
 		"kinds": [el.get("kind") for el in asks],
 		"options": [o.get("label") for el in asks for o in el.get("options") or []],
+		# Bob designs the palette: a colour question, or a tile on the stock cream, is a regression
+		"colour_steps": sum(el.get("kind") == "color_input" for el in asks),
+		"stock_tiles": sum(any(is_cream(c) for c in o["colors"]) for o in tiles),
 	}
 
 
@@ -210,23 +199,18 @@ def summary_line(result: dict) -> str:
 	if "error" in result:
 		return f"{result['scenario']}: ERROR {result['error']}"
 	run, page = result["run"], result.get("page") or {}
-	verdict = "PASS" if result["ok"] else f"FAIL missing={result['missing']} forbidden={result['forbidden']}"
+	broke = "".join(f" {why}" for why in result.get("broke") or [])
+	verdict = (
+		"PASS" if result["ok"] else f"FAIL missing={result['missing']} forbidden={result['forbidden']}{broke}"
+	)
 	line = f"{result['scenario']}: {verdict} | tools {','.join(result['tools']) or '-'} | rounds {run['rounds']} | {run.get('seconds')}s | prompt {run['prompt_tokens']}"
 	if result.get("changed_blocks") is not None:
 		line += f" | changed {result['changed_blocks']}"
 	if page:
 		line += " | " + " ".join(f"{k}={v}" for k, v in page.items())
-	return line + f" | reply dashes={result['reply']['dashes']} hype={result['reply']['hype']}"
-
-
-def is_cream(colour: str) -> bool:
-	"""A warm, pale, muted ground: the cream of the most common generated look."""
-	match = re.fullmatch(r"#([0-9a-fA-F]{6})", colour.strip())
-	if not match:
-		return False
-	r, g, b = (int(match.group(1)[i : i + 2], 16) / 255 for i in (0, 2, 4))
-	hue, lightness, saturation = colorsys.rgb_to_hls(r, g, b)
-	return 20 <= hue * 360 <= 60 and lightness >= 0.85 and 0.15 <= saturation <= 0.8
+	reply = result["reply"]
+	line += f" | reply {reply['words']}w process={reply.get('process_talk', 0)} pills={len(result.get('suggestions') or [])}"
+	return line + f" dashes={reply['dashes']} hype={reply['hype']}"
 
 
 def walk(block: dict):

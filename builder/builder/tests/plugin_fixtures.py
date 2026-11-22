@@ -8,6 +8,7 @@ The setup lives here rather than in each of the files that need it.
 
 import pathlib
 import shutil
+from unittest.mock import patch
 
 import frappe
 from frappe.utils import get_files_path
@@ -102,16 +103,23 @@ def make_user(email="plugin-tester@example.com", roles=("Website Manager",)):
 	return email
 
 
-def make_page_reader(test_case, role=TEST_ROLE, email="plugin-reader@example.com"):
-	"""A user who reads Builder Pages through `role` alone: no System Manager, no Website Manager."""
-	make_role(role)
-	permission = frappe.get_doc(
-		{"doctype": "Custom DocPerm", "parent": "Builder Page", "role": role, "permlevel": 0, "read": 1}
-	).insert(ignore_permissions=True)
-	# Cleanups run last in, first out, so the cache clears after the row goes.
-	test_case.addCleanup(frappe.clear_cache, doctype="Builder Page")
-	test_case.addCleanup(
-		frappe.delete_doc, "Custom DocPerm", permission.name, force=True, ignore_permissions=True
-	)
-	frappe.clear_cache(doctype="Builder Page")
-	return make_user(email, roles=(role,))
+def make_page_reader(test_case, email="plugin-reader@example.com"):
+	"""A user who reads Builder Pages: no System Manager, no Website Manager.
+
+	Only those two roles read Builder Pages, so the read check is patched for this user.
+	An uncommitted Custom DocPerm is not safe here: another bench process can put the
+	committed meta back in the shared cache and take the read away during the test.
+	"""
+	reader = make_user(email, roles=(TEST_ROLE,))
+	has_permission = frappe.has_permission
+
+	def has_permission_with_page_read(doctype=None, ptype="read", *args, **kwargs):
+		user = kwargs.get("user") or frappe.session.user
+		if doctype == "Builder Page" and ptype == "read" and user == reader:
+			return True
+		return has_permission(doctype, ptype, *args, **kwargs)
+
+	patcher = patch("frappe.has_permission", has_permission_with_page_read)
+	patcher.start()
+	test_case.addCleanup(patcher.stop)
+	return reader

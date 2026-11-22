@@ -31,7 +31,7 @@ def release(version: str) -> Release:
 
 
 def package(version: str) -> ValidatedPackage:
-	manifest = {"label": "Updating", "description": "An update test"}
+	manifest = {"label": "Updating", "description": "An update test", "version": version}
 	return ValidatedPackage(manifest=manifest, files={"main.js": f"// {version}".encode()})
 
 
