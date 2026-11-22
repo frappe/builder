@@ -24,6 +24,15 @@ function addPxToNumber(number: number, round: boolean = true): string {
 	return `${number}px`;
 }
 
+// `px` in the unit `current` is written in. A % stays a share of `containerPx`, so a block
+// placed in % keeps its spot at every width; anything else becomes px.
+function toUnitOf(current: StyleValue | undefined, px: number, containerPx: number): string {
+	if (!String(current ?? "").endsWith("%") || !containerPx) {
+		return addPxToNumber(px);
+	}
+	return `${Math.round((px / containerPx) * 1000) / 10}%`;
+}
+
 interface BackgroundValue {
 	image?: string;
 	position?: string;
@@ -388,6 +397,7 @@ function normalizeValueWithUnits(value: string, defaultUnit: string): string {
 
 export {
 	addPxToNumber,
+	addUnitToNumber,
 	collapseBoxShorthand,
 	collapseGapShorthand,
 	expandBoxShorthand,
@@ -400,4 +410,5 @@ export {
 	removeDefaultUnit,
 	setSpacing,
 	shortenNumber,
+	toUnitOf,
 };
