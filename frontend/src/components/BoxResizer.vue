@@ -36,7 +36,8 @@ import useCanvasStore from "@/stores/canvasStore";
 import { startDrag } from "@/utils/cursor";
 import { getResizePositionDelta, toLocalDelta } from "@/utils/rotation";
 import type { ResizeDirection } from "@/utils/rotation";
-import { getNumberFromPx, getRenderedPosition } from "@/utils/helpers";
+import BlockPosition from "@/utils/blockPosition";
+import { getNumberFromPx } from "@/utils/helpers";
 import { clamp } from "@vueuse/core";
 import { computed, inject, onMounted, ref, watch } from "vue";
 import guidesTracker from "../utils/guidesTracker";
@@ -144,15 +145,26 @@ const handleResize = (ev: MouseEvent, { horizontal, vertical }: ResizeDirection)
 	const target = props.target as HTMLElement;
 	const startHeight = target.offsetHeight;
 	const startWidth = target.offsetWidth;
-	const { left: startLeft, top: startTop } = getRenderedPosition(target);
 	const ownRotation = parseFloat(getComputedStyle(target).rotate) || 0;
 	const blockStartWidth = props.targetBlock.getActiveStyleValue("width") as string;
 	const blockStartHeight = props.targetBlock.getActiveStyleValue("height") as string;
 	const startFontSize = fontSize.value || 0;
-	const canReposition = props.targetBlock.isMovable();
+	// a free block moves the sides it is pinned to; a stretched axis resizes by them alone
+	const pinned = props.targetBlock.isMovable()
+		? new BlockPosition(props.targetBlock, target).startResize()
+		: null;
 	// pressing `esc` resets to startStyles. The drag writes to the active state, so read
 	// and restore that same key.
-	const resizedStyles = ["width", "height", "left", "top", "fontSize"] as styleProperty[];
+	const resizedStyles = [
+		"width",
+		"height",
+		"left",
+		"top",
+		"right",
+		"bottom",
+		"inset",
+		"fontSize",
+	] as styleProperty[];
 	const startStyles = new Map(
 		resizedStyles
 			.map((style) => props.targetBlock.getActiveStyleProperty(style))
@@ -179,8 +191,9 @@ const handleResize = (ev: MouseEvent, { horizontal, vertical }: ResizeDirection)
 				return setFontSize(fontSizeMovement, startFontSize);
 			}
 
-			let widthMovement = horizontalMovement(horizontal, localX);
-			let heightMovement = verticalMovement(vertical, localY);
+			// a centred block grows on both sides, so it grows twice as much to follow the pointer
+			let widthMovement = horizontalMovement(horizontal, localX) * (pinned?.centered.x ? 2 : 1);
+			let heightMovement = verticalMovement(vertical, localY) * (pinned?.centered.y ? 2 : 1);
 			if (mouseMoveEvent.shiftKey && startWidth && startHeight) {
 				const aspectRatio = startWidth / startHeight;
 				if (horizontal) {
@@ -190,22 +203,25 @@ const handleResize = (ev: MouseEvent, { horizontal, vertical }: ResizeDirection)
 				}
 			}
 
-			if (horizontal || (mouseMoveEvent.shiftKey && vertical)) {
+			if ((horizontal || (mouseMoveEvent.shiftKey && vertical)) && !pinned?.stretched.x) {
 				setWidth(widthMovement, startWidth, blockStartWidth);
 			}
-			if (vertical || (mouseMoveEvent.shiftKey && horizontal)) {
+			if ((vertical || (mouseMoveEvent.shiftKey && horizontal)) && !pinned?.stretched.y) {
 				setHeight(heightMovement, startHeight, blockStartHeight);
 			}
 
-			if (canReposition) {
-				const positionDelta = getResizePositionDelta(
+			if (pinned) {
+				// a centred axis keeps its centre, so it has no edge to hold still
+				const startMove = getResizePositionDelta(
 					widthMovement,
 					heightMovement,
-					{ horizontal, vertical },
+					{
+						horizontal: pinned.centered.x ? undefined : horizontal,
+						vertical: pinned.centered.y ? undefined : vertical,
+					},
 					ownRotation,
 				);
-				props.targetBlock.setActiveStyle("left", `${Math.round(startLeft + positionDelta.x)}px`);
-				props.targetBlock.setActiveStyle("top", `${Math.round(startTop + positionDelta.y)}px`);
+				pinned.resize(startMove, { x: widthMovement, y: heightMovement });
 			}
 		},
 		onCancel: () => {

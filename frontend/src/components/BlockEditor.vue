@@ -40,6 +40,7 @@
 			:targetBlock="block"
 			@resizing="resizing = $event"
 			:target="target" />
+		<PinLines v-if="showPinLines" :block="block" :target="target" />
 	</div>
 </template>
 <script setup lang="ts">
@@ -47,7 +48,7 @@ import type Block from "@/block";
 import useBuilderStore from "@/stores/builderStore";
 import useCanvasStore from "@/stores/canvasStore";
 import blockController from "@/utils/blockController";
-import { addPxToNumber, getRenderedPosition } from "@/utils/helpers";
+import BlockPosition from "@/utils/blockPosition";
 import { isReorderable, startBlockReorder } from "@/utils/useBlockReorder";
 import { Ref, computed, inject, nextTick, onMounted, ref, watch, watchEffect } from "vue";
 import setGuides from "../utils/guidesTracker";
@@ -56,6 +57,7 @@ import BorderRadiusHandler from "./BorderRadiusHandler.vue";
 import BoxResizer from "./BoxResizer.vue";
 import GapHandler from "./GapHandler.vue";
 import PaddingHandler from "./PaddingHandler.vue";
+import PinLines from "./PinLines.vue";
 import RotationHandler from "./RotationHandler.vue";
 
 const canvasProps = inject("canvasProps") as CanvasProps;
@@ -121,9 +123,13 @@ const showPaddingHandler = computed(() => {
 const showGapHandler = computed(() => {
 	return (
 		showPaddingHandler.value &&
-		(props.block.getChildren().length > 1 || (props.target && (props.target as HTMLElement).childElementCount > 1))
+		(props.block.getChildren().length > 1 ||
+			(props.target && (props.target as HTMLElement).childElementCount > 1))
 	);
 });
+
+// what a free block is pinned to, as lines out to its container
+const showPinLines = computed(() => showResizer.value && movable.value && !rotating.value);
 
 const showBorderRadiusHandler = computed(() => {
 	return (
@@ -295,7 +301,8 @@ const handleMove = (ev: MouseEvent) => {
 	const target = ev.target as HTMLElement;
 	const startX = ev.clientX;
 	const startY = ev.clientY;
-	const { left: startLeft, top: startTop } = getRenderedPosition(props.target as HTMLElement);
+	// moves the sides the block is pinned to, each in the unit it is written in
+	const moveBy = new BlockPosition(props.block, props.target as HTMLElement).startMove();
 
 	moving.value = true;
 	guides.showX();
@@ -310,17 +317,14 @@ const handleMove = (ev: MouseEvent) => {
 		const scale = canvasProps.scale;
 		const movementX = (mouseMoveEvent.clientX - startX) / scale;
 		const movementY = (mouseMoveEvent.clientY - startY) / scale;
-		let finalLeft = startLeft + movementX;
-		let finalTop = startTop + movementY;
-		props.block.setActiveStyle("left", addPxToNumber(finalLeft));
-		props.block.setActiveStyle("top", addPxToNumber(finalTop));
+		moveBy(movementX, movementY);
 		await nextTick();
 		const { leftOffset, rightOffset } = guides.getPositionOffset();
 		if (leftOffset !== 0) {
-			props.block.setActiveStyle("left", addPxToNumber(finalLeft + leftOffset));
+			moveBy(movementX + leftOffset, movementY);
 		}
 		if (rightOffset !== 0) {
-			props.block.setActiveStyle("left", addPxToNumber(finalLeft + rightOffset));
+			moveBy(movementX + rightOffset, movementY);
 		}
 
 		mouseMoveEvent.preventDefault();
