@@ -290,9 +290,17 @@ publish_page_tool = Tool(
 	name="publish_page",
 	side="server",
 	description=(
-		"Publish pages, as the editor's Publish button does: each page's current draft goes live at "
-		"its route for every visitor. Only when the user asks to publish or go live, never on your "
-		"own after a build; their ask is the approval, so don't ask again. Defaults to the open page."
+		"Publish pages, as the editor's Publish button does: each page's current draft goes live at its "
+		"route for every visitor. Only when the user asks to publish or go live, never on your own "
+		"after a build. Pages they name (this page, the pricing page) need no confirmation: their ask "
+		"is the approval. A broad ask ('publish everything', 'all pages') is a scope to check, not a "
+		"list, since a sweep also catches drafts nobody meant to ship. First find what it would change "
+		"(run_python: Builder Pages, not templates, that are unpublished or whose draft_blocks differs "
+		"from blocks, with their project_folder; a draft identical to the live blocks is no change). If "
+		"that's a few pages they'd expect, publish them. If it's many, or spread across folders, ask "
+		"one quick present_ui question first: say how many (counted by the snippet, not by hand), offer "
+		"the scopes that fit (the open page's folder, everything with changes, let me pick), then "
+		"publish what they choose. Defaults to the open page."
 	),
 	parameters={
 		"type": "object",
