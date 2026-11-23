@@ -2,9 +2,11 @@
 
 Page-level settings (SEO/meta/lang/custom HTML) and theme variables are safe and
 reversible, so they are `side="server"` and apply immediately. Site-wide settings
-(global script/style/head/body HTML), the home page, and publishing affect every
-visitor and are hard to undo — those are `side="terminal"` and go through the
-confirm-gate (builder/ai/agent/pending.py); the user approves before they apply.
+(global script/style/head/body HTML) and the home page affect every visitor and
+are hard to undo, so they are `side="terminal"` and go through the confirm-gate
+(builder/ai/agent/pending.py); the user approves before they apply. Publishing
+applies immediately too: Bob publishes only when the user asks, and that ask is
+the approval.
 """
 
 import re
@@ -168,18 +170,35 @@ def request_set_home_page(ctx, args: dict) -> None:
 	pending.request_confirmation(ctx, "home_page", f"Set the site home page to '{route}'?", {"route": route})
 
 
-def request_publish_page(ctx, args: dict) -> str | None:
-	page_id, why = resolve_page_reference(args.get("page") or ctx.page_id or "")
+def publish_pages(ctx, args: dict) -> str:
+	staged = getattr(ctx, "page_changes", None)
+	held = {edit.page["page_id"] for edit in staged.staged()} if staged else set()
+	results = [publish_one(ref, held) for ref in args.get("pages") or [ctx.page_id or ""]]
+	if any(page_id == ctx.page_id for page_id, _ in results):
+		emit_refetch(ctx, "page")
+	return "\n".join(line for _, line in results)
+
+
+def publish_one(ref: str, held: set[str]) -> tuple[str | None, str]:
+	"""Publish one page as the editor's Publish button does. Returns the page id when
+	it went live, and a result line for the model."""
+	page_id, why = resolve_page_reference(ref)
 	if not page_id:
-		return f"FAILED: {why}."
-	if not frappe.has_permission("Builder Page", "write", doc=page_id):
-		return pending.not_permitted("publish this page")
+		return None, f"FAILED: {why}."
 	page = page_row(page_id)
-	published, draft = frappe.db.get_value("Builder Page", page_id, ["published", "draft_blocks"])
-	if published and not draft:
-		return f"NOTHING TO PUBLISH: {page['title']} is live at {page['route']} with no unpublished changes."
-	summary = f"Publish “{page['title']}” at {page['route']}? Every visitor sees this version."
-	pending.request_confirmation(ctx, "publish", summary, page)
+	name = f"{page['title']} ({page['route']})"
+	if page_id in held:
+		return None, (
+			f"NOT PUBLISHED: {name} has changes waiting on the card at the end of this turn. "
+			"Tell the user to publish it once they apply them."
+		)
+	doc = frappe.get_doc("Builder Page", page_id)
+	if not doc.has_permission("write"):
+		return None, f"FAILED: this user can't publish {name}."
+	if doc.published and not doc.draft_blocks:
+		return None, f"ALREADY LIVE: {name} has no unpublished changes."
+	doc.publish()
+	return page_id, f"Published {name}."
 
 
 def request_edit_global_settings(ctx, args: dict) -> None:
@@ -269,21 +288,24 @@ set_home_page_tool = Tool(
 
 publish_page_tool = Tool(
 	name="publish_page",
-	side="terminal",
+	side="server",
 	description=(
-		"Propose publishing a page, as the editor's Publish button does: its current draft goes live "
-		"at its route for every visitor. Only when the user asks to publish or go live, never on your "
-		"own after a build. Defaults to the open page; `page` names another (id, route, title, or URL). "
-		"SENSITIVE: ends your turn and asks the user to confirm before publishing."
+		"Publish pages, as the editor's Publish button does: each page's current draft goes live at "
+		"its route for every visitor. Only when the user asks to publish or go live, never on your "
+		"own after a build; their ask is the approval, so don't ask again. Defaults to the open page."
 	),
 	parameters={
 		"type": "object",
 		"properties": {
-			"page": {"type": "string", "description": "The page to publish; omit for the open page."}
+			"pages": {
+				"type": "array",
+				"items": {"type": "string"},
+				"description": "Pages to publish, each an id, route, title, or URL. Omit for the open page.",
+			}
 		},
 		"required": [],
 	},
-	handler=request_publish_page,
+	handler=publish_pages,
 )
 
 edit_global_settings_tool = Tool(
