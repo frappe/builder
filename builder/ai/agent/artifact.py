@@ -298,15 +298,15 @@ def generate_page_markup(ctx, args: dict) -> list[dict]:
 	)
 	try:
 		for chunk in stream:
-			if ctx.is_cancelled():
+			if ctx.stop_requested():
 				# Stop, but KEEP: what already streamed is paid-for, visible work.
-				# Fall through to persist the partial page; the loop's own cancel
-				# check ends the turn right after this step returns.
+				# Fall through to persist the partial page; a cancel ends the turn right
+				# after this step returns, and notes sent now are read before the next round.
 				try:
 					stream.close()
 				except Exception:
 					pass
-				logger.info("generate_page: cancelled mid-stream, keeping the partial page")
+				logger.info("generate_page: stopped mid-stream, keeping the partial page")
 				break
 			ctx.record_usage(chunk, model=ctx.model)  # generation streams on the heavy model
 			if not chunk.choices:

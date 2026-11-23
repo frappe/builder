@@ -1793,12 +1793,24 @@ class AgentRunner:
 		ops = tool.generator(self, op["args"])
 		self.build_step = None
 		self.end_activity(entry)
+		cut_short = AISession.notes_wanted_now(self.session_id)
 		if not ops:
+			if cut_short:
+				return (
+					"The user sent a note before the page built. Read it (next message) and act on it.",
+					[],
+				)
 			return ("FAILED: generation produced nothing. Retry generate_page with a fuller brief.", [])
 		root = ops[0]["args"]["blocks"][0]
 		self.tree = WorkingTree(root)
+		lead = (
+			"The build stopped early for the user's note (next message), so the page holds only the "
+			"sections written so far. Act on the note first, rebuilding if it changes the page; else "
+			if cut_short
+			else "Page generated and saved. Now "
+		)
 		return (
-			"Page generated and saved. Now finish the build: add the page scripts the brief "
+			f"{lead}finish the build: add the page scripts the brief "
 			"calls for (set_page_script), preview_page it and fix what's broken with edit_page, "
 			"preview again only to confirm a layout fix, then finish with a short summary."
 			f"{self.script_hook_gap_note(root)}{composition_notes(root)}{self.dropped_lines_note()}\n"
