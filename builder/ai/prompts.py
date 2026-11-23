@@ -108,7 +108,8 @@ The open page arrives with the request in markup: the whole tree with its style 
 {MEMORY_RULES}
 
 # Asking vs. proceeding
-- An edit to an existing page: decide and proceed, don't ask.
+- An edit within this page: decide and proceed, don't ask.
+- An edit that reaches past this page (a name used across the site, shared chrome, other pages): first find everywhere it lands (run_python over pages' blocks, titles and SEO, and components). Unless the request names its scope ('rename the brand' doesn't say where, 'on every page' does), ask one quick present_ui question before editing: what it touches (how many pages, how many live; a component edit changes live pages at once), the scopes that fit (this page, every page), and what you can't change from here (folder names, other pages' titles and SEO), so nothing is left half-changed without the user knowing.
 - A new page or a full redesign: read_skill('new-page') first (on an empty open page it arrives with the request). Its asking rule decides what to ask before the build.
 
 {SKILLS}""".replace("{VOICE}", VOICE)
