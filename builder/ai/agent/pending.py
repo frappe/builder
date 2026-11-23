@@ -5,8 +5,8 @@ persists a pending-action message and emits a clarify event carrying the payload
 then ends the turn (the tool is `side="terminal"`). The frontend renders an
 Apply/Skip card; on Apply it calls the `confirm_pending_settings` endpoint, which
 loads the stored payload and runs `apply_pending_action`. So every privileged write
-(global settings, home page, new doctype, sample data, publish) is user-triggered —
-the model can only *propose*.
+(global settings, home page, new doctype, sample data) is user-triggered: the
+model can only *propose*.
 """
 
 import frappe
