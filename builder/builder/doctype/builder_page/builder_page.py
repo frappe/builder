@@ -11,7 +11,7 @@ from urllib.parse import quote_plus
 import bs4 as bs
 import frappe
 import frappe.utils
-from frappe.utils import now, set_request
+from frappe.utils import get_datetime, now, set_request
 from frappe.utils.caching import redis_cache
 from frappe.utils.jinja import render_template
 from frappe.utils.telemetry import capture
@@ -513,19 +513,23 @@ class BuilderPage(WebsiteGenerator):
 		if blocks:
 			blocks = compact_json(frappe.parse_json(blocks))
 		self.draft_blocks = blocks
-		if "page_data_script" in data:
+		# The live page runs the data script and client scripts as they are, so once an AI turn's
+		# work went live (Bob's publish_page, or a Publish after the turn) the pre-turn ones would
+		# strip it of what its blocks rely on: then only the draft goes back.
+		kept_live = snap.snapshot_type == "AI" and self.went_live_since(snap.creation)
+		if "page_data_script" in data and not kept_live:
 			self.page_data_script = data.get("page_data_script")
 		# AI snapshots also capture client scripts (publish/manual ones don't), so a single
 		# revert restores them: re-set the page's links to the pre-turn set (this unlinks any
 		# scripts the turn created) and restore each captured script's content (this reverts
 		# scripts the turn edited).
-		if "client_scripts" in data:
+		if "client_scripts" in data and not kept_live:
 			self.set(
 				"client_scripts",
 				[{"builder_script": s.get("builder_script")} for s in (data.get("client_scripts") or [])],
 			)
 		self.save()
-		for name, content in (data.get("_ai_scripts") or {}).items():
+		for name, content in ({} if kept_live else data.get("_ai_scripts") or {}).items():
 			if not frappe.db.exists("Builder Client Script", name):
 				continue
 			# Save through the doc (NOT db.set_value): on_update regenerates the public JS/CSS
@@ -535,7 +539,25 @@ class BuilderPage(WebsiteGenerator):
 			script_doc.script = content.get("script")
 			script_doc.script_type = content.get("script_type")
 			script_doc.save(ignore_permissions=True)
-		return {"draft_blocks": blocks, "warnings": collect_restore_warnings(blocks)}
+		warnings = collect_restore_warnings(blocks)
+		if kept_live:
+			warnings.append(
+				frappe._(
+					"This AI edit was already published, so your live page keeps it, and the page's scripts "
+					"and data script stay as they are: only the draft went back. Publish to put that live."
+				)
+			)
+		return {"draft_blocks": blocks, "warnings": warnings}
+
+	def went_live_since(self, when) -> bool:
+		"""Whether a publish, live or to staging, put this page's draft at its route after `when`,
+		and the page is still served there."""
+		if not (self.published or self.staging):
+			return False
+		if self.published_at and get_datetime(self.published_at) > get_datetime(when):
+			return True
+		filters = {"reference_doctype": self.doctype, "reference_name": self.name, "snapshot_type": "Publish"}
+		return bool(frappe.db.exists("Builder Snapshot", {**filters, "creation": (">", when)}))
 
 	@frappe.whitelist()
 	def get_current_component_version(self, component_id: str):

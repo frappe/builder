@@ -1087,7 +1087,7 @@ export class AIChatController {
 		// restoring reloads the page onto the active canvas, a component's while one is open
 		if (!snapshot || !this.sessionId.value || this.isSubmitting.value || !this.isEditingPage.value) return;
 		const confirmed = await confirm(
-			"Revert this AI edit? The page (blocks and scripts) returns to how it was just before this turn, and this message and everything after it are removed from the chat. Your live page won't change until you publish.",
+			"Revert this AI edit? The page (blocks and scripts) returns to how it was just before this turn, and this message and everything after it are removed from the chat. Blocks reach your live page when you publish, scripts at once. If this edit was already published, only the draft goes back.",
 		);
 		if (!confirmed) return;
 		// 1. Rewind the conversation server-side (delete this turn + everything after).

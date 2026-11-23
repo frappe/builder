@@ -47,6 +47,12 @@ def preview_tools():
 	return ["preview_page"]
 
 
+def without_save_hooks():
+	"""No installed app's doc_events, for a test of Builder's own save path whatever a host refuses on save.
+	Frappe rebuilds an empty map from the hooks, so this one holds an empty entry."""
+	return patch.object(frappe.local, "doc_events_hooks", {"*": {}}, create=True)
+
+
 @contextmanager
 def hosting_hooks(**hooks):
 	"""Answer each named hook with the given functions, as if an installed app registered them."""
