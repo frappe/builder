@@ -749,7 +749,8 @@ class AgentRunner:
 			"Never offer work only they can do, in a reply or as a next step."
 		)
 		# his asking rules count the pages an edit reaches, which only the withheld search tools can
-		context = "\n".join(filter(None, (context, reach_context(self.page_id, self.page_root(), withheld))))
+		reach = reach_context(self.page_id, self.page_root(), withheld)
+		context = "\n".join(part for part in (context, reach) if part)
 		# a font change needs no skill, and the faces his instructions name load from Google Fonts
 		return context if may_reach_web(self) else f"{context}\n{LOCAL_FACES}"
 

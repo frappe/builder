@@ -16,7 +16,7 @@ from builder.builder.tests.hosting_hooks import hosting_hooks
 
 
 def refuse_on_save(doc, method=None):
-	frappe.throw("Not allowed on this host")
+	frappe.throw(frappe._("Not allowed on this host"))
 
 
 def host_save_hooks(*validate):

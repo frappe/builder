@@ -35,7 +35,7 @@ def reach_context(page_id: str | None, root: dict | None, withheld) -> str:
 	others = [page for page in pages if page.name != page_id]
 	if not others:
 		return ONLY_PAGE
-	return " ".join(filter(None, (other_pages(others), component_reach(page_id, root, pages))))
+	return " ".join(part for part in (other_pages(others), component_reach(page_id, root, pages)) if part)
 
 
 def other_pages(others: list) -> str:
