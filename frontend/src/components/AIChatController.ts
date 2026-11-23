@@ -849,7 +849,7 @@ export class AIChatController {
 	};
 
 	/** Apply or skip a sensitive action the agent proposed (create doctype, seed data,
-	 * global settings, publish). The privileged write happens server-side in the endpoint;
+	 * global settings). The privileged write happens server-side in the endpoint;
 	 * we reload the session so the message's status flips out of "pending_action". */
 	confirmPendingAction = async (message: ChatMessage, decision: "apply" | "skip", skip: string[] = []) => {
 		try {

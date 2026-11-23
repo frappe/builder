@@ -28,14 +28,20 @@ def render(html: str, width: int = 1280, height: int = 720, block_external: bool
 
 
 def render_full_page(
-	html: str, width: int = 1280, height: int = 900, max_height: int = 8000, block_external: bool = False
+	html: str,
+	width: int = 1280,
+	height: int = 900,
+	max_height: int = 8000,
+	block_external: bool = False,
+	inspect=None,
 ) -> bytes:
 	"""Screenshot the whole document from a real-sized viewport, so vh units keep the
 	size they have in a browser instead of stretching to the capture height. With
 	`block_external` Chromium fails every request off this site's host (Frappe's
 	interceptor) instead of fetching it from the server: fonts, images and styles
 	from elsewhere are missing, as they are on a host whose pages load nothing from
-	outside (frappe.page's own site)."""
+	outside (frappe.page's own site). `inspect` is called with the rendered page once
+	the screenshot is taken, under the same blocking."""
 	try:
 		from frappe.utils.chromium import CDPSocketClient, ChromiumManager, Page
 		from frappe.utils.pdf import get_host_url
@@ -66,7 +72,10 @@ def render_full_page(
 			page.wait_for_navigate()
 			page.set_content(html, wait_for=["load", "DOMContentLoaded", "networkIdle"])
 			page.wait_for_set_content()
-			return capture_document(page, width, max_height)
+			image = capture_document(page, width, max_height)
+			if inspect:
+				inspect(page)
+			return image
 		finally:
 			safe_execute(page and page.close)
 			safe_execute(session and session.disconnect)
@@ -77,6 +86,14 @@ def render_full_page(
 		if proc is not None and proc.poll() is not None:
 			generator._close_browser()
 		raise
+
+
+def evaluate(page, function: str):
+	"""What a JS function returns when run in the rendered page."""
+	result, error = page.send("Runtime.evaluate", {"expression": f"({function})()", "returnByValue": True})
+	if error or (result or {}).get("exceptionDetails"):
+		raise RuntimeError(f"Error evaluating in the page: {error or result['exceptionDetails']}")
+	return result["result"].get("value")
 
 
 def capture_document(page, width: int, max_height: int) -> bytes:
