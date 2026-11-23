@@ -10,6 +10,7 @@ the approval.
 """
 
 import re
+from urllib.parse import urlparse
 
 import frappe
 
@@ -185,6 +186,8 @@ def publish_one(ref: str, held: set[str]) -> tuple[str | None, str]:
 	page_id, why = resolve_page_reference(ref)
 	if not page_id:
 		return None, f"FAILED: {why}."
+	if shared := pages_sharing(ref, page_id):
+		return None, f"NOT PUBLISHED: '{ref}' names more than one page ({shared}). Pass the page id."
 	page = page_row(page_id)
 	name = f"{page['title']} ({page['route']})"
 	if page_id in held:
@@ -199,6 +202,23 @@ def publish_one(ref: str, held: set[str]) -> tuple[str | None, str]:
 		return None, f"ALREADY LIVE: {name} has no unpublished changes."
 	doc.publish()
 	return page_id, f"Published {name}."
+
+
+def pages_sharing(ref: str, page_id: str) -> str:
+	"""The pages a route or title names when it names several. A read can take the live
+	one; a publish can't guess, since a draft redesign often shares its route."""
+	if ref == page_id:
+		return ""
+	path = urlparse(ref).path if "://" in ref else ref
+	bare = path.strip().strip("/")
+	rows = frappe.get_all(
+		"Builder Page",
+		or_filters={"route": ["in", (bare, f"/{bare}")], "page_title": ref.strip()},
+		fields=["name", "page_title", "published"],
+	)
+	if len(rows) < 2:
+		return ""
+	return ", ".join(f"{r.name}: {r.page_title}, {'live' if r.published else 'draft'}" for r in rows)
 
 
 def request_edit_global_settings(ctx, args: dict) -> None:
@@ -296,11 +316,14 @@ publish_page_tool = Tool(
 		"is the approval. A broad ask ('publish everything', 'all pages') is a scope to check, not a "
 		"list, since a sweep also catches drafts nobody meant to ship. First find what it would change "
 		"(run_python: Builder Pages, not templates, that are unpublished or whose draft_blocks differs "
-		"from blocks, with their project_folder; a draft identical to the live blocks is no change). If "
-		"that's a few pages they'd expect, publish them. If it's many, or spread across folders, ask "
-		"one quick present_ui question first: say how many (counted by the snippet, not by hand), offer "
-		"the scopes that fit (the open page's folder, everything with changes, let me pick), then "
-		"publish what they choose. Defaults to the open page."
+		"from blocks, with their name, route and project_folder; a draft identical to the live blocks "
+		"is no change). If that's a few pages they'd expect, publish them. If it's many, or spread "
+		"across folders, ask one quick present_ui question first: say how many, quoting counts the "
+		"snippet returns per folder (never count a list yourself), offer the scopes that fit (the open "
+		"page's folder, everything with changes, let me pick), then publish what they choose. Tool "
+		"results don't carry into your next turn, so a card that lists pages keeps their ids in a note "
+		"(never on the card, ids mean nothing to the user) to map the reply back. Defaults to the open "
+		"page."
 	),
 	parameters={
 		"type": "object",
@@ -308,7 +331,10 @@ publish_page_tool = Tool(
 			"pages": {
 				"type": "array",
 				"items": {"type": "string"},
-				"description": "Pages to publish, each an id, route, title, or URL. Omit for the open page.",
+				"description": (
+					"Page ids to publish. A route, title or URL also resolves when no other page "
+					"shares it. Omit for the open page."
+				),
 			}
 		},
 		"required": [],
