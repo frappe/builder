@@ -21,6 +21,7 @@ KINDS = {
 	"create_doctype",
 	"seed_sample_data",
 	"connect_form",
+	"publish",
 }
 
 GLOBAL_SETTING_FIELDS = {"script", "style", "head_html", "body_html"}
@@ -82,6 +83,7 @@ def apply_pending_action(kind: str, payload: dict) -> str:
 		"create_doctype": apply_create_doctype,
 		"seed_sample_data": apply_seed_sample_data,
 		"connect_form": apply_connect_form,
+		"publish": apply_publish,
 	}[kind](payload)
 
 
@@ -89,6 +91,12 @@ def apply_home_page(payload: dict) -> str:
 	route = (payload.get("route") or "").strip().lstrip("/")
 	frappe.db.set_single_value("Builder Settings", "home_page", route)
 	return frappe._("Home page set to /{0}").format(route)
+
+
+def apply_publish(payload: dict) -> str:
+	page = frappe.get_doc("Builder Page", payload.get("page_id"))
+	route = page.publish()
+	return frappe._("Published {0}, live at /{1}").format(page.page_title or page.name, route)
 
 
 def apply_global_settings(payload: dict) -> str:

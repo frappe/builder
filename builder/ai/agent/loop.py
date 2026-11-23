@@ -285,6 +285,7 @@ TOOL_LABELS = {
 	"connect_form": ("Connecting the form", "Connected the form"),
 	"edit_global_settings": ("Updating site settings", "Updated site settings"),
 	"set_home_page": ("Setting the home page", "Set the home page"),
+	"publish_page": ("Proposing to publish the page", "Proposed publishing the page"),
 	"read_plugin": ("Reading the editor plugins", "Read the editor plugins"),
 	"read_editor_source": ("Reading the editor's code", "Read the editor's code"),
 	"create_page": ("Proposing a new page", "Proposed a new page"),
