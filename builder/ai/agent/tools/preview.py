@@ -34,6 +34,73 @@ TILE_HEIGHT = 2000
 MAX_TILES = 3
 
 
+MAX_CONTRAST_LINES = 20
+# light then dark on one render: the root's data-prefers-color-scheme flips light-dark() tokens
+CONTRAST_CHECK = r"""() => {
+  const parse = (c) => {
+    let m = c.match(/^rgba?\(([^)]+)\)/);
+    if (m) { const p = m[1].split(/[\s,\/]+/).filter(Boolean).map(parseFloat); return {r: p[0], g: p[1], b: p[2], a: p.length > 3 ? p[3] : 1}; }
+    m = c.match(/^color\(srgb ([^)]+)\)/);
+    if (m) { const p = m[1].split(/[\s\/]+/).filter(Boolean).map(parseFloat); return {r: p[0] * 255, g: p[1] * 255, b: p[2] * 255, a: p.length > 3 ? p[3] : 1}; }
+    return null;
+  };
+  const over = (top, under) => ({r: top.r * top.a + under.r * (1 - top.a), g: top.g * top.a + under.g * (1 - top.a), b: top.b * top.a + under.b * (1 - top.a), a: 1});
+  const lum = (c) => [c.r, c.g, c.b].map((v) => { v /= 255; return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4; }).reduce((sum, v, i) => sum + v * [0.2126, 0.7152, 0.0722][i], 0);
+  const hex = (c) => '#' + [c.r, c.g, c.b].map((v) => Math.round(v).toString(16).padStart(2, '0')).join('');
+  const behind = (el, dark) => {
+    const layers = [];
+    for (let n = el; n; n = n.parentElement) {
+      const cs = getComputedStyle(n);
+      if (cs.backgroundImage !== 'none') return null;
+      const c = parse(cs.backgroundColor);
+      if (c && c.a > 0) { layers.push(c); if (c.a >= 1) break; }
+    }
+    let out = layers.length && layers[layers.length - 1].a >= 1 ? layers.pop() : (dark ? {r: 18, g: 18, b: 18, a: 1} : {r: 255, g: 255, b: 255, a: 1});
+    while (layers.length) out = over(layers.pop(), out);
+    return out;
+  };
+  const items = [];
+  for (const el of document.body.querySelectorAll('*')) {
+    if (['SCRIPT', 'STYLE', 'NOSCRIPT'].includes(el.tagName)) continue;
+    const own = [...el.childNodes].filter((n) => n.nodeType === 3).map((n) => n.textContent).join(' ').replace(/\s+/g, ' ').trim();
+    const text = own || (['INPUT', 'TEXTAREA'].includes(el.tagName) ? (el.value || el.placeholder || '').trim() : '');
+    if (!text) continue;
+    const box = el.getBoundingClientRect(); const cs = getComputedStyle(el);
+    if (box.width < 1 || box.height < 1 || cs.visibility === 'hidden' || Number(cs.opacity) === 0) continue;
+    items.push({el, text: text.slice(0, 60), tag: el.tagName.toLowerCase()});
+  }
+  const measure = (dark) => items.map(({el}) => {
+    const cs = getComputedStyle(el); let fg = parse(cs.color); const bg = behind(el, dark);
+    if (!fg || !bg || fg.a === 0) return null;
+    const own = cs.color;
+    if (fg.a < 1) fg = over(fg, bg);
+    const [a, b] = [lum(fg), lum(bg)];
+    const size = parseFloat(cs.fontSize); const large = size >= 24 || (parseInt(cs.fontWeight) >= 700 && size >= 18.66);
+    return {own, fg: hex(fg), bg: hex(bg), ratio: Math.round(((Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05)) * 10) / 10, need: large ? 3 : 4.5};
+  });
+  // a transition would hand back the old theme's colour for its first frame
+  const still = document.createElement('style');
+  still.textContent = '*, *::before, *::after { transition: none !important; animation: none !important; }';
+  document.head.appendChild(still);
+  const root = document.documentElement; const before = root.getAttribute('data-prefers-color-scheme');
+  root.setAttribute('data-prefers-color-scheme', 'light'); const light = measure(false);
+  root.setAttribute('data-prefers-color-scheme', 'dark'); const dark = measure(true);
+  if (before === null) root.removeAttribute('data-prefers-color-scheme'); else root.setAttribute('data-prefers-color-scheme', before);
+  still.remove();
+  const seen = new Set(); const out = [];
+  items.forEach((item, i) => {
+    for (const [scheme, m, other] of [['light', light[i], dark[i]], ['dark', dark[i], light[i]]]) {
+      if (!m || m.ratio >= m.need) continue;
+      const key = [scheme, item.text, m.fg, m.bg].join('|');
+      if (seen.has(key)) continue;
+      seen.add(key);
+      out.push({scheme, text: item.text, tag: item.tag, fg: m.fg, bg: m.bg, ratio: m.ratio, fgFixed: !!other && other.own === m.own, bgFixed: !!other && other.bg === m.bg});
+    }
+  });
+  return out;
+}"""
+
+
 def render_page_image(page, viewport: str = "desktop", color_scheme: str | None = None) -> bytes:
 	return render_markup_image(page.get_preview_html(color_scheme=color_scheme), viewport)
 
@@ -43,6 +110,54 @@ def render_markup_image(markup: str, viewport: str = "desktop") -> bytes:
 
 	width, height = VIEWPORTS[viewport]
 	return render_full_page(markup, width=width, height=height, max_height=CAPTURE_HEIGHT)
+
+
+def capture_with_contrast(markup: str, viewport: str) -> tuple[bytes, list[dict] | None]:
+	"""The screenshot, plus the text it leaves unreadable in light or dark mode; None
+	when that couldn't be measured."""
+	from builder.html_preview_image import evaluate, render_full_page
+
+	width, height = VIEWPORTS[viewport]
+	found = {}
+
+	def inspect(page):
+		try:
+			found["rows"] = evaluate(page, CONTRAST_CHECK)
+		except Exception:
+			logger.warning("preview_page: contrast check failed", exc_info=True)
+
+	image = render_full_page(markup, width=width, height=height, max_height=CAPTURE_HEIGHT, inspect=inspect)
+	return image, found.get("rows")
+
+
+def contrast_note(rows: list[dict] | None) -> str:
+	"""The measured unreadable text, for the model to fix. Dark mode counts only when
+	visitors can get it: the site follows their theme unless auto dark mode is off."""
+	if rows and frappe.db.get_single_value("Builder Settings", "disable_auto_dark_mode"):
+		rows = [row for row in rows if row["scheme"] == "light"]
+	if not rows:
+		return ""
+	lines = [contrast_line(row) for row in rows[:MAX_CONTRAST_LINES]]
+	if len(rows) > MAX_CONTRAST_LINES:
+		lines.append(f"- and {len(rows) - MAX_CONTRAST_LINES} more")
+	return (
+		"\n\nUnreadable text, measured on this render in light and dark mode (visitors get the one "
+		"their device uses):\n" + "\n".join(lines) + "\nA colour that stays fixed next to one that "
+		"changes with the theme is the cause: give the text and the background behind it both "
+		"tokens (a dark block is background on the ink token, text on the paper token), or keep "
+		"both fixed. Fix these before you finish. This list already covers both themes, so a "
+		"dark capture isn't needed to find them; keep a preview to confirm the fix."
+	)
+
+
+def contrast_line(row: dict) -> str:
+	def side(fixed: bool) -> str:
+		return "stays fixed" if fixed else "changes with the theme"
+
+	return (
+		f'- {row["scheme"]} mode, {row["tag"]} "{row["text"]}": text {row["fg"]} {side(row["fgFixed"])}, '
+		f"background {row['bg']} {side(row['bgFixed'])} ({row['ratio']}:1)"
+	)
 
 
 def page_error(page, error: Exception) -> str:
@@ -156,7 +271,7 @@ def run_preview_page(ctx, args: dict) -> str:
 		return page_error(page, error)
 	ctx.preview_count += 1
 	try:
-		image = render_markup_image(markup, viewport)
+		image, unreadable = capture_with_contrast(markup, viewport)
 	except Exception:
 		logger.warning("preview_page: render failed for %s", page_id, exc_info=True)
 		return (
@@ -164,6 +279,7 @@ def run_preview_page(ctx, args: dict) -> str:
 			"Continue without the visual check — do not retry."
 		)
 	refresh_page_thumbnail(page)
+	note = contrast_note(unreadable) if page_id == ctx.page_id else ""
 	# A text-only model can't receive the image — attaching it kills the whole turn
 	# (OpenRouter: "No endpoints found that support image input"). The screenshot
 	# still refreshed the page thumbnail above; just skip the visual review.
@@ -173,7 +289,7 @@ def run_preview_page(ctx, args: dict) -> str:
 		return (
 			"Screenshot saved as the page's thumbnail, but your selected model can't view "
 			"images — skip the visual check and continue."
-		)
+		) + note
 	attached, complete = attach_to_model(ctx, page, image, variant)
 	if not attached:
 		return "Screenshot captured but too large to attach for review — finish up."
@@ -219,7 +335,7 @@ def run_preview_page(ctx, args: dict) -> str:
 		"Motion and hover are invisible in a static screenshot; don't chase them here. If "
 		"two or more checks still fail after your fixes, say so honestly in your summary. "
 		"Don't describe the screenshot to the user."
-	)
+	) + note
 
 
 preview_page = Tool(
@@ -238,7 +354,8 @@ preview_page = Tool(
 		"exact values. If the renderer is unavailable, continue without it. Pick "
 		"viewport and color_scheme to check the case you changed: a mobile fix at mobile, "
 		"a dark-mode change in dark. Never report a mobile or dark-mode change as done "
-		"from a desktop light capture."
+		"from a desktop light capture. Every capture also measures text against the colour "
+		"behind it in light and dark mode and lists what's unreadable."
 	),
 	parameters={
 		"type": "object",

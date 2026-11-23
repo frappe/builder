@@ -23,9 +23,12 @@ def render(html: str, width: int = 1280, height: int = 720) -> bytes:
 	return capture_screenshot("webp", html=html, width=width, height=height)
 
 
-def render_full_page(html: str, width: int = 1280, height: int = 900, max_height: int = 8000) -> bytes:
+def render_full_page(
+	html: str, width: int = 1280, height: int = 900, max_height: int = 8000, inspect=None
+) -> bytes:
 	"""Screenshot the whole document from a real-sized viewport, so vh units keep the
-	size they have in a browser instead of stretching to the capture height."""
+	size they have in a browser instead of stretching to the capture height. `inspect`
+	is called with the rendered page once the screenshot is taken."""
 	try:
 		from frappe.utils.chromium import CDPSocketClient, ChromiumManager, Page
 		from frappe.utils.pdf import get_host_url
@@ -52,7 +55,10 @@ def render_full_page(html: str, width: int = 1280, height: int = 900, max_height
 			page.wait_for_navigate()
 			page.set_content(html, wait_for=["load", "DOMContentLoaded", "networkIdle"])
 			page.wait_for_set_content()
-			return capture_document(page, width, max_height)
+			image = capture_document(page, width, max_height)
+			if inspect:
+				inspect(page)
+			return image
 		finally:
 			safe_execute(page and page.close)
 			safe_execute(session and session.disconnect)
@@ -63,6 +69,14 @@ def render_full_page(html: str, width: int = 1280, height: int = 900, max_height
 		if proc is not None and proc.poll() is not None:
 			generator._close_browser()
 		raise
+
+
+def evaluate(page, function: str):
+	"""What a JS function returns when run in the rendered page."""
+	result, error = page.send("Runtime.evaluate", {"expression": f"({function})()", "returnByValue": True})
+	if error or (result or {}).get("exceptionDetails"):
+		raise RuntimeError(f"Error evaluating in the page: {error or result['exceptionDetails']}")
+	return result["result"].get("value")
 
 
 def capture_document(page, width: int, max_height: int) -> bytes:
