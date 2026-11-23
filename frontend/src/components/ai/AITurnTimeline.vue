@@ -170,6 +170,7 @@ const TOOL_ICONS: Record<string, string> = {
 	connect_form: "lucide-link-2",
 	edit_global_settings: "lucide-settings",
 	set_home_page: "lucide-home",
+	publish_page: "lucide-cloud-upload",
 	edit_page: "lucide-file-pen-line",
 	create_page: "lucide-file-plus",
 };

@@ -819,11 +819,18 @@ export class AIChatController {
 	 * global settings, publish). The privileged write happens server-side in the endpoint;
 	 * we reload the session so the message's status flips out of "pending_action". */
 	confirmPendingAction = async (message: ChatMessage, decision: "apply" | "skip", skip: string[] = []) => {
+		const publishing = decision === "apply" && message.metadata?.kind === "publish";
 		try {
+			// flush the autosave first, as pageStore.publishPage does
+			if (publishing) await this.pageStore.waitTillPageIsSaved();
 			const res = await createResource({
 				url: "builder.ai.api.confirm_pending_settings",
 				method: "POST",
 			}).submit({ message_id: message.id, decision, skip });
+			if (publishing) {
+				await this.onRefetch({ resources: ["page"] });
+				this.pageStore.snapshotsVersion++;
+			}
 			await this.loadSession();
 			// a page card shows how each page came out itself
 			if (decision === "apply" && !res?.pages) toast.success(res?.message || "Applied");

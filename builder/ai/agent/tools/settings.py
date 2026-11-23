@@ -12,7 +12,9 @@ import re
 import frappe
 
 from builder.ai.agent import pending
+from builder.ai.agent.page_changes import page_row
 from builder.ai.agent.registry import Tool
+from builder.ai.agent.tools.query import resolve_page_reference
 from builder.ai.stock_look import unseen_creams
 
 PAGE_SETTING_FIELDS = {
@@ -166,6 +168,20 @@ def request_set_home_page(ctx, args: dict) -> None:
 	pending.request_confirmation(ctx, "home_page", f"Set the site home page to '{route}'?", {"route": route})
 
 
+def request_publish_page(ctx, args: dict) -> str | None:
+	page_id, why = resolve_page_reference(args.get("page") or ctx.page_id or "")
+	if not page_id:
+		return f"FAILED: {why}."
+	if not frappe.has_permission("Builder Page", "write", doc=page_id):
+		return pending.not_permitted("publish this page")
+	page = page_row(page_id)
+	published, draft = frappe.db.get_value("Builder Page", page_id, ["published", "draft_blocks"])
+	if published and not draft:
+		return f"NOTHING TO PUBLISH: {page['title']} is live at {page['route']} with no unpublished changes."
+	summary = f"Publish “{page['title']}” at {page['route']}? Every visitor sees this version."
+	pending.request_confirmation(ctx, "publish", summary, page)
+
+
 def request_edit_global_settings(ctx, args: dict) -> None:
 	payload = {f: args[f] for f in pending.GLOBAL_SETTING_FIELDS if f in args and args[f] is not None}
 	summary = f"Update site-wide settings ({', '.join(payload) or 'none'})? These load on EVERY page."
@@ -251,6 +267,25 @@ set_home_page_tool = Tool(
 	handler=request_set_home_page,
 )
 
+publish_page_tool = Tool(
+	name="publish_page",
+	side="terminal",
+	description=(
+		"Propose publishing a page, as the editor's Publish button does: its current draft goes live "
+		"at its route for every visitor. Only when the user asks to publish or go live, never on your "
+		"own after a build. Defaults to the open page; `page` names another (id, route, title, or URL). "
+		"SENSITIVE: ends your turn and asks the user to confirm before publishing."
+	),
+	parameters={
+		"type": "object",
+		"properties": {
+			"page": {"type": "string", "description": "The page to publish; omit for the open page."}
+		},
+		"required": [],
+	},
+	handler=request_publish_page,
+)
+
 edit_global_settings_tool = Tool(
 	name="edit_global_settings",
 	side="terminal",
@@ -272,5 +307,6 @@ TOOLS = [
 	set_page_settings_tool,
 	set_design_token_tool,
 	set_home_page_tool,
+	publish_page_tool,
 	edit_global_settings_tool,
 ]
