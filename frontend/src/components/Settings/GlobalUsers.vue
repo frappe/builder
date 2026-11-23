@@ -191,6 +191,9 @@ const sendInvites = async () => {
 		if (res.disabled_user_emails.length) {
 			toast.error(__("User is disabled: {0}", [res.disabled_user_emails.join(", ")]));
 		}
+		if (res.standard_user_emails?.length) {
+			toast.error(__("Can't be invited: {0}", [res.standard_user_emails.join(", ")]));
+		}
 		showInviteDialog.value = false;
 		inviteEmails.value = "";
 		pendingInvites.fetch();
