@@ -285,7 +285,6 @@ TOOL_LABELS = {
 	"connect_form": ("Connecting the form", "Connected the form"),
 	"edit_global_settings": ("Updating site settings", "Updated site settings"),
 	"set_home_page": ("Setting the home page", "Set the home page"),
-	"publish_page": ("Proposing to publish the page", "Proposed publishing the page"),
 	"read_plugin": ("Reading the editor plugins", "Read the editor plugins"),
 	"read_editor_source": ("Reading the editor's code", "Read the editor's code"),
 	"create_page": ("Proposing a new page", "Proposed a new page"),
@@ -317,6 +316,9 @@ def activity_summary(tool_name: str, args: dict, tree=None, done: bool = True) -
 
 	if pair := TOOL_LABELS.get(tool_name):
 		return voice(*pair)
+	if tool_name == "publish_page":
+		count = len(args.get("pages") or [])
+		return f"{voice('Publishing', 'Published')} {f'{count} pages' if count > 1 else 'the page'}"
 	if tool_name == "create_page" and args.get("title"):
 		return f"{voice('Proposing', 'Proposed')} a new page: {args['title']}"
 	if tool_name == "read_skill" and args.get("name"):

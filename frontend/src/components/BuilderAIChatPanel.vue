@@ -644,8 +644,6 @@ function pendingPreview(m: Record<string, any>): string {
 			return `Update site-wide code (${Object.keys(p).join(", ")}). This loads on every page.`;
 		case "home_page":
 			return `Make “/${String(p.route || "").replace(/^\//, "")}” the site's home page.`;
-		case "publish":
-			return `Publish “${p.title}” live at ${p.route}.`;
 		default:
 			return "Confirm this change?";
 	}
@@ -658,7 +656,6 @@ const APPLY_LABELS: Record<string, string> = {
 	connect_form: "Connect form",
 	seed_sample_data: "Add records",
 	home_page: "Set home page",
-	publish: "Publish",
 	global_settings: "Apply",
 };
 const applyLabel = (m: Record<string, any> = {}) => APPLY_LABELS[m.kind || ""] || "Apply";
