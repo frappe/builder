@@ -33,6 +33,7 @@ Blocks are read and written as markup: one block per line, two-space indentation
 - A run of mixed colours, or code, is one block whose text is HTML with inline `<span style="color:…">`: sibling span blocks stack one per line. Code goes in a pre.
 - A token's handle is $<its document id>, as set_design_token returns it or query_records('Builder Token') lists it; its token_name is only a label.
 - A colour relative to existing ones ("lighter than the background", "match the header") starts from the real values: read_page for the block that paints it, a token's value and dark_value. Name the values you used.
+- Colours that sit together flip together. The site follows each visitor's light or dark theme: a token with a dark_value flips, a fixed hex doesn't. So a text colour and the background behind it are both tokens or both fixed: a dark block is background on the ink token with text on the paper token, and "make it black" on a themed site means that pair, never the ink token beside a fixed #fff.
 - Style lives on blocks or in tokens. A CSS page script is for interaction and motion the user asked for, never a block's colour, spacing, size, layout or type, and never a hand-written :root of variables the editor can't see.
 - Fonts load from font-family by themselves: never add @import or <link> for them."""
 
@@ -148,11 +149,11 @@ The brief carries a named concept, a layout system, a font pairing, a palette, a
 - If the brief names no layout system, pick the boldest system below that fits the brand and subject. classic-centered only when the brief asks for conservative or corporate.
 
 # Craft floor, every page
-**Text colour hierarchy**: body text never sits in flat hex; rgba() creates depth.
-- Headings: the brand's darkest colour or #0F0F0F
-- Subtitles / lead: rgba(0,0,0,0.72) on light sections · rgba(255,255,255,0.82) on dark sections
-- Body copy: rgba(0,0,0,0.55) on light · rgba(255,255,255,0.65) on dark
-- Muted / caption / label: rgba(0,0,0,0.36) on light · rgba(255,255,255,0.42) on dark
+**Text colour hierarchy**: body text never sits in flat full-strength colour; lighter tones create depth. Headings take the darkest colour, then lead, body and captions step down to about 72%, 55% and 36% of it.
+**Colours that sit together flip together**: the page follows each visitor's light or dark theme. A token with a dark value flips; a fixed hex or rgba() stays. So a text colour and the background behind it are both tokens or both fixed, or dark mode puts white text on white.
+- With the brief's tokens, every text colour and every background is one: a dark band, card or button is background on the ink token with text on the paper token, never #fff text; a light card, field or chip is the paper token with ink text. A lighter tone mixes the token, color-mix(in srgb, $ink 55%, transparent); a tint the palette lacks mixes the two, color-mix(in srgb, $ink 4%, $paper) for a pale band.
+- Fixed colours only where neither side should change, like text on a photo scrim.
+- Without tokens: rgba(0,0,0,0.72 / 0.55 / 0.36) on light sections, rgba(255,255,255,0.82 / 0.65 / 0.42) on dark, headings the brand's darkest colour or #0F0F0F.
 **Type scale is about contrast, not fixed sizes**: the largest text on the page is at least 3.5x the body size. Poster and editorial systems push display type to 8vw-14vw (always with an m{} override, e.g. m{font-size:3rem}). Tight display leading (line-height .9-1.0, letter-spacing -0.03em); body stays readable (line-height 1.6-1.75, max-width 60ch).
 - Spacing has a consistent vertical rhythm; generosity fits the system (dense-utility is deliberately tight; poster breathes).
 - Copy is brand-true and specific: real headlines, the brief's personal details verbatim, never lorem.
@@ -231,7 +232,7 @@ Write specific, brand-true copy from the conversation: real headlines and value 
 - classic-centered heading scale: hero 72px-96px, h2 44px-56px, h3 20px-24px, body 16px-18px.
 - Section openers vary per section: an index numeral (01), a rule above the heading, a kicker line, or nothing (poster systems open with the headline itself). A small uppercase label is at most one moment on the page.
 - Section variety: vary structure first (width, grid, density, height); background alternation is one tool, not the requirement. At most half the sections are symmetric.
-- Shadows: rest 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04); hover 0 12px 40px rgba(0,0,0,0.10), 0 4px 12px rgba(0,0,0,0.06). Borders: hairline rgba (light 1px solid rgba(0,0,0,0.07), dark 1px solid rgba(255,255,255,0.10)). poster-brutalist and dense-utility override these: hard edges, no soft shadows.
+- Shadows: rest 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04); hover 0 12px 40px rgba(0,0,0,0.10), 0 4px 12px rgba(0,0,0,0.06). Borders: the palette's line token when it has one, else hairline rgba (light 1px solid rgba(0,0,0,0.07), dark 1px solid rgba(255,255,255,0.10)). poster-brutalist and dense-utility override these: hard edges, no soft shadows.
 - Buttons: one shape page-wide (one $set), pill 100px / sharp 0px-4px / soft 12px-16px, never 8px. Padding 14px 32px or more, font-weight 600.
 - Hover states on every interactive element: transition:all .2s ease plus one of a translateY lift, a background sweep (:hover{background-color:…} a visibly darker fill), an underline grow ({background-image:linear-gradient(currentColor, currentColor);background-size:0% 2px;background-repeat:no-repeat;background-position:left bottom} :hover{background-size:100% 2px}), or a full invert (:hover{background-color:…;color:…}).
 
