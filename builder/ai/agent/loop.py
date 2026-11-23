@@ -54,6 +54,7 @@ from builder.ai.agent import next_steps
 from builder.ai.agent.artifact import may_reach_web
 from builder.ai.agent.edits import EditScript, composition_notes
 from builder.ai.agent.page_changes import PageChanges, page_row
+from builder.ai.agent.reach import reach_context
 from builder.ai.agent.registry import ToolRegistry, build_default_registry
 from builder.ai.agent.selectors import walk_blocks
 from builder.ai.agent.tree import WorkingTree
@@ -747,6 +748,8 @@ class AgentRunner:
 			"instructions name one, skip that step, or say in a sentence that it can't be done here. "
 			"Never offer work only they can do, in a reply or as a next step."
 		)
+		# his asking rules count the pages an edit reaches, which only the withheld search tools can
+		context = "\n".join(filter(None, (context, reach_context(self.page_id, self.page_root(), withheld))))
 		# a font change needs no skill, and the faces his instructions name load from Google Fonts
 		return context if may_reach_web(self) else f"{context}\n{LOCAL_FACES}"
 

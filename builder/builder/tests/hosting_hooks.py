@@ -47,6 +47,10 @@ def preview_tools():
 	return ["preview_page"]
 
 
+def search_tools():
+	return ["run_python"]
+
+
 def without_save_hooks():
 	"""No installed app's doc_events, for a test of Builder's own save path whatever a host refuses on save.
 	Frappe rebuilds an empty map from the hooks, so this one holds an empty entry."""
