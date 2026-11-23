@@ -316,6 +316,9 @@ def activity_summary(tool_name: str, args: dict, tree=None, done: bool = True) -
 
 	if pair := TOOL_LABELS.get(tool_name):
 		return voice(*pair)
+	if tool_name == "publish_page":
+		count = len(args.get("pages") or [])
+		return f"{voice('Publishing', 'Published')} {f'{count} pages' if count > 1 else 'the page'}"
 	if tool_name == "create_page" and args.get("title"):
 		return f"{voice('Proposing', 'Proposed')} a new page: {args['title']}"
 	if tool_name == "read_skill" and args.get("name"):
