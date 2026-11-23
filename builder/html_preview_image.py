@@ -1,7 +1,19 @@
 import base64
 import html as html_parser
+import re
 
 import frappe
+
+# What a blocking capture's page may load: this site's own files, data: and blob:. Chromium then
+# refuses anything else itself, before the request starts, so none depends on Frappe's
+# interceptor still running: Page.close turns it off before the tab closes, and a request the
+# page starts then goes out from the server (render_full_page's `inspect` flips the theme just
+# before, which asks for dark-only images and fonts).
+SITE_ONLY_POLICY = (
+	'<meta http-equiv="Content-Security-Policy" '
+	"content=\"default-src 'self' data: blob: 'unsafe-inline' 'unsafe-eval'\">"
+)
+LEADING_DOCTYPE = re.compile(r"\s*(?:<!doctype[^>]*>)?", re.IGNORECASE)
 
 
 def generate_preview(html, output_path, width: int = 1280, height: int = 720, block_external: bool = False):
@@ -70,7 +82,10 @@ def render_full_page(
 			page.set_device_metrics(width, height)
 			page.set_tab_url(get_host_url())
 			page.wait_for_navigate()
-			page.set_content(html, wait_for=["load", "DOMContentLoaded", "networkIdle"])
+			page.set_content(
+				site_only(html) if block_external else html,
+				wait_for=["load", "DOMContentLoaded", "networkIdle"],
+			)
 			page.wait_for_set_content()
 			image = capture_document(page, width, max_height)
 			if inspect:
@@ -86,6 +101,14 @@ def render_full_page(
 		if proc is not None and proc.poll() is not None:
 			generator._close_browser()
 		raise
+
+
+def site_only(html: str) -> str:
+	"""`html` with SITE_ONLY_POLICY ahead of everything it loads. Placed after the doctype,
+	which must come first (anything before it puts the page in quirks mode), and before
+	<html>, which the parser then folds into the head it opened for the policy."""
+	start = LEADING_DOCTYPE.match(html).end()
+	return html[:start] + SITE_ONLY_POLICY + html[start:]
 
 
 def evaluate(page, function: str):

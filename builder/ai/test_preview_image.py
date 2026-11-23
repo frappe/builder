@@ -11,7 +11,7 @@ from builder.ai.agent.tools.preview import attach_block_images, render_page_imag
 from builder.ai.test_page_changes import heading, make_page
 from builder.builder.doctype.builder_page.builder_page import BuilderPage
 from builder.builder.tests.hosting_hooks import hosting_hooks, isolate, page_tools, preview_tools
-from builder.html_preview_image import render, render_full_page
+from builder.html_preview_image import SITE_ONLY_POLICY, render, render_full_page, site_only
 
 
 class TestRenderPageImage(FrappeTestCase):
@@ -122,6 +122,41 @@ class TestFullPageCapture(FrappeTestCase):
 		render_full_page("<p>Hi</p>", block_external=True)
 		self.assertIs(self.page.block_external_requests, True)
 
+	def test_off_the_web_the_page_itself_may_load_only_from_this_site(self):
+		"""Frappe's interceptor is turned off before the tab closes, and the contrast check flips the theme
+		right before that, which asks for dark-only images and fonts: Chromium must refuse them itself"""
+		self.page.send.side_effect = lambda *args: ({"contentSize": {"height": 900}, "data": ""}, None)
+		markup = "<!DOCTYPE html><html><head></head><body>Hi</body></html>"
+
+		render_full_page(markup)
+		self.assertEqual(self.page.set_content.call_args.args[0], markup)
+
+		render_full_page(markup, block_external=True)
+		sent = self.page.set_content.call_args.args[0]
+		self.assertTrue(sent.startswith(f"<!DOCTYPE html>{SITE_ONLY_POLICY}<html>"), sent)
+		self.assertIn("default-src 'self' data: blob:", SITE_ONLY_POLICY)
+
+	def test_the_contrast_check_runs_on_the_blocking_page_before_it_closes(self):
+		self.page.send.side_effect = lambda *args: ({"contentSize": {"height": 900}, "data": ""}, None)
+		seen = []
+
+		render_full_page(
+			"<p>Hi</p>",
+			block_external=True,
+			inspect=lambda page: seen.append((page.block_external_requests, page.close.called)),
+		)
+
+		self.assertEqual(seen, [(True, False)])
+		self.assert_cleaned_up()
+
+	def test_the_site_only_policy_keeps_the_doctype_first(self):
+		"""Anything before the doctype puts the page in quirks mode"""
+		self.assertEqual(site_only("<p>Hi</p>"), f"{SITE_ONLY_POLICY}<p>Hi</p>")
+		self.assertEqual(
+			site_only("\n<!doctype html>\n<!-- Made with Frappe Builder -->\n<html>"),
+			f"\n<!doctype html>{SITE_ONLY_POLICY}\n<!-- Made with Frappe Builder -->\n<html>",
+		)
+
 	def test_off_the_web_no_renderer_that_fetches_or_sends_the_page_out_is_used(self):
 		with (
 			patch.dict(sys.modules, {"frappe.utils.chromium": None}),
@@ -155,6 +190,8 @@ class TestPreviewOffTheWeb(FrappeTestCase):
 			patch("builder.ai.agent.tools.preview.refresh_page_thumbnail"),
 		):
 			run_preview_page(runner, {})
+		# the capture measures contrast in the page it renders, under the same blocking
+		self.assertTrue(callable(full_page.call_args.kwargs["inspect"]))
 		return full_page.call_args.kwargs["block_external"]
 
 	def test_bobs_screenshot_fetches_nothing_from_outside_off_the_web(self):
