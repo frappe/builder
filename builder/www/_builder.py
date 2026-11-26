@@ -43,6 +43,7 @@ def get_boot() -> dict:
 	messages = get_translations_from_apps(lang, ["builder"])
 	messages.update(get_user_translations(lang) or {})
 	return {
+		"system_timezone": frappe.utils.get_system_timezone(),
 		# Frappe Cloud v2 signs the first user in without one, and onboarding asks for it
 		"is_password_needed": is_password_needed(),
 		"translated_messages": messages,

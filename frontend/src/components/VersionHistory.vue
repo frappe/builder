@@ -71,7 +71,7 @@
 							<UseTimeAgo
 								v-if="pageStore.activePage?.published_at"
 								v-slot="{ timeAgo }"
-								:time="pageStore.activePage.published_at">
+								:time="dayjsLocal(pageStore.activePage.published_at).toDate()">
 								{{ timeAgo }}
 							</UseTimeAgo>
 							<template v-else>{{ __("Currently live") }}</template>
@@ -105,10 +105,15 @@
 					<div class="flex min-w-0 flex-1 flex-col">
 						<span class="truncate text-p-sm text-ink-gray-8">
 							<template v-if="snapshot.label">{{ snapshot.label }}</template>
-							<UseTimeAgo v-else v-slot="{ timeAgo }" :time="snapshot.creation">{{ timeAgo }}</UseTimeAgo>
+							<UseTimeAgo v-else v-slot="{ timeAgo }" :time="dayjsLocal(snapshot.creation).toDate()">
+								{{ timeAgo }}
+							</UseTimeAgo>
 						</span>
 						<span class="truncate text-p-xs text-ink-gray-5">
-							<UseTimeAgo v-if="snapshot.label" v-slot="{ timeAgo }" :time="snapshot.creation">
+							<UseTimeAgo
+								v-if="snapshot.label"
+								v-slot="{ timeAgo }"
+								:time="dayjsLocal(snapshot.creation).toDate()">
 								{{ timeAgo }}
 							</UseTimeAgo>
 							<template v-else>{{ snapshot.snapshot_type || __("Version") }}</template>
@@ -146,7 +151,7 @@ import { getUserInfo } from "@/usersInfo";
 import { saveVersion } from "@/utils/dialogs";
 import { confirm } from "@/utils/helpers";
 import { UseTimeAgo } from "@vueuse/components";
-import { Avatar, Button, createListResource, TextInput } from "frappe-ui";
+import { Avatar, Button, createListResource, dayjsLocal, TextInput } from "frappe-ui";
 import { computed, nextTick, onBeforeUnmount, ref, watch } from "vue";
 
 const builderStore = useBuilderStore();

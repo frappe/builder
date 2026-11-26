@@ -12,6 +12,7 @@ import translationPlugin, { ensureTranslations } from "./translation";
 import App from "@/App.vue";
 import Input from "@/components/Controls/Input.vue";
 import { editorDemo } from "@/utils/editorDemo";
+import { ensureSystemTimezone } from "@/utils/timezone";
 import { pluginsDisabled, getStartupPlugins, listenForPluginJobs } from "@/data/plugins";
 import { restoreDevPlugin } from "@/plugins/devPlugin";
 import { importPlugins, installPlugins } from "@/plugins/loader";
@@ -34,7 +35,7 @@ const plugins = editorDemo
 				return [];
 			});
 
-Promise.all([ensureTranslations(), plugins]).then(([, loaded]) => {
+Promise.all([ensureTranslations(), plugins, ensureSystemTimezone()]).then(([, loaded]) => {
 	app.use(router);
 	app.use(FrappeUI);
 	if (!editorDemo) {

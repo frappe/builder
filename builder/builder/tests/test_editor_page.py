@@ -5,6 +5,7 @@ import frappe
 from frappe.client import set_value
 from frappe.tests.utils import FrappeTestCase
 
+from builder.api import get_system_timezone
 from builder.www._builder import get_context
 
 CLOUD_SETTINGS = "frappe.integrations.frappe_providers.cloud_settings"
@@ -30,6 +31,20 @@ class TestEditorPage(FrappeTestCase):
 	def test_boot_carries_the_cloud_settings_context(self):
 		with patch(f"{CLOUD_SETTINGS}.get_boot_context", return_value={"enabled": True}):
 			self.assertEqual(self.editor_context(dev_server=0).boot["cloud_settings"], {"enabled": True})
+
+	def test_history_uses_the_site_timezone_even_when_the_user_has_another(self):
+		was_zone = frappe.db.get_single_value("System Settings", "time_zone")
+		user_zone = frappe.db.get_value("User", frappe.session.user, "time_zone")
+		self.addCleanup(frappe.clear_cache)
+		self.addCleanup(frappe.db.set_single_value, "System Settings", "time_zone", was_zone)
+		self.addCleanup(set_value, "User", frappe.session.user, "time_zone", user_zone)
+		set_value("User", frappe.session.user, "time_zone", "Asia/Bangkok")
+		for zone in ("UTC", "Asia/Kolkata", "America/New_York"):
+			frappe.db.set_single_value("System Settings", "time_zone", zone)
+			frappe.clear_cache()
+			self.assertEqual(self.editor_context(dev_server=0).boot["system_timezone"], zone)
+			# Vite has no boot payload and reads the same zone through the API.
+			self.assertEqual(get_system_timezone(), zone)
 
 	def test_boot_says_whether_the_persona_survey_is_done(self):
 		# the survey saves its flag this way, and the next page load must see it
