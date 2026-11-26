@@ -292,6 +292,36 @@ class TestBuilderPage(FrappeTestCase):
 		finally:
 			page.delete()
 
+	def test_sitemap_lists_the_routes_a_dynamic_page_names(self):
+		page = insert_page("test-sitemap-dynamic/:slug", "Dynamic Content")
+		try:
+			page.publish()
+			page.db_set(
+				"sitemap_script",
+				'routes = [{"slug": "first", "lastmod": "2026-01-02"}, {"slug": "a/b"}, {"other": "x"}]',
+			)
+			sitemap = get_response_content("/sitemap.xml")
+			self.assertIn("/test-sitemap-dynamic/first</loc>", sitemap)
+			self.assertIn("<lastmod>2026-01-02</lastmod>", sitemap)
+			for skipped in ("a/b", "%3Aslug", ":slug"):
+				self.assertNotIn(f"/test-sitemap-dynamic/{skipped}</loc>", sitemap)
+		finally:
+			page.delete()
+
+	def test_a_failing_sitemap_script_leaves_the_rest_of_the_sitemap(self):
+		dynamic = insert_page("test-sitemap-failing/:slug", "Dynamic Content")
+		static = insert_page("test-sitemap-beside-failing", "Static Content")
+		try:
+			for page in (dynamic, static):
+				page.publish()
+			dynamic.db_set("sitemap_script", 'routes = frappe.get_doc("Builder Page", "no-such-page")')
+			sitemap = get_response_content("/sitemap.xml")
+			self.assertIn(f"/{static.route}</loc>", sitemap)
+			self.assertNotIn("/test-sitemap-failing/", sitemap)
+		finally:
+			for page in (dynamic, static):
+				page.delete()
+
 	def test_a_templated_canonical_url_is_rendered(self):
 		from frappe.utils import get_url
 

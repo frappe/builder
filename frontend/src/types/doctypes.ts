@@ -131,6 +131,8 @@ export interface BuilderPage extends DocType {
   page_title?: string;
   /** Page Data Script: Code */
   page_data_script?: string;
+  /** Sitemap Script: Code */
+  sitemap_script?: string;
   /** Dynamic Route: Check */
   dynamic_route: 0 | 1;
   /** Draft Blocks: Long Text */

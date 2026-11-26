@@ -37,6 +37,7 @@ type BuilderPageSettings = Pick<
 	| "route"
 	| "dynamic_route"
 	| "page_data_script"
+	| "sitemap_script"
 	| "head_html"
 	| "body_html"
 	| "page_title"
@@ -132,6 +133,7 @@ export function copyBuilderBlocks(
 			route: currentPage.route,
 			dynamic_route: currentPage.dynamic_route,
 			page_data_script: currentPage.page_data_script,
+			sitemap_script: currentPage.sitemap_script,
 			head_html: currentPage.head_html,
 			body_html: currentPage.body_html,
 			page_title: currentPage.page_title,
