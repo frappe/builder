@@ -1,0 +1,61 @@
+name: Upload main.pot to Crowdin
+
+on:
+  push:
+    branches:
+      - develop
+    paths:
+      - "builder/locale/main.pot"
+  workflow_dispatch:
+    inputs:
+      upload_translations:
+        description: "Also upload develop's .po files (only to seed an empty Crowdin branch)"
+        type: boolean
+        default: false
+
+concurrency:
+  group: crowdin-upload
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  upload-sources:
+    name: Upload sources from develop
+    # the Crowdin branch is develop's, a dispatch from any other branch must not overwrite it
+    if: github.ref == 'refs/heads/develop'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout develop
+        uses: actions/checkout@v6
+
+      - name: Restore Crowdin cache
+        uses: actions/cache/restore@v6
+        with:
+          path: .crowdin
+          key: crowdin-develop
+          restore-keys: crowdin-develop-
+
+      - name: Upload main.pot to Crowdin
+        uses: crowdin/github-action@v2.17.1
+        with:
+          config: crowdin.yml
+          upload_sources: true
+          upload_translations: ${{ inputs.upload_translations || false }}
+          download_translations: false
+          create_pull_request: false
+          # the name the Crowdin GitHub integration gave develop, so existing translations stay attached
+          crowdin_branch_name: "[frappe.builder] develop"
+          upload_sources_args: "--cache"
+        env:
+          CROWDIN_PROJECT_ID: ${{ secrets.CROWDIN_PROJECT_ID }}
+          CROWDIN_PERSONAL_TOKEN: ${{ secrets.CROWDIN_PERSONAL_TOKEN }}
+
+      - name: Save Crowdin cache
+        uses: actions/cache/save@v6
+        if: always()
+        with:
+          path: .crowdin
+          key: crowdin-develop-${{ github.run_id }}

@@ -1,8 +1,6 @@
+# the Crowdin project is shared with other frappe apps, keep /builder/locale/ so paths don't collide
+preserve_hierarchy: true
+
 files:
   - source: /builder/locale/main.pot
     translation: /builder/locale/%two_letters_code%.po
-pull_request_title: "chore: sync translations from crowdin"
-pull_request_labels:
-  - translation
-commit_message: "chore: %language% translations"
-append_commit_message: false
