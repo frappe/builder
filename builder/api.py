@@ -41,6 +41,11 @@ def is_site_read_only() -> bool:
 
 
 @frappe.whitelist()
+def get_system_timezone() -> str:
+	return frappe.utils.get_system_timezone()
+
+
+@frappe.whitelist()
 def get_page_preview_html(page: str, **kwargs) -> Response:
 	if not frappe.has_permission("Builder Page", "read", page):
 		frappe.throw(_("No permission to preview this page"))
