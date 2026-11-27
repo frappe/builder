@@ -19,6 +19,7 @@ import frappe
 from frappe.model import child_table_fields, default_fields
 
 from builder.ai.agent import pending
+from builder.ai.agent.pending import PendingAction
 from builder.ai.agent.registry import Tool
 
 # Fieldtypes a public form can safely write. Anything else (Link, Table, Attach…)
@@ -82,7 +83,7 @@ def missing_create_permission(doctype: str) -> str | None:
 	return None
 
 
-def request_connect_form(ctx, args: dict) -> str | None:
+def request_connect_form(ctx, args: dict) -> str | PendingAction:
 	"""Validate the proposal and raise the confirm card. Nothing is created until
 	the user approves (see pending.apply_connect_form)."""
 	if not getattr(ctx, "page_id", None):
@@ -121,8 +122,7 @@ def request_connect_form(ctx, args: dict) -> str | None:
 		"page_id": ctx.page_id,
 		"form_selector": selector,
 	}
-	pending.request_confirmation(ctx, "connect_form", summary, payload)
-	return None
+	return PendingAction(summary, payload)
 
 
 def normalize_field(f: dict) -> dict:
@@ -202,7 +202,8 @@ connect_form_tool = Tool(
 		},
 		"required": ["doctype_name", "fields", "form_selector"],
 	},
-	handler=request_connect_form,
+	handler=pending.apply_connect_form,
+	needs_approval=request_connect_form,
 	available=pending.can_create_doctypes,
 )
 

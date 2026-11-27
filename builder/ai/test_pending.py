@@ -5,7 +5,10 @@ from unittest.mock import patch
 import frappe
 from frappe.tests.utils import FrappeTestCase
 
-from builder.ai.agent import pending
+from builder.ai.agent import loop, pending
+from builder.ai.agent.loop import AgentRunner
+from builder.ai.agent.pending import PendingAction
+from builder.ai.agent.registry import Tool, ToolRegistry
 from builder.ai.agent.tools import forms
 from builder.ai.agent.tools.data import request_create_doctype, request_seed_sample_data
 from builder.ai.agent.tools.python import run_python
@@ -182,3 +185,60 @@ class TestChatPrivacy(FrappeTestCase):
 			frappe.delete_doc("Builder Page", page)
 
 		self.assertFalse(frappe.db.exists("Builder AI Session", session))
+
+
+CALLS = []
+
+
+def describe(ctx, args: dict):
+	if not args["what"]:
+		return "DECLINED: nothing to delete."
+	return None if args.get("now") else PendingAction(f"Delete {args['what']}?", args)
+
+
+def delete(ctx, args: dict) -> str:
+	CALLS.append(args)
+	return f"deleted {args['what']}"
+
+
+class TestToolsThatNeedApproval(FrappeTestCase):
+	"""Bob's turn shows the card from needs_approval, and Apply runs the handler once."""
+
+	def setUp(self):
+		tool = Tool(
+			name="app_delete",
+			side="terminal",
+			description="d",
+			parameters={},
+			handler=delete,
+			needs_approval=describe,
+		)
+		registry = ToolRegistry()
+		registry.register(tool)
+		self.turn = SimpleNamespace(registry=registry, page_changes=None, skill_missing=lambda tool: None)
+		patcher = patch.object(pending, "build_default_registry", return_value=registry)
+		patcher.start()
+		self.addCleanup(patcher.stop)
+		CALLS.clear()
+
+	def call(self, args: dict):
+		with patch.object(loop, "request_confirmation") as request:
+			return AgentRunner.handle_terminal(
+				self.turn, {"tool_name": "app_delete", "args": args}
+			), request.call_args
+
+	def test_bob_turn_asks_declines_or_runs_as_needs_approval_says(self):
+		self.assertEqual(
+			self.call({"what": "it"}), (None, ((self.turn, "app_delete", "Delete it?", {"what": "it"}),))
+		)
+		self.assertTrue(self.call({"what": ""})[0].startswith("DECLINED"))
+		self.assertEqual(CALLS, [])
+		self.assertEqual(self.call({"what": "it", "now": True}), ("deleted it", None))
+
+	def test_apply_runs_the_handler_once(self):
+		self.assertEqual(pending.apply_pending_action("app_delete", {"what": "it"}), "deleted it")
+		self.assertEqual(CALLS, [{"what": "it"}])
+
+	def test_an_unknown_kind_is_refused(self):
+		with self.assertRaises(frappe.ValidationError):
+			pending.apply_pending_action("not_registered", {})

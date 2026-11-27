@@ -53,6 +53,7 @@ from builder.ai import llm, locks, markup
 from builder.ai.agent import next_steps
 from builder.ai.agent.edits import EditScript, composition_notes
 from builder.ai.agent.page_changes import PageChanges, page_row
+from builder.ai.agent.pending import PendingAction, request_confirmation
 from builder.ai.agent.registry import ToolRegistry, build_default_registry
 from builder.ai.agent.selectors import walk_blocks
 from builder.ai.agent.tree import WorkingTree
@@ -301,7 +302,9 @@ def readable_doctype(doctype: str | None) -> str:
 	return BUILDER_DOCTYPE_LABELS.get(doctype) or f"{doctype} records"
 
 
-def activity_summary(tool_name: str, args: dict, tree=None, done: bool = True) -> str:
+def activity_summary(
+	tool_name: str, args: dict, tree=None, done: bool = True, label: tuple[str, str] | None = None
+) -> str:
 	"""A short human line for the chat's timeline ("Read block: Hero"). Written for
 	someone who asked for a web page, not someone who knows the tool API. The voice
 	follows the step's status: running or done."""
@@ -314,7 +317,7 @@ def activity_summary(tool_name: str, args: dict, tree=None, done: bool = True) -
 	def voice(running: str, finished: str) -> str:
 		return finished if done else running
 
-	if pair := TOOL_LABELS.get(tool_name):
+	if pair := label or TOOL_LABELS.get(tool_name):
 		return voice(*pair)
 	if tool_name == "publish_page":
 		count = len(args.get("pages") or [])
@@ -1117,15 +1120,16 @@ class AgentRunner:
 	def begin_activity(self, tool_name: str, args: dict) -> dict | None:
 		if tool_name in ACTIVITY_SILENT:
 			return None
+		label = tool.label if (tool := self.registry.get(tool_name)) else None
 		entry = self.add_step(
 			"tool",
 			tool=tool_name,
-			summary=activity_summary(tool_name, args, self.tree, done=False),
+			summary=activity_summary(tool_name, args, self.tree, done=False, label=label),
 			status="running",
 		)
 		self.step_starts[entry["id"]] = time.monotonic()
 		# Resolved now, while args/tree still describe the call; finish_step swaps it in.
-		self.step_done_summaries[entry["id"]] = activity_summary(tool_name, args, self.tree)
+		self.step_done_summaries[entry["id"]] = activity_summary(tool_name, args, self.tree, label=label)
 		return entry
 
 	def end_activity(self, entry: dict | None) -> None:
@@ -1776,9 +1780,17 @@ class AgentRunner:
 				"confirm them only appears when the turn ends normally. Finish with your reply now; "
 				"ask anything else on your next turn."
 			)
-		if tool and tool.handler:
-			return tool.handler(self, op["args"])
-		return None
+		if not (tool and tool.handler):
+			return None
+		if tool.needs_approval:
+			asked = tool.needs_approval(self, op["args"])
+			if isinstance(asked, PendingAction):
+				# the handler waits for the user, and runs only on Apply
+				request_confirmation(self, tool.name, asked.summary, asked.args)
+				return None
+			if asked is not None:
+				return asked
+		return tool.handler(self, op["args"])
 
 	def run_generation_step(self, tool, op: dict) -> tuple[str, list[dict]]:
 		"""Run generate_page as one STEP of the turn. The generator persists the page

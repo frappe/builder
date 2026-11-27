@@ -24,7 +24,13 @@ Adding a capability = registering one `Tool`. The loop never changes.
 
 from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Literal
+from typing import TYPE_CHECKING, Any, Literal
+
+import frappe
+
+if TYPE_CHECKING:
+	# pending imports this module, so its PendingAction is for type checkers only
+	from builder.ai.agent.pending import PendingAction
 
 ToolSide = Literal["client", "server", "terminal"]
 
@@ -47,9 +53,19 @@ class Tool:
 	# A skill-bound tool is offered only once its skill is in the model's context:
 	# rarely used schemas stay off the rounds that never need them.
 	skill: str | None = None
+	# The step's line in the chat, (while running, once done), as in loop.TOOL_LABELS
+	label: tuple[str, str] | None = None
+	# For a tool the user approves first: Bob's turn calls only this, and the handler runs on Apply.
+	# It returns a PendingAction to ask, a text for Bob, or None when no approval is needed.
+	needs_approval: Callable[[Any, dict], "PendingAction | str | None"] | None = None
 	# available(ctx) -> bool: whether the tool can work for this turn's user and model.
 	# One that can't is left out of the schemas, so the model never plans around it.
 	available: Callable | None = None
+
+	def __post_init__(self):
+		# only a terminal tool ends the turn, which a card needs
+		if self.needs_approval and self.side != "terminal":
+			raise ValueError(f"{self.name} has needs_approval, so its side must be terminal")
 
 	def schema(self) -> dict:
 		return {
@@ -138,4 +154,7 @@ def build_default_registry() -> ToolRegistry:
 	registry.extend(components.TOOLS)
 	registry.extend(skills.TOOLS)
 	registry.extend(plugins.TOOLS)
+	# the tools installed apps give Bob, through the builder_agent_tools hook
+	for method in frappe.get_hooks("builder_agent_tools"):
+		registry.extend(frappe.get_attr(method)())
 	return registry

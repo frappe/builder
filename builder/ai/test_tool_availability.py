@@ -36,3 +36,19 @@ class TestToolAvailability(FrappeTestCase):
 		out = runner.run_op({"tool_name": "research", "args": {"question": "q"}}, {})
 
 		self.assertTrue(out.startswith("FAILED: research isn't available"), out)
+
+
+class TestAppTools(FrappeTestCase):
+	"""An app gives Bob its own tools through the builder_agent_tools hook."""
+
+	def test_an_app_gives_bob_tools_through_the_hook(self):
+		from builder.ai.agent import registry
+
+		tool = registry.Tool(name="app_tool", side="server", description="d", parameters={}, handler=print)
+		with (
+			patch.object(registry.frappe, "get_hooks", return_value=["app.tools"]),
+			patch.object(registry.frappe, "get_attr", return_value=lambda: [tool]),
+		):
+			built = registry.build_default_registry()
+
+		self.assertIs(built.get("app_tool"), tool)
