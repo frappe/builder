@@ -29,7 +29,7 @@ from builder.plugins.access import (
 from builder.plugins.constants import ENTRY_FILE, MANIFEST_FILE, PROTOCOL_VERSION
 from builder.plugins.installations import NO_BUILDER_ACCESS
 from builder.plugins.package import validate_package
-from builder.utils import has_page_read, is_isolated
+from builder.utils import has_page_read
 
 PUBLISHER = "bob"
 SLUG_PATTERN = re.compile(r"[a-z0-9][a-z0-9-]{0,40}")
@@ -43,9 +43,6 @@ MAX_REPORT_BYTES = 20_000
 def save_plugin(slug: str, label: str, description: str, code: str, icon: str | None = None):
 	"""Build, check and install a new release. Answers with the installation."""
 	assert_plugin_manager()
-	# an isolated editor never runs a plugin Bob wrote, so it must not install one either
-	if is_isolated():
-		frappe.throw(_("Bob cannot write plugins on this site."), frappe.PermissionError)
 	if not SLUG_PATTERN.fullmatch(slug or ""):
 		frappe.throw(_("A plugin name holds lowercase letters, digits and hyphens."))
 
