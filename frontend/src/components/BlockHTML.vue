@@ -1,6 +1,7 @@
 <template>
 	<div
 		ref="component"
+		:data-html-scope="scopeId"
 		:class="{
 			'!relative': !block.getStyle('position') || block.getStyle('position') === 'static',
 		}"
@@ -10,9 +11,11 @@
 import type Block from "@/block";
 import { BlockValueResolver } from "@/utils/blockValueResolver";
 import { sanitizeBlockHTML } from "@/utils/canvasIsolation";
-import { computed, ref } from "vue";
+import { scopeStyles } from "@/utils/scopeStyles";
+import { computed, ref, useId } from "vue";
 
 const component = ref<HTMLElement | null>(null);
+const scopeId = useId();
 const props = defineProps<{
 	block: Block;
 	data?: Record<string, unknown> | null;
@@ -33,9 +36,10 @@ const html = computed(() => {
 	if (dynamicContent) {
 		content = dynamicContent;
 	}
+	// scoped first and sanitized last, so what reaches v-html is exactly the sanitizer's output
 	return `
 		<div class="absolute top-0 bottom-0 right-0 left-0"></div>
-		${sanitizeBlockHTML(String(content))}
+		${sanitizeBlockHTML(scopeStyles(String(content || ""), `[data-html-scope="${scopeId}"]`))}
 	`;
 });
 
