@@ -23,6 +23,13 @@ export const getRunningEntry = (plugin: string) => runningEntries.get(plugin);
 /** What an isolated editor runs: the boot's list, else the Hub and apps under a mount, else apps only. */
 const isolatedSources = (): string[] => fp.plugin_sources ?? (isMounted ? ["Hub", "App"] : ["App"]);
 
+/**
+ * Where the browser fetches one of a plugin's files. A Hub or Bob plugin's files are the site's own (/files/...),
+ * which frappe.page serves under the site's mount: a root-relative URL would reach the app host instead.
+ */
+export const pluginFileURL = (url: string) =>
+	isMounted && fp.mount && url.startsWith("/files/") ? `${fp.mount}${url}` : url;
+
 /** A refusal names the sources as tenants' editors have always read it ("the Hub or an app"). */
 const SOURCE_NAMES: Record<string, string> = { Hub: "the Hub", App: "an app" };
 
@@ -49,7 +56,7 @@ export async function importPlugin(plugin: RunnablePlugin): Promise<Plugin> {
 			.join(" or ");
 		throw new Error(`${plugin.label} does not run here: this site runs plugins from ${sources} only`);
 	}
-	const module = await import(/* @vite-ignore */ plugin.entryUrl);
+	const module = await import(/* @vite-ignore */ pluginFileURL(plugin.entryUrl));
 	if (!isVuePlugin(module.default)) {
 		throw new Error(`${plugin.entryUrl} has no default export with an install() function`);
 	}

@@ -2,7 +2,7 @@
 	<!-- the size of the Users pane's avatars. So a large icon cannot change the row height -->
 	<img
 		v-if="icon && !icon.startsWith('lucide-')"
-		:src="icon"
+		:src="pluginFileURL(icon)"
 		class="size-8 shrink-0 rounded-4 object-contain"
 		alt=""
 		aria-hidden="true" />
@@ -12,6 +12,8 @@
 </template>
 
 <script setup lang="ts">
+import { pluginFileURL } from "@/plugins/loader";
+
 /** A plugin's icon file, which fills the tile, or a lucide icon class. With neither, a plug. */
 defineProps<{ icon?: string | null }>();
 </script>
