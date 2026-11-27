@@ -1,6 +1,7 @@
 <template>
 	<div
 		ref="component"
+		:data-html-scope="scopeId"
 		:class="{
 			'!relative': !block.getStyle('position') || block.getStyle('position') === 'static',
 		}"
@@ -9,9 +10,11 @@
 <script setup lang="ts">
 import type Block from "@/block";
 import { BlockValueResolver } from "@/utils/blockValueResolver";
-import { computed, ref } from "vue";
+import { scopeStyles } from "@/utils/scopeStyles";
+import { computed, ref, useId } from "vue";
 
 const component = ref<HTMLElement | null>(null);
+const scopeId = useId();
 const props = defineProps<{
 	block: Block;
 	data?: Record<string, unknown> | null;
@@ -34,7 +37,7 @@ const html = computed(() => {
 	}
 	return `
 		<div class="absolute top-0 bottom-0 right-0 left-0"></div>
-		${content}
+		${scopeStyles(content || "", `[data-html-scope="${scopeId}"]`)}
 	`;
 });
 
