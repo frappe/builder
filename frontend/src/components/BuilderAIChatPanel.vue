@@ -48,7 +48,9 @@
 			</span>
 			<div class="flex flex-col items-center gap-1 text-center">
 				<p class="text-sm font-medium text-ink-gray-8">Build pages by describing them</p>
-				<p class="text-p-xs text-ink-gray-5">Sign in with ChatGPT, or paste an API key.</p>
+				<p class="text-p-xs text-ink-gray-5">
+					{{ isIsolated ? "Paste an API key." : "Sign in with ChatGPT, or paste an API key." }}
+				</p>
 			</div>
 			<Button variant="solid" size="sm" @click="menu.open(connectLevel(bob))">Connect a model</Button>
 		</div>
@@ -544,6 +546,7 @@ import { pageBuilds } from "@/components/ai/pageChanges";
 import type { AITurnStep, ChatMessage } from "@/components/ai/types";
 import { reloadAIRegistry } from "@/data/aiModels";
 import { __ } from "@/translation";
+import { isIsolated } from "@/utils/frappePage";
 import useBuilderStore from "@/stores/builderStore";
 import useCanvasStore from "@/stores/canvasStore";
 import { Badge, Button, Dropdown, KeyboardShortcut, Textarea, Tooltip, useKeyboardShortcut } from "frappe-ui";
@@ -875,6 +878,17 @@ watch(
 		builderStore.aiPromptDraft = null;
 		prompt.value = draft;
 		nextTick(() => promptInput.value?.focus());
+	},
+	{ immediate: true },
+);
+
+// a turn another screen asked for on the page it opened, like onboarding's "Describe your website"
+watch(
+	() => builderStore.aiTurnRequest,
+	(request) => {
+		if (!request) return;
+		builderStore.aiTurnRequest = null;
+		chat.startRequestedTurn(request);
 	},
 	{ immediate: true },
 );

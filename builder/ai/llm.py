@@ -12,6 +12,7 @@ import frappe
 from frappe import _
 
 from builder.ai.models import ModelRegistry
+from builder.ai.site_key import Charge, UsageLimitError, scrub_exception
 
 # Sent for a provider with no key of its own (as presets.verify_key does): a
 # keyless gateway (Ollama, vLLM) ignores it, anything else rejects it.
@@ -62,9 +63,24 @@ USER_FIXABLE_ERRORS = {
 PAYMENT_FAILURE = "The AI provider won't take this request: the account is out of credit or has a billing problem. Check it, or pick another model with /model."
 GENERIC_FAILURE = "Something went wrong while building your changes. Please try again."
 
+# How litellm reports a model declining to go on (Anthropic's stop_reason "refusal": its safety
+# classifiers stopped the reply, which can happen mid-stream).
+REFUSED = "content_filter"
+REFUSAL_NOTE = (
+	"I had to stop there: the AI provider's safety checks declined this request, so nothing more was "
+	"changed. If that looks like a mistake, rephrase what you'd like and try again, or pick another "
+	"model with /model."
+)
+
+
+class Refused(Exception):
+	"""A model stopped with a refusal. Not a failure of Builder's: the turn ends, saying so."""
+
 
 def user_facing_error(exc: BaseException) -> str:
 	"""A fixed, safe message for a failed turn: actionable when the user can fix it."""
+	if isinstance(exc, UsageLimitError):
+		return str(exc)
 	if getattr(exc, "status_code", None) == 402:
 		return PAYMENT_FAILURE
 	for cls in type(exc).__mro__:
@@ -132,6 +148,12 @@ class Effort:
 	def __init__(self, level: str | None = None):
 		self.level = level if level in self.LEVELS else None
 
+	def at_most(self, level: str | None) -> "Effort":
+		"""This effort, or `level` when that is shallower. No level, or one Builder doesn't know, caps nothing."""
+		if not self.level or level not in self.LEVELS:
+			return self
+		return Effort(min(self.level, level, key=self.LEVELS.index))
+
 	def params(self, tier: str) -> dict:
 		params = TASK_PARAMS[tier]
 		if not self.level:
@@ -180,10 +202,35 @@ def provider_kwargs(model: str) -> dict:
 	return {}
 
 
+def prepare_request(model: str, messages: list[dict], params: dict) -> dict:
+	"""Fit one call to the API it goes to: cache markers where that API reads them, a conversation that
+	ends on the user's turn for Anthropic's, and only the parameters it takes. Mutates `messages` and
+	returns the parameters. `model` is the routed name (route())."""
+	patch_messages_for_provider(model, messages)
+	if is_anthropic_route(model):
+		end_on_the_user(messages)
+	return patch_params_for_provider(model, params)
+
+
+def is_anthropic_route(model: str) -> bool:
+	"""Whether litellm calls Anthropic's own Messages API for this routed name."""
+	return model.startswith("anthropic/")
+
+
+def end_on_the_user(messages: list[dict]) -> None:
+	"""Claude 4.6 and later refuse a conversation that ends on the assistant's turn (a prefill), so one
+	that does (history ending on a status line, say) gets the user's go-ahead after it."""
+	last = messages[-1] if messages else {}
+	if last.get("role") == "assistant" and not last.get("tool_calls"):
+		messages.append({"role": "user", "content": "Continue."})
+
+
 def patch_params_for_provider(model: str, params: dict) -> dict:
-	"""Moonshot's Kimi rejects every temperature but 1, and so does Anthropic's own API
+	"""Moonshot's Kimi rejects every temperature but 1, and so does a Claude model behind a gateway
 	once thinking is on, so coerce it instead of failing the whole turn over a tuning knob.
-	OpenRouter takes any temperature with thinking."""
+	OpenRouter takes any temperature with thinking. Anthropic's own API: anthropic_params()."""
+	if is_anthropic_route(model):
+		return anthropic_params(model, params)
 	direct_claude = "claude-" in model and not model.startswith("openrouter/")
 	needs_one = "kimi" in model or (direct_claude and params.get("reasoning_effort"))
 	if needs_one and params.get("temperature") not in (None, 1):
@@ -196,6 +243,35 @@ def patch_params_for_provider(model: str, params: dict) -> dict:
 # Newer Claude models stream empty thinking by default: minutes of silence in which
 # a cancel goes unnoticed and the stall timeout fires. A summary keeps chunks coming.
 SUMMARIZED_THINKING = {"type": "adaptive", "display": "summarized"}
+# Sampling knobs Claude Opus 4.7 and later refuse with a 400 (and every model does on the 2026-10-21 API
+# version). Claude samples at its own default instead, which is the 1 thinking needs anyway.
+SAMPLING_PARAMS = ("temperature", "top_p", "top_k")
+# Builder's levels as Claude's output_config.effort
+CLAUDE_EFFORT = {"minimal": "low", "low": "low", "medium": "medium", "high": "high", "xhigh": "xhigh"}
+# a call that names no effort (a chat title, a key check) is a small one
+SMALL_CALL_EFFORT = "low"
+# Claude's thinking counts against max_tokens, so even a small call leaves room to think and still answer
+MIN_CLAUDE_MAX_TOKENS = 1024
+
+
+def anthropic_params(model: str, params: dict) -> dict:
+	"""The parameters Anthropic's own API takes for `model`, from Builder's tier parameters.
+
+	Claude Opus 5.5 and the other newest models think on every call, adaptively, and refuse a sampling
+	knob, a thinking budget and disabled thinking alike: depth is output_config.effort, whose default
+	(medium on Opus 5.5) would otherwise silently lower a tier that asks for more. So no sampling knob
+	is sent, thinking is adaptive with a readable summary, and every call names its effort. Both are
+	set here rather than left to litellm's mapping of reasoning_effort, which follows litellm's own
+	model list: for a model newer than the list it ships, it keeps the temperature the model refuses.
+	Models older than Claude 4.6 still think on a budget, which litellm maps from reasoning_effort."""
+	params = {k: v for k, v in params.items() if k not in SAMPLING_PARAMS}
+	effort = params.pop("reasoning_effort", None)
+	if not thinks_adaptively(model):
+		return {**params, "reasoning_effort": effort} if effort else params
+	if params.get("max_tokens"):
+		params["max_tokens"] = max(params["max_tokens"], MIN_CLAUDE_MAX_TOKENS)
+	level = CLAUDE_EFFORT.get(effort or "", SMALL_CALL_EFFORT)
+	return {**params, "thinking": SUMMARIZED_THINKING, "output_config": {"effort": level}}
 
 
 def thinks_adaptively(model: str) -> bool:
@@ -302,15 +378,18 @@ def complete(
 
 		return codex.complete(target[1], messages, params, provider=target[0], stream=stream)
 	model, overrides, api_key = route(model, api_key)
-	patch_messages_for_provider(model, messages)
-	params = patch_params_for_provider(model, params)
+	params = prepare_request(model, messages, params)
 	logger.info(
 		f"LLM | model={model} stream={stream} params={params}\n"
 		+ "\n".join(f"[{m['role']}] {m['content']!s}" for m in messages)
 	)
+	charge = Charge.open(api_key, messages, params, model=model)
 	import litellm
 
-	resp = litellm.completion(
+	resp = call_metered(
+		charge,
+		stream,
+		litellm.completion,
 		model=model,
 		messages=messages,
 		stream=stream,
@@ -356,12 +435,12 @@ def complete_with_tools(
 			target[1], messages, params, provider=target[0], tools=tools, stream=stream, cache_key=cache_key
 		)
 	model, overrides, api_key = route(model, api_key)
-	patch_messages_for_provider(model, messages)
-	params = patch_params_for_provider(model, params)
+	params = prepare_request(model, messages, params)
 	logger.info(
 		f"LLM tools | model={model} stream={stream} tools={[t['function']['name'] for t in tools]}\n"
 		+ "\n".join(f"[{m['role']}] {m['content']}" for m in messages)
 	)
+	charge = Charge.open(api_key, messages, params, tools, model=model)
 	import litellm
 
 	request = dict(
@@ -379,18 +458,44 @@ def complete_with_tools(
 		**overrides,
 		**params,
 	)
+
+	def call():
+		try:
+			return litellm.completion(**request)
+		except litellm.NotFoundError as exc:
+			if not (
+				model.startswith("openai/")
+				and overrides.get("api_base")
+				and params.get("reasoning_effort")
+				and "does not serve /v1/responses" in str(exc)
+			):
+				raise
+			# LiteLLM bridges reasoning + function tools to Responses, which some
+			# chat-compatible gateways cannot serve. Keep reasoning when they can.
+			logger.warning(
+				"Gateway does not serve Responses; retrying the tool call without reasoning effort"
+			)
+			request.pop("reasoning_effort")
+			return litellm.completion(**request)
+
+	return call_metered(charge, stream, call)
+
+
+def call_metered(charge: Charge | None, streaming: bool, call, /, **kwargs):
+	"""Make the call, holding its cost against the site key's allowance when it is paid with that key
+	(see builder/ai/site_key.py). A stream settles as it ends; anything else once it returns. An
+	error loses the site key from its text, since the gateway may have echoed it."""
 	try:
-		return litellm.completion(**request)
-	except litellm.NotFoundError as exc:
-		if not (
-			model.startswith("openai/")
-			and overrides.get("api_base")
-			and params.get("reasoning_effort")
-			and "does not serve /v1/responses" in str(exc)
-		):
-			raise
-		# LiteLLM bridges reasoning + function tools to Responses, which some
-		# chat-compatible gateways cannot serve. Keep reasoning when they can.
-		logger.warning("Gateway does not serve Responses; retrying the tool call without reasoning effort")
-		request.pop("reasoning_effort")
-		return litellm.completion(**request)
+		resp = call(**kwargs)
+	except Exception as exc:
+		if charge:
+			charge.settle()
+		scrub_exception(exc)
+		raise
+	if not charge:
+		return resp
+	if streaming:
+		return charge.stream(resp)
+	charge.receive(resp)
+	charge.settle()
+	return resp

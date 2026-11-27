@@ -11,6 +11,7 @@
 		<div id="app"></div>
 		<div id="popovers"></div>
 		<script type="application/json" id="editor-demo">{% if editor_demo %}{{ editor_demo | tojson }}{% endif %}</script>
+		<script type="application/json" id="fp-boot">{{ fp | tojson }}</script>
 
 		<script>
 			window.csrf_token = "{{ csrf_token }}";
@@ -21,6 +22,222 @@
 			window.is_fc_site = "{{ is_fc_site }}";
 			window.is_developer_mode = "{{ is_developer_mode }}";
 			window.is_read_only_mode = "{{ is_read_only_mode }}";
+		</script>
+		<script>
+			// frappe.page serves the editor under a path of its app host (fp.mount, such as /s/<sub>),
+			// and its edge strips that prefix. The bundle and frappe-ui call root-relative URLs (/api/...),
+			// so each same-origin request gets the prefix before it leaves. Without a mount nothing changes.
+			window.fp = (function () {
+				try {
+					return JSON.parse(document.getElementById("fp-boot").textContent) || {};
+				} catch (error) {
+					return {}; // the vite dev server serves this file without jinja
+				}
+			})();
+			// stylesheets the hosting app adds to the editor, such as how its own blocks look in the canvas;
+			// written here, not as <link>s in the head, because vite would try to bundle a templated href
+			for (const href of window.fp.stylesheets || []) {
+				const link = document.createElement("link");
+				link.rel = "stylesheet";
+				link.href = href;
+				document.head.append(link);
+			}
+			(function (mount) {
+				if (!mount) return;
+				// a short mount (frappe.page/<sub>) puts Builder's routes right under it
+				window.builder_path = window.fp.editor_base || mount + "/builder";
+
+				function mounted(url) {
+					let parsed;
+					try {
+						parsed = new URL(url, window.location.href);
+					} catch (error) {
+						return url;
+					}
+					const path = parsed.pathname;
+					const isMounted = path === mount || path.startsWith(mount + "/");
+					if (parsed.origin !== window.location.origin || isMounted || path.startsWith("/assets/")) return url;
+					return mount + path + parsed.search + parsed.hash;
+				}
+
+				const fetch = window.fetch;
+				// the unwrapped fetch: /api on this origin is the app host's own control site, which the
+				// site settings call (frappePage.ts controlCall) with the control session's CSRF token
+				window.fp.appFetch = fetch.bind(window);
+				window.fetch = function (input, init) {
+					if (input instanceof Request) {
+						const url = mounted(input.url);
+						return fetch(url === input.url ? input : new Request(url, input), init);
+					}
+					return fetch(mounted(String(input)), init);
+				};
+
+				const open = XMLHttpRequest.prototype.open;
+				XMLHttpRequest.prototype.open = function (method, url, ...rest) {
+					return open.call(this, method, mounted(String(url)), ...rest);
+				};
+
+				if (navigator.sendBeacon) {
+					const sendBeacon = navigator.sendBeacon.bind(navigator);
+					navigator.sendBeacon = (url, data) => sendBeacon(mounted(String(url)), data);
+				}
+			})(window.fp.mount);
+		</script>
+		<script id="fp-site-storage">
+			// Stock Builder has an origin per site, so whatever it keeps in the browser is that site's alone. frappe.page
+			// serves every site's editor from one origin, which has one localStorage, sessionStorage, set of IndexedDB
+			// databases and namespace of BroadcastChannels for all of them: a folder picked on one site was the folder
+			// a new page on another went into. So each mounted site stores its keys, database and channel names under
+			// its own prefix, and never sees another's. The prefix is the site's internal name, which a rename keeps and
+			// no other site ever takes, and the signed-in user (fp.user), as a site has several members and one browser
+			// may serve each of them in turn: one member's folder, filters and cached pages are never another's. The
+			// color scheme stays shared: it is the browser's, and frappe.page's pages read it.
+			(function (site, user) {
+				if (!window.fp.mount || !site) return;
+				const account = encodeURIComponent(user || "");
+				const prefix = "fp:" + site + ":" + account + ":";
+				const shared = new Set(["vueuse-color-scheme", "theme"]);
+				const stored = (key) => (shared.has(key) ? key : prefix + key);
+				const isOwn = (key) => typeof key === "string" && key.startsWith(prefix);
+				const unscoped = (key) => (isOwn(key) ? key.slice(prefix.length) : key);
+				const getter = (proto, name) => Object.getOwnPropertyDescriptor(proto, name).get;
+				const redefine = (proto, name, get) =>
+					Object.defineProperty(proto, name, { configurable: true, enumerable: true, get });
+				// Sign Out forgets the user's keys and databases (fp.forgetUser below). It names the user under SIGNED_OUT
+				// first, as frappe.page's own sign-out does (frappe_page's control.js), and every editor tab of that user
+				// then forgets too: what it still holds is never written back, and the removals never reach the app,
+				// which would write its defaults in their place.
+				const SIGNED_OUT = "fp-signed-out";
+				const namesThisUser = (value) => {
+					try {
+						return JSON.parse(value).user === account;
+					} catch (error) {
+						return false;
+					}
+				};
+				let forgotten = false;
+
+				// localStorage and sessionStorage stay the browser's own objects, so storage events keep naming them
+				const storage = window.Storage.prototype;
+				const { getItem, setItem, removeItem, key: keyAt } = storage;
+				const lengthOf = getter(storage, "length");
+				const visibleKeys = (area) => {
+					const keys = [];
+					for (let index = 0, length = lengthOf.call(area); index < length; index++) {
+						const key = keyAt.call(area, index);
+						if (isOwn(key) || shared.has(key)) keys.push(unscoped(key));
+					}
+					return keys;
+				};
+				storage.getItem = function (key) {
+					return getItem.call(this, stored(String(key)));
+				};
+				storage.setItem = function (key, value) {
+					if (forgotten && !shared.has(String(key))) return;
+					setItem.call(this, stored(String(key)), value);
+				};
+				storage.removeItem = function (key) {
+					removeItem.call(this, stored(String(key)));
+				};
+				storage.key = function (index) {
+					const key = visibleKeys(this)[index];
+					return key === undefined ? null : key;
+				};
+				// the shared keys and the other sites' keys stay
+				storage.clear = function () {
+					for (const key of visibleKeys(this)) if (!shared.has(key)) removeItem.call(this, prefix + key);
+				};
+				redefine(storage, "length", function () {
+					return visibleKeys(this).length;
+				});
+
+				// another tab's write reaches this one under the key as stored: this site's keys read as the app wrote
+				// them, and other sites' never get past here, nor this user's once signed out. An event the app dispatches
+				// itself has the app's key already.
+				const eventKey = getter(window.StorageEvent.prototype, "key");
+				redefine(window.StorageEvent.prototype, "key", function () {
+					const key = eventKey.call(this);
+					return this.isTrusted ? unscoped(key) : key;
+				});
+				window.addEventListener(
+					"storage",
+					(event) => {
+						const key = eventKey.call(event);
+						if (!event.isTrusted || key === null) return;
+						if (key === SIGNED_OUT && namesThisUser(event.newValue)) forgotten = true;
+						if (!shared.has(key) && (forgotten || !isOwn(key))) event.stopImmediatePropagation();
+					},
+					true,
+				);
+
+				// frappe-ui keeps its resource cache in IndexedDB (idb-keyval's "keyval-store")
+				const { open, deleteDatabase, databases } = window.IDBFactory ? window.IDBFactory.prototype : {};
+				if (window.IDBFactory) {
+					const factory = window.IDBFactory.prototype;
+					factory.open = function (name, ...rest) {
+						const request = open.call(this, prefix + name, ...rest);
+						// a sign-out deletes the database (fp.forgetUser below), from this tab or another: give way to it
+						request.addEventListener("success", () => {
+							const database = request.result;
+							database.addEventListener("versionchange", () => database.close());
+						});
+						return request;
+					};
+					factory.deleteDatabase = function (name) {
+						return deleteDatabase.call(this, prefix + name);
+					};
+					if (databases) {
+						factory.databases = function () {
+							return databases
+								.call(this)
+								.then((list) => list.filter((db) => isOwn(db.name)).map((db) => ({ ...db, name: unscoped(db.name) })));
+						};
+					}
+					const databaseName = getter(window.IDBDatabase.prototype, "name");
+					redefine(window.IDBDatabase.prototype, "name", function () {
+						return unscoped(databaseName.call(this));
+					});
+				}
+
+				if (window.BroadcastChannel) {
+					const Channel = window.BroadcastChannel;
+					window.BroadcastChannel = class BroadcastChannel extends Channel {
+						constructor(name) {
+							super(prefix + name);
+						}
+						get name() {
+							return unscoped(super.name);
+						}
+					};
+				}
+
+				// Sign Out (frappePageSite.ts) ends the user's session on every site at once, so it forgets what each site's
+				// editor kept here for them: their keys (sessionStorage: this tab's) and their databases, under
+				// "fp:<any site>:<user>:". Another account's stay, for that person's next sign-in. The other tabs hear of it
+				// under SIGNED_OUT (above) before anything goes.
+				const ofUser = (name) => typeof name === "string" && name.startsWith("fp:") && name.split(":")[2] === account;
+				window.fp.forgetUser = async function () {
+					forgotten = true;
+					setItem.call(window.localStorage, SIGNED_OUT, JSON.stringify({ user: account, at: Date.now() }));
+					removeItem.call(window.localStorage, SIGNED_OUT);
+					for (const area of [window.localStorage, window.sessionStorage]) {
+						const keys = [];
+						for (let index = 0, length = lengthOf.call(area); index < length; index++) keys.push(keyAt.call(area, index));
+						for (const key of keys) if (ofUser(key)) removeItem.call(area, key);
+					}
+					if (!databases) return;
+					const factory = window.indexedDB;
+					const deleted = (name) =>
+						new Promise((done) => {
+							const request = deleteDatabase.call(factory, name);
+							// blocked: an editor tab loaded before connections gave way (open above) holds it; the delete
+							// goes ahead once that tab closes
+							request.onsuccess = request.onerror = request.onblocked = () => done();
+						});
+					const list = await databases.call(factory);
+					await Promise.all(list.filter((db) => ofUser(db.name)).map((db) => deleted(db.name)));
+				};
+			})(window.site_name, window.fp.user);
 		</script>
 		<script type="module" src="/src/main.ts"></script>
 	</body>

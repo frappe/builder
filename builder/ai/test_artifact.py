@@ -4,7 +4,12 @@ from unittest.mock import patch
 import frappe
 from frappe.tests.utils import FrappeTestCase
 
-from builder.ai.agent.artifact import brief_image_parts, image_url_resolves, reference_geometry
+from builder.ai.agent.artifact import (
+	brief_image_parts,
+	image_url_resolves,
+	may_reach_web,
+	reference_geometry,
+)
 
 PUBLIC = "https://cdn.example.com/hero.png"
 PRIVATE = "https://internal.example.com/hero.png"
@@ -78,6 +83,25 @@ class TestBriefImageParts(FrappeTestCase):
 			parts = brief_image_parts(f"REFERENCE IMAGE: {PUBLIC}", skip={PUBLIC})
 
 		self.assertEqual(parts, [])
+
+	def test_a_run_kept_off_the_web_requests_no_marker_and_hands_none_on(self):
+		with responding(200) as session:
+			parts = brief_image_parts(f"HERO IMAGE: {PUBLIC}", web=False)
+
+		self.assertEqual(parts, [])
+		session.return_value.head.assert_not_called()
+		session.return_value.get.assert_not_called()
+
+	def test_a_run_is_off_the_web_once_a_hosting_app_withholds_a_web_tool(self):
+		for withheld, on_the_web in (
+			(set(), True),
+			({"run_python"}, True),
+			({"search_images"}, False),
+			({"read_url", "search_images", "run_python"}, False),
+		):
+			with self.subTest(withheld=withheld):
+				ctx = SimpleNamespace(registry=SimpleNamespace(withheld=withheld))
+				self.assertEqual(may_reach_web(ctx), on_the_web)
 
 	def test_stops_at_the_attachment_limit(self):
 		brief = "\n".join(f"HERO IMAGE: https://cdn.example.com/{i}.png" for i in range(4))

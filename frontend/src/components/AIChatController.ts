@@ -7,7 +7,7 @@ import { contextUsageOf } from "@/components/ai/contextUsage";
 import { ChatAttachments, sentImages } from "@/components/ai/attachments";
 import { ChatScroll } from "@/components/ai/chatScroll";
 import type { BuildPage } from "@/components/ai/pageChanges";
-import type { AIProvider, AITurnStep, ChatMessage } from "@/components/ai/types";
+import type { AIProvider, AITurnRequest, AITurnStep, ChatMessage } from "@/components/ai/types";
 import { buildLocalMessage } from "@/components/ai/blockFields";
 import type BuilderCanvas from "@/components/BuilderCanvas.vue";
 import useBuilderStore from "@/stores/builderStore";
@@ -15,7 +15,7 @@ import useCanvasStore from "@/stores/canvasStore";
 import usePageStore from "@/stores/pageStore";
 import { confirm, getErrorMessage } from "@/utils/helpers";
 import { useBuilderToken } from "@/utils/useBuilderToken";
-import { useLocalStorage } from "@vueuse/core";
+import { until, useLocalStorage } from "@vueuse/core";
 import { createResource, toast } from "frappe-ui";
 import { computed, inject, nextTick, ref, shallowRef, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
@@ -55,6 +55,8 @@ export class AIChatController {
 		contextUsageOf(this.messages.value.findLast((m) => m.metadata?.debug)?.metadata?.debug),
 	);
 	readonly isLoadingSession = ref(false);
+	// the page whose chat last finished loading: a turn started before that load lands is wiped by it
+	private readonly loadedChatPage = ref("");
 	// only the newest load may commit; older responses are stale
 	private loadSessionEpoch = 0;
 	// target of the newest in-flight load; refreshes follow it, not the current session
@@ -146,6 +148,8 @@ export class AIChatController {
 	// the CPU. The final generate_page op re-applies the authoritative tree, so this
 	// preview can render at a coarse cadence.
 	private static readonly STREAM_RENDER_MS = 200;
+	// a page, its chat and the model list load in a few seconds; past this the user has moved on
+	private static readonly REQUESTED_TURN_WAIT_MS = 60000;
 	private streamRenderTimer: ReturnType<typeof setTimeout> | null = null;
 	private lastStreamRenderAt = 0;
 
@@ -188,7 +192,7 @@ export class AIChatController {
 	readonly selectedGateway = computed(
 		() =>
 			this.availableModels.value.find((group) =>
-				group.models.some((m) => m.name === this.selectedModel.value && m.api_base),
+				group.models.some((m) => m.name === this.selectedModel.value && m.gateway),
 			)?.provider,
 	);
 	readonly credits = ref<Credits | null>(null);
@@ -218,6 +222,20 @@ export class AIChatController {
 			this.isEditingPage.value &&
 			!!this.selectedModel.value &&
 			!this.selectedModelUnusable.value,
+	);
+
+	/** A turn could start now on the open page as if typed in: the page and its chat have loaded,
+	 * and the picked model is on offer with a key behind it. */
+	private readonly canStartTurn = computed(
+		() =>
+			!this.isUnsavedPage.value &&
+			this.pageStore.activePage?.name === this.pageId.value &&
+			!this.pageStore.settingPage &&
+			this.loadedChatPage.value === this.pageId.value &&
+			!this.isLoadingSession.value &&
+			!this.isSubmitting.value &&
+			this.isEditingPage.value &&
+			this.currentProviderModels.value.some((m) => m.name === this.selectedModel.value && m.ready !== false),
 	);
 
 	constructor() {
@@ -382,6 +400,7 @@ export class AIChatController {
 			// a chat being opened starts at its latest; a refresh keeps the reader's place
 			const opened = session.session_id !== this.sessionId.value;
 			this.sessionId.value = session.session_id;
+			this.loadedChatPage.value = pageId;
 			this.messages.value = (session.messages || []).map(
 				(m) => ({ ...m, role: m.role === "user" ? "user" : "assistant" }) as ChatMessage,
 			);
@@ -808,11 +827,25 @@ export class AIChatController {
 	/** Submit a reply composed by an agent UI card (option tap, action button,
 	 * collected form values) as the user's next ordinary message. `display` is
 	 * the compact line the chat shows instead of the full relay — the model
-	 * still receives the full reply. */
+	 * still receives the full reply. Resolves with whether Bob accepted the turn. */
 	selectOption = (option: string, display?: string) => {
 		this.prompt.value = option;
 		this.pendingDisplayText = display?.trim() || null;
-		this.submitPrompt();
+		return this.submitPrompt();
+	};
+
+	/** Start the turn another screen asked for, once its page and chat have loaded here. A page
+	 * that never gets there (left, or no usable model) gets what the user wrote in its composer.
+	 * The screen that asked hears whether Bob accepted it. */
+	startRequestedTurn = async (request: AITurnRequest) => {
+		const opened = () => this.pageId.value === request.pageId;
+		const ready = await until(() => opened() && this.canStartTurn.value).toBe(true, {
+			timeout: AIChatController.REQUESTED_TURN_WAIT_MS,
+		});
+		if (!ready && opened() && !this.prompt.value.trim())
+			this.prompt.value = request.display || request.prompt;
+		const accepted = ready && (await this.selectOption(request.prompt, request.display));
+		request.settled?.(accepted);
 	};
 
 	/** Apply or skip a sensitive action the agent proposed (create doctype, seed data,
@@ -952,8 +985,9 @@ export class AIChatController {
 		this.cancelWatchdog = setTimeout(resetStuckCancel, 20000);
 	};
 
-	submitPrompt = async () => {
-		if (!this.canSubmit.value || !this.pageId.value || this.isUnsavedPage.value) return;
+	/** Send the composer's prompt. Resolves with whether the server accepted the turn. */
+	submitPrompt = async (): Promise<boolean> => {
+		if (!this.canSubmit.value || !this.pageId.value || this.isUnsavedPage.value) return false;
 		// submitting pins the current chat over any session choice still in flight
 		this.sessionIntentEpoch++;
 		const pageId = this.pageId.value;
@@ -999,7 +1033,7 @@ export class AIChatController {
 			// unsaved canvas changes first so the turn (and its revert snapshot) starts
 			// from exactly what the user sees.
 			await this.pageStore.savePage();
-			if (!stillOwned()) return;
+			if (!stillOwned()) return false;
 			const result = await createResource({
 				url: "builder.ai.api.run",
 				makeParams: () => ({
@@ -1015,13 +1049,15 @@ export class AIChatController {
 					...(this.selectedEffort.value ? { effort: this.selectedEffort.value } : {}),
 				}),
 			}).submit();
-			if (!stillOwned()) return;
+			if (!stillOwned()) return true;
 			const response = result as { session_id?: string; status?: string; message?: string };
 			if (response.session_id) this.sessionId.value = response.session_id;
 			// a blank chat's first send created its session; list it in the switcher
 			if (!sessionId) this.loadSessions();
+			return true;
 		} catch (error) {
-			if (stillOwned()) this.failSend([userMessage.id, assistantMessage.id], userText, error);
+			if (stillOwned()) this.failSend([userMessage.id, assistantMessage.id], displayText || userText, error);
+			return false;
 		} finally {
 			if (this.liveSend === turn) {
 				this.liveSend = 0;
@@ -1031,7 +1067,8 @@ export class AIChatController {
 	};
 
 	/** The send failed before any turn started, so nothing reached the chat: take
-	 * the optimistic bubbles back out and hand the prompt back to the composer. */
+	 * the optimistic bubbles back out and hand the prompt back to the composer, as the
+	 * user wrote it (a requested turn's words, not what was added to them for Bob). */
 	private failSend(messageIds: string[], userText: string, error: unknown) {
 		this.messages.value = this.messages.value.filter((m) => !messageIds.includes(m.id));
 		this.pendingAssistantId.value = null;
@@ -1050,7 +1087,7 @@ export class AIChatController {
 		// restoring reloads the page onto the active canvas, a component's while one is open
 		if (!snapshot || !this.sessionId.value || this.isSubmitting.value || !this.isEditingPage.value) return;
 		const confirmed = await confirm(
-			"Revert this AI edit? The page (blocks and scripts) returns to how it was just before this turn, and this message and everything after it are removed from the chat. Your live page won't change until you publish.",
+			"Revert this AI edit? The page (blocks and scripts) returns to how it was just before this turn, and this message and everything after it are removed from the chat. Blocks reach your live page when you publish, scripts at once. If this edit was already published, only the draft goes back.",
 		);
 		if (!confirmed) return;
 		// 1. Rewind the conversation server-side (delete this turn + everything after).

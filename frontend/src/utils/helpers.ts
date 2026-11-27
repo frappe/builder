@@ -59,11 +59,10 @@ function getTextContent(html: string | null) {
 	if (!html || !isHTMLString(html)) {
 		return html || "";
 	}
-	const tmp = document.createElement("div");
-	tmp.innerHTML = html || "";
-	const textContent = tmp.textContent || tmp.innerText || "";
-	tmp.remove();
-	return textContent;
+	// a template's content is inert: a <div> would load an <img> and fire its onerror
+	const template = document.createElement("template");
+	template.innerHTML = html;
+	return template.content.textContent || "";
 }
 
 function isHTMLString(str: string) {

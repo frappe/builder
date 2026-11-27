@@ -1,6 +1,6 @@
 import { __ } from "@/translation";
 import BlockContextMenu from "@/components/BlockContextMenu.vue";
-import type { AISetupState } from "@/components/ai/types";
+import type { AISetupState, AITurnRequest } from "@/components/ai/types";
 import { builderSettings } from "@/data/builderSettings";
 import { BuilderSettings } from "@/types/doctypes";
 import { editorDemo } from "@/utils/editorDemo";
@@ -74,6 +74,9 @@ const useBuilderStore = defineStore("builderStore", {
 		aiConfigured: <boolean | null>null,
 		// text for Bob's composer, set by another panel; the chat takes it and clears it
 		aiPromptDraft: <string | null>null,
+		// a turn for Bob to start on a page another screen opened, like onboarding's "Describe your
+		// website"; the chat takes it and starts it once that page has loaded
+		aiTurnRequest: <AITurnRequest | null>null,
 	}),
 	getters: {
 		isSmallScreen(): boolean {

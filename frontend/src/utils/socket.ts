@@ -1,4 +1,5 @@
 import { io, type Socket } from "socket.io-client";
+import { fp, isMounted } from "@/utils/frappePage";
 
 declare global {
 	interface Window {
@@ -11,6 +12,13 @@ declare global {
 // `app.config.globalProperties.$socket`. It no longer does, so the one consumer
 // (RealTimeHandler) opens it here instead.
 export function createSocket(): Socket {
+	// the frappe.page edge proxies socket.io under the mount, on the page's own origin
+	if (isMounted) {
+		return io(`${window.location.origin}/${window.site_name}`, {
+			path: `${fp.mount}/socket.io`,
+			withCredentials: true,
+		});
+	}
 	return io(socketUrl(), { withCredentials: true });
 }
 

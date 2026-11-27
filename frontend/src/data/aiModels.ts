@@ -8,7 +8,15 @@ export const aiProviders = createListResource({
 	doctype: "Builder AI Provider",
 	// route_prefix is read-only here: the server derives it, and the model dialog
 	// previews the qualified name (<prefix>/<model id>) it will produce.
-	fields: ["name", "provider_name", "enabled", "route_prefix", "litellm_provider", "api_base"],
+	fields: [
+		"name",
+		"provider_name",
+		"enabled",
+		"route_prefix",
+		"litellm_provider",
+		"api_base",
+		"from_site_config",
+	],
 	orderBy: "creation asc",
 	pageLength: 100,
 	auto: false,

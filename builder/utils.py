@@ -1,7 +1,10 @@
+import html
 import inspect
 import os
 import re
 import shutil
+import traceback
+from contextlib import contextmanager
 from dataclasses import dataclass
 from functools import wraps
 from os.path import join
@@ -50,6 +53,60 @@ def is_bulk_import() -> bool:
 
 def get_builder_path() -> str:
 	return frappe.conf.builder_path or "builder"
+
+
+def is_mounted() -> bool:
+	"""Whether this request is a frappe.page tenant editor, which the edge serves under /s/<sub>/ and marks
+	with X-FP-Mount (the edge always overwrites the header, so a client cannot set it). Outside a request (a
+	job, a test) it is not."""
+	request = getattr(frappe.local, "request", None)
+	return bool(request and request.headers.get("X-FP-Mount"))
+
+
+def is_isolated() -> bool:
+	"""Whether the editor must keep code that pages and plugins bring away from its origin, as it does under a
+	frappe.page mount. A hosting app turns it on for a site of its own with the builder_is_isolated hook:
+	frappe.page does on its control site, whose editor shares the origin with every member's dashboard."""
+	return is_mounted() or any(
+		frappe.get_attr(method)() for method in frappe.get_hooks("builder_is_isolated")
+	)
+
+
+def can_serve_page(page: str | None, path: str | None) -> bool:
+	"""Whether Builder Page `page` may answer the request for `path`; both are None when the question is
+	about every page, as for the sitemap. A hosting app keeps pages from visitors with the
+	builder_can_serve_page hook: frappe.page only compiles its control site's pages, so a visitor must never
+	get one rendered raw. Only an explicit False refuses, so without a hook, or with a hook that answers
+	None, every page is served."""
+	return all(
+		frappe.get_attr(method)(page, path) is not False
+		for method in frappe.get_hooks("builder_can_serve_page")
+	)
+
+
+def content_problems(doc, rendering: bool = False) -> list[str]:
+	"""Why a hosting app refuses Builder Page or Builder Component `doc`, saved or not, through the
+	builder_content_problems hook (empty: nothing refused). Builder's AI writes drafts, generated pages, page
+	settings and component definitions with frappe.db.set_value, past validate, and previews render a page
+	on the server, so those paths ask here: frappe.page compiles its own site's page into a public copy
+	through Jinja that can read the database, and stored content is the only place that can be stopped.
+	`rendering` is True right before a preview renders the page, so a hook can check what the render pulls
+	in with it (components, settings)."""
+	problems = []
+	for method in frappe.get_hooks("builder_content_problems"):
+		problems.extend(frappe.get_attr(method)(doc, rendering) or [])
+	return problems
+
+
+def refuse_unsafe_write(doctype: str, name: str, updates: dict) -> None:
+	"""Raise before Builder writes `updates` to `name` past validate, when a hosting app refuses the doc as it
+	would be after the write (content_problems). Without a hook it reads nothing."""
+	if not frappe.get_hooks("builder_content_problems"):
+		return
+	doc = frappe.get_doc(doctype, name)
+	doc.update(updates)
+	if problems := content_problems(doc):
+		frappe.throw("\n".join(problems), title=frappe._("Not allowed on this site"))
 
 
 def get_installed_app_path(app_name) -> str | None:
@@ -561,7 +618,9 @@ def is_component_used(blocks, component_id):
 
 
 def escape_single_quotes(text):
-	return (text or "").replace("'", "\\'")
+	"""`text` made safe inside a single-quoted Jinja string literal. The backslash goes first: left alone, a
+	value ending in one escapes the literal's own closing quote, and whatever follows runs as Jinja."""
+	return (text or "").replace("\\", "\\\\").replace("'", "\\'")
 
 
 def camel_case_to_kebab_case(text, remove_spaces=False):
@@ -635,6 +694,33 @@ def execute_script(script, _locals, script_filename):
 		safe_exec(script, None, _locals, script_filename=script_filename)  # nosemgrep
 	else:
 		safer_exec(script, None, _locals, script_filename=script_filename)
+
+
+@contextmanager
+def script_errors_as_messages():
+	"""A failing data script's reason as a message the editor shows: the error's type, text and script line.
+	Otherwise only the traceback carries it, and Frappe sends that just to a System User on a site that allows
+	tracebacks. An error the script raised with frappe.throw has a message of its own already."""
+	try:
+		yield
+	except Exception as error:
+		if not getattr(error, "__frappe_exc_id", None):
+			message = html.escape(describe_script_error(error), quote=False)  # messages are HTML
+			frappe.msgprint(message, title=frappe._("Data script error"), indicator="red")
+		raise
+
+
+def describe_script_error(error: Exception) -> str:
+	"""Such as `NameError on line 2: name 'x' is not defined`, the line being the script's last one the error
+	passed through."""
+	if isinstance(error, SyntaxError) and error.args and isinstance(error.args[0], tuple | list):
+		# RestrictedPython's, each "Line <n>: ..." already
+		return "\n".join(str(line) for line in error.args[0])
+	frames = traceback.extract_tb(error.__traceback__)
+	lines = [frame.lineno for frame in frames if frame.filename.startswith(SERVER_SCRIPT_FILE_PREFIX)]
+	name = type(error).__name__
+	head = frappe._("{0} on line {1}").format(name, lines[-1]) if lines else name
+	return f"{head}: {error}" if str(error) else head
 
 
 def clean_data(data):

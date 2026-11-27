@@ -94,6 +94,7 @@ async function loadAndCheck(request: PluginLoadRequest): Promise<LoadReport> {
 		label: request.label,
 		version: request.version,
 		entryUrl: request.entry_url,
+		source: "Bob",
 	};
 	const before = new Set(Object.values(registries).flatMap((registry) => registry.all.value));
 	try {

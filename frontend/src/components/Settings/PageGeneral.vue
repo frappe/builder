@@ -182,6 +182,7 @@ import useBuilderStore from "@/stores/builderStore";
 import usePageStore from "@/stores/pageStore";
 import { BuilderProjectFolder } from "@/types/doctypes";
 import { toTitleCase } from "@/utils/helpers";
+import { liveOrigin } from "@/utils/frappePage";
 import { createResource, Switch, toast } from "frappe-ui";
 import { computed } from "vue";
 
@@ -205,7 +206,7 @@ const statusLabel = computed(() => {
 });
 
 const fullURL = computed(
-	() => window.location.origin + (pageStore.activePage?.route ? "/" + pageStore.activePage.route : ""),
+	() => liveOrigin() + (pageStore.activePage?.route ? "/" + pageStore.activePage.route : ""),
 );
 
 const folderOptions = computed(() => {

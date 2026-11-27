@@ -1,4 +1,5 @@
 import { isCloudBillingAvailable, useCloudBilling } from "@/composables/useCloudBilling";
+import { isHostEditor, isIsolated, isMounted } from "@/utils/frappePage";
 import { call } from "frappe-ui";
 import { computed, ref, watch } from "vue";
 
@@ -46,15 +47,19 @@ export function serverMessage(error: unknown, fallback: string): string {
 	return fallback;
 }
 
-/** Frappe Cloud v2 sites only: elsewhere `available` stays false and nothing is fetched. */
+// frappe.page sites clone through the same service; they have no Cloud billing to ask.
+// The app host's own editor holds only its landing page, so it clones nothing
+const available = computed(() => !isHostEditor && (isMounted || isCloudBillingAvailable.value));
+
+/** Frappe Cloud v2 and frappe.page sites only: elsewhere `available` stays false and nothing is fetched. */
 export function useSiteClone() {
-	useCloudBilling();
+	if (!isIsolated) useCloudBilling();
 	if (!watching) {
 		watching = true;
-		watch(isCloudBillingAvailable, (available) => available && refresh(), { immediate: true });
+		watch(available, (canClone) => canClone && refresh(), { immediate: true });
 	}
 	return {
-		available: isCloudBillingAvailable,
+		available,
 		clone,
 		done,
 		failed,

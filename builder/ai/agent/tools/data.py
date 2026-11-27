@@ -21,6 +21,7 @@ from frappe.utils.safe_exec import SERVER_SCRIPT_FILE_PREFIX
 from builder.ai.agent import pending
 from builder.ai.agent.registry import Tool
 from builder.ai.agent.tools.scripts import LIVE_NOTE
+from builder.utils import refuse_unsafe_write
 
 logger = frappe.logger("builder.ai.agent.data")
 logger.setLevel(logging.INFO)
@@ -353,6 +354,9 @@ def write_page_data_script(ctx, args: dict) -> str:
 			f"{', '.join(missing)} don't exist, so the page would fail to render. Use "
 			f"{PORTABLE_HINT}."
 		)
+	# set_value skips validate, so the hosting app is asked first (builder_content_problems),
+	# before the test run executes the script at all
+	refuse_unsafe_write("Builder Page", ctx.page_id, {"page_data_script": script})
 	trial = DataScriptTrial(ctx.page_id, script)
 	if trial.blocks_save:
 		return (

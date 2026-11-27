@@ -133,10 +133,11 @@ import { editorDemo } from "@/utils/editorDemo";
 import blockController from "@/utils/blockController";
 import { offerPendingAssetImport } from "@/utils/builderBlockCopyPaste";
 import componentController from "@/utils/componentController.js";
-import { getPageUsageMessage, getRootBlockTemplate } from "@/utils/helpers";
+import { getErrorMessage, getPageUsageMessage } from "@/utils/helpers";
+import { insertBlankPage } from "@/utils/pageActions";
 import { useBuilderEvents } from "@/utils/useBuilderEvents";
 import { useDebounceFn } from "@vueuse/core";
-import { createResource, KeyboardShortcutsDialog, useKeyboardShortcut } from "frappe-ui";
+import { createResource, KeyboardShortcutsDialog, toast, useKeyboardShortcut } from "frappe-ui";
 import { computed, onActivated, onDeactivated, onMounted, provide, ref, watch, watchEffect } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import CodeEditor from "../components/Controls/CodeEditor.vue";
@@ -295,18 +296,16 @@ watch(
 	route,
 	(to, from) => {
 		if (to.name === "builder" && to.params.pageId === "new") {
-			const pageInfo = {
-				page_title: "My Page",
-				draft_blocks: [getRootBlockTemplate()],
-			} as BuilderPage;
-			const folder = (to.query.folder as string) || builderStore.activeFolder;
-			if (folder) {
-				pageInfo["project_folder"] = folder;
-			}
-			webPages.insert.submit(pageInfo).then((data: BuilderPage) => {
-				router.push({ name: "builder", params: { pageId: data.name }, force: true });
-				pageStore.setPage(data.name);
-			});
+			insertBlankPage((to.query.folder as string) || builderStore.activeFolder)
+				.then((data: BuilderPage) => {
+					router.push({ name: "builder", params: { pageId: data.name }, force: true });
+					pageStore.setPage(data.name);
+				})
+				.catch((error) => {
+					// "new" is no page: staying on it would leave the editor loading forever
+					toast.error(__("Could not create page"), { description: getErrorMessage(error) });
+					router.replace({ name: "home" });
+				});
 		}
 	},
 	{ immediate: true },

@@ -9,6 +9,7 @@ import re
 import frappe
 
 from builder.ai import markup
+from builder.ai.agent.artifact import may_reach_web
 from builder.ai.agent.registry import Tool
 from builder.ai.agent.selectors import design_digest, find_block, walk_blocks
 
@@ -95,7 +96,8 @@ def run_read_page(ctx, args: dict) -> str:
 	if root is None:
 		return f"{label} has no blocks yet."
 	components = render_components(root)
-	fonts_missing = font_warning(root)
+	# the check asks Google Fonts, an outside address, and off the web the host decides what loads anyway
+	fonts_missing = font_warning(root) if may_reach_web(ctx) else ""
 	digest = design_digest(root)
 	prefix = "abcdefgh"[(ctx.page_read_count - 1) % 8]
 	pending = " It includes the edits you prepared for it this turn." if held else ""

@@ -10,15 +10,18 @@ the approval.
 """
 
 import re
+from contextlib import contextmanager
 from urllib.parse import urlparse
 
 import frappe
 
+from builder.ai import locks
 from builder.ai.agent import pending
-from builder.ai.agent.page_changes import page_row
+from builder.ai.agent.page_changes import APPLY_LOCK_TTL, page_row
 from builder.ai.agent.registry import Tool
 from builder.ai.agent.tools.query import resolve_page_reference
 from builder.ai.stock_look import unseen_creams
+from builder.utils import refuse_unsafe_write
 
 PAGE_SETTING_FIELDS = {
 	"page_title",
@@ -60,6 +63,9 @@ def set_page_settings(ctx, args: dict) -> str:
 		doc.save()
 		note = dynamic_route_note(doc)
 	else:
+		# set_value skips validate, so the hosting app is asked first (head/body HTML and the canonical URL
+		# are rendered as Jinja)
+		refuse_unsafe_write("Builder Page", ctx.page_id, updates)
 		frappe.db.set_value("Builder Page", ctx.page_id, updates)
 	emit_refetch(ctx, "page")
 	return f"Updated page settings: {', '.join(updates)}.{note}"
@@ -174,13 +180,14 @@ def request_set_home_page(ctx, args: dict) -> None:
 def publish_pages(ctx, args: dict) -> str:
 	staged = getattr(ctx, "page_changes", None)
 	held = {edit.page["page_id"] for edit in staged.staged()} if staged else set()
-	results = [publish_one(ref, held) for ref in args.get("pages") or [ctx.page_id or ""]]
+	own_locks = {key for key, _token in getattr(ctx, "held_locks", None) or []}
+	results = [publish_one(ref, held, own_locks) for ref in args.get("pages") or [ctx.page_id or ""]]
 	if any(page_id == ctx.page_id for page_id, _ in results):
 		emit_refetch(ctx, "page")
 	return "\n".join(line for _, line in results)
 
 
-def publish_one(ref: str, held: set[str]) -> tuple[str | None, str]:
+def publish_one(ref: str, held: set[str], own_locks: set[str]) -> tuple[str | None, str]:
 	"""Publish one page as the editor's Publish button does. Returns the page id when
 	it went live, and a result line for the model."""
 	page_id, why = resolve_page_reference(ref)
@@ -195,13 +202,31 @@ def publish_one(ref: str, held: set[str]) -> tuple[str | None, str]:
 			f"NOT PUBLISHED: {name} has changes waiting on the card at the end of this turn. "
 			"Tell the user to publish it once they apply them."
 		)
-	doc = frappe.get_doc("Builder Page", page_id)
-	if not doc.has_permission("write"):
-		return None, f"FAILED: this user can't publish {name}."
-	if doc.published and not doc.draft_blocks:
-		return None, f"ALREADY LIVE: {name} has no unpublished changes."
-	doc.publish()
+	with page_lock(page_id, own_locks) as locked:
+		if not locked:
+			return None, (
+				f"NOT PUBLISHED: {name} is being edited by another AI task right now. "
+				"Tell the user to publish it once that finishes."
+			)
+		doc = frappe.get_doc("Builder Page", page_id)
+		if not doc.has_permission("write"):
+			return None, f"FAILED: this user can't publish {name}."
+		if doc.published and not doc.draft_blocks:
+			return None, f"ALREADY LIVE: {name} has no unpublished changes."
+		doc.publish()
 	return page_id, f"Published {name}."
+
+
+@contextmanager
+def page_lock(page_id: str, own_locks: set[str]):
+	"""Yields whether this turn may put the page's draft live. Another chat's turn saves its draft
+	after every batch, so a page under its lock is half built; this turn's own lock covers its page."""
+	key = locks.page_key(page_id)
+	if key in own_locks:
+		yield True
+		return
+	with locks.guard(key, APPLY_LOCK_TTL) as token:
+		yield bool(token)
 
 
 def pages_sharing(ref: str, page_id: str) -> str:

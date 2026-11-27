@@ -13,6 +13,9 @@ from builder.builder.component_versions import resolve_component, walk_blocks
 
 CACHE_SECONDS = 300
 
+# what a hosting app's editor boot says of the signed-in user (frappe.page: fp.user, fp.start)
+SESSION_BOOT_KEYS = ("user", "start")
+
 # The editor loads from the site but may not open a single connection back to it,
 # even for a signed-in visitor whose cookies ride along.
 CONTENT_SECURITY_POLICY = "; ".join(
@@ -70,6 +73,13 @@ class EditorDemo:
 				"is_developer_mode": 0,
 				"is_fc_site": 0,
 				"is_read_only_mode": 0,
+				# the host's boot (_builder.get_editor_boot), less what it may say of the signed-in user: who they
+				# are, and the description a new site of theirs starts from
+				"fp": {
+					key: value
+					for key, value in (context.get("fp") or {}).items()
+					if key not in SESSION_BOOT_KEYS
+				},
 			}
 		)
 		frappe.local.response_headers.update(

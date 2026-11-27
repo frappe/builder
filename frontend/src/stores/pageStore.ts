@@ -9,12 +9,14 @@ import { __ } from "@/translation";
 import { BuilderClientScript, BuilderPage } from "@/types/doctypes";
 import getBlockTemplate from "@/utils/blockTemplate";
 import { editorDemo } from "@/utils/editorDemo";
+import { fp, isMounted, liveOrigin } from "@/utils/frappePage";
 import {
 	confirm,
 	countBlocks,
 	generateId,
 	getBlockInstance,
 	getCopyWithoutParent,
+	getErrorMessage,
 	getRouteVariables,
 } from "@/utils/helpers";
 import { createDocumentResource, createListResource, createResource, toast } from "frappe-ui";
@@ -425,10 +427,10 @@ const usePageStore = defineStore("pageStore", {
 				.then((data: { message: { [key: string]: [] } }) => {
 					this.pageData = data.message;
 				})
-				.catch((e: { exc: string | null }) => {
-					const error_message = e.exc?.split("\n").slice(-2)[0];
+				.catch((error: unknown) => {
+					// the server's message names the script's error and line; a traceback is not always sent
 					toast.error(__("There was an error while fetching page data"), {
-						description: error_message,
+						description: getErrorMessage(error),
 					});
 				});
 		},
@@ -524,7 +526,11 @@ const usePageStore = defineStore("pageStore", {
 		},
 
 		openPageInBrowser(page: BuilderPage) {
+			// the hosting app serves what visitors see somewhere else than at the page's route
+			if (fp.view_live_url) return void window.open(fp.view_live_url, "builder-preview");
 			const pageURL = this.getResolvedPageURL(true, page);
+			// a tab on the live host is cross-origin, so opening it again is the only reload there is
+			if (isMounted) return void window.open(liveOrigin() + pageURL, "builder-preview");
 			const targetWindow = window.open(pageURL, "builder-preview");
 			if (targetWindow?.location.pathname === pageURL) {
 				targetWindow?.location.reload();

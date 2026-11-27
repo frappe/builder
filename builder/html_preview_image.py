@@ -1,16 +1,32 @@
 import base64
 import html as html_parser
+import re
 
 import frappe
 
+# What a blocking capture's page may load: this site's own files, data: and blob:. Chromium then
+# refuses anything else itself, before the request starts, so none depends on Frappe's
+# interceptor still running: Page.close turns it off before the tab closes, and a request the
+# page starts then goes out from the server (render_full_page's `inspect` flips the theme just
+# before, which asks for dark-only images and fonts).
+SITE_ONLY_POLICY = (
+	'<meta http-equiv="Content-Security-Policy" '
+	"content=\"default-src 'self' data: blob: 'unsafe-inline' 'unsafe-eval'\">"
+)
+LEADING_DOCTYPE = re.compile(r"\s*(?:<!doctype[^>]*>)?", re.IGNORECASE)
 
-def generate_preview(html, output_path, width: int = 1280, height: int = 720):
-	image = render(html, width=width, height=height)
+
+def generate_preview(html, output_path, width: int = 1280, height: int = 720, block_external: bool = False):
+	image = render(html, width=width, height=height, block_external=block_external)
 	with open(output_path, "wb") as f:
 		f.write(image)
 
 
-def render(html: str, width: int = 1280, height: int = 720) -> bytes:
+def render(html: str, width: int = 1280, height: int = 720, block_external: bool = False) -> bytes:
+	"""`block_external`: the page gets only what this site serves itself, for a host that keeps the
+	server off the web (render_full_page)."""
+	if block_external:
+		return render_full_page(html, width=width, height=height, max_height=height, block_external=True)
 	# Newer Frappe versions ship a built-in headless-Chromium screenshot generator,
 	# so we render previews in-process — no external service, and local assets
 	# resolve. Older versions don't have this helper; fall back to the
@@ -24,16 +40,28 @@ def render(html: str, width: int = 1280, height: int = 720) -> bytes:
 
 
 def render_full_page(
-	html: str, width: int = 1280, height: int = 900, max_height: int = 8000, inspect=None
+	html: str,
+	width: int = 1280,
+	height: int = 900,
+	max_height: int = 8000,
+	block_external: bool = False,
+	inspect=None,
 ) -> bytes:
 	"""Screenshot the whole document from a real-sized viewport, so vh units keep the
-	size they have in a browser instead of stretching to the capture height. `inspect`
-	is called with the rendered page once the screenshot is taken."""
+	size they have in a browser instead of stretching to the capture height. With
+	`block_external` Chromium fails every request off this site's host (Frappe's
+	interceptor) instead of fetching it from the server: fonts, images and styles
+	from elsewhere are missing, as they are on a host whose pages load nothing from
+	outside (frappe.page's own site). `inspect` is called with the rendered page once
+	the screenshot is taken, under the same blocking."""
 	try:
 		from frappe.utils.chromium import CDPSocketClient, ChromiumManager, Page
 		from frappe.utils.pdf import get_host_url
 		from frappe.utils.preview import safe_execute
 	except ImportError:
+		if block_external:
+			# the other renderers fetch what the page names, or send it to an outside service
+			raise RuntimeError("No renderer here keeps a page off the web") from None
 		return render(html, width=width, height=max_height)
 
 	generator, browser_id = ChromiumManager.acquire()
@@ -48,12 +76,16 @@ def render_full_page(
 			if error:
 				raise RuntimeError(f"Error creating browser context: {error}")
 			page = Page(session, context["browserContextId"], "screenshot")
+			page.block_external_requests = block_external
 			page.is_print_designer = False
 			page.set_media_emulation("screen")
 			page.set_device_metrics(width, height)
 			page.set_tab_url(get_host_url())
 			page.wait_for_navigate()
-			page.set_content(html, wait_for=["load", "DOMContentLoaded", "networkIdle"])
+			page.set_content(
+				site_only(html) if block_external else html,
+				wait_for=["load", "DOMContentLoaded", "networkIdle"],
+			)
 			page.wait_for_set_content()
 			image = capture_document(page, width, max_height)
 			if inspect:
@@ -69,6 +101,14 @@ def render_full_page(
 		if proc is not None and proc.poll() is not None:
 			generator._close_browser()
 		raise
+
+
+def site_only(html: str) -> str:
+	"""`html` with SITE_ONLY_POLICY ahead of everything it loads. Placed after the doctype,
+	which must come first (anything before it puts the page in quirks mode), and before
+	<html>, which the parser then folds into the head it opened for the policy."""
+	start = LEADING_DOCTYPE.match(html).end()
+	return html[:start] + SITE_ONLY_POLICY + html[start:]
 
 
 def evaluate(page, function: str):

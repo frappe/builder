@@ -155,9 +155,10 @@ import useCanvasStore from "@/stores/canvasStore.js";
 import usePageStore from "@/stores/pageStore";
 import { BuilderPage } from "@/types/doctypes";
 import componentController from "@/utils/componentController";
+import { getErrorMessage } from "@/utils/helpers";
 import { TabButtons, toast } from "frappe-ui";
 import { useTelemetry } from "@framework/ui/telemetry";
-import { computed, defineComponent, ref, watch } from "vue";
+import { computed, ref, watch } from "vue";
 import CodeEditor from "./Controls/CodeEditor.vue";
 import PageClientScriptManager from "./PageClientScriptManager.vue";
 import PropsEditor from "./PropsEditor.vue";
@@ -223,16 +224,8 @@ const savePageDataScript = (value: string) => {
 			pageStore.setPageData(props.page);
 			toast.success(__("Data script saved"));
 		})
-		.catch((e: { message: string; exc: string; messages: [string] }) => {
-			let errorMessage = e.exc?.split("\n").slice(-2)[0];
-			if (!errorMessage) {
-				errorMessage = e.messages[0];
-			}
-			toast.error(__("Failed to save script"), {
-				description: defineComponent({
-					template: `<div>${errorMessage}</div>`,
-				}),
-			});
+		.catch((error: unknown) => {
+			toast.error(__("Failed to save script"), { description: getErrorMessage(error) });
 		});
 };
 

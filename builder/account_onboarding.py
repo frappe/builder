@@ -9,12 +9,16 @@ from frappe.core.doctype.user.user import handle_password_test_fail, test_passwo
 from frappe.utils import today
 from frappe.utils.password import update_password
 
+from builder.utils import is_isolated, is_mounted
 from builder.www._builder import get_cloud_settings
 
 ONBOARDING_ROLES = ("Website Manager",)
 
 
 def is_password_needed() -> bool:
+	# a hosting app's editor (mounted, or isolated on its own site) signs its users in itself: none sets a password here
+	if is_mounted() or is_isolated():
+		return False
 	# Cloud Settings is on only for a System Manager of a v2 site
 	if not get_cloud_settings().get("enabled"):
 		return False

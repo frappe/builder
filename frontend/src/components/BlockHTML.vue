@@ -10,6 +10,7 @@
 <script setup lang="ts">
 import type Block from "@/block";
 import { BlockValueResolver } from "@/utils/blockValueResolver";
+import { sanitizeBlockHTML } from "@/utils/canvasIsolation";
 import { scopeStyles } from "@/utils/scopeStyles";
 import { computed, ref, useId } from "vue";
 
@@ -35,9 +36,10 @@ const html = computed(() => {
 	if (dynamicContent) {
 		content = dynamicContent;
 	}
+	// scoped first and sanitized last, so what reaches v-html is exactly the sanitizer's output
 	return `
 		<div class="absolute top-0 bottom-0 right-0 left-0"></div>
-		${scopeStyles(content || "", `[data-html-scope="${scopeId}"]`)}
+		${sanitizeBlockHTML(scopeStyles(String(content || ""), `[data-html-scope="${scopeId}"]`))}
 	`;
 });
 

@@ -61,6 +61,8 @@ class TestPluginUpdates(FrappeTestCase):
 			self.assertEqual(get_update(PLUGIN), {"version": "1.1.0"})
 
 	def test_refuses_an_plugin_that_did_not_come_from_a_hub(self):
+		# a source is fixed at install, so this starts from a dev install rather than relabelling the Hub one
+		drop_installations(PLUGIN)
 		make_installation(PLUGIN, source="Development")
 
 		with self.assertRaises(frappe.ValidationError):

@@ -5,6 +5,7 @@ video: few models Bob drives read video, but every vision model reads its frames
 """
 
 import logging
+import math
 
 import frappe
 from frappe import _
@@ -13,6 +14,17 @@ from builder.ai.block_codec import BlockCodec
 
 logger = frappe.logger("builder.ai.attachments")
 logger.setLevel(logging.INFO)
+
+# What vision models read and all read_site_image hands back on a later turn. The file an image is saved
+# as takes its name from the type, so nothing else (an .svg, an .html) is stored from a chat.
+MEDIA_TYPES = ("png", "jpeg", "webp", "gif")
+# A frame's time in a video, in seconds; the editor takes frames from videos of up to two minutes.
+MAX_FRAME_AT = 24 * 60 * 60
+
+
+def media_type(data_url: str) -> str:
+	"""The image type a data URI names: `png` for data:image/png;base64,..."""
+	return data_url.split(",", 1)[0].split(";", 1)[0].removeprefix("data:image/").lower()
 
 
 class AttachedImage:
@@ -24,8 +36,12 @@ class AttachedImage:
 
 	@classmethod
 	def from_dict(cls, d: dict) -> "AttachedImage":
-		at = d.get("at") if isinstance(d.get("at"), int | float) else None
-		return cls(d.get("data") or "", d.get("url") or "", str(d.get("video") or "")[:140], at)
+		video = str(d.get("video") or "")[:140]
+		return cls(d.get("data") or "", d.get("url") or "", video, frame_at(d.get("at")))
+
+	@property
+	def saved(self) -> bool:
+		return self.url.startswith("/")
 
 	def to_dict(self, with_data: bool = False) -> dict:
 		d = {"url": self.url or self.data}
@@ -37,7 +53,7 @@ class AttachedImage:
 
 	def label(self, number: int) -> str:
 		name = f"Frame at {self.timestamp()} of {self.video}" if self.video else f"Image {number}"
-		return f"{name} (saved at {self.url})" if self.url.startswith("/") else name
+		return f"{name} (saved at {self.url})" if self.saved else name
 
 	def timestamp(self) -> str:
 		seconds = int(float(self.at or 0))
@@ -49,8 +65,8 @@ class AttachedImage:
 		to the chat (a mock may be confidential), and every reader — replay, brief
 		attachment, the chat thumbnail — goes through permissioned paths."""
 		try:
-			header, content = self.data.split(";base64,", 1)
-			ext = header.removeprefix("data:image/").split("+")[0] or "png"
+			content = self.data.split(";base64,", 1)[1]
+			ext = media_type(self.data)
 			file = frappe.get_doc(
 				{
 					"doctype": "File",
@@ -79,6 +95,14 @@ class AttachedImage:
 		return None
 
 
+def frame_at(value) -> float | None:
+	"""A frame's time as the request or a stored message gives it, or None when it is no time a video has:
+	JSON can carry Infinity and NaN, and a label made from either would fail every later turn's replay."""
+	if isinstance(value, bool) or not isinstance(value, int | float):
+		return None
+	return float(value) if math.isfinite(value) and 0 <= value <= MAX_FRAME_AT else None
+
+
 class TurnImages:
 	# Six images and the frames of one video, as the editor caps them.
 	MAX_IMAGES = 14
@@ -103,6 +127,8 @@ class TurnImages:
 			frappe.throw(_("These attachments are too large to send together. Remove some and try again."))
 		for i in images:
 			BlockCodec.validate_image_data(i["data"])
+			if media_type(i["data"]) not in MEDIA_TYPES:
+				frappe.throw(_("Attach images as PNG, JPEG, WebP or GIF."))
 		# The address is the server's to assign once saved, never the client's.
 		return cls([AttachedImage.from_dict({**i, "url": ""}) for i in images])
 
@@ -124,13 +150,16 @@ class TurnImages:
 		return [image.to_dict() for image in self.images]
 
 	def payload(self) -> list[dict]:
-		return [image.to_dict(with_data=True) for image in self.images]
+		"""What the turn's job is queued with: a saved image by its address, which the job reads back as a
+		later turn's replay does, and only one that could not be saved by its data. A message's images are up
+		to 20 MB of data, and the queue keeps a finished job for minutes and a failed one for days."""
+		return [image.to_dict(with_data=not image.saved) for image in self.images]
 
 	def first(self, count: int) -> "TurnImages":
 		return TurnImages(self.images[:count])
 
 	def file_urls(self) -> set[str]:
-		return {image.url for image in self.images if image.url.startswith("/")}
+		return {image.url for image in self.images if image.saved}
 
 	def parts(self) -> list[dict]:
 		"""Provider content parts, each image after a label naming it, so the model

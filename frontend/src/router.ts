@@ -3,7 +3,9 @@ import { ref } from "vue";
 import { NavigationGuardNext, RouteLocationNormalized, createRouter, createWebHistory } from "vue-router";
 import { __ } from "./translation";
 import { editorDemo } from "./utils/editorDemo";
-import { personaSurveyRedirect } from "./utils/personaSurvey";
+import { appURL, isMounted, loginURL, shortEditorURLs } from "./utils/frappePage";
+import { finishedSurveyRedirect, personaSurveyRedirect } from "./utils/personaSurvey";
+import { pendingStartDescription, promptStartRedirect } from "./utils/promptStart";
 
 let hasPermission: null | boolean = null;
 let sessionUser = ref("Guest");
@@ -14,9 +16,10 @@ function validatePermission(next: NavigationGuardNext) {
 	} else {
 		alert(__("You do not have permission to access this page"));
 		if (isUserLoggedIn()) {
-			window.location.href = "/app";
+			// a frappe.page site has no Desk: the user's sites, listed even when there is only this one
+			window.location.href = isMounted ? appURL("/sites?all=1") : "/app";
 		} else {
-			window.location.href = "/login?redirect-to=/builder";
+			window.location.href = loginURL();
 		}
 	}
 }
@@ -50,6 +53,12 @@ const validateVisit = async function (
 
 // before the dashboard renders, so a user who owes the persona survey never sees the dashboard first
 const personaSurveyFirst = (to: RouteLocationNormalized) => personaSurveyRedirect(to, sessionUser.value);
+// frappe.page: a site created from a description opens with Bob building from it, ahead of the survey
+const promptStartFirst = () => promptStartRedirect();
+// a finished survey doesn't ask again at its own address, which opens the dashboard; it stays while a site's
+// description waits for Bob, as promptStartFirst sends the home page there to start it
+const surveyOnce = (to: RouteLocationNormalized) =>
+	pendingStartDescription() ? undefined : finishedSurveyRedirect(to);
 
 function isUserLoggedIn() {
 	return document.cookie.includes("user_id") && !document.cookie.includes("user_id=Guest");
@@ -58,6 +67,9 @@ function isUserLoggedIn() {
 function getSessionUser() {
 	return decodeURIComponent(document.cookie.split("user_id=")[1].split(";")[0]) || "Guest";
 }
+
+// frappe.page shows a page at frappe.page/<sub>/<page>, without Builder's /page segment
+const pagePath = shortEditorURLs ? "/:pageId" : "/page/:pageId";
 
 const routes = [
 	{
@@ -73,24 +85,25 @@ const routes = [
 	{
 		path: "/",
 		name: "home",
-		beforeEnter: [validateVisit, personaSurveyFirst],
+		beforeEnter: [validateVisit, promptStartFirst, personaSurveyFirst],
 		component: () => import("@/pages/PageBuilderDashboard.vue"),
 	},
 	{
 		path: "/dashboard/:item/:path(.*)*",
 		name: "dashboard-item",
-		// a dashboard view is the dashboard too, so a user who owes the survey goes there first
-		beforeEnter: [validateVisit, personaSurveyFirst],
+		// a dashboard view is the dashboard too: a site's description starts Bob first, and a user who owes the
+		// survey goes there first
+		beforeEnter: [validateVisit, promptStartFirst, personaSurveyFirst],
 		component: () => import("@/pages/PageBuilderDashboard.vue"),
 	},
 	{
-		path: "/page/:pageId",
+		path: pagePath,
 		name: "builder",
 		beforeEnter: validateVisit,
 		component: () => import("@/pages/PageBuilder.vue"),
 	},
 	{
-		path: "/page/:pageId/preview",
+		path: `${pagePath}/preview`,
 		name: "preview",
 		beforeEnter: validateVisit,
 		component: () => import("@/pages/PagePreview.vue"),
@@ -98,9 +111,16 @@ const routes = [
 	{
 		path: "/persona-survey",
 		name: "persona-survey",
-		beforeEnter: validateVisit,
+		beforeEnter: [validateVisit, surveyOnce],
 		component: () => import("@/pages/PagePersonaSurvey.vue"),
 	},
+	// older /page/<page> links keep working under short addresses
+	...(shortEditorURLs
+		? [
+				{ path: "/page/:pageId", redirect: (to) => ({ name: "builder", params: to.params, query: to.query }) },
+				{ path: "/page/:pageId/preview", redirect: (to) => ({ name: "preview", params: to.params, query: to.query }) },
+			]
+		: []),
 ];
 
 declare global {

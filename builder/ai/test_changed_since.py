@@ -60,6 +60,31 @@ class TestChangedSince(FrappeTestCase):
 
 		self.assertNotIn(CHANGED, self.turn("Done."))
 
+	def test_a_page_deleted_while_bob_works_still_ends_the_turn(self):
+		"""The turn's end marks its page; the user may have deleted it in the desk meanwhile"""
+		model, events = ScriptedModel("Done."), []
+
+		def complete(*args, **kwargs):
+			frappe.db.delete("Builder Page", self.page)
+			return model()
+
+		runner = AgentRunner("go", "m", "k", page_id=self.page, session_id=self.session_id)
+		with (
+			patch.object(llm, "complete_with_tools", complete),
+			patch("frappe.publish_realtime", lambda event, *args, **kwargs: events.append(event)),
+			patch.object(AgentRunner, "maybe_name_session"),
+		):
+			runner.run()
+
+		saved = AISession.get(self.session_id).get_messages()[-1]
+		self.assertEqual((saved["content"], saved["metadata"]["status"]), ("Done.", "complete"))
+		self.assertIn(f"ai_chat_complete_{self.page}", events)
+		self.assertIsNone(load_page_root(self.page))
+		for end in (runner.emit_cancelled, lambda: runner.fail_turn("Something broke.")):
+			end()
+			marks = AISession.get(self.session_id).get_messages()[-1]["metadata"]["pageMarks"]
+			self.assertIn(self.page, marks)
+
 	def test_an_approved_edit_to_another_page_is_not_taken_for_the_users(self):
 		self.turn("Hi.", page_id=self.other)
 		self.turn([("edit_page", {"page": self.other, "ops": '@csabout "Our story"'})], "Ready.")

@@ -29,13 +29,13 @@
 </template>
 <script setup lang="ts">
 import { __ } from "@/translation";
+import { liveOrigin } from "@/utils/frappePage";
 import { Button, toast } from "frappe-ui";
 
-const site = window.location.origin;
-const host = window.location.hostname;
+const site = liveOrigin();
+const { protocol, hostname: host } = new URL(site);
 // frappectl refuses plain http anywhere but localhost
-const reachable =
-	window.location.protocol === "https:" || host === "localhost" || host.endsWith(".localhost");
+const reachable = protocol === "https:" || host === "localhost" || host.endsWith(".localhost");
 
 const promptParts = [
 	{ text: "Install the frappe-builder skill with " },

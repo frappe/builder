@@ -13,6 +13,7 @@ import { commandShortcuts } from "@/components/Commands";
 import { __ } from "@/translation";
 import { copyBuilderBlocks, pasteBuilderBlocks } from "@/utils/builderBlockCopyPaste";
 import { promptOversizedSVG, promptSaveVersion } from "@/utils/dialogs";
+import { siteURL } from "@/utils/frappePage";
 import {
 	addPxToNumber,
 	getBlockCopy,
@@ -119,7 +120,7 @@ export function useBuilderEvents(
 
 		let text = (e.clipboardData?.getData("text/plain") as string) || "";
 
-		await pasteBuilderBlocks(e, window.location.origin);
+		await pasteBuilderBlocks(e, siteURL());
 
 		if (!text) {
 			return;
@@ -497,7 +498,7 @@ const copySelectedBlocksToClipboard = (e: ClipboardEvent) => {
 			size: "md",
 		});
 	} else {
-		copyBuilderBlocks(e, window.location.origin, canvasStore.copyEntirePage);
+		copyBuilderBlocks(e, siteURL(), canvasStore.copyEntirePage);
 		canvasStore.requiresConfirmationForCopyingEntirePage = true;
 		canvasStore.copyEntirePage = false;
 	}

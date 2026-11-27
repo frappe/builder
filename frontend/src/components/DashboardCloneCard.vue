@@ -12,6 +12,7 @@
 
 <script setup lang="ts">
 import { useSiteClone } from "@/composables/useSiteClone";
+import { isMounted } from "@/utils/frappePage";
 import { __ } from "@/translation";
 import { getDomains } from "@frappe/cloud-sdk/api";
 import { useStorage } from "@vueuse/core";
@@ -46,6 +47,8 @@ function connectDomain() {
 }
 
 function readDomains() {
+	// a frappe.page site's domains live in its settings, which say what is connected already
+	if (isMounted) return (offerDomain.value = true);
 	getDomains()
 		.then(({ domains }) => (offerDomain.value = domains.every((domain) => domain.is_default)))
 		.catch((reason) => console.error("Could not read the domains", reason));

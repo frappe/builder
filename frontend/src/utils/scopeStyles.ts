@@ -1,6 +1,12 @@
 const STYLE_TAG = /<style[\s>]/i;
 const IMPORT_RULE = /@import\s[^;]+;/g;
 const DOCUMENT_ROOT = /(^|[\s>+~,(])(?::root|html|body)(?![\w-])/g;
+// Serializing the rules writes an escaped "<" ("\3c ") as a bare "<" in strings and as "\<" in names. Raw in <style>,
+// "</style" would end the element, and a sanitizer drops a <style> whose text looks like markup, so each such "<" is
+// escaped again (an odd run of backslashes before it ends in the one escaping it). A media range's "<" is followed
+// by a space or "=", and stays.
+const MARKUP_START = /(\\*)<(?=[/\w!])/g;
+const escapeMarkup = (_: string, slashes: string) => (slashes.length % 2 ? slashes.slice(1) : slashes) + "\\3c ";
 
 export function scopeStyles(html: string, scope: string) {
 	if (!STYLE_TAG.test(html)) return html;
@@ -21,7 +27,8 @@ function scopeCSS(css: string, scope: string) {
 	const global = rules.filter((rule) => !isScopable(rule)).map((rule) => rule.cssText);
 	const scoped = rules.filter(isScopable).map((rule) => rule.cssText);
 	const imports = css.match(IMPORT_RULE) || [];
-	return [...imports, ...global, `@scope (${scope}) {`, ...scoped, "}"].join("\n");
+	const text = [...imports, ...global, `@scope (${scope}) {`, ...scoped, "}"].join("\n");
+	return text.replace(MARKUP_START, escapeMarkup);
 }
 
 function scopeDocumentRoot(rules: CSSRuleList) {

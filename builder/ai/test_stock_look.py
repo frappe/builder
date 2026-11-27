@@ -66,6 +66,21 @@ class TestCreamTiles(FrappeTestCase):
 		self.assertTrue(first.startswith("FAILED: #F4EEE2 on the direction tiles"), first)
 		self.assertIsNone(run_present_ui(ctx, args))
 
+	def test_a_tile_colour_that_is_not_text_is_dropped_not_fatal(self):
+		"""The card is still shown, as before the stock-look check read the tiles"""
+		options = [
+			{"label": "The Kiln Ledger", "colors": ["#272B25", 0xF5EFE6, {"hex": "#C64C2F"}, None]},
+			{"label": "Glaze Atlas", "colors": [{"hex": "#DCE5E1"}]},
+		]
+		ctx = CardCtx()
+
+		self.assertIsNone(
+			run_present_ui(ctx, {"text": "Which direction?", "ui": [{"kind": "choices", "options": options}]})
+		)
+
+		card = AISession.get(ctx.session_id).get_messages()[-1]["metadata"]["ui"][0]
+		self.assertEqual([option["colors"] for option in card["options"]], [["#272B25"], []])
+
 
 class TestFontDraw(FrappeTestCase):
 	def test_a_chat_draws_the_same_faces_every_turn(self):
