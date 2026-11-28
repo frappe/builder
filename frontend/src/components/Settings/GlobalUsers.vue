@@ -61,7 +61,7 @@
 							{{ user.full_name }}
 							<Badge v-if="user.name === sessionUser" theme="gray" class="ml-1">{{ __("You") }}</Badge>
 						</span>
-						<span class="truncate text-p-xs text-ink-gray-5">{{ user.name }}</span>
+						<span class="truncate text-p-xs text-ink-gray-5">{{ user.email }}</span>
 					</div>
 					<Badge v-if="user.is_admin" theme="gray" class="ml-auto shrink-0">{{ __("Admin") }}</Badge>
 				</div>
@@ -108,6 +108,7 @@ type PendingInvite = {
 };
 type BuilderUser = {
 	name: string;
+	email: string;
 	full_name: string;
 	user_image?: string;
 	is_admin: boolean;
@@ -152,7 +153,7 @@ const filteredInvites = computed<PendingInvite[]>(() =>
 
 const filteredMembers = computed<BuilderUser[]>(() => {
 	const members = (builderUsers.data || []).filter((user: BuilderUser) =>
-		matchesSearch(user.full_name, user.name),
+		matchesSearch(user.full_name, user.email),
 	);
 	return members.sort((a: BuilderUser, b: BuilderUser) =>
 		a.name === sessionUser.value ? -1 : b.name === sessionUser.value ? 1 : 0,
