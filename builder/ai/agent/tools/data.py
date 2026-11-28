@@ -19,6 +19,7 @@ import frappe
 from frappe.utils.safe_exec import SERVER_SCRIPT_FILE_PREFIX
 
 from builder.ai.agent import pending
+from builder.ai.agent.pending import PendingAction
 from builder.ai.agent.registry import Tool
 from builder.ai.agent.tools.scripts import LIVE_NOTE
 
@@ -369,7 +370,7 @@ def write_page_data_script(ctx, args: dict) -> str:
 # --- writes (terminal, confirm-gated) -----------------------------------
 
 
-def request_create_doctype(ctx, args: dict) -> str | None:
+def request_create_doctype(ctx, args: dict) -> str | PendingAction:
 	"""Returning a string DECLINES the proposal (no confirm card) and feeds the
 	reason back to the model — e.g. proposing 'Event', a built-in Frappe doctype."""
 	name = (args.get("name") or "").strip()
@@ -385,11 +386,10 @@ def request_create_doctype(ctx, args: dict) -> str | None:
 	if not pending.can_create_doctypes():
 		return pending.not_permitted("create DocTypes")
 	summary = f"Create a new DocType '{name}' with {len(fields)} field(s)?"
-	pending.request_confirmation(ctx, "create_doctype", summary, {"name": name, "fields": fields})
-	return None
+	return PendingAction(summary, {"name": name, "fields": fields})
 
 
-def request_seed_sample_data(ctx, args: dict) -> str | None:
+def request_seed_sample_data(ctx, args: dict) -> str | PendingAction:
 	doctype = (args.get("doctype") or "").strip()
 	rows = [r for r in (args.get("rows") or []) if isinstance(r, dict)]
 	if not doctype or not frappe.db.exists("DocType", doctype):
@@ -408,8 +408,7 @@ def request_seed_sample_data(ctx, args: dict) -> str | None:
 			f"fieldnames: {sorted(valid)}."
 		)
 	summary = f"Insert {len(rows)} sample record(s) into '{doctype}'?"
-	pending.request_confirmation(ctx, "seed_sample_data", summary, {"doctype": doctype, "rows": rows})
-	return None
+	return PendingAction(summary, {"doctype": doctype, "rows": rows})
 
 
 # --- schemas ------------------------------------------------------------
@@ -568,7 +567,8 @@ create_doctype_tool = Tool(
 		},
 		"required": ["name", "fields"],
 	},
-	handler=request_create_doctype,
+	handler=pending.apply_create_doctype,
+	needs_approval=request_create_doctype,
 	available=pending.can_create_doctypes,
 )
 
@@ -589,7 +589,8 @@ seed_sample_data_tool = Tool(
 		},
 		"required": ["doctype", "rows"],
 	},
-	handler=request_seed_sample_data,
+	handler=pending.apply_seed_sample_data,
+	needs_approval=request_seed_sample_data,
 )
 
 TOOLS = [

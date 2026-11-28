@@ -640,9 +640,9 @@ function pendingPreview(m: Record<string, any>): string {
 			const n = (p.rows || []).length;
 			return `Add ${n} sample ${n === 1 ? "record" : "records"} to “${p.doctype}”.`;
 		}
-		case "global_settings":
+		case "edit_global_settings":
 			return `Update site-wide code (${Object.keys(p).join(", ")}). This loads on every page.`;
-		case "home_page":
+		case "set_home_page":
 			return `Make “/${String(p.route || "").replace(/^\//, "")}” the site's home page.`;
 		default:
 			return "Confirm this change?";
@@ -655,8 +655,8 @@ const APPLY_LABELS: Record<string, string> = {
 	create_doctype: "Create it",
 	connect_form: "Connect form",
 	seed_sample_data: "Add records",
-	home_page: "Set home page",
-	global_settings: "Apply",
+	set_home_page: "Set home page",
+	edit_global_settings: "Apply",
 };
 const applyLabel = (m: Record<string, any> = {}) => APPLY_LABELS[m.kind || ""] || "Apply";
 const builderStore = useBuilderStore();

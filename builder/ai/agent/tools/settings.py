@@ -16,6 +16,7 @@ import frappe
 
 from builder.ai.agent import pending
 from builder.ai.agent.page_changes import page_row
+from builder.ai.agent.pending import PendingAction
 from builder.ai.agent.registry import Tool
 from builder.ai.agent.tools.query import resolve_page_reference
 from builder.ai.stock_look import unseen_creams
@@ -166,9 +167,9 @@ def set_design_token(ctx, args: dict) -> str:
 # --- sensitive (terminal, confirm-gated) --------------------------------
 
 
-def request_set_home_page(ctx, args: dict) -> None:
+def request_set_home_page(ctx, args: dict) -> PendingAction:
 	route = (args.get("route") or "").strip()
-	pending.request_confirmation(ctx, "home_page", f"Set the site home page to '{route}'?", {"route": route})
+	return PendingAction(f"Set the site home page to '{route}'?", {"route": route})
 
 
 def publish_pages(ctx, args: dict) -> str:
@@ -221,10 +222,10 @@ def pages_sharing(ref: str, page_id: str) -> str:
 	return ", ".join(f"{r.name}: {r.page_title}, {'live' if r.published else 'draft'}" for r in rows)
 
 
-def request_edit_global_settings(ctx, args: dict) -> None:
+def request_edit_global_settings(ctx, args: dict) -> PendingAction:
 	payload = {f: args[f] for f in pending.GLOBAL_SETTING_FIELDS if f in args and args[f] is not None}
 	summary = f"Update site-wide settings ({', '.join(payload) or 'none'})? These load on EVERY page."
-	pending.request_confirmation(ctx, "global_settings", summary, payload)
+	return PendingAction(summary, payload)
 
 
 set_page_settings_tool = Tool(
@@ -303,7 +304,8 @@ set_home_page_tool = Tool(
 		"properties": {"route": {"type": "string"}},
 		"required": ["route"],
 	},
-	handler=request_set_home_page,
+	handler=pending.apply_home_page,
+	needs_approval=request_set_home_page,
 )
 
 publish_page_tool = Tool(
@@ -356,7 +358,8 @@ edit_global_settings_tool = Tool(
 		},
 		"required": [],
 	},
-	handler=request_edit_global_settings,
+	handler=pending.apply_global_settings,
+	needs_approval=request_edit_global_settings,
 )
 
 TOOLS = [

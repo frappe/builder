@@ -1,27 +1,29 @@
 """Confirm-gating for sensitive agent actions.
 
-A sensitive tool NEVER mutates directly. It calls `request_confirmation`, which
-persists a pending-action message and emits a clarify event carrying the payload,
-then ends the turn (the tool is `side="terminal"`). The frontend renders an
-Apply/Skip card; on Apply it calls the `confirm_pending_settings` endpoint, which
-loads the stored payload and runs `apply_pending_action`. So every privileged write
-(global settings, home page, new doctype, sample data) is user-triggered: the
-model can only *propose*.
+A sensitive tool has `needs_approval`, the function that describes its change (the tool is
+`side="terminal"`). In Bob's turn the loop calls only that, and the `PendingAction` it returns is
+shown as an Apply/Skip card: the turn ends, and the tool's handler does not run. On Apply, the
+`confirm_pending_settings` endpoint runs `apply_pending_action`, which calls the handler once,
+with the args the card saved. So every privileged write is user-triggered: the model can only
+*propose*.
 """
+
+from dataclasses import dataclass
 
 import frappe
 
+from builder.ai.agent.registry import build_default_registry
 from builder.ai.session import AISession
 
-# Sensitive action kinds the confirm card understands. Kept explicit so an unknown
-# kind can never be applied.
-KINDS = {
-	"home_page",
-	"global_settings",
-	"create_doctype",
-	"seed_sample_data",
-	"connect_form",
-}
+
+@dataclass
+class PendingAction:
+	"""What a sensitive tool's needs_approval returns to ask the user: the card's text, and the args its
+	handler runs with once the user approves."""
+
+	summary: str
+	args: dict
+
 
 GLOBAL_SETTING_FIELDS = {"script", "style", "head_html", "body_html"}
 
@@ -73,25 +75,21 @@ def apply_pending_action(kind: str, payload: dict) -> str:
 	"""Run the real mutation for a confirmed action. Called ONLY from the confirm
 	endpoint (user-triggered), with the confirming user's own permissions, since the
 	model wrote the payload. Returns a short human summary of what happened."""
-	if kind not in KINDS:
+	# the kind is the name of the tool that asked, and only a tool that needs approval has cards
+	tool = build_default_registry().get(kind)
+	if not (tool and tool.needs_approval):
 		frappe.throw(frappe._("Unknown pending action: {0}").format(kind))
-	payload = payload or {}
-	return {
-		"home_page": apply_home_page,
-		"global_settings": apply_global_settings,
-		"create_doctype": apply_create_doctype,
-		"seed_sample_data": apply_seed_sample_data,
-		"connect_form": apply_connect_form,
-	}[kind](payload)
+	# there is no turn by then: the card's args hold all the handler needs
+	return tool.handler(None, payload or {})
 
 
-def apply_home_page(payload: dict) -> str:
+def apply_home_page(ctx, payload: dict) -> str:
 	route = (payload.get("route") or "").strip().lstrip("/")
 	frappe.db.set_single_value("Builder Settings", "home_page", route)
 	return frappe._("Home page set to /{0}").format(route)
 
 
-def apply_global_settings(payload: dict) -> str:
+def apply_global_settings(ctx, payload: dict) -> str:
 	settings = frappe.get_single("Builder Settings")
 	changed = []
 	for field in GLOBAL_SETTING_FIELDS:
@@ -103,7 +101,7 @@ def apply_global_settings(payload: dict) -> str:
 	return frappe._("Updated global settings: {0}").format(", ".join(changed) or "nothing")
 
 
-def apply_create_doctype(payload: dict) -> str:
+def apply_create_doctype(ctx, payload: dict) -> str:
 	"""Create a Custom DocType (custom=1, no code files or migration). No Guest read:
 	it would publish every field over the REST API; public pages use a data script."""
 	name = (payload.get("name") or "").strip()
@@ -145,7 +143,7 @@ def apply_create_doctype(payload: dict) -> str:
 	return frappe._("Created DocType {0} with {1} field(s)").format(name, len(fields))
 
 
-def apply_seed_sample_data(payload: dict) -> str:
+def apply_seed_sample_data(ctx, payload: dict) -> str:
 	doctype = (payload.get("doctype") or "").strip()
 	rows = payload.get("rows") or []
 	if not doctype or not frappe.db.exists("DocType", doctype):
@@ -159,7 +157,7 @@ def apply_seed_sample_data(payload: dict) -> str:
 	return frappe._("Seeded {0} sample record(s) into {1}").format(created, doctype)
 
 
-def apply_connect_form(payload: dict) -> str:
+def apply_connect_form(ctx, payload: dict) -> str:
 	"""Wire a page form to real data: a private submission DocType + a guest-safe
 	Web Form (the trusted, rate-limited, field-whitelisted boundary) + a client
 	script that POSTs the form's fields to the Web Form's accept endpoint. Reused
