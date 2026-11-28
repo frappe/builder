@@ -95,4 +95,5 @@ leftPanelTabs.register({
 	shortcut: "Mod+Shift+O",
 	// the composer's controls and the chat bubbles stop fitting below this
 	minWidth: 300,
+	condition: () => builderStore.isBobOn,
 });

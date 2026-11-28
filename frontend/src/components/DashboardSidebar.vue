@@ -136,6 +136,7 @@ import {
 	SidebarHeaderProps,
 	SidebarItem,
 	SidebarLabel,
+	useKeyboardShortcut,
 } from "frappe-ui";
 import { TrialBanner } from "@framework/ui/components/TrialBanner";
 import { DialogDescription, DialogTitle } from "reka-ui";
@@ -264,6 +265,16 @@ const deleteFolder = async (folderName: string) => {
 	setFolderActive("");
 };
 const showSettingsDialog = ref(false);
+// the editor's "settings" command binds the same keys to its own dialog. They type nothing, so they
+// work from any field or dialog
+useKeyboardShortcut({
+	combo: "Mod+Shift+Comma",
+	allowInInput: true,
+	allowInDialog: true,
+	description: __("Open Settings"),
+	group: __("General"),
+	handler: () => (showSettingsDialog.value = true),
+});
 const openSettings = (pane: string) => {
 	builderStore.settingsActiveTab = pane;
 	showSettingsDialog.value = true;

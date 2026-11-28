@@ -119,16 +119,26 @@ const select = (tab: LeftPanelTab) => {
 	builderStore.showTokenManager = false;
 };
 
-// read once at setup, so a tab registered later gets no binding until reload
+// read once at setup, so a tab registered later gets no binding until reload. A tab's binding works
+// only while the tab shows, as Bob's while Bob is on
 useKeyboardShortcut(
-	tabs.value
+	leftPanelTabs.all.value
 		.filter((tab) => tab.shortcut)
 		.map((tab) => ({
 			combo: tab.shortcut!,
 			description: `Show ${tab.label} Panel`,
 			group: "View",
+			enabled: () => tabs.value.includes(tab),
 			handler: () => select(tab),
 		})),
+);
+
+// a tab that stops showing while open, as Bob's when Bob is turned off, gives way to the layers
+watch(
+	() => tabs.value.some((tab) => tab.name === builderStore.leftPanelActiveTab),
+	(isShown) => {
+		if (!isShown) builderStore.leftPanelActiveTab = "Layers";
+	},
 );
 
 // a non-lazy tab mounts as soon as it registers, a lazy one on first open

@@ -34,6 +34,18 @@ class TestAgentJobs(FrappeTestCase):
 			self.assertNotIn("api_key", enqueue.call_args.kwargs)
 			self.assertNotIn(SECRET, enqueue.call_args.kwargs.values())
 
+	def test_a_site_with_bob_off_starts_no_chat(self):
+		page, _ = chat_session()
+		frappe.db.set_single_value("Builder Settings", "disable_bob", 1)
+		self.addCleanup(frappe.db.set_single_value, "Builder Settings", "disable_bob", 0)
+		chats = frappe.db.count("Builder AI Session")
+
+		with patch("frappe.enqueue") as enqueue, self.assertRaises(frappe.ValidationError):
+			api.run("hi", page, model=MODEL["name"])
+
+		enqueue.assert_not_called()
+		self.assertEqual(frappe.db.count("Builder AI Session"), chats)
+
 	def test_a_resumed_turn_keeps_the_picked_effort(self):
 		page, session = chat_session()
 		with (
