@@ -146,6 +146,7 @@ class BuilderPage(WebsiteGenerator):
 		published: DF.Check
 		published_at: DF.Datetime | None
 		route: DF.Data | None
+		sitemap_script: DF.Code | None
 		staging: DF.Check
 		template_group: DF.Data | None
 	# end: auto-generated types

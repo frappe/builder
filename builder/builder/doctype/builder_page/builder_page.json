@@ -27,6 +27,7 @@
   "draft_blocks",
   "scripting_tab",
   "page_data_script",
+  "sitemap_script",
   "head_html",
   "body_html",
   "client_scripts",
@@ -108,6 +109,14 @@
    "fieldname": "page_data_script",
    "fieldtype": "Code",
    "label": "Page Data Script",
+   "options": "Python"
+  },
+  {
+   "depends_on": "dynamic_route",
+   "description": "Lists the routes of a dynamic page for the sitemap. Set <code>routes</code> to one dict of route variables per page, with an optional <code>lastmod</code>.<br><b>Example:</b> routes = frappe.get_all(\"Blog Post\", fields=[\"slug\", \"modified as lastmod\"]) for <code>/blog/:slug</code>",
+   "fieldname": "sitemap_script",
+   "fieldtype": "Code",
+   "label": "Sitemap Script",
    "options": "Python"
   },
   {
@@ -272,7 +281,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-09-11 16:00:00.000000",
+ "modified": "2026-11-26 23:30:00.000000",
  "modified_by": "Administrator",
  "module": "Builder",
  "name": "Builder Page",

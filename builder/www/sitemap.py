@@ -4,13 +4,16 @@ from urllib import robotparser
 from urllib.parse import quote
 
 import frappe
-from frappe.utils import get_url
+from frappe.utils import get_url, getdate
 from frappe.website.router import get_pages
 from frappe.www.sitemap import get_public_pages_from_doctypes, is_dynamic_route
+
+from builder.utils import execute_script
 
 no_cache = 1
 
 REGEX_CHARS = frozenset(".^$*+?{}[]\\|()")
+ROUTE_VARIABLE = re.compile(r":(\w+)|<(?:\w+:)?(\w+)>")
 
 
 def get_context(context):
@@ -65,10 +68,55 @@ def get_builder_page_routes() -> dict:
 	robots = get_robots_parser()
 	routes = {}
 	for page in get_served_pages():
-		route = "" if page.route == home_page else page.route
-		if is_indexable(page, route) and robots.can_fetch("*", f"/{route}"):
-			routes[route] = f"{page.published_at or page.modified:%Y-%m-%d}"
+		page_route = "" if page.route == home_page else page.route
+		for route, lastmod in get_listed_routes(page, page_route):
+			if is_indexable(page, route) and robots.can_fetch("*", f"/{route}"):
+				routes[route] = lastmod
 	return routes
+
+
+def get_listed_routes(page: dict, route: str) -> list[tuple[str, str | None]]:
+	"""A dynamic route stands for the routes its sitemap script lists"""
+	lastmod = format_date(page.published_at or page.modified)
+	if not is_dynamic_route(route):
+		return [(route, lastmod)]
+	return [
+		(filled_route, format_date(variables.get("lastmod")) or lastmod)
+		for variables in run_sitemap_script(page)
+		if (filled_route := fill_route(route, variables))
+	]
+
+
+def run_sitemap_script(page: dict) -> list[dict]:
+	if not page.sitemap_script:
+		return []
+	_locals = {"routes": []}
+	try:
+		execute_script(page.sitemap_script, _locals, page.name)
+	except Exception:
+		# one page's broken script shouldn't take the whole sitemap down
+		frappe.log_error(f"Sitemap script failed for Builder Page {page.name}")
+		return []
+	return [variables for variables in _locals["routes"] if isinstance(variables, dict)]
+
+
+def fill_route(route: str, variables: dict) -> str | None:
+	parts = [fill_route_part(part, variables) for part in route.split("/")]
+	return None if None in parts else "/".join(parts)
+
+
+def fill_route_part(part: str, variables: dict) -> str | None:
+	variable = ROUTE_VARIABLE.fullmatch(part)
+	if not variable:
+		return part
+	value = str(variables.get(variable.group(1) or variable.group(2)) or "").strip()
+	# a value with a slash would fill more than its own segment of the route
+	return value if value and "/" not in value else None
+
+
+def format_date(value) -> str | None:
+	with suppress(Exception):
+		return f"{getdate(value):%Y-%m-%d}" if value else None
 
 
 def get_served_pages() -> list[dict]:
@@ -76,7 +124,9 @@ def get_served_pages() -> list[dict]:
 	pages = frappe.get_all(
 		"Builder Page",
 		fields=[
+			"name",
 			"route",
+			"sitemap_script",
 			"canonical_url",
 			"disable_indexing",
 			"authenticated_access",
