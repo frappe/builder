@@ -83,6 +83,30 @@
 
 		<!-- Toolbar layer (top) - comes last in DOM -->
 		<BuilderToolbar data-panel="toolbar" class="absolute left-0 right-0 top-0"></BuilderToolbar>
+		<DraggablePopup
+			v-model="builderStore.showSearchBlock"
+			:container="canvasStore.activeCanvas?.$el"
+			placement="top-right"
+			:placementOffset="20"
+			:width="290"
+			:height="0"
+			v-if="builderStore.showSearchBlock">
+			<template #header>
+				<!-- the header drags the popup, so a tab click mustn't start a drag; -ml-1 lines the tabs up with the inputs -->
+				<div v-if="!builderStore.readOnlyMode" class="-ml-1" @mousedown.stop>
+					<TabButtons
+						v-model="searchMode"
+						:options="[
+							{ label: __('Find'), value: 'search' },
+							{ label: __('Replace'), value: 'replace' },
+						]" />
+				</div>
+				<template v-else>{{ __("Search Block") }}</template>
+			</template>
+			<template #content>
+				<SearchBlock v-model:mode="searchMode"></SearchBlock>
+			</template>
+		</DraggablePopup>
 	</div>
 	<PageListModal v-model="pageListDialog" :pages="componentUsedInPages"></PageListModal>
 	<Dialog
@@ -120,6 +144,8 @@ import BuilderRightPanel from "@/components/BuilderRightPanel.vue";
 import BuilderToolbar from "@/components/BuilderToolbar.vue";
 import { installEditorDemo } from "@/components/EditorDemo";
 import Dialog from "@/components/Controls/Dialog.vue";
+import DraggablePopup from "@/components/Controls/DraggablePopup.vue";
+import SearchBlock from "@/components/Controls/SearchBlock.vue";
 import PageListModal from "@/components/Modals/PageListModal.vue";
 import TemplatesDialog from "@/components/Templates/TemplatesDialog.vue";
 import { webPages } from "@/data/webPage";
@@ -136,7 +162,7 @@ import componentController from "@/utils/componentController.js";
 import { getPageUsageMessage, getRootBlockTemplate } from "@/utils/helpers";
 import { useBuilderEvents } from "@/utils/useBuilderEvents";
 import { useDebounceFn } from "@vueuse/core";
-import { createResource, KeyboardShortcutsDialog, useKeyboardShortcut } from "frappe-ui";
+import { createResource, KeyboardShortcutsDialog, TabButtons, useKeyboardShortcut } from "frappe-ui";
 import { computed, onActivated, onDeactivated, onMounted, provide, ref, watch, watchEffect } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import CodeEditor from "../components/Controls/CodeEditor.vue";
@@ -153,6 +179,14 @@ const usageCount = ref(0);
 const componentUsedInPages = ref<BuilderPage[]>([]);
 const pageListDialog = ref(false);
 const blockContextMenu = ref<InstanceType<typeof BlockContextMenu> | null>(null);
+// kept here for the popup header's tabs; reset on close so search always reopens on Find
+const searchMode = ref<"search" | "replace">("search");
+watch(
+	() => builderStore.showSearchBlock,
+	(open) => {
+		if (!open) searchMode.value = "search";
+	},
+);
 
 watch(
 	[
@@ -316,6 +350,7 @@ onDeactivated(() => {
 	builderStore.realtime.doc_close("Builder Page", pageStore.activePage?.name as string);
 	builderStore.realtime.off("doc_viewers", () => {});
 	builderStore.viewers = [];
+	builderStore.showSearchBlock = false;
 });
 
 onMounted(() => {
