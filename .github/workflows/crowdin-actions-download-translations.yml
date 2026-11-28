@@ -1,0 +1,48 @@
+name: Download translations from Crowdin
+
+on:
+  schedule:
+    # 4 AM UTC Monday, the slot frappe, erpnext and lms use
+    - cron: "0 4 * * 1"
+  workflow_dispatch:
+
+concurrency:
+  group: crowdin-download
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  download-translations:
+    name: Download translations into develop
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout develop
+        uses: actions/checkout@v6
+        with:
+          ref: develop
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Download translations and open PR
+        uses: crowdin/github-action@v2.17.1
+        with:
+          config: crowdin.yml
+          upload_sources: false
+          upload_translations: false
+          download_translations: true
+          crowdin_branch_name: "[frappe.builder] develop"
+          skip_ref_checkout: true
+          # not l10n_develop, which the Crowdin GitHub integration still owns until it is turned off
+          localization_branch_name: l10n_crowdin_develop
+          create_pull_request: true
+          pull_request_base_branch_name: develop
+          commit_message: "chore: sync translations from crowdin"
+          pull_request_title: "chore: sync translations from crowdin"
+          pull_request_labels: "translation"
+        env:
+          GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
+          CROWDIN_PROJECT_ID: ${{ secrets.CROWDIN_PROJECT_ID }}
+          CROWDIN_PERSONAL_TOKEN: ${{ secrets.CROWDIN_PERSONAL_TOKEN }}
