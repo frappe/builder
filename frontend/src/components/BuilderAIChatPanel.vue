@@ -224,7 +224,7 @@
 							v-else-if="message.metadata?.status === 'pending_action'"
 							class="mt-2 w-full rounded-6 border border-outline-gray-2 bg-surface-gray-1 p-3">
 							<p class="text-p-sm font-medium text-ink-gray-8">
-								{{ pendingPreview(message.metadata) }}
+								{{ pendingPreview(message) }}
 							</p>
 							<div v-if="message.id === lastMessageId" class="mt-2.5 flex gap-2">
 								<Button
@@ -628,7 +628,8 @@ function fieldNames(fields: any[]): string {
 		.join(", ");
 }
 
-function pendingPreview(m: Record<string, any>): string {
+function pendingPreview(message: ChatMessage): string {
+	const m = message.metadata || {};
 	const p = m.payload || {};
 	const fields = fieldNames(p.fields);
 	switch (m.kind) {
@@ -645,7 +646,8 @@ function pendingPreview(m: Record<string, any>): string {
 		case "set_home_page":
 			return `Make “/${String(p.route || "").replace(/^\//, "")}” the site's home page.`;
 		default:
-			return "Confirm this change?";
+			// an app's tool: the summary its needs_approval wrote
+			return message.content || "Confirm this change?";
 	}
 }
 
